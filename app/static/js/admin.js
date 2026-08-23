@@ -167,6 +167,10 @@ function toggleBox(boxId, iconContainer) {
         selectedBox.classList.add('is-visible');
         if (boxId === 'vacationRequestBox') {
             selectedBox.style.display = 'inline-table';
+        } else if (boxId === 'payrollBox') {
+            // باکس حقوق و دستمزد به‌صورت block نمایش داده می‌شود تا جدول پهن
+            // داخل کانتینر خودش اسکرول شود و کل صفحه را بیرون نزند.
+            selectedBox.style.display = 'block';
         } else {
             selectedBox.style.display = 'flex';
         }
@@ -264,9 +268,801 @@ function toggleBox(boxId, iconContainer) {
     }
 }
 
+// تابع سوئیچ تب‌های بخش حقوق و دستمزد
+function switchPayrollTab(tabId, btnEl) {
+    // غیرفعال کردن تمام دکمه‌ها
+    document.querySelectorAll('.payroll-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    // غیرفعال کردن تمام محتواها
+    document.querySelectorAll('.payroll-tab-content').forEach(c => c.classList.remove('active'));
+    // فعال کردن دکمه انتخاب شده
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    // فعال کردن محتوای مربوطه
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+    if (tabId === 'hourly-payroll-calculation') computeHourlyPayrollTotals();
+    if (tabId === 'overtime-calculation') loadOvertimePayrollData(false);
+}
+
+// ===== محاسبه جامع حقوق و دستمزد =====
+// فیلدهای پرداختی (مجموع پرداختی را می‌سازند)
+// بن کارگری، حق مسکن، حق اولاد و حق تأهل در یک ستون واحد (benefits) تعریف می‌شوند.
+var PAYROLL_PAY_FIELDS = ['dailySalary', 'benefits', 'overtime', 'bonus', 'eidiSanavat'];
+// فیلدهای کسورات (از مجموع پرداختی کم می‌شوند)
+var PAYROLL_DEDUCT_FIELDS = ['leave', 'workDeduction', 'insurance', 'advance'];
+// فیلدهای ساعتی/عددی که مجموعشان هم در ردیف پایین نمایش داده می‌شود
+var PAYROLL_HOUR_FIELDS = ['workHours'];
+var PAYROLL_ALL_FIELDS = PAYROLL_PAY_FIELDS.concat(PAYROLL_DEDUCT_FIELDS, PAYROLL_HOUR_FIELDS);
+
+/** تبدیل ارقام فارسی به انگلیسی (برای محاسبه) */
+function persianDigitsToEnglish(str) {
+    var fa = '۰۱۲۳۴۵۶۷۸۹';
+    return String(str).replace(/[۰-۹]/g, function (d) { return String(fa.indexOf(d)); });
+}
+
+function numVal(el) {
+    if (!el) return 0;
+    var v = parseFloat(persianDigitsToEnglish(el.value).replace(/[،,]/g, ''));
+    return isNaN(v) ? 0 : v;
+}
+
+function formatPayrollNumber(n) {
+    if (n === 0) return '۰';
+    var persian = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '،');
+    return convertToPersianDigits(persian);
+}
+
+function convertToPersianDigits(str) {
+    var map = { '0': '۰', '1': '۱', '2': '۲', '3': '۳', '4': '۴', '5': '۵', '6': '۶', '7': '۷', '8': '۸', '9': '۹' };
+    return String(str).replace(/[0-9]/g, function (d) { return map[d]; });
+}
+
+/** هنگام تایپ در ورودی‌های عددی، ارقام انگلیسی به فارسی تبدیل می‌شوند */
+function toPersianPayrollInput(el) {
+    if (!el || el.type === 'number') return;
+    var before = el.value;
+    var after = convertToPersianDigits(before);
+    if (after !== before) el.value = after;
+}
+
+/** تعداد کاراکترهای عددی (رقم یا ممیز) قبل از موقعیت داده‌شده — جداکننده‌ها شمارش نمی‌شوند */
+function countNumChars(str, pos) {
+    var n = 0;
+    for (var i = 0; i < pos && i < str.length; i++) {
+        if (/[0-9۰-۹.]/.test(str.charAt(i))) n++;
+    }
+    return n;
+}
+
+/** قرار دادن مکان‌نما بعد از n کاراکتر عددی در مقدار جدید (جداکننده‌ها نادیده گرفته می‌شوند) */
+function setCaretAfterNumChars(el, count) {
+    var v = el.value, pos = 0, seen = 0;
+    while (pos < v.length && seen < count) {
+        if (/[0-9۰-۹.]/.test(v.charAt(pos))) seen++;
+        pos++;
+    }
+    el.setSelectionRange(pos, pos);
+}
+
+/** هنگام تایپ در سلول‌های جدول: ارقام فارسی + جداکننده سه‌رقمی زنده */
+function formatPayrollInputValue(el) {
+    if (!el) return;
+    var raw = el.value;
+    var selStart = el.selectionStart != null ? el.selectionStart : raw.length;
+    var numBefore = countNumChars(raw, selStart);
+    var field = el.getAttribute('data-field') || '';
+    var isHours = field === 'workHours';
+    var cleaned = raw.replace(/[،,]/g, '');
+
+    if (isHours) {
+        /* ساعت کارکرد: فقط ارقام فارسی + ممیز، بدون جداکننده */
+        var h = cleaned.replace(/[^0-9۰-۹.]/g, '');
+        var dotIdx = h.indexOf('.');
+        if (dotIdx !== -1) h = h.slice(0, dotIdx + 2);
+        var pers = convertToPersianDigits(h);
+        if (pers !== raw) {
+            el.value = pers;
+            setCaretAfterNumChars(el, numBefore);
+        }
+        return;
+    }
+
+    /* فیلدهای مبلغ: فقط رقم + جداکننده سه‌رقمی (ریال) */
+    var digits = cleaned.replace(/[^0-9۰-۹]/g, '');
+    if (digits === '') {
+        if (raw !== '') el.value = '';
+        return;
+    }
+    var english = persianDigitsToEnglish(digits).replace(/^0+(?=\d)/, '');
+    var grouped = english.replace(/\B(?=(\d{3})+(?!\d))/g, '،');
+    var formatted = convertToPersianDigits(grouped);
+    if (formatted !== raw) {
+        el.value = formatted;
+        setCaretAfterNumChars(el, numBefore);
+    }
+}
+
+/** پیدا کردن تمام ورودی‌های یک پرسنل (چه در جدول، چه در کارت موبایل) */
+function payrollInputsFor(username) {
+    var all = document.querySelectorAll('.payroll-input');
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].getAttribute('data-username') === username) out.push(all[i]);
+    }
+    return out;
+}
+
+/** مقدار یک فیلد برای یک پرسنل */
+function payrollFieldValue(username, field) {
+    var inputs = payrollInputsFor(username);
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].getAttribute('data-field') === field) return numVal(inputs[i]);
+    }
+    return 0;
+}
+
+/** به‌روزرسانی سلول‌های نتیجه (جدول یا کارت) برای یک پرسنل */
+function setPayrollResult(username, resultKey, value) {
+    var all = document.querySelectorAll('[data-result="' + resultKey + '"][data-username="' + username + '"]');
+    for (var i = 0; i < all.length; i++) all[i].textContent = formatPayrollNumber(value);
+}
+
+// محاسبه مجموع پرداختی و مانده قابل پرداخت برای یک پرسنل
+function computePayrollRow(username) {
+    var totalPay = 0;
+    PAYROLL_PAY_FIELDS.forEach(function (f) { totalPay += payrollFieldValue(username, f); });
+    var totalDeduct = 0;
+    PAYROLL_DEDUCT_FIELDS.forEach(function (f) { totalDeduct += payrollFieldValue(username, f); });
+    var netPay = Math.max(0, totalPay - totalDeduct);
+    setPayrollResult(username, 'totalPay', totalPay);
+    setPayrollResult(username, 'netPay', netPay);
+    return { totalPay: totalPay, netPay: netPay };
+}
+
+// محاسبه مجموع ستون‌ها در ردیف پایانی
+function computePayrollTotals() {
+    var table = document.getElementById('payrollComprehensiveTable');
+    if (!table) return;
+    var rows = table.querySelectorAll('tbody .payroll-row');
+    var sums = {};
+    PAYROLL_ALL_FIELDS.forEach(function (f) { sums[f] = 0; });
+    var grandTotalPay = 0;
+    var grandNetPay = 0;
+    rows.forEach(function (row) {
+        var username = row.getAttribute('data-username');
+        PAYROLL_ALL_FIELDS.forEach(function (f) {
+            sums[f] += payrollFieldValue(username, f);
+        });
+        var res = computePayrollRow(username);
+        grandTotalPay += res.totalPay;
+        grandNetPay += res.netPay;
+    });
+    PAYROLL_ALL_FIELDS.forEach(function (f) {
+        var cell = table.querySelector('tfoot [data-total="' + f + '"]');
+        if (cell) cell.textContent = formatPayrollNumber(sums[f]);
+    });
+    var totalPayCell = table.querySelector('tfoot [data-total="totalPay"]');
+    var netPayCell = table.querySelector('tfoot [data-total="netPay"]');
+    if (totalPayCell) totalPayCell.textContent = formatPayrollNumber(grandTotalPay);
+    if (netPayCell) netPayCell.textContent = formatPayrollNumber(grandNetPay);
+    var mobileNet = document.getElementById('payrollMobileNetTotal');
+    if (mobileNet) mobileNet.textContent = formatPayrollNumber(grandNetPay);
+    updatePayrollSummary();
+}
+
+// ===== نمای موبایل جدول محاسبه جامع (کارت به ازای هر پرسنل) =====
+// برخلاف الگوی عمومی cards، این جدول همه‌جا ورودی دارد؛ پس ورودی‌ها به کارت‌ها
+// «منتقل» می‌شوند تا رویدادها و مقادیر حفظ شوند (همان اصل adopt در responsive-tables).
+var PAYROLL_MOBILE_BP = 768;
+var payrollMql = window.matchMedia ? window.matchMedia('(max-width: ' + PAYROLL_MOBILE_BP + 'px)') : null;
+var payrollMobileActive = false;
+var payrollMobileCards = null;   // کانتینر کارت‌ها
+var payrollAdoptions = [];       // { td, input } برای بازگرداندن ورودی‌ها به جدول
+
+function payrollFieldLabel(field) {
+    var table = document.getElementById('payrollComprehensiveTable');
+    if (!table) return field;
+    var th = table.querySelector('thead .payroll-table-subhead th[data-field="' + field + '"]');
+    return th ? th.textContent : field;
+}
+
+function buildPayrollMobileCards() {
+    var table = document.getElementById('payrollComprehensiveTable');
+    if (!table || payrollMobileCards) return;
+
+    var content = table.closest('.payroll-tab-content');
+    var scrollWrap = table.closest('.payroll-table-scroll');
+    if (!content) return;
+
+    var container = document.createElement('div');
+    container.className = 'payroll-mobile-cards';
+    content.insertBefore(container, scrollWrap ? scrollWrap.nextSibling : null);
+    payrollMobileCards = container;
+
+    var rows = table.querySelectorAll('tbody .payroll-row');
+    rows.forEach(function (row) {
+        var username = row.getAttribute('data-username');
+        var nameEl = row.querySelector('.payroll-person-name');
+        var metaEl = row.querySelector('.payroll-person-meta');
+        var name = nameEl ? nameEl.textContent : username;
+        var meta = metaEl ? metaEl.textContent : '';
+
+        var card = document.createElement('article');
+        card.className = 'payroll-card';
+        card.setAttribute('data-username', username);
+
+        var head = document.createElement('header');
+        head.className = 'payroll-card__head';
+        var title = document.createElement('div');
+        title.className = 'payroll-card__title';
+        title.appendChild(el('strong', 'payroll-card__name', name));
+        if (meta) title.appendChild(el('span', 'payroll-card__meta', meta));
+        head.appendChild(title);
+        card.appendChild(head);
+
+        var fields = document.createElement('div');
+        fields.className = 'payroll-card__fields';
+        PAYROLL_ALL_FIELDS.forEach(function (field) {
+            var input = row.querySelector('.payroll-input[data-field="' + field + '"]');
+            if (!input) return;
+            var label = document.createElement('label');
+            label.className = 'payroll-card__field' + (field === 'workHours' ? ' is-hours' : '');
+            label.appendChild(el('span', 'payroll-card__field-label', payrollFieldLabel(field)));
+            /* انتقال ورودی از سلول جدول به کارت — مقادیر/رویدادها حفظ می‌شوند */
+            var td = input.parentNode;
+            label.appendChild(input);
+            fields.appendChild(label);
+            payrollAdoptions.push({ td: td, input: input });
+        });
+        card.appendChild(fields);
+
+        var results = document.createElement('div');
+        results.className = 'payroll-card__results';
+        results.appendChild(el('div', 'payroll-card__result', 'مجموع پرداختی: <b data-result="totalPay" data-username="' + username + '">—</b>'));
+        results.appendChild(el('div', 'payroll-card__result is-net', 'مانده قابل پرداخت: <b data-result="netPay" data-username="' + username + '">—</b>'));
+        card.appendChild(results);
+
+        container.appendChild(card);
+    });
+
+    /* ردیف مجموع کل هم در موبایل نمایش داده شود */
+    var totalRow = table.querySelector('tfoot .payroll-total-row');
+    if (totalRow) {
+        var netCell = totalRow.querySelector('[data-total="netPay"]');
+        var sumBox = document.createElement('div');
+        sumBox.className = 'payroll-mobile-total';
+        sumBox.appendChild(el('span', 'payroll-mobile-total__label', 'مجموع کل مانده قابل پرداخت:'));
+        var sumVal = document.createElement('b');
+        sumVal.className = 'payroll-mobile-total__value';
+        sumVal.id = 'payrollMobileNetTotal';
+        sumVal.textContent = netCell ? netCell.textContent : '—';
+        sumBox.appendChild(sumVal);
+        container.appendChild(sumBox);
+    }
+}
+
+function restorePayrollMobileCards() {
+    payrollAdoptions.forEach(function (a) {
+        if (a.input && a.td) a.td.appendChild(a.input);
+    });
+    payrollAdoptions = [];
+    if (payrollMobileCards) {
+        payrollMobileCards.remove();
+        payrollMobileCards = null;
+    }
+}
+
+function applyPayrollMobile(on) {
+    if (on === payrollMobileActive) return;
+    payrollMobileActive = on;
+    if (on) {
+        buildPayrollMobileCards();
+        computePayrollTotals();
+    } else {
+        restorePayrollMobileCards();
+    }
+}
+
+// ===== محاسبه اضافه‌کاری و کسری‌کاری ماهانه =====
+var overtimePayrollCache = {};
+var overtimePayrollLoading = false;
+
+function overtimePayrollParseHours(value) {
+    if (typeof value === 'number') return value;
+    var text = persianDigitsToEnglish(String(value || '')).replace(/[،,]/g, '').trim();
+    var parts = text.split(':');
+    if (parts.length >= 2) {
+        var h = parseFloat(parts[0]) || 0;
+        var m = parseFloat(parts[1]) || 0;
+        return h + (m / 60);
+    }
+    var numeric = parseFloat(text);
+    return isNaN(numeric) ? 0 : numeric;
+}
+
+function overtimePayrollFormatHours(hours) {
+    var sign = hours < 0 ? '-' : '';
+    var absolute = Math.abs(Number(hours) || 0);
+    var totalMinutes = Math.round(absolute * 60);
+    return convertToPersianDigits(sign + Math.floor(totalMinutes / 60) + ':' + String(totalMinutes % 60).padStart(2, '0'));
+}
+
+function overtimePayrollFormatSignedMinutes(minutes) {
+    var sign = minutes < 0 ? '-' : '';
+    var absolute = Math.abs(Math.round(minutes || 0));
+    return convertToPersianDigits(sign + Math.floor(absolute / 60) + ':' + String(absolute % 60).padStart(2, '0'));
+}
+
+function overtimePayrollInputValue(row, field) {
+    var input = row.querySelector('.overtime-payroll-input[data-overtime-field="' + field + '"]');
+    return input ? numVal(input) : 0;
+}
+
+function formatOvertimePayrollInputValue(input) {
+    if (!input) return;
+    var raw = input.value;
+    var caret = input.selectionStart == null ? raw.length : input.selectionStart;
+    var before = countNumChars(raw, caret);
+    var digits = raw.replace(/[،,]/g, '').replace(/[^0-9۰-۹]/g, '');
+    if (!digits) {
+        if (raw) input.value = '';
+        return;
+    }
+    var english = persianDigitsToEnglish(digits).replace(/^0+(?=\d)/, '');
+    var grouped = english.replace(/\B(?=(\d{3})+(?!\d))/g, '،');
+    var value = convertToPersianDigits(grouped);
+    if (value !== raw) {
+        input.value = value;
+        setCaretAfterNumChars(input, before);
+    }
+}
+
+function overtimePayrollSet(row, key, value) {
+    var cell = row.querySelector('[data-overtime-result="' + key + '"]');
+    if (cell) cell.textContent = value;
+}
+
+function computeOvertimePayrollRow(row) {
+    var username = row.getAttribute('data-username');
+    var data = overtimePayrollCache[username] || { workedHours: 0, status: 'بدون داده' };
+    var minuteRate = overtimePayrollInputValue(row, 'minuteRate');
+    var hourRate = overtimePayrollInputValue(row, 'hourRate');
+    var workedHours = Number(data.workedHours) || 0;
+    var mandatoryHours = overtimePayrollGetMandatoryHours();
+    var differenceMinutes = Math.round((workedHours - mandatoryHours) * 60);
+    var overtimeMinutes = Math.max(0, differenceMinutes);
+    var deficitMinutes = Math.max(0, -differenceMinutes);
+    var allowedDeficitMinutes = 10 * 60;
+    var excessDeficitMinutes = Math.max(0, deficitMinutes - allowedDeficitMinutes);
+
+    /* کسری بیش از ۱۰ ساعت ابتدا از اضافه‌کاری جبران می‌شود. */
+    var compensatedOvertimeMinutes = Math.max(0, overtimeMinutes - excessDeficitMinutes);
+    var remainingExcessDeficitMinutes = Math.max(0, excessDeficitMinutes - overtimeMinutes);
+    var overtimeHoursPart = Math.floor(compensatedOvertimeMinutes / 60);
+    var overtimeMinutePart = compensatedOvertimeMinutes % 60;
+    var deficitHoursPart = Math.floor(remainingExcessDeficitMinutes / 60);
+    var deficitMinutePart = remainingExcessDeficitMinutes % 60;
+    var overtimeBaseCost = (overtimeHoursPart * hourRate) + (overtimeMinutePart * minuteRate);
+    var deficitCost = (deficitHoursPart * hourRate) + (deficitMinutePart * minuteRate);
+    var premium = overtimeBaseCost * 0.4;
+    var totalCost = overtimeBaseCost + premium - deficitCost;
+    var finalWorkHours = workedHours - (remainingExcessDeficitMinutes / 60);
+    var status = differenceMinutes > 0 ? 'اضافه‌کاری' : differenceMinutes < 0 ? 'کسری‌کاری' : 'مطابق موظفی';
+
+    overtimePayrollSet(row, 'signedMinutes', overtimePayrollFormatSignedMinutes(differenceMinutes));
+    overtimePayrollSet(row, 'signedHours', overtimePayrollFormatHours(differenceMinutes / 60));
+    overtimePayrollSet(row, 'totalCost', formatPayrollNumber(totalCost));
+    overtimePayrollSet(row, 'status', status);
+    overtimePayrollSet(row, 'workedHours', overtimePayrollFormatHours(workedHours));
+    overtimePayrollSet(row, 'mandatoryHours', overtimePayrollFormatHours(mandatoryHours));
+    overtimePayrollSet(row, 'difference', overtimePayrollFormatHours(differenceMinutes / 60));
+    overtimePayrollSet(row, 'premium', formatPayrollNumber(premium));
+    overtimePayrollSet(row, 'finalWorkHours', overtimePayrollFormatHours(finalWorkHours));
+    overtimePayrollSet(row, 'finalOvertimeHours', overtimePayrollFormatHours(compensatedOvertimeMinutes / 60));
+
+    return {
+        signedMinutes: differenceMinutes,
+        totalCost: totalCost,
+        workedHours: workedHours,
+        mandatoryHours: mandatoryHours,
+        premium: premium,
+        finalWorkHours: finalWorkHours,
+        finalOvertimeHours: compensatedOvertimeMinutes / 60
+    };
+}
+
+function overtimePayrollGetMandatoryHours() {
+    var input = document.getElementById('payrollMandatoryHours');
+    var value = numVal(input);
+    return value > 0 ? value : 176;
+}
+
+function overtimePayrollSetTotals(results) {
+    var totals = { signedMinutes: 0, totalCost: 0, workedHours: 0, mandatoryHours: 0, difference: 0, premium: 0, finalWorkHours: 0, finalOvertimeHours: 0 };
+    results.forEach(function (result) {
+        Object.keys(totals).forEach(function (key) { totals[key] += result[key] || 0; });
+    });
+    var table = document.getElementById('overtimePayrollTable');
+    if (!table) return;
+    Object.keys(totals).forEach(function (key) {
+        var cell = table.querySelector('[data-overtime-total="' + key + '"]');
+        if (!cell) return;
+        if (key === 'totalCost' || key === 'premium') cell.textContent = formatPayrollNumber(totals[key]);
+        else if (key === 'signedMinutes') cell.textContent = overtimePayrollFormatSignedMinutes(totals[key]);
+        else cell.textContent = overtimePayrollFormatHours(totals[key]);
+    });
+}
+
+function overtimePayrollMonthRange() {
+    var monthSelect = document.getElementById('payrollMonth');
+    var yearInput = document.getElementById('payrollYear');
+    var month = monthSelect ? monthSelect.selectedIndex + 1 : 1;
+    var year = parseInt(persianDigitsToEnglish((yearInput && yearInput.value) || '1405'), 10) || 1405;
+    var days = typeof daysInJMonth === 'function' ? daysInJMonth(year, month) : (month <= 6 ? 31 : month <= 11 ? 30 : 29);
+    function pad(value) { return String(value).padStart(2, '0'); }
+    return { start: year + '/' + pad(month) + '/01', end: year + '/' + pad(month) + '/' + pad(days) };
+}
+
+function overtimePayrollRenderLoading() {
+    document.querySelectorAll('#overtimePayrollTable tbody .overtime-payroll-row').forEach(function (row) {
+        overtimePayrollSet(row, 'status', 'در حال دریافت…');
+    });
+}
+
+async function loadOvertimePayrollData(force) {
+    if (overtimePayrollLoading && !force) return;
+    overtimePayrollLoading = true;
+    overtimePayrollRenderLoading();
+    var range = overtimePayrollMonthRange();
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#overtimePayrollTable tbody .overtime-payroll-row'));
+    try {
+        await Promise.all(rows.map(async function (row) {
+            var username = row.getAttribute('data-username');
+            try {
+                var response = await fetch('/get_hozoor/' + encodeURIComponent(username) + '?start_date=' + encodeURIComponent(range.start) + '&end_date=' + encodeURIComponent(range.end), { credentials: 'same-origin' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                var payload = await response.json();
+                var records = Array.isArray(payload) ? payload : [];
+                var workedHours = records.reduce(function (sum, item) { return sum + overtimePayrollParseHours(item.WorkedHours); }, 0);
+                var status = records.some(function (item) { return String(item.Status || '').indexOf('اضافه') !== -1; }) ? 'اضافه‌کاری' : records.some(function (item) { return String(item.Status || '').indexOf('خروج') !== -1 || String(item.Status || '').indexOf('تاخیر') !== -1; }) ? 'کسری‌کاری' : 'مطابق موظفی';
+                overtimePayrollCache[username] = { workedHours: workedHours, status: status, records: records };
+            } catch (error) {
+                overtimePayrollCache[username] = { workedHours: 0, status: 'خطا در دریافت' };
+            }
+        }));
+        var results = rows.map(computeOvertimePayrollRow);
+        overtimePayrollSetTotals(results);
+    } finally {
+        overtimePayrollLoading = false;
+    }
+}
+
+// اتصال رویدادها و محاسبه اولیه
+document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('payrollComprehensiveTable');
+    if (!table) return;
+    document.addEventListener('input', function (e) {
+        var target = e.target;
+        var hourlyInput = target && target.closest ? target.closest('.hourly-payroll-input') : null;
+        if (hourlyInput) {
+            formatHourlyPayrollInputValue(hourlyInput);
+            computeHourlyPayrollTotals();
+            return;
+        }
+        var overtimeInput = target && target.closest ? target.closest('.overtime-payroll-input') : null;
+        if (overtimeInput) {
+            formatOvertimePayrollInputValue(overtimeInput);
+            var overtimeRow = overtimeInput.closest('.overtime-payroll-row');
+            if (overtimeRow) {
+                computeOvertimePayrollRow(overtimeRow);
+                overtimePayrollSetTotals(Array.prototype.slice.call(document.querySelectorAll('#overtimePayrollTable tbody .overtime-payroll-row')).map(computeOvertimePayrollRow));
+            }
+            return;
+        }
+        var input = target && target.closest ? target.closest('.payroll-input') : null;
+        if (!input) {
+            /* فیلدهای تنظیمات دوره (سال، روزهای کاری، ساعت موظفی) */
+            if (target && target.closest && target.closest('.payroll-config-item') && target.matches && target.matches('input')) {
+                toPersianPayrollInput(target);
+            }
+            return;
+        }
+        /* ارقام فارسی + جداکننده سه‌رقمی زنده هنگام تایپ */
+        formatPayrollInputValue(input);
+        computePayrollTotals();
+    });
+    computePayrollTotals();
+    computeHourlyPayrollTotals();
+    loadOvertimePayrollData(false);
+
+    /* نمای موبایل */
+    if (payrollMql) {
+        if (payrollMql.addEventListener) payrollMql.addEventListener('change', function (e) { applyPayrollMobile(e.matches); });
+        else if (payrollMql.addListener) payrollMql.addListener(function (e) { applyPayrollMobile(e.matches); });
+        applyPayrollMobile(payrollMql.matches);
+    }
+    if (hourlyPayrollMql) {
+        if (hourlyPayrollMql.addEventListener) hourlyPayrollMql.addEventListener('change', function (e) { applyHourlyPayrollMobile(e.matches); });
+        else if (hourlyPayrollMql.addListener) hourlyPayrollMql.addListener(function (e) { applyHourlyPayrollMobile(e.matches); });
+        applyHourlyPayrollMobile(hourlyPayrollMql.matches);
+    }
+});
+
 // تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها
 // تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها
 // تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها// تابع برای باز و بسته کردن منوی گزینه‌ها
+
+// ===== محاسبه حقوق ساعتی پرسنل غیررسمی =====
+var HOURLY_HOUR_FIELDS = ['hourlyWorkHours', 'hourlyLeaveHours', 'hourlyPenaltyHours', 'hourlyOvertimeHours'];
+var HOURLY_ALL_FIELDS = ['hourlyRate', 'hourlyWorkHours', 'hourlyLeaveHours', 'hourlyPenaltyHours', 'hourlyOvertimeHours', 'hourlyBonus', 'hourlyEidiSanavat', 'hourlyAdvance'];
+var hourlyPayrollMql = window.matchMedia ? window.matchMedia('(max-width: ' + PAYROLL_MOBILE_BP + 'px)') : null;
+var hourlyPayrollMobileActive = false;
+var hourlyPayrollMobileCards = null;
+var hourlyPayrollAdoptions = [];
+
+function hourlyPayrollInputsFor(username) {
+    var all = document.querySelectorAll('.hourly-payroll-input'), result = [];
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].getAttribute('data-username') === username) result.push(all[i]);
+    }
+    return result;
+}
+
+function hourlyPayrollFieldValue(username, field) {
+    var inputs = hourlyPayrollInputsFor(username);
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].getAttribute('data-hourly-field') === field) return numVal(inputs[i]);
+    }
+    return 0;
+}
+
+function setHourlyPayrollResult(username, key, value) {
+    var nodes = document.querySelectorAll('[data-hourly-result="' + key + '"][data-username="' + username + '"]');
+    for (var i = 0; i < nodes.length; i++) nodes[i].textContent = formatPayrollNumber(value);
+}
+
+function hourlyPayrollFieldLabel(field) {
+    var table = document.getElementById('hourlyPayrollTable');
+    var th = table && table.querySelector('thead th[data-hourly-field="' + field + '"]');
+    return th ? th.textContent : field;
+}
+
+function formatHourlyPayrollInputValue(input) {
+    if (!input) return;
+    var raw = input.value;
+    var caret = input.selectionStart == null ? raw.length : input.selectionStart;
+    var before = countNumChars(raw, caret);
+    var field = input.getAttribute('data-hourly-field') || '';
+    var cleaned = raw.replace(/[،,]/g, '');
+    var isHours = HOURLY_HOUR_FIELDS.indexOf(field) !== -1;
+
+    if (isHours) {
+        var hours = cleaned.replace(/[^0-9۰-۹.]/g, '');
+        var dot = hours.indexOf('.');
+        if (dot !== -1) hours = hours.slice(0, dot + 3);
+        var hoursValue = convertToPersianDigits(hours);
+        if (hoursValue !== raw) {
+            input.value = hoursValue;
+            setCaretAfterNumChars(input, before);
+        }
+        return;
+    }
+
+    var digits = cleaned.replace(/[^0-9۰-۹]/g, '');
+    if (!digits) {
+        if (raw) input.value = '';
+        return;
+    }
+    var english = persianDigitsToEnglish(digits).replace(/^0+(?=\d)/, '');
+    var grouped = english.replace(/\B(?=(\d{3})+(?!\d))/g, '،');
+    var value = convertToPersianDigits(grouped);
+    if (value !== raw) {
+        input.value = value;
+        setCaretAfterNumChars(input, before);
+    }
+}
+
+function computeHourlyPayrollRow(username) {
+    var rate = hourlyPayrollFieldValue(username, 'hourlyRate');
+    var work = hourlyPayrollFieldValue(username, 'hourlyWorkHours');
+    var leave = hourlyPayrollFieldValue(username, 'hourlyLeaveHours');
+    var penalty = hourlyPayrollFieldValue(username, 'hourlyPenaltyHours');
+    var overtime = hourlyPayrollFieldValue(username, 'hourlyOvertimeHours');
+    var bonus = hourlyPayrollFieldValue(username, 'hourlyBonus');
+    var eidi = hourlyPayrollFieldValue(username, 'hourlyEidiSanavat');
+    var advance = hourlyPayrollFieldValue(username, 'hourlyAdvance');
+
+    /* مبلغ مرخصی و جریمه بر اساس نرخ ساعتی کسر می‌شوند. */
+    var totalPay = (rate * work) + (rate * overtime) + bonus + eidi;
+    var deductions = (rate * leave) + (rate * penalty) + advance;
+    var netPay = Math.max(0, totalPay - deductions);
+    setHourlyPayrollResult(username, 'totalPay', totalPay);
+    setHourlyPayrollResult(username, 'netPay', netPay);
+    return { totalPay: totalPay, netPay: netPay };
+}
+
+function computeHourlyPayrollTotals() {
+    var table = document.getElementById('hourlyPayrollTable');
+    if (!table) return;
+    var rows = table.querySelectorAll('tbody .hourly-payroll-row');
+    var sums = {}, total = 0, net = 0, rates = 0, rateCount = 0;
+    HOURLY_ALL_FIELDS.forEach(function (field) { sums[field] = 0; });
+    for (var i = 0; i < rows.length; i++) {
+        var username = rows[i].getAttribute('data-username');
+        HOURLY_ALL_FIELDS.forEach(function (field) { sums[field] += hourlyPayrollFieldValue(username, field); });
+        var rate = hourlyPayrollFieldValue(username, 'hourlyRate');
+        if (rate) { rates += rate; rateCount++; }
+        var result = computeHourlyPayrollRow(username);
+        total += result.totalPay;
+        net += result.netPay;
+    }
+    var rateCell = table.querySelector('[data-hourly-total="hourlyRate"]');
+    if (rateCell) rateCell.textContent = formatPayrollNumber(rateCount ? rates / rateCount : 0);
+    HOURLY_ALL_FIELDS.forEach(function (field) {
+        if (field === 'hourlyRate') return;
+        var cell = table.querySelector('[data-hourly-total="' + field + '"]');
+        if (cell) cell.textContent = formatPayrollNumber(sums[field]);
+    });
+    var totalCell = table.querySelector('[data-hourly-total="totalPay"]');
+    var netCell = table.querySelector('[data-hourly-total="netPay"]');
+    if (totalCell) totalCell.textContent = formatPayrollNumber(total);
+    if (netCell) netCell.textContent = formatPayrollNumber(net);
+    if (hourlyPayrollMobileCards) {
+        var mobileNet = hourlyPayrollMobileCards.querySelector('.hourly-payroll-mobile-total__value');
+        if (mobileNet) mobileNet.textContent = formatPayrollNumber(net);
+    }
+    updatePayrollSummary();
+}
+
+function updatePayrollSummary() {
+    var summary = {
+        insurance: 0,
+        bonus: 0,
+        eidiSanavat: 0,
+        advance: 0,
+        totalPay: 0,
+        netPay: 0
+    };
+
+    var comprehensiveTable = document.getElementById('payrollComprehensiveTable');
+    if (comprehensiveTable) {
+        var rows = comprehensiveTable.querySelectorAll('tbody .payroll-row');
+        for (var i = 0; i < rows.length; i++) {
+            var username = rows[i].getAttribute('data-username');
+            summary.insurance += payrollFieldValue(username, 'insurance');
+            summary.bonus += payrollFieldValue(username, 'bonus');
+            summary.eidiSanavat += payrollFieldValue(username, 'eidiSanavat');
+            summary.advance += payrollFieldValue(username, 'advance');
+            var result = computePayrollRow(username);
+            summary.totalPay += result.totalPay;
+            summary.netPay += result.netPay;
+        }
+    }
+
+    var hourlyTable = document.getElementById('hourlyPayrollTable');
+    if (hourlyTable) {
+        var hourlyRows = hourlyTable.querySelectorAll('tbody .hourly-payroll-row');
+        for (var j = 0; j < hourlyRows.length; j++) {
+            var hourlyUsername = hourlyRows[j].getAttribute('data-username');
+            summary.bonus += hourlyPayrollFieldValue(hourlyUsername, 'hourlyBonus');
+            summary.eidiSanavat += hourlyPayrollFieldValue(hourlyUsername, 'hourlyEidiSanavat');
+            summary.advance += hourlyPayrollFieldValue(hourlyUsername, 'hourlyAdvance');
+            var hourlyResult = computeHourlyPayrollRow(hourlyUsername);
+            summary.totalPay += hourlyResult.totalPay;
+            summary.netPay += hourlyResult.netPay;
+        }
+    }
+
+    var outputMap = {
+        payrollSummaryInsurance: summary.insurance,
+        payrollSummaryBonus: summary.bonus,
+        payrollSummaryEidiSanavat: summary.eidiSanavat,
+        payrollSummaryAdvance: summary.advance,
+        payrollSummaryNetPay: summary.netPay,
+        payrollSummaryTotalPay: summary.totalPay
+    };
+    Object.keys(outputMap).forEach(function (id) {
+        var element = document.getElementById(id);
+        if (element) element.textContent = formatPayrollNumber(outputMap[id]);
+    });
+}
+
+function hourlyPayrollText(tag, className, text) {
+    var node = document.createElement(tag);
+    node.className = className || '';
+    node.textContent = text;
+    return node;
+}
+
+function buildHourlyPayrollMobileCards() {
+    var table = document.getElementById('hourlyPayrollTable');
+    if (!table || hourlyPayrollMobileCards) return;
+    var content = table.closest('.payroll-tab-content');
+    var scroll = table.closest('.hourly-payroll-table-scroll');
+    if (!content) return;
+    var container = document.createElement('div');
+    container.className = 'hourly-payroll-mobile-cards';
+    content.insertBefore(container, scroll ? scroll.nextSibling : null);
+    hourlyPayrollMobileCards = container;
+
+    var rows = table.querySelectorAll('tbody .hourly-payroll-row');
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i], username = row.getAttribute('data-username');
+        var card = document.createElement('article');
+        card.className = 'hourly-payroll-card';
+        var head = document.createElement('header');
+        head.className = 'hourly-payroll-card__head';
+        var title = document.createElement('div');
+        var name = row.querySelector('.payroll-person-name');
+        var meta = row.querySelector('.payroll-person-meta');
+        title.appendChild(hourlyPayrollText('strong', 'hourly-payroll-card__name', name ? name.textContent : username));
+        if (meta && meta.textContent) title.appendChild(hourlyPayrollText('span', 'hourly-payroll-card__meta', meta.textContent));
+        head.appendChild(title);
+        card.appendChild(head);
+
+        var fields = document.createElement('div');
+        fields.className = 'hourly-payroll-card__fields';
+        HOURLY_ALL_FIELDS.forEach(function (field) {
+            var input = row.querySelector('.hourly-payroll-input[data-hourly-field="' + field + '"]');
+            if (!input) return;
+            var label = document.createElement('label');
+            label.className = 'hourly-payroll-card__field';
+            label.appendChild(hourlyPayrollText('span', 'hourly-payroll-card__field-label', hourlyPayrollFieldLabel(field)));
+            var cell = input.parentNode;
+            label.appendChild(input);
+            fields.appendChild(label);
+            hourlyPayrollAdoptions.push({ td: cell, input: input });
+        });
+        card.appendChild(fields);
+
+        var results = document.createElement('div');
+        results.className = 'hourly-payroll-card__results';
+        [['netPay', 'مبلغ مانده قابل پرداخت'], ['totalPay', 'مجموع پرداختی']].forEach(function (item) {
+            var result = document.createElement('div');
+            result.className = 'hourly-payroll-card__result';
+            result.appendChild(hourlyPayrollText('span', '', item[1]));
+            var value = hourlyPayrollText('b', '', '—');
+            value.setAttribute('data-hourly-result', item[0]);
+            value.setAttribute('data-username', username);
+            result.appendChild(value);
+            results.appendChild(result);
+        });
+        card.appendChild(results);
+        container.appendChild(card);
+    }
+    var totalBox = document.createElement('div');
+    totalBox.className = 'hourly-payroll-mobile-total';
+    totalBox.appendChild(hourlyPayrollText('span', 'hourly-payroll-mobile-total__label', 'مجموع مانده قابل پرداخت'));
+    totalBox.appendChild(hourlyPayrollText('b', 'hourly-payroll-mobile-total__value', '۰'));
+    container.appendChild(totalBox);
+}
+
+function restoreHourlyPayrollMobileCards() {
+    hourlyPayrollAdoptions.forEach(function (item) {
+        if (item.input && item.td) item.td.appendChild(item.input);
+    });
+    hourlyPayrollAdoptions = [];
+    if (hourlyPayrollMobileCards) {
+        hourlyPayrollMobileCards.remove();
+        hourlyPayrollMobileCards = null;
+    }
+}
+
+function applyHourlyPayrollMobile(on) {
+    if (on === hourlyPayrollMobileActive) return;
+    hourlyPayrollMobileActive = on;
+    if (on) {
+        buildHourlyPayrollMobileCards();
+        computeHourlyPayrollTotals();
+    } else {
+        restoreHourlyPayrollMobileCards();
+    }
+}
 
 // تابع برای باز و بسته کردن نوار کناری// تابع برای باز و بسته کردن نوار کناری// تابع برای باز و بسته کردن نوار کناری
 // تابع برای باز و بسته کردن نوار کناری// تابع برای باز و بسته کردن نوار کناری// تابع برای باز و بسته کردن نوار کناری

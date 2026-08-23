@@ -167,9 +167,9 @@
                     <span class="icon-label">ثبت تیکت</span>
                 </div>
 
-                <div class="icon-container" >
-                    <img src="/static/images/answer-icon.png" alt="گزارشات" class="sidebar-icon" data-default-src="/static/images/answer-icon.png" data-active-src="/static/images/answer-icon-purple.png">
-                    <span class="icon-label">گزارشات</span>
+                <div class="icon-container" onclick="toggleBox('payrollBox', this)">
+                    <img src="/static/images/answer-icon.png" alt="حقوق و دستمزد" class="sidebar-icon" data-default-src="/static/images/answer-icon.png" data-active-src="/static/images/answer-icon-purple.png">
+                    <span class="icon-label">حقوق و دستمزد</span>
                 </div>
 
                 <div class="icon-container" onclick="logout()">
@@ -749,7 +749,7 @@
             </section>
         </div>
 
-        <div id="shiftBox" class="management-box">
+        <div id="shiftBox" class="management-box" style="display:none;">
             <h2>مدیریت شیفت‌های ماهانه پرسنل</h2>
 
             <div class="form-container-shift">
@@ -873,7 +873,7 @@
 
         <!-- محتوای باکس‌ها -->
         <!-- باکس مدیریت درخواست‌های مرخصی -->
-        <div id="vacationRequestBox" class="management-box">
+        <div id="vacationRequestBox" class="management-box" style="display:none;">
             <h2>مدیریت درخواست‌های مرخصی</h2>
             <table class="request-table" id="leaveRequestsTable">
                 <thead>
@@ -902,7 +902,7 @@
         </div>
 
         <!-- باکس گزارش مرخصی های کاربران به صورت مختصر -->
-        <div id="vacationBox" class="management-box">
+        <div id="vacationBox" class="management-box" style="display:none;">
             <h2>گزارشات مرخصی‌ها</h2>
             <table class="vacation-table">
                 <thead>
@@ -1393,39 +1393,353 @@
             </div>
         </div>
 
-        <!-- پاپ‌آپ ثبت تیکت -->
-        <div id="ticketModal" class="morakhaci-sabt" style="display: none;">
-            <div  class="modaleSabteTicket">
-                <div class="modal-content-sabtTicket">
-                    <img src="/static/images/close.png" alt="بستن" class="closeSabtTicket" onclick="closeTicketModal()">
-                    <h2>ثبت تیکت</h2>
-                    <form id="ticketForm" class="tikcet-popup-Req">
+        <!-- باکس حقوق و دستمزد -->
+        <div id="payrollBox" class="management-box payroll-panel" style="display:none;">
+            <div class="payroll-heading">
+                <h2>محاسبه حقوق و دستمزد پرسنل</h2>
+                <span class="payroll-heading-bar"></span>
 
-                        <label for="ticketReceiver">دریافت کننده</label>
-                        <select id="ticketReceiver" name="ticketReceiver" required>
-                            <option value="" disabled selected>انتخاب کنید</option>
-                        </select>
-                    
-                        <label for="ticketTitleAdmin">عنوان تیکت</label>
-                        <input type="text" id="ticketTitleAdmin" name="ticketTitleAdmin" required maxlength="180" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <div class="payroll-frame">
+                    <div class="payroll-tabs" role="tablist">
+                        <button class="payroll-tab-btn active" role="tab" aria-selected="true" data-tab="overtime-calculation" onclick="switchPayrollTab('overtime-calculation', this)">محاسبات اضافه کاری و کسری کار</button>
+                        <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="comprehensive-calculation" onclick="switchPayrollTab('comprehensive-calculation', this)">محاسبه جامع</button>
+                        <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="hourly-payroll-calculation" onclick="switchPayrollTab('hourly-payroll-calculation', this)">حقوق ساعتی پرسنل غیررسمی</button>
+                        <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="payroll-summary-calculation" onclick="switchPayrollTab('payroll-summary-calculation', this)">جمع کل پرداخت‌ها</button>
+                    </div>
 
-                        <label for="ticketCategory">دسته‌بندی</label>
-                        <select id="ticketCategory" name="category_id"><option value="">عمومی</option></select>
+                    <div id="overtime-calculation" class="payroll-tab-content active" role="tabpanel">
+                        <div class="overtime-payroll-toolbar">
+                            <div class="overtime-payroll-note">
+                                <strong>محاسبه اضافه‌کاری و کسری‌کاری</strong>
+                                <span>نرخ‌ها را به ریال وارد کنید. کسری بیشتر از ۱۰ ساعت، پس از جبران با اضافه‌کاری، از ساعت کاری نهایی کم می‌شود.</span>
+                            </div>
+                            <button type="button" class="overtime-payroll-refresh" onclick="loadOvertimePayrollData(true)">محاسبه مجدد</button>
+                        </div>
+                        <div class="overtime-payroll-table-scroll">
+                            <table class="payroll-table overtime-payroll-table" id="overtimePayrollTable">
+                                <thead>
+                                    <tr class="payroll-table-group">
+                                        <th rowspan="2" class="payroll-col-name">پرسنل</th>
+                                        <th colspan="5">نرخ و مبلغ محاسبه</th>
+                                        <th colspan="7">وضعیت کارکرد ماه</th>
+                                    </tr>
+                                    <tr class="payroll-table-subhead">
+                                        <th data-overtime-field="minuteRate">هزینه هر دقیقه (ریال)</th>
+                                        <th data-overtime-field="hourRate">هزینه هر ساعت (ریال)</th>
+                                        <th>دقیقه اضافه‌کاری/کسری</th>
+                                        <th>ساعت اضافه‌کاری/کسری</th>
+                                        <th>جمع کل (ریال)</th>
+                                        <th>وضعیت این ماه</th>
+                                        <th>کل ساعات ماه محاسبه‌شده</th>
+                                        <th>ساعت موظفی</th>
+                                        <th>مابه‌التفاوت ساعتی</th>
+                                        <th>۴۰٪ اضافه‌کاری (ریال)</th>
+                                        <th>مقدار نهایی ساعت کاری</th>
+                                        <th>مقدار نهایی اضافه‌کاری</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="overtime-payroll-row" data-username="{{ user.username }}">
+                                        <td class="payroll-col-name">
+                                            <div class="payroll-person">
+                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-meta">{{ user.department or '' }}</span>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="overtime-payroll-input" data-overtime-field="minuteRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="overtime-payroll-input" data-overtime-field="hourRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td class="overtime-payroll-result" data-overtime-result="signedMinutes">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="signedHours">۰</td>
+                                        <td class="overtime-payroll-result overtime-payroll-money" data-overtime-result="totalCost">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="status">در حال دریافت…</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="workedHours">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="mandatoryHours">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="difference">۰</td>
+                                        <td class="overtime-payroll-result overtime-payroll-money" data-overtime-result="premium">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="finalWorkHours">۰</td>
+                                        <td class="overtime-payroll-result" data-overtime-result="finalOvertimeHours">۰</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="payroll-total-row overtime-payroll-total-row">
+                                        <td class="payroll-col-name">مجموع کل</td>
+                                        <td>—</td>
+                                        <td>—</td>
+                                        <td data-overtime-total="signedMinutes">۰</td>
+                                        <td data-overtime-total="signedHours">۰</td>
+                                        <td data-overtime-total="totalCost">۰</td>
+                                        <td>—</td>
+                                        <td data-overtime-total="workedHours">۰</td>
+                                        <td data-overtime-total="mandatoryHours">۰</td>
+                                        <td data-overtime-total="difference">۰</td>
+                                        <td data-overtime-total="premium">۰</td>
+                                        <td data-overtime-total="finalWorkHours">۰</td>
+                                        <td data-overtime-total="finalOvertimeHours">۰</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
 
-                        <label for="ticketPriority">اولویت</label>
-                        <select id="ticketPriority" name="priority"><option value="normal">عادی</option><option value="low">کم</option><option value="high">زیاد</option><option value="urgent">فوری</option></select>
-                    
-                        <label for="ticketDescription">توضیحات</label>
-                        <textarea id="ticketDescription" name="ticketDescription" rows="4" required maxlength="4000"></textarea>
-
-                        <label for="ticketAttachments">پیوست (اختیاری، حداکثر ۱۰ مگابایت برای هر فایل)</label>
-                        <input type="file" id="ticketAttachments" name="attachments" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx,.xls,.xlsx">
-                    
-                        <div class="modal-buttons">
-                            <button type="submit" class="btn-confirm">تایید</button>
-                            <button type="button" class="btn-cancel" onclick="closeTicketModal()">انصراف</button>
+                    <div id="comprehensive-calculation" class="payroll-tab-content" role="tabpanel">
+                        <!-- تنظیمات دوره گزارش -->
+                        <div class="payroll-config">
+                            <div class="payroll-config-title">تنظیمات دوره گزارش</div>
+                            <div class="payroll-config-grid">
+                                <label class="payroll-config-item">
+                                    <span>ماه</span>
+                                    <select id="payrollMonth">
+                                        <option value="فروردین">فروردین</option>
+                                        <option value="اردیبهشت">اردیبهشت</option>
+                                        <option value="خرداد">خرداد</option>
+                                        <option value="تیر">تیر</option>
+                                        <option value="مرداد">مرداد</option>
+                                        <option value="شهریور">شهریور</option>
+                                        <option value="مهر">مهر</option>
+                                        <option value="آبان">آبان</option>
+                                        <option value="آذر">آذر</option>
+                                        <option value="دی">دی</option>
+                                        <option value="بهمن">بهمن</option>
+                                        <option value="اسفند">اسفند</option>
+                                    </select>
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>سال</span>
+                                    <input type="text" id="payrollYear" value="۱۴۰۵" inputmode="numeric" autocomplete="off">
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>روزهای کاری</span>
+                                    <input type="text" id="payrollWorkDays" value="۲۲" inputmode="numeric" autocomplete="off">
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>ساعت موظفی</span>
+                                    <input type="text" id="payrollMandatoryHours" value="۱۷۶" inputmode="numeric" autocomplete="off">
+                                </label>
+                            </div>
                         </div>
 
+                        <!-- جدول محاسبه جامع پرسنل -->
+                        <div class="payroll-table-scroll">
+                            <table class="payroll-table" id="payrollComprehensiveTable">
+                                <thead>
+                                    <tr class="payroll-table-group">
+                                        <th rowspan="2" class="payroll-col-index">ردیف</th>
+                                        <th rowspan="2" class="payroll-col-name">پرسنل</th>
+                                        <th colspan="6">پرداختی‌ها</th>
+                                        <th colspan="4">کسورات</th>
+                                        <th rowspan="2">مجموع پرداختی (ریال)</th>
+                                        <th rowspan="2">مانده قابل پرداخت (ریال)</th>
+                                    </tr>
+                                    <tr class="payroll-table-subhead">
+                                        <th data-field="dailySalary">حقوق روزانه</th>
+                                        <th data-field="benefits">بن کارگری، حق مسکن، حق اولاد و حق تأهل</th>
+                                        <th data-field="workHours">ساعت کارکرد قابل پرداخت</th>
+                                        <th data-field="overtime">اضافه کاری</th>
+                                        <th data-field="bonus">پاداش</th>
+                                        <th data-field="eidiSanavat">عیدی و سنوات</th>
+                                        <th data-field="leave">مرخصی</th>
+                                        <th data-field="workDeduction">کسر کار</th>
+                                        <th data-field="insurance">کسر بیمه پایه و تکمیلی</th>
+                                        <th data-field="advance">علی‌الحساب دریافتی</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="payroll-row" data-username="{{ user.username }}">
+                                        <td class="payroll-col-index">{{ loop.index }}</td>
+                                        <td class="payroll-col-name">
+                                            <div class="payroll-person">
+                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-meta">{{ user.department or '' }}</span>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="dailySalary" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="benefits" value="۰" inputmode="numeric" autocomplete="off" title="بن کارگری، حق مسکن، حق اولاد و حق تأهل"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="workHours" value="۰" inputmode="decimal" autocomplete="off" title="ساعت کارکرد قابل پرداخت"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="overtime" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="bonus" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="eidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="leave" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="workDeduction" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="insurance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="advance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td class="payroll-calc-cell" data-username="{{ user.username }}" data-result="totalPay">—</td>
+                                        <td class="payroll-calc-cell" data-username="{{ user.username }}" data-result="netPay">—</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="payroll-total-row">
+                                        <td colspan="2">مجموع کل</td>
+                                        <td data-total="dailySalary">—</td>
+                                        <td data-total="benefits">—</td>
+                                        <td data-total="workHours">—</td>
+                                        <td data-total="overtime">—</td>
+                                        <td data-total="bonus">—</td>
+                                        <td data-total="eidiSanavat">—</td>
+                                        <td data-total="leave">—</td>
+                                        <td data-total="workDeduction">—</td>
+                                        <td data-total="insurance">—</td>
+                                        <td data-total="advance">—</td>
+                                        <td data-total="totalPay">—</td>
+                                        <td data-total="netPay">—</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- محاسبه حقوق ساعتی پرسنل غیررسمی -->
+                    <div id="hourly-payroll-calculation" class="payroll-tab-content" role="tabpanel">
+                        <div class="payroll-table-hint hourly-payroll-hint">مبالغ به ریال و زمان‌ها به ساعت وارد شوند. مبلغ پایه بر اساس نرخ ساعتی × ساعت کارکرد محاسبه می‌شود.</div>
+                        <div class="hourly-payroll-table-scroll">
+                            <table class="payroll-table hourly-payroll-table" id="hourlyPayrollTable">
+                                <thead>
+                                    <tr class="payroll-table-group">
+                                        <th rowspan="2" class="payroll-col-name hourly-payroll-person-col">پرسنل</th>
+                                        <th colspan="4">ساعت کار و محاسبه</th>
+                                        <th colspan="4">پرداختی‌ها و کسورات</th>
+                                        <th rowspan="2">مبلغ مانده قابل پرداخت (ریال)</th>
+                                        <th rowspan="2">مجموع پرداختی (ریال)</th>
+                                    </tr>
+                                    <tr class="payroll-table-subhead">
+                                        <th data-hourly-field="hourlyRate">دستمزد به ازای هر ساعت (ریال)</th>
+                                        <th data-hourly-field="hourlyWorkHours">ساعت کارکرد ماه</th>
+                                        <th data-hourly-field="hourlyLeaveHours">مرخصی (ساعت)</th>
+                                        <th data-hourly-field="hourlyPenaltyHours">جریمه به ساعت</th>
+                                        <th data-hourly-field="hourlyOvertimeHours">اضافه‌کاری به ساعت</th>
+                                        <th data-hourly-field="hourlyBonus">پاداش (ریال)</th>
+                                        <th data-hourly-field="hourlyEidiSanavat">عیدی و سنوات (ریال)</th>
+                                        <th data-hourly-field="hourlyAdvance">علی‌الحساب دریافتی (ریال)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="payroll-row hourly-payroll-row" data-username="{{ user.username }}">
+                                        <td class="payroll-col-name">
+                                            <div class="payroll-person">
+                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-meta">{{ user.department or '' }}</span>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyWorkHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyLeaveHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyPenaltyHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyOvertimeHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyBonus" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyEidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyAdvance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td class="payroll-calc-cell hourly-payroll-result" data-username="{{ user.username }}" data-hourly-result="netPay">—</td>
+                                        <td class="payroll-calc-cell hourly-payroll-result" data-username="{{ user.username }}" data-hourly-result="totalPay">—</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="payroll-total-row hourly-payroll-total-row">
+                                        <td class="payroll-col-name">مجموع کل</td>
+                                        <td data-hourly-total="hourlyRate">—</td>
+                                        <td data-hourly-total="hourlyWorkHours">—</td>
+                                        <td data-hourly-total="hourlyLeaveHours">—</td>
+                                        <td data-hourly-total="hourlyPenaltyHours">—</td>
+                                        <td data-hourly-total="hourlyOvertimeHours">—</td>
+                                        <td data-hourly-total="hourlyBonus">—</td>
+                                        <td data-hourly-total="hourlyEidiSanavat">—</td>
+                                        <td data-hourly-total="hourlyAdvance">—</td>
+                                        <td data-hourly-total="netPay">—</td>
+                                        <td data-hourly-total="totalPay">—</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- خلاصه جمع کل حقوق و دستمزد -->
+                    <div id="payroll-summary-calculation" class="payroll-tab-content" role="tabpanel">
+                        <div class="payroll-summary-intro">
+                            <strong>خلاصه پرداخت دوره</strong>
+                            <span>جمع ارقام از محاسبه جامع و حقوق ساعتی پرسنل نمایش داده می‌شود.</span>
+                        </div>
+                        <div class="payroll-summary-grid">
+                            <article class="payroll-summary-card payroll-summary-card--deduction">
+                                <span>جمع کل کسورات بابت بیمه پایه و تکمیلی</span>
+                                <strong id="payrollSummaryInsurance">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                            <article class="payroll-summary-card payroll-summary-card--bonus">
+                                <span>جمع کل پاداش</span>
+                                <strong id="payrollSummaryBonus">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                            <article class="payroll-summary-card payroll-summary-card--eidi">
+                                <span>جمع کل عیدی و سنوات</span>
+                                <strong id="payrollSummaryEidiSanavat">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                            <article class="payroll-summary-card payroll-summary-card--advance">
+                                <span>جمع کل علی‌الحساب دریافتی</span>
+                                <strong id="payrollSummaryAdvance">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                            <article class="payroll-summary-card payroll-summary-card--net">
+                                <span>جمع کل مبلغ مانده قابل پرداخت</span>
+                                <strong id="payrollSummaryNetPay">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                            <article class="payroll-summary-card payroll-summary-card--total">
+                                <span>جمع کل مبلغ پرداختی به پرسنل</span>
+                                <strong id="payrollSummaryTotalPay">۰</strong>
+                                <small>ریال</small>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- پاپ‌آپ ثبت تیکت -->
+        <div id="ticketModal" class="morakhaci-sabt" style="display: none;">
+            <div class="modaleSabteTicket sabt-ticket-wrap">
+                <div class="modal-content-sabtTicket sabt-ticket-dialog" role="dialog" aria-modal="true" aria-labelledby="sabtTicketHeading">
+                    <header class="sabt-ticket-head">
+                        <div>
+                            <span class="ticket-panel-kicker">تیکت جدید</span>
+                            <h2 id="sabtTicketHeading">ثبت تیکت</h2>
+                            <p>موضوع را کوتاه و روشن بنویسید تا سریع‌تر پاسخ بگیرید.</p>
+                        </div>
+                        <button type="button" class="sabt-ticket-close" onclick="closeTicketModal()" aria-label="بستن فرم">×</button>
+                    </header>
+                    <form id="ticketForm" class="tikcet-popup-Req sabt-ticket-form">
+                        <div class="sabt-ticket-grid">
+                            <label for="ticketReceiver">دریافت‌کننده
+                                <select id="ticketReceiver" name="ticketReceiver" required>
+                                    <option value="" disabled selected>انتخاب همکار…</option>
+                                </select>
+                            </label>
+                            <label for="ticketCategory">دسته‌بندی
+                                <select id="ticketCategory" name="category_id"><option value="">عمومی</option></select>
+                            </label>
+                            <label for="ticketPriority">اولویت
+                                <select id="ticketPriority" name="priority"><option value="normal">عادی</option><option value="low">کم</option><option value="high">زیاد</option><option value="urgent">فوری</option></select>
+                            </label>
+                            <label for="ticketTitleAdmin" class="sabt-ticket-span-2">عنوان تیکت
+                                <input type="text" id="ticketTitleAdmin" name="ticketTitleAdmin" required maxlength="180" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="مثلاً مشکل در ثبت ورود">
+                            </label>
+                            <label for="ticketDescription" class="sabt-ticket-span-2">توضیحات
+                                <textarea id="ticketDescription" name="ticketDescription" rows="4" required maxlength="4000" placeholder="چه اتفاقی افتاده و چه کمکی نیاز دارید؟"></textarea>
+                                <small>حداکثر ۴۰۰۰ نویسه</small>
+                            </label>
+                            <label for="ticketAttachments" class="sabt-ticket-span-2 sabt-ticket-attach">پیوست‌های اختیاری
+                                <input type="file" id="ticketAttachments" name="attachments" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx,.xls,.xlsx">
+                                <small>هر فایل حداکثر ۱۰ مگابایت</small>
+                            </label>
+                        </div>
+                        <div class="modal-buttons sabt-ticket-actions">
+                            <button type="button" class="btn-cancel" onclick="closeTicketModal()">انصراف</button>
+                            <button type="submit" class="btn-confirm">ثبت تیکت</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -1437,7 +1751,7 @@
 <script src="{{ url_for('static', path='js/admin.js') }}"></script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/persian-date/dist/persian-date.min.js"></script>
+    <script src="{{ url_for('static', path='vendor/persian-date/persian-date.min.js') }}"></script>
 
     
 </body>

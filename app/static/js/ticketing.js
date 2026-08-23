@@ -179,7 +179,7 @@
         form.append(visibility, body, submit); container.append(form);
         status.onchange = () => updateAdminTicket(ticket.id, { status: status.value });
         priority.onchange = () => updateAdminTicket(ticket.id, { priority: priority.value });
-        form.onsubmit = async event => { event.preventDefault(); submit.disabled = true; try { await api(`/api/tickets/${ticket.id}/messages`, { method: 'POST', body: { body: body.value, visibility: visibility.value } }); await openAdminTicket(ticket.id); await loadAdmin(); } catch (error) { announce(error.message, true); } finally { submit.disabled = false; } };
+        form.onsubmit = async event => { event.preventDefault(); submit.disabled = true; try { await api(`/api/tickets/${ticket.id}/messages`, { method: 'POST', body: { body: body.value, visibility: visibility.value } }); await openAdminTicket(ticket.id, { scrollToLatest: true }); body.value = ''; await loadAdmin(); } catch (error) { announce(error.message, true); } finally { submit.disabled = false; } };
     }
 
     async function updateAdminTicket(id, patch) {
@@ -187,8 +187,16 @@
         catch (error) { announce(error.message, true); }
     }
 
-    async function openAdminTicket(id) {
-        try { renderAdminContext(await api(`/api/tickets/${id}`)); }
+    async function openAdminTicket(id, options = {}) {
+        try {
+            renderAdminContext(await api(`/api/tickets/${id}`));
+            if (options.scrollToLatest) {
+                requestAnimationFrame(() => {
+                    const timeline = $('#adminTicketContext .ticket-workspace-timeline');
+                    if (timeline) timeline.scrollTop = timeline.scrollHeight;
+                });
+            }
+        }
         catch (error) { errorState($('#adminTicketContext'), error.message); }
     }
 

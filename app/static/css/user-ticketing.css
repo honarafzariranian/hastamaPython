@@ -14,7 +14,16 @@
 
 .user-support-center[hidden], .user-ticket-create[hidden] { display: none !important; }
 /* ---------- مرکز پشتیبانی کاربر ---------- */
-.user-support-center, .user-ticket-create { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 18px; }
+.user-support-center, .user-ticket-create {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    justify-content: center;
+}
+
 .user-support-backdrop, .user-ticket-create-backdrop { position: absolute; inset: 0; background: rgba(7, 29, 42, .64); backdrop-filter: blur(7px); }
 .user-support-dialog { position: relative; display: flex; flex-direction: column; width: min(1320px, 100%); height: min(900px, calc(100dvh - 36px)); overflow: hidden; border: 1px solid rgba(56,182,255,.2); border-radius: 26px; background: #f7fbfd; box-shadow: 0 28px 90px rgba(7,29,42,.3); color: #0d3b4e; }
 .user-support-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; border-bottom: 1px solid rgba(13,59,78,.1); background: #fff; }

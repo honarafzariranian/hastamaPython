@@ -32,13 +32,12 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 38px 0 24px;
     min-height: 100vh;
     align-items: center;
 }
 
 .admin-topbar-modern {
-    position: absolute;
+    position: fixed;
     top: 6px;
     left: 8px;
     right: 8px;
@@ -823,7 +822,8 @@ html, body {
     font-family: 'Vazir', sans-serif;
     text-align: center;
     position: relative;
-    margin-top: 4.2% !important;
+    /* فاصله ثابت در دسکتاپ؛ درصد نسبت به عرض مانیتور محاسبه می‌شد و ناپایدار بود */
+    margin-top: 108px !important;
 }
 
 /* تنظیم استایل عنوان */
@@ -1001,7 +1001,7 @@ html, body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     flex-direction: column;
     align-items: stretch;
-    margin-top: 3.79% !important; /* فاصله از بالای صفحه */
+    margin-top: 108px !important; /* فاصله از بالای صفحه */
 }
 
 #vacationRequestBox h2 {
@@ -1405,8 +1405,8 @@ form button:hover {background-color: #506bff;}
     background-color: #f8fafc;
 }
 
-/* Make sure parent containers don't clip the dropdown */
-.management-box,
+/* فقط والدهای dropdown درخواست مرخصی نباید آن را clip کنند.
+   اعمال overflow: visible روی همه management-boxها، اسکرول داخلی داشبورد و گزارش حقوق را خراب می‌کند. */
 #vacationRequestBox,
 .request-table,
 .request-table tbody,
@@ -1679,7 +1679,7 @@ form button:active {
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     flex-direction: column;
-    margin-top: 3.79% !important; /* فاصله از بالای صفحه */
+    margin-top: 108px !important; /* فاصله از بالای صفحه */
 }
 
 #overtimeBox h2{
@@ -1854,7 +1854,7 @@ form button:active {
     border-radius: 20px;
     border: 1px solid #ccc;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 3.79% !important; /* فاصله از بالای صفحه */
+    margin-top: 108px !important; /* فاصله از بالای صفحه */
 }
 
 #hourlyPassBox h2{
@@ -1930,14 +1930,14 @@ form button:active {
 #ticketBox {
     margin-left: auto; /* برای وسط‌چین کردن در سمت چپ */
     margin-right: auto; /* برای وسط‌چین کردن در سمت راست */
-    width: 70%;
+    width: 86% !important;
     padding: 20px;
     background-color: #ffffff;
     margin-top: 2rem;
     display: none;
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 3.79% !important; /* فاصله از بالای صفحه */
+    margin-top: 108px !important; /* فاصله از بالای صفحه */
 }
 
 #ticketBox h2{
@@ -2156,7 +2156,7 @@ form button:active {
     width: 80%;
     padding: 20px;
     background-color: #ffffff;
-    margin-top: 3.79% !important;
+    margin-top: 108px !important;
     display: none;
     position: relative;
     border-radius: 20px;
@@ -2913,12 +2913,12 @@ margin-left: 15%;
 
 @media screen and (min-width: 769px) {
     #dashboardBox {
-        height: calc(100vh - 120px);
-        max-height: calc(100vh - 120px);
-        min-height: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 12px 16px 16px;
+        position: sticky !important;
+        top: 12.5% !important;
+        margin-top: 5% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 12px 16px 0px;
     }
 
     #dashboardBox .dashboard-grid,
@@ -3473,7 +3473,7 @@ margin-left: 15%;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     flex-direction: column;
     text-align: center;
-    margin-top: 3.79% !important;
+    margin-top: 108px !important;
 }
 
 /*  --- = فرم و جدول شیفت‌ها ---  */
@@ -3788,6 +3788,334 @@ margin-left: 15%;
     max-width: 100%;
 }
 
+/* --- payroll panel --- */
+.payroll-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+    border-radius: 18px;
+    padding: 16px 24px 20px;
+    direction: rtl;
+    text-align: right;
+    border: 1px solid #ddd;
+    margin-top: 108px !important;
+    width: min(93%, 100%) !important;
+    margin-left: 2rem !important;
+}
+
+/* عنوان بالای پنل + زیرمجموعه‌ی آن (باکس تب‌ها) */
+.payroll-heading {
+    margin: 0;
+}
+
+.payroll-heading h2 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    font-weight: 800;
+    color: #0B2A3B;
+    line-height: 1.4;
+}
+
+.payroll-heading-bar {
+    display: block;
+    width: 46px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0ea5e9, #6366f1);
+}
+
+/* --- payroll frame (زیرمجموعه‌ی عنوان) --- */
+.payroll-frame {
+    margin-top: 16px;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+/* نوار تب‌ها: پیش‌زمینه متمایز، تب فعال به بدنه می‌چسبد */
+.payroll-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    padding: 10px 12px 0 12px;
+    background: #EFF4F8;
+}
+
+.payroll-tab-btn {
+    position: relative;
+    padding: 13px 22px;
+    background: transparent;
+    color: #6B8091;
+    border: 0;
+    border-radius: 12px 12px 0 0;
+    font: 700 14px 'Vazir', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.payroll-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.55);
+    color: #0ea5e9;
+}
+
+/* تب فعال: هم‌رنگ بدنه و بدون خط جدایی — انگار جزئی از باکس زیرش است */
+.payroll-tab-btn.active {
+    background: #fff;
+    color: #0B2A3B;
+    box-shadow: 0 -4px 10px rgba(15, 23, 42, 0.06);
+}
+
+/* بدنه محتوا: ادامه‌ی مستقیم تب فعال */
+.payroll-tab-content {
+    display: none;
+    padding: 22px 20px 16px;
+    min-height: 140px;
+    animation: payrollFadeIn 0.28s ease;
+}
+
+.payroll-tab-content.active {
+    display: block;
+}
+
+@keyframes payrollFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- تنظیمات دوره گزارش (محاسبه جامع) --- */
+.payroll-config {
+    background: #F7FAFC;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+}
+
+.payroll-config-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0B2A3B;
+    margin-bottom: 12px;
+}
+
+.payroll-config-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.payroll-config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.payroll-config-item span {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #5C7285;
+}
+
+.payroll-config-item input,
+.payroll-config-item select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #D8E1EA;
+    border-radius: 10px;
+    font: 700 14px 'Vazir', sans-serif;
+    color: #0B2A3B;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payroll-config-item input:focus,
+.payroll-config-item select:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14);
+}
+
+.payroll-table-scroll {
+    overflow-x: auto;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.payroll-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Vazir', sans-serif;
+    table-layout: fixed;
+}
+
+.payroll-table thead th {
+    background: #F1F6FA;
+    color: #334E63;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 9px 4px;
+    border: 1px solid #e3e3e3;
+    white-space: nowrap;
+    text-align: center;
+    text-wrap: auto;
+}
+
+.payroll-table-group th {
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    color: #fff;
+    font-size: 12px;
+    padding: 10px 4px;
+}
+
+.payroll-table-subhead th {
+    font-size: 10.5px;
+    padding: 8px 3px;
+}
+
+.payroll-table tbody td {
+    padding: 6px 3px;
+    border: 1px solid #e3e3e3;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.payroll-table tbody tr:nth-child(even) td {
+    background: #FAFCFE;
+}
+
+/* عرض ستون‌ها: فشرده تا کل جدول در دسکتاپ جا بگیرد */
+.payroll-col-index {
+    color: #7A8FA0;
+    font-size: 12px;
+    font-weight: 700;
+    width: 40px;
+}
+
+.payroll-col-name {
+    text-align: right !important;
+    width: 90px;
+}
+
+.payroll-person {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.payroll-person-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0B2A3B;
+}
+
+.payroll-person-meta {
+    font-size: 10px;
+    color: #93A7B8;
+}
+
+/* ورودی‌های عددی هر پرسنل */
+.payroll-input {
+    width: 100%;
+    max-width: 78px;
+    padding: 6px 4px;
+    border: 1.5px solid #D8E1EA;
+    border-radius: 8px;
+    font: 700 12px 'Vazir', sans-serif;
+    color: #0B2A3B;
+    text-align: center;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payroll-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14);
+}
+
+/* حذف فلش‌های کم/زیاد ورودی‌های عددی در جدول محاسبه جامع */
+.payroll-input::-webkit-outer-spin-button,
+.payroll-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.payroll-input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* سلول‌های محاسبه‌شده */
+.payroll-calc-cell {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0B6E4F;
+    min-width: 70px;
+    white-space: nowrap;
+}
+
+.payroll-total-row td {
+    background: #EFF8FF !important;
+    color: #0B2A3B;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 10px 4px;
+    border: 1px solid #DCEBF5;
+    white-space: nowrap;
+}
+
+.payroll-total-row td:first-child,
+.payroll-total-row td:nth-child(2) {
+    text-align: right;
+    font-size: 14px;
+}
+
+.payroll-total-row td[data-total="netPay"] {
+    color: #0B6E4F;
+}
+
+/* --- حقوق و دستمزد — دسکتاپ/تبلت: باکس ثابت می‌ماند و فقط جدول داخلش اسکرول می‌شود --- */
+@media (min-width: 769px) {
+
+    /* باکس زیر نوار بالایی چسبان می‌ماند و با اسکرول صفحه جابه‌جا نمی‌شود */
+    .payroll-panel {
+        position: sticky !important;
+        top: 88px !important;
+        z-index: 55;
+        max-height: calc(100vh - 96px);
+        overflow: hidden;
+        margin-top: 88px !important;
+    }
+
+    /* فقط جدول داخل باکس اسکرول عمودی می‌گیرد؛ عنوان، تب‌ها و تنظیمات ثابت می‌مانند */
+    .payroll-panel .payroll-table-scroll {
+        max-height: calc(100vh - 440px);
+        min-height: 160px;
+        overflow-y: auto;
+    }
+
+    /* ردیف «مجموع کل» هنگام اسکرول جدول همیشه در پایین دیده می‌ماند */
+    .payroll-panel .payroll-table tfoot {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+
+    /* هدر جدول (ردیف گروهی + زیرعنوان) هنگام اسکرول عمودی ثابت می‌ماند */
+    .payroll-panel .payroll-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+}
 
 #natigehHozoor {
     position: relative !important;
@@ -5065,7 +5393,8 @@ margin-left: 15%;
     #ticketBox,
     #hozoorbox,
     #natigehHozoor,
-    #sabtdst {
+    #sabtdst,
+    #payrollBox {
         position: static !important;
         top: auto !important;
         left: auto !important;
@@ -5318,8 +5647,156 @@ margin-left: 15%;
     #ticketBox,
     #hozoorbox,
     #natigehHozoor,
-    #sabtdst {
+    #sabtdst,
+    #payrollBox {
         padding: 12px !important;
+    }
+
+    /* حقوق و دستمزد — موبایل */
+    .payroll-frame {
+        margin-top: 12px;
+        border-radius: 14px;
+    }
+
+    .payroll-tabs {
+        padding: 8px 8px 0 8px;
+        overflow-x: auto;
+    }
+
+    .payroll-tab-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
+    .payroll-tab-content {
+        padding: 14px 12px 6px;
+    }
+
+    .payroll-config-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .payroll-config {
+        padding: 12px;
+    }
+
+    /* نمای موبایل جدول محاسبه جامع — کارت به ازای هر پرسنل */
+    .payroll-table-scroll {
+        display: none;
+    }
+
+    .payroll-mobile-cards {
+        display: grid;
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    .payroll-card {
+        background: #fff;
+        border: 1.5px solid #E6ECF2;
+        border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+    }
+
+    .payroll-card__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.10), rgba(99, 102, 241, 0.08));
+        border-bottom: 1.5px solid #E6ECF2;
+    }
+
+    .payroll-card__title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .payroll-card__name {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0B2A3B;
+    }
+
+    .payroll-card__meta {
+        font-size: 11px;
+        color: #93A7B8;
+    }
+
+    .payroll-card__fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .payroll-card__field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .payroll-card__field-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #5C7285;
+    }
+
+    .payroll-card__field .payroll-input {
+        width: 100%;
+        max-width: none;
+        padding: 9px 8px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
+    .payroll-card__results {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px 14px;
+        background: #F7FAFC;
+        border-top: 1.5px solid #E6ECF2;
+    }
+
+    .payroll-card__result {
+        font-size: 12px;
+        font-weight: 700;
+        color: #334E63;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .payroll-card__result b {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0B6E4F;
+    }
+
+    .payroll-mobile-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+        color: #fff;
+    }
+
+    .payroll-mobile-total__label {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .payroll-mobile-total__value {
+        font-size: 15px;
+        font-weight: 800;
     }
 }
 
@@ -5479,4 +5956,344 @@ margin-left: 15%;
 
 .notification-admin {
     margin-top: 3.79% !important;
+}
+
+/* حقوق ساعتی پرسنل غیررسمی */
+.hourly-payroll-hint {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid #cfe3ed;
+    border-radius: 10px;
+    background: #f3faff;
+    color: #326177;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+/* خلاصه جمع کل حقوق و دستمزد */
+.payroll-summary-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid #d7e8f0;
+    border-radius: 13px;
+    background: #f4fbfe;
+    color: #426579;
+}
+
+.payroll-summary-intro strong {
+    color: #0b2a3b;
+    font-size: 15px;
+}
+
+.payroll-summary-intro span {
+    font-size: 12px;
+}
+
+.payroll-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.payroll-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-height: 132px;
+    padding: 18px;
+    border: 1.5px solid #dce8ef;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 7px 18px rgba(15, 23, 42, .06);
+}
+
+.payroll-summary-card span {
+    min-height: 38px;
+    color: #526b7d;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.8;
+}
+
+.payroll-summary-card strong {
+    color: #0b2a3b;
+    font-size: clamp(1.1rem, 2vw, 1.45rem);
+    font-weight: 900;
+    letter-spacing: .01em;
+}
+
+.payroll-summary-card small {
+    color: #8aa0ad;
+    font-size: 10px;
+}
+
+.payroll-summary-card--deduction { border-top: 4px solid #f59e0b; }
+.payroll-summary-card--bonus { border-top: 4px solid #8b5cf6; }
+.payroll-summary-card--eidi { border-top: 4px solid #0ea5e9; }
+.payroll-summary-card--advance { border-top: 4px solid #ef6c77; }
+.payroll-summary-card--net {
+    border-color: #9bdccc;
+    border-top: 4px solid #00a884;
+    background: linear-gradient(145deg, #f2fffb, #ffffff);
+}
+.payroll-summary-card--total {
+    border-color: #b8d9f3;
+    border-top: 4px solid #2563eb;
+    background: linear-gradient(145deg, #f3f9ff, #ffffff);
+}
+.payroll-summary-card--net strong { color: #087f64; }
+.payroll-summary-card--total strong { color: #1457a6; }
+
+@media (max-width: 768px) {
+    .payroll-summary-intro {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px 13px;
+    }
+
+    .payroll-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .payroll-summary-card {
+        min-height: 118px;
+        padding: 13px;
+        border-radius: 13px;
+    }
+
+    .payroll-summary-card span {
+        min-height: 44px;
+        font-size: 11px;
+    }
+
+    .payroll-summary-card strong {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .payroll-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hourly-payroll-table-scroll {
+    overflow: auto;
+    max-height: calc(100vh - 360px);
+    min-height: 180px;
+    border: 1.5px solid #e6ecf2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.hourly-payroll-table {
+    min-width: 1080px;
+}
+
+.hourly-payroll-table .hourly-payroll-person-col,
+.hourly-payroll-table .hourly-payroll-row > .payroll-col-name,
+.hourly-payroll-table .hourly-payroll-total-row > .payroll-col-name {
+    width: 112px;
+    min-width: 112px;
+}
+
+.hourly-payroll-table .hourly-payroll-row td {
+    min-width: 88px;
+}
+
+.hourly-payroll-table .hourly-payroll-row td:first-child,
+.hourly-payroll-table .hourly-payroll-total-row td:first-child {
+    min-width: 112px;
+}
+
+.hourly-payroll-input {
+    width: 100%;
+    max-width: 104px;
+    min-height: 34px;
+    padding: 6px 5px;
+    border: 1.5px solid #d8e1ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #0b2a3b;
+    font: 700 12px 'Vazir', sans-serif;
+    text-align: center;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.hourly-payroll-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, .14);
+}
+
+.hourly-payroll-result {
+    min-width: 112px !important;
+    color: #0b6e4f;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.hourly-payroll-total-row td[data-hourly-total="netPay"] {
+    color: #0b6e4f;
+}
+
+.hourly-payroll-mobile-cards {
+    display: none;
+}
+
+@media (min-width: 769px) {
+    .hourly-payroll-table-scroll {
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    .payroll-panel .hourly-payroll-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .payroll-panel .hourly-payroll-table tfoot {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .hourly-payroll-hint {
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+
+    .hourly-payroll-table-scroll {
+        display: none;
+    }
+
+    .hourly-payroll-mobile-cards {
+        display: grid;
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    .hourly-payroll-card {
+        overflow: hidden;
+        border: 1.5px solid #dbe6ed;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, .05);
+    }
+
+    .hourly-payroll-card__head {
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        border-bottom: 1.5px solid #e6ecf2;
+        background: linear-gradient(135deg, rgba(14, 165, 233, .1), rgba(99, 102, 241, .08));
+    }
+
+    .hourly-payroll-card__head > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .hourly-payroll-card__name {
+        color: #0b2a3b;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .hourly-payroll-card__meta {
+        color: #93a7b8;
+        font-size: 11px;
+    }
+
+    .hourly-payroll-card__fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .hourly-payroll-card__field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 0;
+    }
+
+    .hourly-payroll-card__field-label {
+        color: #5c7285;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.6;
+    }
+
+    .hourly-payroll-card__field .hourly-payroll-input {
+        max-width: none;
+        min-height: 40px;
+        padding: 8px;
+        font-size: 13px;
+    }
+
+    .hourly-payroll-card__results {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px 14px;
+        border-top: 1.5px solid #e6ecf2;
+        background: #f7fafc;
+    }
+
+    .hourly-payroll-card__result {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        color: #526a7d;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .hourly-payroll-card__result b {
+        color: #0b6e4f;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .hourly-payroll-mobile-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        color: #fff;
+    }
+
+    .hourly-payroll-mobile-total__label {
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .hourly-payroll-mobile-total__value {
+        font-size: 15px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 420px) {
+    .hourly-payroll-card__fields,
+    .hourly-payroll-card__results {
+        grid-template-columns: 1fr;
+    }
 }
