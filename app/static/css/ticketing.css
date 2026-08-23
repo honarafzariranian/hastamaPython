@@ -1131,7 +1131,18 @@ body.dark-mode .ticket-popup-box .mobile-box { background: rgba(255,255,255,.04)
 .ticket-workspace-badge--priority-low { background: rgba(100,116,139,.13); color: #475569; }
 .helpdesk-ticket-item-meta, .ticket-user-item-details { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
 
-.helpdesk-ticket-item-preview, .ticket-user-item-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 8px 0 0; color: var(--ticket-muted); font-size: .73rem; line-height: 1.75; overflow-wrap: anywhere; }
+.helpdesk-ticket-item-preview, .ticket-user-item-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 8px 0 0;
+    color: var(--ticket-muted);
+    font-size: 0.73rem;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
 
 .helpdesk-ticket-item-foot, .ticket-user-item-foot { display: flex; align-items: center; justify-content: space-between; gap: 7px; margin-top: 9px; }
 .ticket-inline-action { min-height: 32px; padding: 5px 9px; border: 1px solid var(--ticket-border); border-radius: 9px; background: transparent; color: var(--ticket-blue); cursor: pointer; font: inherit; font-size: .68rem; }
