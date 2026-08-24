@@ -1,0 +1,313 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: light;
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    color: #163849;
+    background: #eef4f7;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    background: linear-gradient(145deg, #edf7fa, #f7fbfc);
+}
+
+.preview-page {
+    width: min(1500px, calc(100% - 32px));
+    margin: 24px auto 42px;
+}
+
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 18px;
+    padding: 20px 24px;
+    border: 1px solid #d8e6ec;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(29, 74, 95, .08);
+}
+
+.preview-kicker {
+    color: #07896f;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.preview-toolbar h1 {
+    margin: 5px 0 3px;
+    color: #174a64;
+    font-size: 22px;
+}
+
+.preview-toolbar p {
+    margin: 0;
+    color: #627b88;
+    font-size: 12px;
+}
+
+.preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.preview-btn {
+    min-height: 42px;
+    padding: 9px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 800 13px 'Vazir', sans-serif;
+    transition: transform .18s ease, filter .18s ease, background .18s ease;
+}
+
+.preview-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+}
+
+.preview-btn-print {
+    border: 1px solid #2563a6;
+    background: #eaf3ff;
+    color: #1457a6;
+}
+
+.preview-btn-download {
+    border: 1px solid #07896f;
+    background: linear-gradient(135deg, #079b80, #087fc0);
+    color: #ffffff;
+    box-shadow: 0 7px 16px rgba(0, 128, 112, .18);
+}
+
+.report-sheet {
+    min-height: 400px;
+    padding: 24px;
+    overflow-x: auto;
+    border: 1px solid #d8e6ec;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(29, 74, 95, .08);
+}
+
+.preview-section {
+    margin-bottom: 26px;
+}
+
+.preview-section:last-child {
+    margin-bottom: 0;
+}
+
+.preview-section h2 {
+    margin: 0;
+    padding: 10px 14px;
+    border: 1px solid #19455e;
+    border-radius: 9px 9px 0 0;
+    background: #245a78;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.preview-section table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    direction: rtl;
+}
+
+.preview-section th,
+.preview-section td {
+    padding: 9px 5px;
+    overflow: hidden;
+    border: 1px solid #a5b9c3;
+    text-align: center;
+    vertical-align: middle;
+    word-break: break-word;
+    line-height: 1.35;
+}
+
+.preview-section thead th {
+    background: #dcecf4;
+    color: #163c50;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.preview-section thead tr:first-child th {
+    background: #28627f;
+    color: #ffffff;
+}
+
+.preview-section tbody td,
+.preview-section tfoot td {
+    font-size: 10px;
+}
+
+.preview-section tbody tr:nth-child(even) td {
+    background: #f5f9fb;
+}
+
+.preview-section tfoot td {
+    background: #e6f2f7;
+    font-weight: 800;
+}
+
+.print-value {
+    display: block;
+    min-height: 20px;
+    white-space: nowrap;
+}
+
+.payroll-person {
+    display: block;
+}
+
+.payroll-person-name {
+    font-weight: 800;
+}
+
+.payroll-person-meta {
+    display: block;
+    color: #5c7481;
+    font-size: 9px;
+}
+
+.preview-empty {
+    padding: 70px 20px;
+    color: #6d8490;
+    text-align: center;
+}
+
+@page {
+    size: A4 landscape;
+    margin: 7mm;
+}
+
+@media (max-width: 760px) {
+    .preview-page {
+        width: calc(100% - 18px);
+        margin-top: 9px;
+    }
+
+    .preview-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 17px;
+    }
+
+    .preview-toolbar h1 {
+        font-size: 18px;
+    }
+
+    .preview-actions {
+        flex-direction: column;
+    }
+
+    .preview-btn {
+        width: 100%;
+    }
+
+    .report-sheet {
+        padding: 12px;
+    }
+}
+
+@media print {
+    :root,
+    body {
+        background: #ffffff;
+    }
+
+    .preview-page {
+        width: 100%;
+        margin: 0;
+    }
+
+    .preview-toolbar {
+        display: block;
+        margin: 0 0 8mm;
+        padding: 0 0 3mm;
+        border: 0;
+        border-bottom: 1px solid #234b63;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .preview-toolbar h1 {
+        margin: 0;
+        text-align: center;
+        font-size: 16px;
+    }
+
+    .preview-toolbar p,
+    .preview-kicker,
+    .preview-actions {
+        display: none;
+    }
+
+    .report-sheet {
+        min-height: 0;
+        padding: 0;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .preview-section {
+        margin-bottom: 5mm;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .preview-section h2 {
+        padding: 2mm 3mm;
+        font-size: 9px;
+    }
+
+    .preview-section table {
+        min-width: 0;
+    }
+
+    .preview-section th,
+    .preview-section td {
+        padding: 1.1mm .55mm;
+        font-size: 6.2px;
+        line-height: 1.2;
+    }
+
+    .preview-section thead th {
+        font-size: 6.2px;
+    }
+
+    .preview-section thead tr:first-child th {
+        font-size: 6.7px;
+    }
+
+    .preview-section:first-child th,
+    .preview-section:first-child td {
+        padding: .75mm .35mm;
+        font-size: 5.5px;
+    }
+
+    .preview-section:first-child thead th {
+        font-size: 5.4px;
+    }
+
+    .preview-section:first-child thead tr:first-child th {
+        font-size: 5.8px;
+    }
+
+    .payroll-person-meta {
+        font-size: 4.8px;
+    }
+
+    .print-value {
+        min-height: 2.5mm;
+    }
+}

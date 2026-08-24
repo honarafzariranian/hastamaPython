@@ -160,9 +160,9 @@
         const close = node('button', 'helpdesk-context-close', '×'); close.type = 'button'; close.setAttribute('aria-label', 'بستن جزئیات'); close.onclick = () => { container.replaceChildren(node('div', 'ticket-context-empty', 'یک تیکت را انتخاب کنید')); state.admin.detail = null; };
         head.append(heading, close); container.append(head);
         const fields = node('div', 'helpdesk-context-fields');
-        const status = document.createElement('select'); status.className = 'ticket-context-select'; status.dataset.contextField = 'status';
+        const status = document.createElement('select'); status.id = 'adminTicketStatus'; status.name = 'status'; status.className = 'ticket-context-select'; status.dataset.contextField = 'status';
         Object.entries(STATUS_LABELS).forEach(([value, label]) => { const option = node('option', '', label); option.value = value; option.selected = value === ticket.status; status.append(option); });
-        const priority = document.createElement('select'); priority.className = 'ticket-context-select'; priority.dataset.contextField = 'priority';
+        const priority = document.createElement('select'); priority.id = 'adminTicketPriorityContext'; priority.name = 'priority'; priority.className = 'ticket-context-select'; priority.dataset.contextField = 'priority';
         Object.entries(PRIORITY_LABELS).forEach(([value, label]) => { const option = node('option', '', label); option.value = value; option.selected = value === ticket.priority; priority.append(option); });
         fields.append(node('label', '', 'وضعیت'), status, node('label', '', 'اولویت'), priority);
         const requester = node('div', 'helpdesk-requester-card'); requester.append(node('strong', '', 'درخواست‌کننده'), node('span', '', ticket.requester_username || '—'), node('small', '', ticket.category_name || 'دسته‌بندی عمومی'));
@@ -201,6 +201,10 @@
     }
 
     function announce(message, isError) {
+        if (window.NotificationSystem && typeof window.NotificationSystem.announce === 'function') {
+            window.NotificationSystem.announce(message, isError ? 'error' : 'success');
+            return;
+        }
         const toast = node('div', `ticket-workspace-toast${isError ? ' is-error' : ''}`, message); toast.setAttribute('role', 'status'); document.body.append(toast); setTimeout(() => toast.remove(), 3500);
     }
 

@@ -17,6 +17,8 @@ from typing import Optional
 
 import pyodbc
 
+from app.api.routes.notifications import publish_system_notification
+
 TICKET_STATUSES = (
     "new",
     "open",
@@ -390,10 +392,15 @@ class TicketService:
         )
         message_id = int(self.cursor.fetchone()[0])
         _event(self.cursor, ticket_id, actor, "created", {"message_id": message_id})
+        publish_system_notification(
+            self.conn,
+            f"تیکت جدید: {subject}",
+            f"کاربر «{actor}» برای شما تیکت جدیدی با موضوع «{subject}» ثبت کرد.",
+            [recipient],
+            notification_type="information",
+            action_url="/user_panel",
+        )
         self.conn.commit()
-        # Ticket activity is kept in ticket_events. The organizational
-        # notification inbox is intentionally reserved for admin announcements
-        # and is not used as a second ticket channel.
         return self.get_ticket(ticket_id, actor, is_admin)
 
     def add_message(self, ticket_id: int, actor: str, is_admin: bool, body: str, visibility: str = "public") -> dict:
@@ -428,9 +435,20 @@ class TicketService:
                 (next_status, 1 if is_admin or actor != ticket["requester_username"] else 0, ticket_id),
             )
         _event(self.cursor, ticket_id, actor, event_type, {"message_id": message_id, "visibility": visibility})
+        if visibility == "public":
+            requester = str(ticket.get("requester_username") or "").strip()
+            recipient = str(ticket.get("recipient_username") or "").strip()
+            target = requester if actor.casefold() != requester.casefold() else recipient
+            if target:
+                publish_system_notification(
+                    self.conn,
+                    f"پاسخ جدید به تیکت: {ticket['subject']}",
+                    f"کاربر «{actor}» به تیکت «{ticket['subject']}» پاسخ جدید داد.",
+                    [target],
+                    notification_type="information",
+                    action_url="/user_panel",
+                )
         self.conn.commit()
-        # Public replies remain in the ticket conversation; they are not
-        # copied into the separate organizational notification inbox.
         return self.get_ticket(ticket_id, actor, is_admin)
 
     def update_ticket(
@@ -488,10 +506,41 @@ class TicketService:
         self.cursor.execute(f"UPDATE tickets SET {', '.join(assignments)} WHERE id=?", tuple(params + [ticket_id]))
         if status is not None and status != ticket["status"]:
             _event(self.cursor, ticket_id, actor, "status_changed", {"from": ticket["status"], "to": status})
+            target = str(ticket.get("requester_username") or "").strip() if is_admin else str(ticket.get("recipient_username") or "").strip()
+            if target and target.casefold() != actor.casefold():
+                publish_system_notification(
+                    self.conn,
+                    f"وضعیت تیکت تغییر کرد: {ticket['subject']}",
+                    f"وضعیت تیکت «{ticket['subject']}» به «{STATUS_LABELS.get(status, status)}» تغییر کرد.",
+                    [target],
+                    notification_type="success" if status in {"resolved", "closed"} else "information",
+                    action_url="/user_panel",
+                )
         if priority is not None and priority != ticket["priority"]:
             _event(self.cursor, ticket_id, actor, "priority_changed", {"from": ticket["priority"], "to": priority})
+            requester = str(ticket.get("requester_username") or "").strip()
+            recipient = str(ticket.get("recipient_username") or "").strip()
+            target = requester if actor.casefold() != requester.casefold() else recipient
+            if target and target.casefold() != actor.casefold():
+                publish_system_notification(
+                    self.conn,
+                    f"اولویت تیکت تغییر کرد: {ticket['subject']}",
+                    f"اولویت تیکت «{ticket['subject']}» به «{PRIORITY_LABELS.get(priority, priority)}» تغییر کرد.",
+                    [target],
+                    notification_type="warning" if priority in {"high", "urgent"} else "information",
+                    action_url="/user_panel",
+                )
         if assigned_to is not None and assigned_to != ticket.get("assigned_to"):
             _event(self.cursor, ticket_id, actor, "assigned", {"assignee": assigned_to})
+            if assigned_to and assigned_to.casefold() != actor.casefold():
+                publish_system_notification(
+                    self.conn,
+                    f"تیکت به شما واگذار شد: {ticket['subject']}",
+                    f"تیکت «{ticket['subject']}» برای بررسی به شما واگذار شد.",
+                    [assigned_to],
+                    notification_type="information",
+                    action_url="/admin",
+                )
         self.conn.commit()
         return self.get_ticket(ticket_id, actor, is_admin)
 
@@ -501,13 +550,16 @@ class TicketService:
             raise LookupError("تیکت پیدا نشد.")
         if ticket["status"] == "closed":
             raise ValueError("تیکت بسته‌شده قابل تغییر نیست.")
+        message_visibility = "public"
         if metadata.get("message_id") is not None:
             self.cursor.execute(
-                "SELECT 1 FROM ticket_messages WHERE id=? AND ticket_id=?",
+                "SELECT visibility FROM ticket_messages WHERE id=? AND ticket_id=?",
                 (metadata["message_id"], ticket_id),
             )
-            if not self.cursor.fetchone():
+            message_row = self.cursor.fetchone()
+            if not message_row:
                 raise LookupError("پیام مقصد پیوست پیدا نشد.")
+            message_visibility = str(message_row[0] or "public").strip()
         self.cursor.execute(
             """INSERT INTO ticket_attachments
                 (ticket_id,message_id,uploaded_by,original_name,storage_name,content_type,size_bytes)
@@ -516,6 +568,19 @@ class TicketService:
         )
         attachment_id = int(self.cursor.fetchone()[0])
         _event(self.cursor, ticket_id, actor, "attachment_added", {"attachment_id": attachment_id})
+        if message_visibility == "public":
+            requester = str(ticket.get("requester_username") or "").strip()
+            recipient = str(ticket.get("recipient_username") or "").strip()
+            target = requester if actor.casefold() != requester.casefold() else recipient
+            if target:
+                publish_system_notification(
+                    self.conn,
+                    f"پیوست جدید به تیکت: {ticket['subject']}",
+                    f"یک فایل جدید از طرف «{actor}» در تیکت «{ticket['subject']}» ارسال شد.",
+                    [target],
+                    notification_type="information",
+                    action_url="/user_panel",
+                )
         self.conn.commit()
         return {"id": attachment_id, "download_url": f"/api/tickets/{ticket_id}/attachments/{attachment_id}", "original_name": metadata["original_name"]}
 

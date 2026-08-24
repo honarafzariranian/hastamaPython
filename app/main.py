@@ -5,6 +5,7 @@ import jdatetime
 import random
 import pdfkit
 import shutil
+import json
 from datetime import datetime, date, time, timedelta
 from collections import Counter
 from persiantools.jdatetime import JalaliDate
@@ -16,7 +17,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.api.routes.api import router as api_router
 from app.api.routes.auth import router as auth_router
-from app.api.routes.notifications import router as notifications_router
+from app.api.routes.notifications import (
+    router as notifications_router,
+    publish_system_notification,
+    publish_system_notification_to_admins,
+)
 from app.api.routes.ticketing import router as ticketing_router
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
@@ -666,6 +671,54 @@ def persian_to_english_digits(text):
     return text.translate(translation_table)
 
 
+def _notify_admins_new_request(kind, username, details):
+    labels = {
+        'leave': 'مرخصی',
+        'overtime': 'اضافه‌کاری',
+        'hourly_pass': 'پاس ساعتی',
+    }
+    label = labels.get(kind, 'جدید')
+    publish_system_notification_to_admins(
+        conn,
+        f'درخواست جدید {label}',
+        f'کاربر «{str(username).strip()}» یک درخواست {label} ثبت کرد. {details}'.strip(),
+        notification_type='information',
+        priority='important',
+        action_url='/admin',
+    )
+
+
+def _notify_requester_status(table, request_id, new_status, label):
+    notification_cursor = conn.cursor()
+    notification_cursor.execute(
+        f'SELECT TOP 1 LTRIM(RTRIM(username)) FROM {table} WHERE id = ?',
+        (request_id,),
+    )
+    row = notification_cursor.fetchone()
+    username = str(row[0]).strip() if row and row[0] else ''
+    if not username:
+        return
+    status = str(new_status or 'انتظار تایید').strip()
+    kind = 'success' if status == 'تایید شده' else ('warning' if status == 'رد شده' else 'information')
+    publish_system_notification(
+        conn,
+        f'تغییر وضعیت درخواست {label}',
+        f'وضعیت درخواست {label} شما به «{status}» تغییر کرد.',
+        [username],
+        notification_type=kind,
+        action_url='/user_panel',
+    )
+
+
+def _pass_duration(start_value, end_value):
+    start = datetime.strptime(str(start_value), '%H:%M')
+    end = datetime.strptime(str(end_value), '%H:%M')
+    if end < start:
+        end += timedelta(days=1)
+    seconds = int((end - start).total_seconds())
+    return f'{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:00'
+
+
 @app.post("/submit_leave")
 async def submit_leave(
     request: Request,
@@ -697,6 +750,7 @@ async def submit_leave(
                 INSERT INTO mrkhc_table (start_date, end_date, days, substitute, username)
                 VALUES (?, ?, ?, ?, ?)
             """, (start_date_gregorian, end_date_gregorian, days_int, substitute, username))
+            _notify_admins_new_request('leave', username, f'تعداد روز: {days_int}')
             conn.commit()
             return JSONResponse(content={"success": True, "message": "مرخصی با موفقیت ثبت شد!"})
         except Exception as e:
@@ -738,6 +792,7 @@ async def submit_overtime(
             VALUES (?, ?, ?, ?, ?, ?)
         """
         cursor.execute(query, (gregorian_date, fromTime, toTime, description, username, 'انتظار تایید'))
+        _notify_admins_new_request('overtime', username, f'شرح: {description}')
         conn.commit()
 
         return JSONResponse(content={"success": True, "message": "اضافه‌کار با موفقیت ثبت شد!"})
@@ -784,12 +839,15 @@ async def submit_hourly_pass(request: Request):
         if exitTime:
             exitTime = persian_to_english_numbers(exitTime)
 
+        pass_requests = []
+
         # پاس اول وقت
         if officialTime and entryTime:
             cursor.execute("""
                 INSERT INTO avalpss_table (officialTime, entryTime, date, username)
                 VALUES (?, ?, ?, ?)
             """, (officialTime, entryTime, date, username))
+            pass_requests.append(('avalpss', _pass_duration(officialTime, entryTime)))
 
         # پاس بین وقت
         if entryTime and exitTime:
@@ -797,6 +855,7 @@ async def submit_hourly_pass(request: Request):
                 INSERT INTO beynpss_table (entryTime, exitTime, date, username)
                 VALUES (?, ?, ?, ?)
             """, (entryTime, exitTime, date, username))
+            pass_requests.append(('beynpss', _pass_duration(entryTime, exitTime)))
 
         # پاس آخر وقت
         if officialTime and exitTime:
@@ -804,7 +863,21 @@ async def submit_hourly_pass(request: Request):
                 INSERT INTO akhrpss_table (officialTime, exitTime, date, username)
                 VALUES (?, ?, ?, ?)
             """, (officialTime, exitTime, date, username))
+            pass_requests.append(('akhrpss', _pass_duration(officialTime, exitTime)))
 
+        # این جدول صف تأیید مدیریت است؛ بدون آن، درخواست تازه در پنل مدیر دیده نمی‌شود.
+        for pass_title, pass_duration in pass_requests:
+            cursor.execute("""
+                INSERT INTO totalpass_table (username, request_date, pass_title, pass_duration, status)
+                VALUES (?, ?, ?, ?, N'انتظار تایید')
+            """, (username, date, pass_title, pass_duration))
+
+        if pass_requests:
+            _notify_admins_new_request(
+                'hourly_pass',
+                username,
+                'نوع پاس: ' + '، '.join(pass_title for pass_title, _ in pass_requests),
+            )
         conn.commit()
         return JSONResponse(content={"success": True})
 
@@ -1125,12 +1198,13 @@ class ReportData:
         self.total_remaining = total_remaining
 
 class UserData:
-    def __init__(self, username, department, work_hours, substitute, name):
+    def __init__(self, username, department, work_hours, substitute, name, employment_status="official"):
         self.username = username
         self.department = department
         self.work_hours = work_hours
         self.substitute = substitute
         self.name = name
+        self.employment_status = employment_status or "official"
 
 class PassData:
     def __init__(self, row_number, username, total_pass_time):
@@ -1160,6 +1234,56 @@ def get_user_from_session(request: Request):
 
 def get_is_admin_from_session(request: Request):
     return request.session.get("is_admin") is True
+
+
+EMPLOYMENT_STATUS_VALUES = frozenset({"official", "unofficial"})
+
+
+def ensure_employment_status_column(cursor):
+    """ستون وضعیت استخدام را برای نصب‌های قدیمی، بدون نیاز به مهاجرت دستی، ایجاد می‌کند."""
+    cursor.execute("""
+        IF COL_LENGTH(N'dbo.user_table', N'employment_status') IS NULL
+        BEGIN
+            ALTER TABLE dbo.user_table ADD employment_status NVARCHAR(20) NULL;
+        END
+    """)
+
+
+@app.post("/api/admin/employment-status")
+async def update_employment_status(request: Request):
+    if not get_is_admin_from_session(request):
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مجاز نیست."})
+
+    conn = None
+    cursor = None
+    try:
+        data = await request.json()
+        username = str(data.get("username") or "").strip()
+        employment_status = str(data.get("employment_status") or "").strip().lower()
+        if not username or employment_status not in EMPLOYMENT_STATUS_VALUES:
+            return JSONResponse(status_code=400, content={"success": False, "error": "وضعیت استخدام معتبر نیست."})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        ensure_employment_status_column(cursor)
+        cursor.execute(
+            "UPDATE user_table SET employment_status = ? WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?))",
+            (employment_status, username),
+        )
+        if cursor.rowcount == 0:
+            return JSONResponse(status_code=404, content={"success": False, "error": "کاربر پیدا نشد."})
+        conn.commit()
+        return JSONResponse(content={"success": True, "employment_status": employment_status})
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        return JSONResponse(status_code=500, content={"success": False, "error": "خطا در ذخیره وضعیت استخدام."})
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
 
 # تبدیل زمان به ثانیه
 def parse_seconds(duration):
@@ -1230,6 +1354,8 @@ async def admin(request: Request):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        ensure_employment_status_column(cursor)
+        conn.commit()
 
         # دریافت اطلاعات از جدول leave_report
         cursor.execute("""
@@ -1240,7 +1366,7 @@ async def admin(request: Request):
 
         # دریافت اطلاعات از جدول user_table
         cursor.execute("""
-            SELECT username, department, work_hours, substitute, name
+            SELECT username, department, work_hours, substitute, name, employment_status
             FROM user_table
         """)
         users_data = cursor.fetchall()
@@ -1249,7 +1375,14 @@ async def admin(request: Request):
         report_data = [ReportData(username=report[0], total_used=report[1], total_remaining=report[2]) for report in reports]
 
         # پردازش اطلاعات کاربران
-        users = [UserData(username=user[0], department=user[1], work_hours=user[2], substitute=user[3], name=user[4]) for user in users_data]
+        users = [
+            UserData(
+                username=user[0], department=user[1], work_hours=user[2], substitute=user[3],
+                name=user[4], employment_status=str(user[5] or "official").strip().lower()
+                if str(user[5] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official"
+            )
+            for user in users_data
+        ]
 
         # دریافت مجموع زمان پاس برای هر کاربر از جدول totalpass_table
         cursor.execute("""
@@ -1390,6 +1523,138 @@ async def admin(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ذخیره و بازیابی محاسبات حقوق و دستمزد ادمین
+PAYROLL_CALCULATION_TYPES = {"overtime", "comprehensive", "hourly", "summary"}
+
+
+def _payroll_ascii_digits(value):
+    return str(value or "").translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+
+
+def _ensure_payroll_calculations_table(cursor):
+    cursor.execute("""
+        IF OBJECT_ID(N'dbo.admin_payroll_calculations', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.admin_payroll_calculations (
+                id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                calculation_type NVARCHAR(32) NOT NULL,
+                period_year INT NOT NULL,
+                period_month NVARCHAR(40) NOT NULL,
+                username NVARCHAR(255) NOT NULL,
+                payload_json NVARCHAR(MAX) NOT NULL,
+                saved_by NVARCHAR(255) NOT NULL,
+                created_at DATETIME2(0) NOT NULL CONSTRAINT DF_admin_payroll_created DEFAULT SYSUTCDATETIME(),
+                updated_at DATETIME2(0) NOT NULL CONSTRAINT DF_admin_payroll_updated DEFAULT SYSUTCDATETIME(),
+                CONSTRAINT UQ_admin_payroll_row UNIQUE (calculation_type, period_year, period_month, username)
+            );
+        END
+    """)
+
+
+@app.post("/api/admin/payroll/save")
+async def save_admin_payroll(request: Request):
+    if not get_is_admin_from_session(request):
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مجاز نیست."})
+    conn = None
+    cursor = None
+    try:
+        data = await request.json()
+        calculation_type = str(data.get("calculation_type") or "").strip()
+        if calculation_type not in PAYROLL_CALCULATION_TYPES:
+            return JSONResponse(status_code=400, content={"success": False, "error": "نوع محاسبه معتبر نیست."})
+        period_year = int(_payroll_ascii_digits(data.get("period_year")))
+        period_month = str(data.get("period_month") or "").strip()
+        rows = data.get("rows")
+        if period_year < 1300 or period_year > 1600 or not period_month or not isinstance(rows, list):
+            return JSONResponse(status_code=400, content={"success": False, "error": "اطلاعات دوره یا ردیف‌ها معتبر نیست."})
+        if len(rows) > 500:
+            return JSONResponse(status_code=400, content={"success": False, "error": "تعداد ردیف‌ها بیش از حد مجاز است."})
+        actor = str(get_user_from_session(request) or "admin").strip()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        _ensure_payroll_calculations_table(cursor)
+        saved = 0
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            username = str(row.get("username") or "").strip()
+            payload = row.get("payload")
+            if not username or not isinstance(payload, dict):
+                continue
+            if calculation_type != "summary":
+                cursor.execute("SELECT 1 FROM user_table WHERE LTRIM(RTRIM(username)) = ?", (username,))
+                if cursor.fetchone() is None:
+                    continue
+            payload_json = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+            cursor.execute("""
+                UPDATE dbo.admin_payroll_calculations
+                SET payload_json = ?, saved_by = ?, updated_at = SYSUTCDATETIME()
+                WHERE calculation_type = ? AND period_year = ? AND period_month = ? AND username = ?
+            """, (payload_json, actor, calculation_type, period_year, period_month, username))
+            if cursor.rowcount == 0:
+                cursor.execute("""
+                    INSERT INTO dbo.admin_payroll_calculations
+                        (calculation_type, period_year, period_month, username, payload_json, saved_by)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (calculation_type, period_year, period_month, username, payload_json, actor))
+            saved += 1
+        conn.commit()
+        return JSONResponse(content={"success": True, "saved": saved, "message": "تغییرات با موفقیت ذخیره شد."})
+    except (TypeError, ValueError):
+        if conn is not None:
+            conn.rollback()
+        return JSONResponse(status_code=400, content={"success": False, "error": "اطلاعات ذخیره‌سازی معتبر نیست."})
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        return JSONResponse(status_code=500, content={"success": False, "error": "خطا در ذخیره تغییرات.", "detail": str(exc) if DEBUG else None})
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
+
+@app.get("/api/admin/payroll/load")
+async def load_admin_payroll(request: Request, calculation_type: str, period_year: str, period_month: str):
+    if not get_is_admin_from_session(request):
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مجاز نیست."})
+    if calculation_type not in PAYROLL_CALCULATION_TYPES:
+        return JSONResponse(status_code=400, content={"success": False, "error": "نوع محاسبه معتبر نیست."})
+    conn = None
+    cursor = None
+    try:
+        year = int(_payroll_ascii_digits(period_year))
+        month = str(period_month or "").strip()
+        if year < 1300 or year > 1600 or not month:
+            return JSONResponse(status_code=400, content={"success": False, "error": "دوره معتبر نیست."})
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        _ensure_payroll_calculations_table(cursor)
+        cursor.execute("""
+            SELECT username, payload_json, updated_at
+            FROM dbo.admin_payroll_calculations
+            WHERE calculation_type = ? AND period_year = ? AND period_month = ?
+            ORDER BY username
+        """, (calculation_type, year, month))
+        items = []
+        for username, payload_json, updated_at in cursor.fetchall():
+            try:
+                payload = json.loads(payload_json or "{}")
+            except (TypeError, ValueError):
+                payload = {}
+            items.append({"username": str(username).strip(), "payload": payload, "updated_at": str(updated_at) if updated_at else None})
+        return JSONResponse(content={"success": True, "items": items})
+    except (TypeError, ValueError):
+        return JSONResponse(status_code=400, content={"success": False, "error": "دوره معتبر نیست."})
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"success": False, "error": "خطا در بازیابی تغییرات.", "detail": str(exc) if DEBUG else None})
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
 # تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر
 # تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر
 # تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر# تابع اضافه کردن کاربر
@@ -1412,6 +1677,7 @@ async def add_user(
     seshanbeh: str = Form(...),
     chrshanbeh: str = Form(...),
     panjshanbeh: str = Form(...),
+    employment_status: str = Form("official"),
 ):
     try:
         user_id = random.randint(100, 999)
@@ -1421,6 +1687,10 @@ async def add_user(
                               'DATABASE=userDB;'
                               'Trusted_Connection=yes;')
         cursor = conn.cursor()
+        ensure_employment_status_column(cursor)
+        employment_status = str(employment_status or "official").strip().lower()
+        if employment_status not in EMPLOYMENT_STATUS_VALUES:
+            employment_status = "official"
 
         password_hash = hash_password(password)
         insert_user_with_optional_hash(
@@ -1442,6 +1712,10 @@ async def add_user(
             seshanbeh,
             chrshanbeh,
             panjshanbeh,
+        )
+        cursor.execute(
+            "UPDATE user_table SET employment_status = ? WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?))",
+            (employment_status, username),
         )
 
         conn.commit()
@@ -1473,6 +1747,7 @@ async def update_user(request: Request):
         substitute = data.get("substitute")
         work_hours = data.get("work_hours")
         department = data.get("department")
+        employment_status = str(data.get("employment_status") or "").strip().lower()
 
         if not current_username or not username:
             return {"success": False, "error": "نام کاربری الزامی است."}
@@ -1482,9 +1757,13 @@ async def update_user(request: Request):
 
         # رمز عبور خالی یعنی رمز فعلی حفظ شود؛ رمز جدید با همان سازوکار ورود ذخیره می‌شود.
         password_value = str(password).strip() if password is not None else ""
+        ensure_employment_status_column(cursor)
         columns = get_user_table_columns(cursor)
         set_clauses = ["username = ?", "substitute = ?", "work_hours = ?", "department = ?"]
         params = [username, substitute, work_hours, department]
+        if employment_status in EMPLOYMENT_STATUS_VALUES:
+            set_clauses.append("employment_status = ?")
+            params.append(employment_status)
 
         if password_value:
             set_clauses.append("password = ?")
@@ -1776,6 +2055,8 @@ async def update_leave_status(request: Request):
             WHERE id = ?
         """
         cursor.execute(query, (new_status, request_id))
+        if cursor.rowcount:
+            _notify_requester_status('mrkhc_table', request_id, new_status, 'مرخصی')
         conn.commit()
         return JSONResponse(content={'success': True, 'message': 'وضعیت با موفقیت به‌روزرسانی شد!'})
     except Exception as e:
@@ -1944,6 +2225,8 @@ async def change_hourly_pass_status(request: Request):
             WHERE id = ?
         """
         cursor.execute(update_query, (new_status, request_id))
+        if cursor.rowcount:
+            _notify_requester_status('totalpass_table', request_id, new_status, 'پاس ساعتی')
         conn.commit()
 
         return JSONResponse(content={"success": True})
@@ -2027,6 +2310,8 @@ async def update_hourly_pass_status(request: Request):
         new_status = data.get("status")
 
         cursor.execute("UPDATE totalpass_table SET status = ? WHERE id = ?", new_status, row_id)
+        if cursor.rowcount:
+            _notify_requester_status('totalpass_table', row_id, new_status, 'پاس ساعتی')
         conn.commit()
 
         return JSONResponse(content={"success": True})
@@ -2112,6 +2397,8 @@ async def update_overtime_status(data: OvertimeUpdateRequest):
             WHERE id = ?
         """, (data.status, data.requestId))
         
+        if cursor.rowcount:
+            _notify_requester_status('ezafe_table', data.requestId, data.status, 'اضافه‌کاری')
         conn.commit()
 
         if cursor.rowcount == 0:
@@ -2141,6 +2428,8 @@ async def update_overtime_indivisual_status(data: OvertimeStatusUpdate):
             WHERE id = ?
         '''
         cursor.execute(query, (data.status, data.id))
+        if cursor.rowcount:
+            _notify_requester_status('ezafe_table', data.id, data.status, 'اضافه‌کاری')
         conn.commit()
 
         if cursor.rowcount == 0:
@@ -2699,11 +2988,19 @@ from datetime import time
 
 @app.get("/get_hozoor/{username}")
 def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Query(...)):
-    # تبدیل اعداد فارسی به انگلیسی (تابع شما)
-    start_date = convert_farsi_to_english(start_date)
-    end_date = convert_farsi_to_english(end_date)
+    # نرمال‌سازی نام کاربر و تاریخ‌ها قبل از دسترسی به دیتابیس.
+    username = str(username or "").strip()
+    start_date = convert_farsi_to_english(start_date).strip()
+    end_date = convert_farsi_to_english(end_date).strip()
+    try:
+        from_g = JalaliDate.strptime(start_date, "%Y/%m/%d").to_gregorian()
+        to_g = JalaliDate.strptime(end_date, "%Y/%m/%d").to_gregorian()
+    except (TypeError, ValueError):
+        return JSONResponse(status_code=400, content={"error": "بازه تاریخ معتبر نیست."})
+    if from_g > to_g:
+        return JSONResponse(status_code=400, content={"error": "تاریخ شروع نباید بعد از تاریخ پایان باشد."})
 
-    # اتصال به SQL Server و گرفتن اطلاعات کاربر (مثل قبل)
+    # اتصال به SQL Server و گرفتن اطلاعات کاربر.
     conn = pyodbc.connect(r'DRIVER={ODBC Driver 17 for SQL Server};'
                           r'SERVER=localhost\SQLEXPRESS;'
                           r'DATABASE=userDB;'
@@ -2712,8 +3009,8 @@ def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Quer
 
     cursor.execute("""
         SELECT hozoor_num, work_hours, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh
-        FROM user_table 
-        WHERE username = ?
+        FROM user_table
+        WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?))
     """, (username,))
     user = cursor.fetchone()
 
@@ -2739,43 +3036,54 @@ def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Quer
     } for r in cursor.fetchall()]
 
     def resolve_work_hours(sh_year, sh_month, sh_day, wd):
-        # اول دنبال بازه‌ی تعریف‌شده در shiftha برای همین ماه/روز می‌گردیم
+        # اول دنبال بازه‌ی تعریف‌شده در shiftha برای همین ماه/روز می‌گردیم.
         for row in shift_rows:
-            if row['jalali_year'] == sh_year and row['jalali_month'] == sh_month and row['start_day'] <= sh_day <= row['end_day']:
+            try:
+                in_range = (
+                    int(row.get('jalali_year') or 0) == sh_year and
+                    int(row.get('jalali_month') or 0) == sh_month and
+                    int(row.get('start_day') or 0) <= sh_day <= int(row.get('end_day') or 0)
+                )
+            except (TypeError, ValueError):
+                in_range = False
+            if in_range:
                 val = row.get(SHIFT_DAY_COLUMNS[wd])
-                if val:
-                    return val
-                break  # بازه پیدا شد ولی برای این روز هفته مقداری ثبت نشده → می‌رویم سراغ شیفت پیش‌فرض کاربر
-        # در صورت نبود شیفت اختصاصی، همان منطق قبلی (شیفت هفتگی ثابتِ user_table) اجرا می‌شود
-        return weekday_map.get(wd, default_work_hours)
+                if val and "-" in str(val):
+                    return str(val)
+                break
 
-    # اتصال به Access و خواندن رکوردها (مثل قبل)
-    mdb_path = r"E:\\Hastama\\database\\Arazdb.mdb"
-    password = "meyer#perko"
-    conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
-                rf"DBQ={mdb_path};"
-                rf"PWD={password};")
-    conn_access = pyodbc.connect(conn_str)
-    cursor_access = conn_access.cursor()
+        # اگر برنامه‌ی هفتگی هم خالی باشد، بازه‌ی صفر برمی‌گردانیم تا endpoint خطا ندهد.
+        value = weekday_map.get(wd) or default_work_hours or "00:00-00:00"
+        value = str(value).replace(" ", "")
+        return value if "-" in value else "00:00-00:00"
 
-    query = """
-    SELECT CardNo, Date, Time, InOutType
-    FROM TPrsInOut
-    WHERE CardNo = ? AND Date BETWEEN ? AND ?
-    """
-
-    # تاریخ شمسی برای Access (چون فیلد Date از نوع Short Text است)
-    from_j = start_date
-    to_j = end_date
-
-    # تاریخ میلادی برای SQL Server
-    from_g = JalaliDate.strptime(start_date, "%Y/%m/%d").to_gregorian()
-    to_g = JalaliDate.strptime(end_date, "%Y/%m/%d").to_gregorian()
-
-    # خواندن اطلاعات از Access
-    cursor_access.execute(query, (hozoor_num, from_j, to_j))
-    rows = cursor_access.fetchall()
-    conn_access.close()
+    # Access ممکن است روی سرور فعلی نصب یا در دسترس نباشد؛ در این حالت
+    # گزارش از رکوردهای hozoor در SQL Server ساخته می‌شود و 500 برنمی‌گرداند.
+    rows = []
+    conn_access = None
+    cursor_access = None
+    try:
+        mdb_path = os.getenv("ARAZ_ACCESS_PATH") or r"E:\Hastama\database\Arazdb.mdb"
+        password = os.getenv("ARAZ_ACCESS_PASSWORD") or "meyer#perko"
+        conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
+                    rf"DBQ={mdb_path};"
+                    rf"PWD={password};")
+        conn_access = pyodbc.connect(conn_str)
+        cursor_access = conn_access.cursor()
+        query = """
+        SELECT CardNo, Date, Time, InOutType
+        FROM TPrsInOut
+        WHERE CardNo = ? AND Date BETWEEN ? AND ?
+        """
+        cursor_access.execute(query, (hozoor_num, start_date, end_date))
+        rows = cursor_access.fetchall()
+    except Exception as access_error:
+        print(f"get_hozoor Access fallback for {username}: {access_error}")
+    finally:
+        if cursor_access is not None:
+            cursor_access.close()
+        if conn_access is not None:
+            conn_access.close()
 
     # ساخت دیکشنری attendance از داده‌های اکسس (کمترین entry، بیشترین exit)
     attendance = {}
@@ -2818,7 +3126,7 @@ def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Quer
     # حالا از جدول hozoor در SQL Server تاریخ‌های ثبت‌شده رو هم اضافه کن
     cursor.execute("""
         SELECT [date], vrood, khoroj FROM hozoor
-        WHERE username = ? AND [date] BETWEEN ? AND ?
+        WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?)) AND [date] BETWEEN ? AND ?
         ORDER BY [date]
     """, (username, from_g, to_g))
     rows_sql = cursor.fetchall()
@@ -3205,13 +3513,14 @@ async def get_hozoor_today(request: Request):
         cursor = conn.cursor()
 
         # کاربران عادی فقط وضعیت خودشان را می‌خوانند؛ ادمین وضعیت همه را می‌گیرد.
-        # ورود فعال ممکن است مربوط به روز قبلِ یک شیفت شب باشد.
+        # برای جدول کاربران، فقط رکوردی معتبر است که تاریخ آن دقیقاً امروز باشد.
+        # رکورد فعالِ روزهای قبل (مثلاً شیفت شب) نباید ساعت ورود امروز تلقی شود.
         if request.session.get("is_admin"):
             cursor.execute("""
                 SELECT u.username, h.[date], h.vrood, h.khoroj
                 FROM user_table u
                 LEFT JOIN hozoor h ON u.username = h.username
-                    AND ((h.vrood IS NOT NULL AND h.khoroj IS NULL) OR h.[date] = ?)
+                    AND h.[date] = ?
             """, (today,))
         else:
             cursor.execute("""
@@ -3317,6 +3626,11 @@ async def get_hozoor_today(request: Request):
                 conn.close()
             except Exception:
                 pass
+
+
+@app.get("/payroll_report_page", response_class=HTMLResponse)
+async def payroll_report_page(request: Request):
+    return templates.TemplateResponse(request, "payroll_report_page.html", {"request": request})
 
 
 @app.get("/final_report_page", response_class=HTMLResponse)

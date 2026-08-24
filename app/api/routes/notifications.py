@@ -6,14 +6,17 @@ All timestamps are UTC DATETIME2 values; the browser formats them in fa-IR.
 """
 from __future__ import annotations
 
+import json
 import os
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 
 import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/api", tags=["notifications"])
@@ -152,6 +155,73 @@ def _fanout(cursor, notification_id: int) -> int:
         (notification_id, *params, notification_id),
     )
     return max(0, cursor.rowcount if cursor.rowcount is not None else 0)
+
+
+def publish_system_notification(
+    conn,
+    title: str,
+    content: str,
+    targets: list[str],
+    notification_type: str = "information",
+    priority: str = "normal",
+    action_url: Optional[str] = "/user_panel",
+) -> int:
+    """Publish a durable event from another subsystem into the notification inbox.
+
+    Ticketing and attendance remain separate domains; they only call this small
+    delivery boundary when a user-facing event should appear in notifications.
+    The caller owns the transaction so the event is committed with its source
+    change whenever possible.
+    """
+    values = list(dict.fromkeys(str(value or "").strip() for value in targets if str(value or "").strip()))
+    if not values:
+        return 0
+    if notification_type not in {"general", "announcement", "system", "warning", "information", "success", "reminder"}:
+        notification_type = "information"
+    if priority not in {"normal", "important", "high", "critical"}:
+        priority = "normal"
+    conn_cursor = conn.cursor()
+    _ensure_schema(conn)
+    conn_cursor.execute(
+        """INSERT INTO notifications
+               (title,content,type,priority,status,target_type,action_url,created_by,published_at)
+           OUTPUT INSERTED.id VALUES (?,?,?,?,?,?,?,?,SYSUTCDATETIME())""",
+        (str(title).strip()[:180], str(content).strip()[:4000], notification_type,
+         priority, "published", "selected", action_url, "سامانه"),
+    )
+    notification_id = int(conn_cursor.fetchone()[0])
+    for value in values:
+        conn_cursor.execute(
+            "INSERT INTO notification_targets (notification_id,target_value) VALUES (?,?)",
+            (notification_id, value),
+        )
+    _fanout(conn_cursor, notification_id)
+    return notification_id
+
+
+def publish_system_notification_to_admins(
+    conn,
+    title: str,
+    content: str,
+    notification_type: str = "information",
+    priority: str = "normal",
+    action_url: Optional[str] = "/admin",
+) -> int:
+    """Deliver a system event to every account whose persisted role is admin."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT RTRIM(username) FROM user_table WHERE LOWER(RTRIM(COALESCE(role, ''))) = 'admin'"
+    )
+    admins = [str(row[0]).strip() for row in cursor.fetchall() if row[0]]
+    return publish_system_notification(
+        conn,
+        title,
+        content,
+        admins,
+        notification_type=notification_type,
+        priority=priority,
+        action_url=action_url,
+    )
 
 
 def _publish(cursor, notification_id: int, actor: str) -> int:
@@ -399,6 +469,106 @@ def unread_count(request: Request):
         count = int(cur.fetchone()[0]); conn.commit()
         return {"unread": count}
     finally: conn.close()
+
+
+@router.get("/notifications/poll")
+def browser_notification_poll(request: Request):
+    """Return a compact snapshot for Chrome notifications while a panel is open.
+
+    This endpoint intentionally returns state, not a second notification inbox:
+    the browser client compares snapshots and only announces changes observed
+    after the page has finished its initial load.
+    """
+    username = _actor(request)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+
+        cur.execute(
+            """SELECT TOP 50 n.id,n.title,n.content,n.type,n.priority,n.action_url,n.created_by,
+                      n.published_at,un.delivered_at,un.read_at
+               FROM user_notifications un JOIN notifications n ON n.id=un.notification_id
+               WHERE RTRIM(un.username)=? AND un.dismissed_at IS NULL
+                 AND n.status IN ('published','archived')
+               ORDER BY un.delivered_at DESC, n.id DESC""",
+            (username,),
+        )
+        notifications = [_serialize(row) for row in _dict_rows(cur)]
+
+        conn.commit()
+        # Approval and ticket events are both represented by durable inbox rows.
+        # This endpoint intentionally never reads ticket or attendance tables.
+        return {"notifications": notifications}
+    finally:
+        conn.close()
+
+
+@router.get("/notifications/stream")
+def notification_stream(request: Request):
+    """Push newly delivered inbox notifications, including ticket events."""
+    username = _actor(request)
+
+    def events():
+        seen = None
+        try:
+            last_event_id = int(request.headers.get("last-event-id") or 0)
+        except (TypeError, ValueError):
+            last_event_id = 0
+        try:
+            while True:
+                conn = get_connection()
+                try:
+                    _ensure_schema(conn)
+                    cur = conn.cursor()
+                    cur.execute(
+                        """SELECT TOP 100 n.id,n.title,n.content,n.type,n.priority,
+                                  n.action_label,n.action_url,n.created_by,n.published_at,
+                                  un.delivered_at,un.read_at
+                           FROM user_notifications un
+                           JOIN notifications n ON n.id=un.notification_id
+                           WHERE RTRIM(un.username)=? AND un.dismissed_at IS NULL
+                             AND n.status IN ('published','archived')
+                           ORDER BY un.delivered_at DESC,n.id DESC""",
+                        (username,),
+                    )
+                    items = [_serialize(row) for row in _dict_rows(cur)]
+                finally:
+                    conn.close()
+
+                current = {str(item["id"]): item for item in items}
+                if seen is None:
+                    if last_event_id:
+                        for item in reversed(items):
+                            if int(item["id"]) > last_event_id:
+                                yield "id: " + str(item["id"]) + "\ndata: " + json.dumps(item, ensure_ascii=False) + "\n\n"
+                    seen = set(current)
+                else:
+                    for key, item in reversed(list(current.items())):
+                        if key not in seen:
+                            yield "id: " + str(item["id"]) + "\ndata: " + json.dumps(item, ensure_ascii=False) + "\n\n"
+                    seen = set(current)
+                yield ": heartbeat\n\n"
+                time.sleep(2)
+        except (GeneratorExit, ConnectionError):
+            return
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/notifications/admin-stream")
+def admin_request_stream(request: Request):
+    """Compatibility alias for the single durable notification stream."""
+    _actor(request, admin=True)
+    return notification_stream(request)
 
 
 @router.get("/notifications/{notification_id}")

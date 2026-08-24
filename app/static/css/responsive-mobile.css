@@ -296,10 +296,10 @@
     /* --- ۳-۴) پیام موفقیت: محدوده امن در موبایل */
     .success-message {
         position: fixed !important;
-        left: -300px !important;
-        right: 12px;
+        left: 12px !important;
+        right: auto;
         bottom: 12px !important;
-        width: auto !important;
+        width: min(420px, calc(100vw - 24px)) !important;
         height: auto !important;
         min-height: 0;
         max-height: 30vh;
@@ -307,10 +307,11 @@
         padding: 12px 40px 12px 14px;
         font-size: 14px;
         z-index: 1300;
+        transform: translateX(calc(-100% - 24px));
     }
 
     .success-message.show {
-        left: 12px !important;
+        transform: translateX(0);
     }
 
     /* --- ۳-۵) کارت‌های داشبورد ادمین بدون کش‌آمدن غیرضروری */

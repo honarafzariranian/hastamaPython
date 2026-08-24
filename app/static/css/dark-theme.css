@@ -395,6 +395,39 @@ body.dark-mode .payroll-config-item select {
     color: var(--dk-text);
 }
 
+body.dark-mode .payroll-period-actions {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-period-status {
+    color: #5eead4;
+}
+
+body.dark-mode .payroll-period-status.is-error {
+    color: #fda4af;
+}
+
+body.dark-mode .payroll-period-status.is-warning {
+    color: #fcd34d;
+}
+
+body.dark-mode .payroll-period-display-btn {
+    border-color: #0f9f86;
+    color: #fff;
+}
+
+body.dark-mode .payroll-copy-previous-btn {
+    border-color: #39748a;
+    background: #193746;
+    color: #b9ecfa;
+}
+
+body.dark-mode .payroll-copy-previous-btn:hover:not(:disabled) {
+    border-color: #56b8d4;
+    background: #214b5e;
+    color: #ffffff;
+}
+
 body.dark-mode .payroll-table-scroll {
     background: var(--dk-surface);
     border-color: var(--dk-border);
@@ -1560,6 +1593,53 @@ body.dark-mode .individual-report-table thead tr {
 /* سر جدول‌های گزارش نهایی — در طراحی یکپارچهٔ جدید (tables.css) همهٔ هدرها
    خنثی هستند؛ این قواعد قدیمی (سرستون بنفش) حذف شدند تا یکدست بمانند. */
 
+/* عملیات ذخیره و محاسبه حقوق در حالت تاریک */
+body.dark-mode .payroll-save-actions,
+body.dark-mode .overtime-payroll-actions {
+    border-top-color: var(--dk-line);
+}
+
+body.dark-mode .payroll-save-recalculate,
+body.dark-mode .overtime-payroll-refresh {
+    border-color: #486079;
+    background: #243349;
+    color: #e8edf5;
+}
+
+body.dark-mode .payroll-save-recalculate:hover,
+body.dark-mode .overtime-payroll-refresh:hover {
+    background: #30425b;
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-save-btn,
+body.dark-mode .overtime-payroll-save {
+    border-color: #18b99a;
+    background: linear-gradient(135deg, #079b80, #087fc0);
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-print-btn {
+    border-color: #4b8dcc;
+    background: #203c5b;
+    color: #bfe2ff;
+}
+
+body.dark-mode .payroll-print-btn:hover {
+    background: #2a4d72;
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-save-status,
+body.dark-mode .overtime-payroll-save-status {
+    color: #5eead4;
+}
+
+body.dark-mode .payroll-save-status.is-error,
+body.dark-mode .overtime-payroll-save-status.is-error {
+    color: #fca5a5;
+}
+
 /* =============================================================================
    ۹) لایهٔ موبایل جدول‌ها — responsive-tables.css
    توکن‌های آن به `.dark-theme` وابسته‌اند؛ برای اطمینان `.dark-mode` هم اضافه شد.
@@ -1614,8 +1694,12 @@ body.dark-mode .waves .wave path {
    ۱۱) پیام‌ها و وضعیت‌ها
    ========================================================================== */
 body.dark-mode .success-message {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: rgba(74, 222, 128, .35);
     box-shadow: var(--dk-shadow);
 }
+body.dark-mode .success-message::after { background: rgba(74, 222, 128, .18); }
 
 body.dark-mode .empty-row,
 body.dark-mode .no-ticket-message {
@@ -1957,6 +2041,18 @@ body.dark-mode .notification-badge--scheduled,
 body.dark-mode .notification-badge--information,
 body.dark-mode .notification-unread-label { background: rgba(56,189,248,.14); color: #7dd3fc; }
 
+body.dark-mode .notification-toast {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow);
+}
+body.dark-mode .notification-toast__message { color: var(--dk-text); }
+body.dark-mode .notification-toast__close { color: var(--dk-text-2); }
+body.dark-mode .notification-toast--success { --notification-tint: rgba(34, 197, 94, .16); }
+body.dark-mode .notification-toast--warning { --notification-tint: rgba(234, 179, 8, .16); }
+body.dark-mode .notification-toast--error { --notification-tint: rgba(248, 113, 113, .16); }
+
 /* ثبت تیکت (پنل مدیریت) — حالت تاریک */
 body.dark-mode .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap {
     background-color: #182233 !important;
@@ -2024,3 +2120,21 @@ body.dark-mode .sabt-ticket-actions .btn-cancel {
     border-color: #2c3a52;
 }
 body.dark-mode .sabt-ticket-actions .btn-cancel:hover { background: #24324a; }
+
+body.dark-mode .employment-status-label {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .employment-status-label[data-status="official"] {
+    border-color: rgba(52, 211, 153, .38);
+    background: rgba(16, 185, 129, .14);
+    color: #6ee7b7;
+}
+
+body.dark-mode .employment-status-label[data-status="unofficial"] {
+    border-color: rgba(56, 189, 248, .38);
+    background: rgba(14, 165, 233, .14);
+    color: #7dd3fc;
+}

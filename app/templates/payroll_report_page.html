@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>پیش‌نمایش گزارش حقوق</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/payroll-report-preview.css') }}">
+</head>
+<body>
+    <main class="preview-page">
+        <header class="preview-toolbar">
+            <div>
+                <span class="preview-kicker">پیش‌نمایش گزارش</span>
+                <h1 id="payrollPreviewTitle">گزارش حقوق و دستمزد</h1>
+                <p>اطلاعات زیر آماده چاپ یا دریافت فایل است.</p>
+            </div>
+            <div class="preview-actions" aria-label="عملیات گزارش">
+                <button type="button" id="payrollPrintButton" class="preview-btn preview-btn-print">چاپ گزارش</button>
+                <button type="button" id="payrollDownloadButton" class="preview-btn preview-btn-download">دریافت فایل گزارش</button>
+            </div>
+        </header>
+
+        <section id="payrollPreviewContent" class="report-sheet" aria-live="polite">
+            <div class="preview-empty">در حال آماده‌سازی گزارش…</div>
+        </section>
+    </main>
+    <script src="{{ url_for('static', path='js/payroll-report-preview.js') }}"></script>
+</body>
+</html>

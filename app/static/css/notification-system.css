@@ -723,29 +723,151 @@
     margin: 0;
 }
 
-.notification-toast {
+.notification-toast-stack {
     position: fixed;
     left: 24px;
     bottom: 24px;
     z-index: 12000;
-    max-width: min(380px, calc(100vw - 30px));
-    padding: 13px 18px;
-    background: #0D3B4E;
-    color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-    transform: translateY(25px);
-    opacity: 0;
-    transition: 0.22s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: min(420px, calc(100vw - 30px));
+    direction: rtl;
+    pointer-events: none;
 }
 
-.notification-toast.is-error {
-    background: #9b2c2c;
+.notification-toast {
+    --notification-color: #168dc7;
+    --notification-tint: #eaf6ff;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 14px 17px 18px;
+    background: var(--surface-strong, #fff);
+    color: var(--text, #0D3B4E);
+    border: 1px solid color-mix(in srgb, var(--notification-color) 28%, transparent);
+    border-left: 4px solid var(--notification-color);
+    border-radius: 15px;
+    box-shadow: 0 14px 42px rgba(13, 59, 78, 0.22);
+    transform: translateX(calc(-100% - 34px));
+    opacity: 0;
+    pointer-events: auto;
+    transition: transform .42s cubic-bezier(.2,.75,.25,1), opacity .28s ease;
 }
 
 .notification-toast.show {
-    transform: none;
+    transform: translateX(0);
     opacity: 1;
+}
+
+.notification-toast.is-closing {
+    transform: translateX(calc(-100% - 34px));
+    opacity: 0;
+}
+
+.notification-toast--success {
+    --notification-color: #079b70;
+    --notification-tint: #e9faf3;
+}
+
+.notification-toast--warning {
+    --notification-color: #c98900;
+    --notification-tint: #fff8df;
+}
+
+.notification-toast--error,
+.notification-toast.is-error {
+    --notification-color: #d64545;
+    --notification-tint: #fff0f0;
+}
+
+.notification-toast__head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.notification-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    flex: 0 0 auto;
+    background: var(--notification-tint);
+    color: var(--notification-color);
+    border-radius: 50%;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.notification-toast__title {
+    flex: 1;
+    color: var(--notification-color);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.notification-toast__close {
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted, #4D6B7A);
+    cursor: pointer;
+    font: 700 18px/1 'Vazir', sans-serif;
+}
+
+.notification-toast__close:hover {
+    background: var(--notification-tint);
+    color: var(--notification-color);
+}
+
+.notification-toast__message {
+    display: block;
+    margin-top: 8px;
+    color: var(--text, #0D3B4E);
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.notification-toast__timeline {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    overflow: hidden;
+    background: var(--notification-tint);
+}
+
+.notification-toast__timeline span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--notification-color);
+    transform-origin: right center;
+}
+
+.notification-toast.show .notification-toast__timeline span {
+    animation: notification-toast-countdown var(--notification-duration, 4.5s) linear forwards;
+}
+
+@keyframes notification-toast-countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+@supports not (color: color-mix(in srgb, red 20%, transparent)) {
+    .notification-toast { border-color: rgba(22, 141, 199, .28); }
+    .notification-toast--success { border-color: rgba(7, 155, 112, .28); }
+    .notification-toast--warning { border-color: rgba(201, 137, 0, .28); }
+    .notification-toast--error,
+    .notification-toast.is-error { border-color: rgba(214, 69, 69, .28); }
 }
 
 .sidebar-svg-icon {
@@ -885,8 +1007,13 @@
         flex-basis: 100%;
     }
 
-    .notification-toast {
+    .notification-toast-stack {
         left: 15px;
         bottom: 15px;
+    }
+
+    .notification-toast {
+        left: auto;
+        bottom: auto;
     }
 }

@@ -34,7 +34,11 @@ install: generate_dot_env venv
 	uv sync --dev
 
 run: venv
-	PYTHONPATH=app/ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080
+	@if [ -n "$${SSL_CERTFILE:-}" ] && [ -n "$${SSL_KEYFILE:-}" ]; then \
+		PYTHONPATH=app/ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080 --ssl-certfile "$$SSL_CERTFILE" --ssl-keyfile "$$SSL_KEYFILE"; \
+	else \
+		PYTHONPATH=app/ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080; \
+	fi
 
 deploy: generate_dot_env
 	docker-compose build

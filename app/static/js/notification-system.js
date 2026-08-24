@@ -36,11 +36,161 @@
         }
         return payload;
     }
-    function announce(message, error) {
-        var toast = el('div', 'notification-toast' + (error ? ' is-error' : ''), message);
-        toast.setAttribute('role', 'status'); document.body.appendChild(toast);
+
+    /* اعلان بومی Chrome برای زمانی که کاربر در تب دیگری یا نرم‌افزار دیگری است. */
+    var browserNotificationState = {
+        initialized: false,
+        timer: null,
+        notifications: Object.create(null),
+        polling: false,
+        stream: null,
+        testSent: false
+    };
+    function browserNotificationsSupported() {
+        return typeof window !== 'undefined' && 'Notification' in window;
+    }
+
+    function requestBrowserNotificationPermission() {
+        if (!browserNotificationsSupported()) {
+            announce('این مرورگر از اعلان دسکتاپ پشتیبانی نمی‌کند.', true);
+            return Promise.resolve('unsupported');
+        }
+        if (window.isSecureContext === false) {
+            var hostHint = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'آدرس فعلی باید با http://localhost باز شود.'
+                : 'اگر روی همین سیستم هستید با http://localhost وارد شوید؛ برای دسترسی شبکه‌ای HTTPS لازم است.';
+            announce('اعلان Chrome در این آدرس فعال نمی‌شود. ' + hostHint, 'warning');
+            return Promise.resolve('insecure');
+        }
+        if (Notification.permission === 'granted') {
+            announce('اعلان‌های مرورگر فعال هستند.');
+            return Promise.resolve('granted');
+        }
+        if (Notification.permission === 'denied') {
+            announce('اعلان‌ها مسدود هستند؛ آن‌ها را از تنظیمات سایت Chrome فعال کنید.', true);
+            return Promise.resolve('denied');
+        }
+        return Notification.requestPermission().then(function (permission) {
+            announce(permission === 'granted' ? 'اعلان‌های مرورگر فعال شد.' : 'اجازه اعلان داده نشد.', permission !== 'granted');
+            return permission;
+        }).catch(function () {
+            announce('دریافت اجازه اعلان مرورگر ناموفق بود.', true);
+            return 'error';
+        });
+    }
+
+    function sendBrowserNotification(title, body, tag, actionUrl) {
+        if (!browserNotificationsSupported() || Notification.permission !== 'granted' || window.isSecureContext === false) return;
+        try {
+            var notification = new Notification(title, {
+                body: body,
+                icon: '/static/images/newlogo.png',
+                tag: tag || 'hastama-notification'
+            });
+            notification.onclick = function () {
+                window.focus();
+                notification.close();
+                if (actionUrl && actionUrl.charAt(0) === '/') window.location.assign(actionUrl);
+            };
+        } catch (error) {
+            console.warn('اعلان مرورگر ارسال نشد:', error);
+        }
+    }
+
+    function pollBrowserNotifications() {
+        if (!browserNotificationsSupported() || browserNotificationState.polling) return;
+        browserNotificationState.polling = true;
+        api('/api/notifications/poll').then(function (data) {
+            var notifications = data.notifications || [];
+            if (!browserNotificationState.initialized) {
+                notifications.forEach(function (item) { browserNotificationState.notifications[String(item.id)] = true; });
+                browserNotificationState.initialized = true;
+                return;
+            }
+            notifications.forEach(function (item) {
+                var key = String(item.id);
+                if (browserNotificationState.notifications[key]) return;
+                browserNotificationState.notifications[key] = true;
+                sendBrowserNotification(
+                    item.title || 'اعلان جدید هستما',
+                    item.content || 'یک اعلان جدید دریافت شد.',
+                    'notification-' + key,
+                    item.action_url
+                );
+            });
+        }).catch(function () { /* قطع موقت شبکه نباید رابط کاربری را مختل کند. */ })
+            .then(function () { browserNotificationState.polling = false; });
+    }
+
+    function startBrowserNotificationPolling() {
+        if (!browserNotificationsSupported()) return;
+        pollBrowserNotifications();
+        // این poll پشتیبان SSE است؛ وضعیت polling از هم‌پوشانی جلوگیری می‌کند.
+        browserNotificationState.timer = setInterval(pollBrowserNotifications, 5000);
+    }
+
+    function startNotificationStream() {
+        if (!browserNotificationsSupported() || typeof EventSource === 'undefined') return;
+        var stream = new EventSource('/api/notifications/stream');
+        stream.onmessage = function (event) {
+            try {
+                var item = JSON.parse(event.data || '{}');
+                var key = String(item.id || '');
+                if (!key || browserNotificationState.notifications[key]) return;
+                browserNotificationState.notifications[key] = true;
+                sendBrowserNotification(
+                    item.title || 'اعلان جدید هستما',
+                    item.content || 'یک اعلان جدید دریافت شد.',
+                    'notification-' + key,
+                    item.action_url
+                );
+            } catch (_) { /* داده‌ی خراب از stream نباید رابط کاربری را متوقف کند. */ }
+        };
+    }
+
+    function announce(message, error, options) {
+        var requestedKind = options && options.kind;
+        var kind = requestedKind || (typeof error === 'string' ? error : (error ? 'error' : 'success'));
+        if (['success', 'warning', 'error', 'info'].indexOf(kind) === -1) kind = 'info';
+        var titles = { success: 'عملیات موفق', warning: 'توجه سامانه', error: 'خطای سامانه', info: 'پیام سامانه' };
+        var icons = { success: '✓', warning: '!', error: '×', info: 'i' };
+        var duration = kind === 'error' ? 6000 : 4500;
+        var stack = document.getElementById('notificationToastStack');
+        if (!stack) {
+            stack = el('div', 'notification-toast-stack');
+            stack.id = 'notificationToastStack';
+            document.body.appendChild(stack);
+        }
+        var toast = el('div', 'notification-toast notification-toast--' + kind);
+        toast.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+        toast.setAttribute('aria-live', kind === 'error' ? 'assertive' : 'polite');
+        toast.style.setProperty('--notification-duration', duration + 'ms');
+        var head = el('div', 'notification-toast__head');
+        var icon = el('span', 'notification-toast__icon', icons[kind]);
+        icon.setAttribute('aria-hidden', 'true');
+        var title = el('strong', 'notification-toast__title', (options && options.title) || titles[kind]);
+        var close = el('button', 'notification-toast__close', '×');
+        close.type = 'button';
+        close.setAttribute('aria-label', 'بستن پیام');
+        var messageNode = el('span', 'notification-toast__message', message);
+        var timeline = el('div', 'notification-toast__timeline');
+        timeline.append(el('span'));
+        head.append(icon, title, close);
+        toast.append(head, messageNode, timeline);
+        stack.append(toast);
+        var dismissed = false;
+        var dismiss = function () {
+            if (dismissed) return;
+            dismissed = true;
+            clearTimeout(timer);
+            toast.classList.remove('show');
+            toast.classList.add('is-closing');
+            setTimeout(function () { toast.remove(); }, 450);
+        };
+        close.addEventListener('click', dismiss);
+        var timer = setTimeout(dismiss, duration);
         requestAnimationFrame(function () { toast.classList.add('show'); });
-        setTimeout(function () { toast.classList.remove('show'); setTimeout(function(){ toast.remove(); }, 250); }, 3200);
+        return toast;
     }
 
     function pagination(container, page, pages, callback) {
@@ -184,8 +334,18 @@
             ['adminNotificationStatus','adminNotificationType','adminNotificationPriority'].forEach(function(id){document.getElementById(id).onchange=function(){loadAdmin(1);};});
             document.getElementById('adminNotificationSearch').oninput=function(){clearTimeout(debounceTimer);debounceTimer=setTimeout(function(){loadAdmin(1);},350);};
         }
+        var adminBell=document.getElementById('notificationsButton');
+        if(adminBell) adminBell.addEventListener('click', function () {
+            requestBrowserNotificationPermission().then(function (permission) {
+                // یک تست واقعی فقط در اولین کلیک انجام می‌شود تا کاربر بداند مجوز درست است.
+                if (permission === 'granted' && !browserNotificationState.testSent) {
+                    browserNotificationState.testSent = true;
+                    sendBrowserNotification('اعلان آزمایشی هستما', 'اعلان Chrome برای پنل ادمین فعال است.', 'admin-notification-test');
+                }
+            });
+        });
         var bell=document.getElementById('notificationBell');if(bell){
-            bell.onclick=function(e){e.stopPropagation();var d=document.getElementById('notificationDropdown');d.hidden=!d.hidden;bell.setAttribute('aria-expanded',String(!d.hidden));if(!d.hidden)loadUser(1,true);};
+            bell.onclick=function(e){e.stopPropagation();requestBrowserNotificationPermission();var d=document.getElementById('notificationDropdown');d.hidden=!d.hidden;bell.setAttribute('aria-expanded',String(!d.hidden));if(!d.hidden)loadUser(1,true);};
             document.addEventListener('click',function(e){var d=document.getElementById('notificationDropdown');if(!d.hidden&&!d.contains(e.target)&&e.target!==bell)d.hidden=true;});
             document.querySelectorAll('[data-action="open-notification-center"]').forEach(function(n){n.addEventListener('click',openCenter);});
             document.querySelectorAll('[data-notification-center-close]').forEach(function(n){n.onclick=closeCenter;});document.querySelectorAll('[data-notification-detail-close]').forEach(function(n){n.onclick=closeDetail;});
@@ -196,6 +356,8 @@
             refreshCount();setInterval(refreshCount,60000);
         }
         document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeEditor();closeCenter();closeDetail();}});
+        startBrowserNotificationPolling();
+        startNotificationStream();
     });
-    window.NotificationSystem={loadAdmin:loadAdmin,openCenter:openCenter};
+    window.NotificationSystem={loadAdmin:loadAdmin,openCenter:openCenter,announce:announce,requestBrowserNotificationPermission:requestBrowserNotificationPermission};
 })();

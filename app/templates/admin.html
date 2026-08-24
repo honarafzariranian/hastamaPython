@@ -18,7 +18,7 @@
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
-<body>
+<body data-notification-role="admin" data-notification-actor="{{ request.session.get('username') or 'admin' }}">
     <div class="page-shell">
         <header class="topbar admin-topbar-modern">
             <button type="button" class="mobile-menu-toggle" aria-label="باز کردن منو" aria-controls="mainSidebar" aria-expanded="false" onclick="toggleSidebar(event)">
@@ -355,7 +355,8 @@
         <!-- باکس اطلاعات کاربران -->
         <div class="management-box" id="userInfoBox" style="display:none;">
             <h2>اطلاعات کاربران</h2>
-            <table id="userTable">
+            <div class="user-table-scroll" role="region" aria-label="جدول اطلاعات کاربران، قابل پیمایش افقی">
+                <table id="userTable">
                 <thead>
                     <tr>
                         <th class="radif">ردیف</th>
@@ -366,12 +367,13 @@
                         <th class="saat-vorood">ساعت ورود</th>
                         <th class="saat-khorooj">ساعت خروج</th>
                         <th class="vaziat-hozoor">وضعیت حضور</th>
+                        <th class="vaziat-estekhdam">وضعیت استخدام</th>
                         <th class="taghirat">تغییرات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
-                    <tr data-username="{{ user.username }}">
+                    <tr data-username="{{ user.username }}" data-employment-status="{{ user.employment_status or 'official' }}">
                         <td>{{ loop.index }}</td>
                         <td>{{ user.username }}</td>
                         <td>{{ user.department }}</td>
@@ -380,6 +382,11 @@
                         <td class="attendance-checkin-cell"><span class="attendance-checkin">—</span></td>
                         <td class="attendance-checkout-cell"><span class="attendance-checkout">—</span></td>
                         <td class="attendance-status-cell"><span class="attendance-status" data-state="loading">در حال دریافت…</span></td>
+                        <td class="employment-status-cell">
+                            <span class="employment-status-label" data-status="{{ user.employment_status or 'official' }}">
+                                {% if user.employment_status == 'unofficial' %}غیر رسمی{% else %}رسمی{% endif %}
+                            </span>
+                        </td>
                         <td>
                             <!-- دکمه حذف با ارسال اطلاعات به روت /admin -->
                             <form method="POST" action="{{ url_for('admin') }}" class="trash-icon-form"
@@ -392,7 +399,7 @@
                             </form>
 
                             <button class="edit-btn"
-                                onclick="openEditPopup('{{ user.username }}', '{{ user.substitute }}', '{{ user.work_hours }}', '{{ user.department }}')">
+                                onclick="openEditPopup('{{ user.username }}', '{{ user.substitute }}', '{{ user.work_hours }}', '{{ user.department }}', '{{ user.employment_status }}')">
                                 <img src="/static/images/writing.png" alt="ویرایش">
                                 <span class="tooltip-text-table">ویرایش</span>
                             </button>
@@ -405,7 +412,8 @@
                     </tr>
                     {% endfor %}
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
 
         <!-- باکس تعریف کاربر جدید -->
@@ -460,6 +468,14 @@
                             <option value="14:30 - 07:30">14:30 - 07:30</option>
                             <option value="20:30 - 13:30">20:30 - 13:30</option>
                             <option value="00:00 - 00:00">"00:00 - 00:00</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row-krbrjadid">
+                        <label for="newEmploymentStatus">وضعیت استخدام</label>
+                        <select id="newEmploymentStatus" name="employment_status" required>
+                            <option value="official" selected>رسمی</option>
+                            <option value="unofficial">غیر رسمی</option>
                         </select>
                     </div>
 
@@ -532,6 +548,7 @@
                 <input type="hidden" id="hiddenDepartment" name="department">
                 <input type="hidden" id="hiddenWorkHours" name="work_hours">
                 <input type="hidden" id="hiddenSubstitute" name="substitute">
+                <input type="hidden" id="hiddenEmploymentStatus" name="employment_status">
                 <input type="hidden" id="hiddenUsername" name="username">
                 <input type="hidden" id="hiddenPassword" name="password">
                 <input type="hidden" id="hiddenRole" name="role">
@@ -656,6 +673,13 @@
                         </div>
                         <!-- فیلد جانشین -->
                         <div class="form-row">
+                            <label for="editEmploymentStatus">وضعیت استخدام:</label>
+                            <select id="editEmploymentStatus" name="employment_status" required>
+                                <option value="official">رسمی</option>
+                                <option value="unofficial">غیر رسمی</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
                             <label for="editSubstitute">جانشین:</label>
                             <select id="editSubstitute" name="substitute" required>
                                 <option value="بدون جانشین">بدون جانشین</option>
@@ -727,17 +751,17 @@
             <section class="notification-dialog-card" role="dialog" aria-modal="true" aria-labelledby="notificationEditorTitle">
                 <header><div><span class="notification-kicker">پیام جدید</span><h2 id="notificationEditorTitle">ایجاد اعلان</h2></div><button type="button" data-notification-close aria-label="بستن">×</button></header>
                 <form id="notificationForm">
-                    <input type="hidden" id="notificationId">
+                    <input type="hidden" id="notificationId" name="notification_id">
                     <div class="notification-form-grid">
-                        <label class="span-2">عنوان اعلان<input id="notificationTitle" maxlength="180" required></label>
-                        <label class="span-2">متن اعلان<textarea id="notificationContent" maxlength="4000" rows="5" required></textarea><small><span id="notificationContentCount">۰</span> / ۴۰۰۰</small></label>
-                        <label>نوع<select id="notificationType"><option value="general">عمومی</option><option value="announcement">اطلاعیه</option><option value="system">سیستمی</option><option value="warning">هشدار</option><option value="information">اطلاعات</option><option value="success">موفقیت</option><option value="reminder">یادآوری</option></select></label>
-                        <label>اولویت<select id="notificationPriority"><option value="normal">عادی</option><option value="important">مهم</option><option value="high">بالا</option><option value="critical">بحرانی</option></select></label>
-                        <label>گروه مخاطب<select id="notificationTargetType"><option value="all">همه کاربران</option><option value="selected">کاربران منتخب</option><option value="department">واحد سازمانی</option><option value="role">نقش کاربری</option></select></label>
-                        <label id="notificationTargetsField" hidden>انتخاب مخاطب<select id="notificationTargets" multiple size="5"></select><small>برای انتخاب چند مورد Ctrl را نگه دارید.</small></label>
-                        <label>متن دکمه اختیاری<input id="notificationActionLabel" maxlength="80" placeholder="مشاهده جزئیات"></label>
-                        <label>پیوند داخلی اختیاری<input id="notificationActionUrl" maxlength="500" dir="ltr" placeholder="/user_panel"></label>
-                        <label id="notificationScheduleField" hidden>زمان انتشار<input id="notificationScheduledAt" type="datetime-local"></label>
+                        <label class="span-2">عنوان اعلان<input id="notificationTitle" name="title" maxlength="180" required></label>
+                        <label class="span-2">متن اعلان<textarea id="notificationContent" name="content" maxlength="4000" rows="5" required></textarea><small><span id="notificationContentCount">۰</span> / ۴۰۰۰</small></label>
+                        <label>نوع<select id="notificationType" name="type"><option value="general">عمومی</option><option value="announcement">اطلاعیه</option><option value="system">سیستمی</option><option value="warning">هشدار</option><option value="information">اطلاعات</option><option value="success">موفقیت</option><option value="reminder">یادآوری</option></select></label>
+                        <label>اولویت<select id="notificationPriority" name="priority"><option value="normal">عادی</option><option value="important">مهم</option><option value="high">بالا</option><option value="critical">بحرانی</option></select></label>
+                        <label>گروه مخاطب<select id="notificationTargetType" name="target_type"><option value="all">همه کاربران</option><option value="selected">کاربران منتخب</option><option value="department">واحد سازمانی</option><option value="role">نقش کاربری</option></select></label>
+                        <label id="notificationTargetsField" hidden>انتخاب مخاطب<select id="notificationTargets" name="targets" multiple size="5"></select><small>برای انتخاب چند مورد Ctrl را نگه دارید.</small></label>
+                        <label>متن دکمه اختیاری<input id="notificationActionLabel" name="action_label" maxlength="80" placeholder="مشاهده جزئیات"></label>
+                        <label>پیوند داخلی اختیاری<input id="notificationActionUrl" name="action_url" maxlength="500" dir="ltr" placeholder="/user_panel"></label>
+                        <label id="notificationScheduleField" hidden>زمان انتشار<input id="notificationScheduledAt" name="scheduled_at" type="datetime-local"></label>
                     </div>
                     <div class="notification-form-error" id="notificationFormError" role="alert"></div>
                     <footer>
@@ -1408,13 +1432,6 @@
                     </div>
 
                     <div id="overtime-calculation" class="payroll-tab-content active" role="tabpanel">
-                        <div class="overtime-payroll-toolbar">
-                            <div class="overtime-payroll-note">
-                                <strong>محاسبه اضافه‌کاری و کسری‌کاری</strong>
-                                <span>نرخ‌ها را به ریال وارد کنید. کسری بیشتر از ۱۰ ساعت، پس از جبران با اضافه‌کاری، از ساعت کاری نهایی کم می‌شود.</span>
-                            </div>
-                            <button type="button" class="overtime-payroll-refresh" onclick="loadOvertimePayrollData(true)">محاسبه مجدد</button>
-                        </div>
                         <div class="overtime-payroll-table-scroll">
                             <table class="payroll-table overtime-payroll-table" id="overtimePayrollTable">
                                 <thead>
@@ -1439,7 +1456,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for user in users %}
+                                    {% for user in users if (user.employment_status or 'official') == 'official' %}
                                     <tr class="overtime-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
@@ -1447,8 +1464,8 @@
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
-                                        <td><input type="text" class="overtime-payroll-input" data-overtime-field="minuteRate" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="overtime-payroll-input" data-overtime-field="hourRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="overtime-payroll-input" name="overtime_minute_rate" data-overtime-field="minuteRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="overtime-payroll-input" name="overtime_hour_rate" data-overtime-field="hourRate" value="۰" inputmode="numeric" autocomplete="off"></td>
                                         <td class="overtime-payroll-result" data-overtime-result="signedMinutes">۰</td>
                                         <td class="overtime-payroll-result" data-overtime-result="signedHours">۰</td>
                                         <td class="overtime-payroll-result overtime-payroll-money" data-overtime-result="totalCost">۰</td>
@@ -1481,6 +1498,11 @@
                                 </tfoot>
                             </table>
                         </div>
+                        <div class="overtime-payroll-actions" aria-label="عملیات محاسبات اضافه‌کاری و کسری‌کاری">
+                            <button type="button" class="overtime-payroll-refresh" onclick="loadOvertimePayrollData(true)">محاسبه مجدد</button>
+                            <button type="button" class="overtime-payroll-save" onclick="savePayrollChanges('overtime', this)">ذخیره تغییرات</button>
+                        </div>
+                        <p class="overtime-payroll-save-status" id="overtimePayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
 
                     <div id="comprehensive-calculation" class="payroll-tab-content" role="tabpanel">
@@ -1518,6 +1540,10 @@
                                     <input type="text" id="payrollMandatoryHours" value="۱۷۶" inputmode="numeric" autocomplete="off">
                                 </label>
                             </div>
+                            <div class="payroll-period-actions">
+                                <button type="button" class="payroll-period-display-btn" id="payrollDisplayPeriodBtn" onclick="showPayrollPeriod()">نمایش</button>
+                                <span class="payroll-period-status" id="payrollPeriodStatus" role="status" aria-live="polite">برای بارگذاری اطلاعات دوره، ماه و سال را انتخاب کنید.</span>
+                            </div>
                         </div>
 
                         <!-- جدول محاسبه جامع پرسنل -->
@@ -1533,16 +1559,16 @@
                                         <th rowspan="2">مانده قابل پرداخت (ریال)</th>
                                     </tr>
                                     <tr class="payroll-table-subhead">
-                                        <th data-field="dailySalary">حقوق روزانه</th>
-                                        <th data-field="benefits">بن کارگری، حق مسکن، حق اولاد و حق تأهل</th>
-                                        <th data-field="workHours">ساعت کارکرد قابل پرداخت</th>
-                                        <th data-field="overtime">اضافه کاری</th>
-                                        <th data-field="bonus">پاداش</th>
-                                        <th data-field="eidiSanavat">عیدی و سنوات</th>
-                                        <th data-field="leave">مرخصی</th>
-                                        <th data-field="workDeduction">کسر کار</th>
-                                        <th data-field="insurance">کسر بیمه پایه و تکمیلی</th>
-                                        <th data-field="advance">علی‌الحساب دریافتی</th>
+                                        <th data-field="dailySalary"><span class="payroll-column-title">حقوق روزانه</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="dailySalary" onclick="copyComprehensiveColumnFromPrevious('dailySalary', this)">ماه قبل</button></th>
+                                        <th data-field="benefits"><span class="payroll-column-title">بن کارگری، حق مسکن، حق اولاد و حق تأهل</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="benefits" onclick="copyComprehensiveColumnFromPrevious('benefits', this)">ماه قبل</button></th>
+                                        <th data-field="workHours"><span class="payroll-column-title">ساعت کارکرد قابل پرداخت</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="workHours" onclick="copyComprehensiveColumnFromPrevious('workHours', this)">ماه قبل</button></th>
+                                        <th data-field="overtime"><span class="payroll-column-title">اضافه کاری</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="overtime" onclick="copyComprehensiveColumnFromPrevious('overtime', this)">ماه قبل</button></th>
+                                        <th data-field="bonus"><span class="payroll-column-title">پاداش</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="bonus" onclick="copyComprehensiveColumnFromPrevious('bonus', this)">ماه قبل</button></th>
+                                        <th data-field="eidiSanavat"><span class="payroll-column-title">عیدی و سنوات</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="eidiSanavat" onclick="copyComprehensiveColumnFromPrevious('eidiSanavat', this)">ماه قبل</button></th>
+                                        <th data-field="leave"><span class="payroll-column-title">مرخصی</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="leave" onclick="copyComprehensiveColumnFromPrevious('leave', this)">ماه قبل</button></th>
+                                        <th data-field="workDeduction"><span class="payroll-column-title">کسر کار</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="workDeduction" onclick="copyComprehensiveColumnFromPrevious('workDeduction', this)">ماه قبل</button></th>
+                                        <th data-field="insurance"><span class="payroll-column-title">کسر بیمه پایه و تکمیلی</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="insurance" onclick="copyComprehensiveColumnFromPrevious('insurance', this)">ماه قبل</button></th>
+                                        <th data-field="advance"><span class="payroll-column-title">علی‌الحساب دریافتی</span><button type="button" class="payroll-copy-previous-btn" data-copy-payroll-field="advance" onclick="copyComprehensiveColumnFromPrevious('advance', this)">ماه قبل</button></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1555,16 +1581,16 @@
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="dailySalary" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="benefits" value="۰" inputmode="numeric" autocomplete="off" title="بن کارگری، حق مسکن، حق اولاد و حق تأهل"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="workHours" value="۰" inputmode="decimal" autocomplete="off" title="ساعت کارکرد قابل پرداخت"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="overtime" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="bonus" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="eidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="leave" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="workDeduction" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="insurance" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="payroll-input" data-username="{{ user.username }}" data-field="advance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="daily_salary" data-username="{{ user.username }}" data-field="dailySalary" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="benefits" data-username="{{ user.username }}" data-field="benefits" value="۰" inputmode="numeric" autocomplete="off" title="بن کارگری، حق مسکن، حق اولاد و حق تأهل"></td>
+                                        <td><input type="text" class="payroll-input" name="work_hours" data-username="{{ user.username }}" data-field="workHours" value="۰" inputmode="decimal" autocomplete="off" title="ساعت کارکرد قابل پرداخت"></td>
+                                        <td><input type="text" class="payroll-input" name="overtime" data-username="{{ user.username }}" data-field="overtime" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="bonus" data-username="{{ user.username }}" data-field="bonus" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="eidi_sanavat" data-username="{{ user.username }}" data-field="eidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="leave" data-username="{{ user.username }}" data-field="leave" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="work_deduction" data-username="{{ user.username }}" data-field="workDeduction" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="insurance" data-username="{{ user.username }}" data-field="insurance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="payroll-input" name="advance" data-username="{{ user.username }}" data-field="advance" value="۰" inputmode="numeric" autocomplete="off"></td>
                                         <td class="payroll-calc-cell" data-username="{{ user.username }}" data-result="totalPay">—</td>
                                         <td class="payroll-calc-cell" data-username="{{ user.username }}" data-result="netPay">—</td>
                                     </tr>
@@ -1589,9 +1615,12 @@
                                 </tfoot>
                             </table>
                         </div>
-                    </div>
-
-                    <!-- محاسبه حقوق ساعتی پرسنل غیررسمی -->
+                        <div class="payroll-save-actions" aria-label="عملیات محاسبه جامع">
+                            <button type="button" class="payroll-save-recalculate" onclick="computePayrollTotals()">محاسبه مجدد</button>
+                            <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('comprehensive', this)">ذخیره تغییرات</button>
+                        </div>
+                        <p class="payroll-save-status" id="comprehensivePayrollSaveStatus" role="status" aria-live="polite"></p>
+                    </div>                                    <!-- محاسبه حقوق ساعتی پرسنل غیررسمی -->
                     <div id="hourly-payroll-calculation" class="payroll-tab-content" role="tabpanel">
                         <div class="payroll-table-hint hourly-payroll-hint">مبالغ به ریال و زمان‌ها به ساعت وارد شوند. مبلغ پایه بر اساس نرخ ساعتی × ساعت کارکرد محاسبه می‌شود.</div>
                         <div class="hourly-payroll-table-scroll">
@@ -1616,7 +1645,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for user in users %}
+                                    {% for user in users if user.employment_status == 'unofficial' %}
                                     <tr class="payroll-row hourly-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
@@ -1624,14 +1653,14 @@
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyRate" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyWorkHours" value="۰" inputmode="decimal" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyLeaveHours" value="۰" inputmode="decimal" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyPenaltyHours" value="۰" inputmode="decimal" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyOvertimeHours" value="۰" inputmode="decimal" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyBonus" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyEidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
-                                        <td><input type="text" class="hourly-payroll-input" data-username="{{ user.username }}" data-hourly-field="hourlyAdvance" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_rate" data-username="{{ user.username }}" data-hourly-field="hourlyRate" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_work_hours" data-username="{{ user.username }}" data-hourly-field="hourlyWorkHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_leave_hours" data-username="{{ user.username }}" data-hourly-field="hourlyLeaveHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_penalty_hours" data-username="{{ user.username }}" data-hourly-field="hourlyPenaltyHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_overtime_hours" data-username="{{ user.username }}" data-hourly-field="hourlyOvertimeHours" value="۰" inputmode="decimal" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_bonus" data-username="{{ user.username }}" data-hourly-field="hourlyBonus" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_eidi_sanavat" data-username="{{ user.username }}" data-hourly-field="hourlyEidiSanavat" value="۰" inputmode="numeric" autocomplete="off"></td>
+                                        <td><input type="text" class="hourly-payroll-input" name="hourly_advance" data-username="{{ user.username }}" data-hourly-field="hourlyAdvance" value="۰" inputmode="numeric" autocomplete="off"></td>
                                         <td class="payroll-calc-cell hourly-payroll-result" data-username="{{ user.username }}" data-hourly-result="netPay">—</td>
                                         <td class="payroll-calc-cell hourly-payroll-result" data-username="{{ user.username }}" data-hourly-result="totalPay">—</td>
                                     </tr>
@@ -1654,6 +1683,11 @@
                                 </tfoot>
                             </table>
                         </div>
+                        <div class="payroll-save-actions" aria-label="عملیات حقوق ساعتی">
+                            <button type="button" class="payroll-save-recalculate" onclick="computeHourlyPayrollTotals()">محاسبه مجدد</button>
+                            <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('hourly', this)">ذخیره تغییرات</button>
+                        </div>
+                        <p class="payroll-save-status" id="hourlyPayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
 
                     <!-- خلاصه جمع کل حقوق و دستمزد -->
@@ -1694,6 +1728,12 @@
                                 <small>ریال</small>
                             </article>
                         </div>
+                        <div class="payroll-save-actions" aria-label="عملیات جمع کل پرداخت‌ها">
+                            <button type="button" class="payroll-save-recalculate" onclick="updatePayrollSummary()">محاسبه مجدد</button>
+                            <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('summary', this)">ذخیره تغییرات</button>
+                            <button type="button" class="payroll-print-btn" onclick="openPayrollReportPreview()">نمایش گزارش چاپی</button>
+                        </div>
+                        <p class="payroll-save-status" id="summaryPayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
                 </div>
             </div>

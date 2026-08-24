@@ -739,27 +739,52 @@ html, body {
 /*  --- = پیام‌های وضعیت ---  */
 
 .success-message {
-    background-color: #4CAF50;
-    color: white;
-    padding: 15px;
-    height: 70px;  /* تنظیم ارتفاع پیام */
-    margin-top: 30px;
-    border-radius: 5px;
-    text-align: center;
-    position: absolute;
-    bottom: 20px; 
-    left: -300px; /* مخفی بودن پیام خارج از صفحه */
-    width: auto;
-    z-index: 9999;
-    font-size: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.5s ease-in-out; /* انیمیشن برای باز شدن و بسته شدن */
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 12000;
+    width: min(420px, calc(100vw - 30px));
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 0;
+    padding: 14px 17px 18px;
+    background: #ffffff;
+    color: #0d3b4e;
+    border: 1px solid rgba(7, 155, 112, .28);
+    border-left: 4px solid #079b70;
+    border-radius: 15px;
+    text-align: right;
+    font-size: 13px;
+    box-shadow: 0 14px 42px rgba(13, 59, 78, .22);
+    transform: translateX(calc(-100% - 34px));
+    opacity: 0;
+    transition: transform .42s cubic-bezier(.2,.75,.25,1), opacity .28s ease;
 }
 
-/* انیمیشن باز شدن پیام از سمت چپ */
+/* پیام‌های فلش قدیمی هم همان رفتار پاپ‌آپ جدید را دارند. */
 .success-message.show {
-    left: 20px; /* پس از انیمیشن، پیام به داخل صفحه می‌آید */
-    transition: all 0.4s ease-in-out; /* تغییر مدت زمان انیمیشن به 0.3 ثانیه */
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.success-message::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #e9faf3;
+    transform-origin: right center;
+}
+
+.success-message.show::after {
+    animation: legacy-success-message-countdown 5s linear forwards;
+}
+
+@keyframes legacy-success-message-countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
 }
 
 /* استایل برای ضربدر بستن */
@@ -813,7 +838,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 63rem; /* عرض باکس */
+    width: min(94vw, 1400px); /* فضای کافی برای نمایش کامل جدول کاربران */
     padding: 20px; /* فاصله داخلی */
     background-color: #ffffff; /* رنگ پس‌زمینه */
     border: 1px solid #ccc; /* حاشیه */
@@ -840,10 +865,35 @@ html, body {
     color: #555; /* رنگ متن محتوای باکس */
 }
 
+/* جدول کاربران در ظرف مستقل پیمایش می‌شود تا ستون‌های انتهایی بریده نشوند. */
+.user-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: auto;
+}
+
+.user-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.user-table-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #a9bbc5;
+}
+
+.user-table-scroll::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: #edf3f6;
+}
+
 /* جدول مستقل مدیریت کاربران در دسکتاپ */
 @media screen and (min-width: 769px) {
     #userTable {
         width: 100%;
+        min-width: 1120px;
         border: 1px solid #e2e8f0;
         border-collapse: separate;
         border-spacing: 0;
@@ -880,9 +930,24 @@ html, body {
 
     #userTable tbody {
         display: block;
-        max-height: 194px;
+        max-height: min(58vh, 560px);
         overflow-y: auto;
         overflow-x: hidden;
+        scrollbar-width: auto;
+        scrollbar-gutter: stable;
+    }
+
+    #userTable tbody::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #userTable tbody::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #a9bbc5;
+    }
+
+    #userTable tbody::-webkit-scrollbar-track {
+        background: #edf3f6;
     }
 
     #userTable tbody td {
@@ -912,13 +977,27 @@ html, body {
 
     #userTable th:nth-child(1), #userTable td:nth-child(1) { width: 4%; }
     #userTable th:nth-child(2), #userTable td:nth-child(2) { width: 10%; }
-    #userTable th:nth-child(3), #userTable td:nth-child(3) { width: 12%; }
-    #userTable th:nth-child(4), #userTable td:nth-child(4) { width: 14%; }
-    #userTable th:nth-child(5), #userTable td:nth-child(5) { width: 12%; }
-    #userTable th:nth-child(6), #userTable td:nth-child(6) { width: 9%; }
-    #userTable th:nth-child(7), #userTable td:nth-child(7) { width: 9%; }
-    #userTable th:nth-child(8), #userTable td:nth-child(8) { width: 12%; }
-    #userTable th:nth-child(9), #userTable td:nth-child(9) { width: 18%; }
+    #userTable th:nth-child(3), #userTable td:nth-child(3) { width: 11%; }
+    #userTable th:nth-child(4), #userTable td:nth-child(4) { width: 12%; }
+    #userTable th:nth-child(5), #userTable td:nth-child(5) { width: 11%; }
+    #userTable th:nth-child(6), #userTable td:nth-child(6) { width: 7%; }
+    #userTable th:nth-child(7), #userTable td:nth-child(7) { width: 7%; }
+    #userTable th:nth-child(8), #userTable td:nth-child(8) { width: 10%; }
+    #userTable th:nth-child(9), #userTable td:nth-child(9) { width: 10%; }
+    #userTable th:nth-child(10), #userTable td:nth-child(10) { width: 18%; }
+
+    #userTable td:nth-child(4),
+    #userTable td:nth-child(6),
+    #userTable td:nth-child(7),
+    #userTable td:nth-child(8),
+    #userTable td:nth-child(9),
+    #userTable td:last-child {
+        white-space: nowrap;
+    }
+
+    #userTable td:last-child {
+        min-width: 200px;
+    }
 }
 
 /* استایل برای دکمه‌های تغییرات */
@@ -3942,6 +4021,65 @@ margin-left: 15%;
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14);
 }
 
+.payroll-period-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e2ebf1;
+}
+
+.payroll-period-display-btn {
+    min-width: 112px;
+    min-height: 42px;
+    padding: 9px 22px;
+    border: 1px solid #07896f;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #079b80, #087fc0);
+    color: #fff;
+    cursor: pointer;
+    font: 800 13px 'Vazir', sans-serif;
+    box-shadow: 0 7px 16px rgba(0, 128, 112, .16);
+    transition: transform .18s ease, filter .18s ease;
+}
+
+.payroll-period-display-btn:hover:not(:disabled) {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+}
+
+.payroll-period-display-btn:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+.payroll-period-status {
+    min-height: 22px;
+    color: #087f64;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.payroll-period-status.is-error {
+    color: #c03945;
+}
+
+.payroll-period-status.is-warning {
+    color: #a56a00;
+}
+
+.payroll-print-frame {
+    position: fixed;
+    inset: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .payroll-table-scroll {
     overflow-x: auto;
     border: 1.5px solid #E6ECF2;
@@ -3978,6 +4116,51 @@ margin-left: 15%;
 .payroll-table-subhead th {
     font-size: 10.5px;
     padding: 8px 3px;
+}
+
+/* کنترل انتقال هر ستون از ماه قبل */
+#payrollComprehensiveTable {
+    min-width: 1480px;
+}
+
+#payrollComprehensiveTable .payroll-table-subhead th[data-field] {
+    min-width: 104px;
+    white-space: normal;
+    vertical-align: top;
+}
+
+.payroll-column-title {
+    display: block;
+    min-height: 34px;
+    line-height: 1.65;
+}
+
+.payroll-copy-previous-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 25px;
+    margin-top: 6px;
+    padding: 3px 9px;
+    border: 1px solid #9ac7d8;
+    border-radius: 7px;
+    background: #edf9fd;
+    color: #12627a;
+    cursor: pointer;
+    font: 700 10px 'Vazir', sans-serif;
+    white-space: nowrap;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.payroll-copy-previous-btn:hover:not(:disabled) {
+    border-color: #41a9c8;
+    background: #dff4fa;
+    transform: translateY(-1px);
+}
+
+.payroll-copy-previous-btn:disabled {
+    cursor: wait;
+    opacity: .65;
 }
 
 .payroll-table tbody td {
@@ -4339,6 +4522,11 @@ margin-left: 15%;
     #userTable th:nth-child(9),
     #userTable td:nth-child(9) {
         width: 8%;
+    }
+
+    #userTable th:nth-child(10),
+    #userTable td:nth-child(10) {
+        width: 12%;
     }
 
     .edit-btn, .trash-icon { margin: -3px; }
@@ -5681,6 +5869,15 @@ margin-left: 15%;
         padding: 12px;
     }
 
+    .payroll-period-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .payroll-period-display-btn {
+        width: 100%;
+    }
+
     /* نمای موبایل جدول محاسبه جامع — کارت به ازای هر پرسنل */
     .payroll-table-scroll {
         display: none;
@@ -5956,6 +6153,175 @@ margin-left: 15%;
 
 .notification-admin {
     margin-top: 3.79% !important;
+}
+
+/* محاسبات اضافه‌کاری و کسری‌کاری */
+.overtime-payroll-table-scroll {
+    overflow: auto;
+    max-height: calc(100vh - 330px);
+    min-height: 190px;
+    border: 1.5px solid #e6ecf2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.overtime-payroll-table {
+    min-width: 1460px;
+}
+
+.overtime-payroll-table th,
+.overtime-payroll-table td {
+    min-width: 92px;
+}
+
+.overtime-payroll-table .payroll-col-name {
+    min-width: 118px;
+    width: 118px;
+}
+
+.overtime-payroll-input {
+    width: 100%;
+    max-width: 100px;
+    min-height: 34px;
+    padding: 6px 5px;
+    border: 1.5px solid #d8e1ea;
+    border-radius: 8px;
+    background: #fff;
+    color: #0b2a3b;
+    font: 700 12px 'Vazir', sans-serif;
+    text-align: center;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.overtime-payroll-input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, .14);
+}
+
+.overtime-payroll-result {
+    color: #3e596b;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.overtime-payroll-money {
+    color: #0b6e4f;
+    font-weight: 900;
+}
+
+.overtime-payroll-table .overtime-payroll-total-row td[data-overtime-total="totalCost"],
+.overtime-payroll-table .overtime-payroll-total-row td[data-overtime-total="premium"] {
+    color: #0b6e4f;
+}
+
+@media (min-width: 769px) {
+    .overtime-payroll-table-scroll {
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    .payroll-panel .overtime-payroll-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .payroll-panel .overtime-payroll-table tfoot {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+}
+
+/* عملیات ذخیره و محاسبه حقوق */
+.payroll-save-actions,
+.overtime-payroll-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e2ebf1;
+}
+
+.payroll-save-actions button,
+.overtime-payroll-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font: 700 13px 'Vazir', sans-serif;
+    transition: transform .18s ease, filter .18s ease, background .18s ease;
+}
+
+.payroll-save-recalculate,
+.overtime-payroll-refresh {
+    border: 1px solid #b8cfdb;
+    background: #f2f8fb;
+    color: #315e73;
+}
+
+.payroll-save-recalculate:hover,
+.overtime-payroll-refresh:hover {
+    background: #e4f2f8;
+    transform: translateY(-1px);
+}
+
+.payroll-save-btn,
+.overtime-payroll-save {
+    border: 1px solid #07896f;
+    background: linear-gradient(135deg, #079b80, #087fc0);
+    color: #fff;
+    box-shadow: 0 7px 16px rgba(0, 128, 112, .2);
+}
+
+.payroll-save-btn:hover,
+.overtime-payroll-save:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+}
+
+.payroll-print-btn {
+    border: 1px solid #2563a6;
+    background: #eaf3ff;
+    color: #1457a6;
+}
+
+.payroll-print-btn:hover {
+    background: #dcecff;
+    transform: translateY(-1px);
+}
+
+.payroll-save-actions button:disabled,
+.overtime-payroll-actions button:disabled {
+    cursor: wait;
+    opacity: .62;
+    transform: none;
+}
+
+.payroll-save-status,
+.overtime-payroll-save-status {
+    min-height: 22px;
+    margin: 7px 2px 0;
+    color: #087f64;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.payroll-save-status.is-error,
+.overtime-payroll-save-status.is-error {
+    color: #c03945;
+}
+
+.payroll-save-status.is-warning,
+.overtime-payroll-save-status.is-warning {
+    color: #a56a00;
 }
 
 /* حقوق ساعتی پرسنل غیررسمی */
@@ -6291,9 +6657,98 @@ margin-left: 15%;
     }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 768px) {
+    .overtime-payroll-table-scroll {
+        max-height: none;
+        min-height: 0;
+    }
+
+    .overtime-payroll-actions,
+    .payroll-save-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .overtime-payroll-actions button,
+    .payroll-save-actions button {
+        width: 100%;
+    }
+
+    .payroll-save-actions,
+    .overtime-payroll-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .payroll-save-actions button,
+    .overtime-payroll-actions button {
+        width: 100%;
+    }
+}@media (max-width: 420px) {
     .hourly-payroll-card__fields,
     .hourly-payroll-card__results {
         grid-template-columns: 1fr;
     }
+}
+
+/* نوار دکمه‌های تب‌های حقوق باید داخل خود پنل قابل دسترسی باشد. */
+@media (min-width: 769px) {
+    .payroll-panel {
+        box-sizing: border-box;
+        max-height: calc(100dvh - 112px) !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        padding-bottom: 24px;
+        overscroll-behavior: contain;
+    }
+
+    .payroll-panel .payroll-frame {
+        overflow: visible;
+    }
+
+    .payroll-panel .payroll-tab-content.active {
+        min-height: 0;
+        padding-bottom: 4px;
+    }
+
+    .payroll-panel .payroll-save-actions,
+    .payroll-panel .overtime-payroll-actions {
+        position: relative;
+        z-index: 3;
+        margin-bottom: 2px;
+    }
+}
+
+/* وضعیت استخدام کارکنان */
+.employment-status-cell {
+    min-width: 118px;
+    white-space: nowrap;
+}
+
+.employment-status-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 86px;
+    padding: 7px 10px;
+    border: 1px solid #b9cbd5;
+    border-radius: 999px;
+    background: #f8fbfd;
+    color: #20475b;
+    font: 700 12px 'Vazir', sans-serif;
+    white-space: nowrap;
+}
+
+.employment-status-label[data-status="official"] {
+    border-color: rgba(16, 185, 129, .35);
+    background: rgba(16, 185, 129, .1);
+    color: #087f64;
+}
+
+.employment-status-label[data-status="unofficial"] {
+    border-color: rgba(14, 165, 233, .35);
+    background: rgba(14, 165, 233, .1);
+    color: #126393;
 }
