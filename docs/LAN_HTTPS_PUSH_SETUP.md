@@ -83,8 +83,15 @@ caddy trust
 ```
 
 `caddy trust` must be run with the required Windows approval on the server/client where
-Caddy's root certificate is installed. For a client that does not run Caddy, export or
-copy the matching root certificate from Caddy's data directory, then import it into
+Caddy's root certificate is installed. On this server, the generated root certificate
+was found at:
+
+```text
+C:\Users\Administrator\AppData\Roaming\Caddy\pki\authorities\local\root.crt
+```
+
+For a client that does not run Caddy, copy the matching root certificate from the
+server's Caddy data directory, then import it into
 **Local Computer > Trusted Root Certification Authorities** using the Windows
 certificate manager. Use the same Caddy installation/data directory and protect the CA
 private material.
