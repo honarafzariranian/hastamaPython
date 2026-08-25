@@ -30,19 +30,33 @@ make install
 
 `make run`
 
-#### اعلان Chrome برای درخواست‌های جدید
+#### اعلان Chrome و Web Push
 
-اعلان Chrome فقط در **Secure Context** کار می‌کند. روی همان کامپیوتر پنل ادمین را با
-`http://localhost:8080/admin` باز کنید؛ آدرس‌هایی مثل `http://192.168.x.x:8080` برای
-اعلان دسکتاپ امن محسوب نمی‌شوند. برای دسترسی از شبکه، سامانه را پشت HTTPS اجرا کنید.
-برای اجرای مستقیم با Uvicorn می‌توانید مسیر گواهی را تنظیم کنید:
+اعلان داخلی سامانه از inbox پایدار خوانده می‌شود و Web Push اختیاری آن با Service Worker
+می‌تواند حتی در تب پس‌زمینه، پنجره‌ی Minimize‌شده و نرم‌افزار دیگر Windows اعلان سیستم‌عامل را نشان دهد.
+برای فعال‌سازی، پکیج پروژه را نصب کنید و این مقادیر را فقط در `.env` سمت سرور قرار دهید:
+
+```env
+VAPID_PUBLIC_KEY=<public-key>
+VAPID_PRIVATE_KEY=<private-key>
+VAPID_SUBJECT=mailto:admin@example.com
+
+```
+
+روی `localhost`، HTTP یک Secure Context محسوب می‌شود. برای استفاده‌ی شبکه‌ای، HTTP با IP
+مناسب Web Push نیست و باید HTTPS معتبر داشته باشید؛ ترجیحاً یک نام داخلی مانند
+`hastama.local` با گواهی صادرشده برای همان نام (یا گواهی دارای IP در صورت پشتیبانی CA).
+گواهی CA باید روی تمام Clientها Trusted شود. سپس:
 
 ```sh
 SSL_CERTFILE=/path/to/cert.pem SSL_KEYFILE=/path/to/key.pem make run
 ```
 
-پس از یک‌بار کلیک روی زنگ اعلان و موافقت با مجوز Chrome، درخواست‌های مرخصی جدید
-ادمین تقریباً هر پنج ثانیه بررسی و با نام کاربر اعلام می‌شوند.
+پس از ورود، یک‌بار روی زنگ اعلان کلیک و مجوز را Allow کنید. Service Worker از مسیر
+`/static/js/hastama-sw.js` ثبت می‌شود و Subscription به کاربر نشست‌شده متصل است.
+اگر Permission قبلاً رد شده، آن را از Site settings > Notifications در Chrome فعال کنید.
+
+ساخت کلید VAPID را با ابزار امن Web Push انجام دهید؛ کلید خصوصی هرگز در Frontend، لاگ یا Git قرار نگیرد.
 
 ## Deploy app
 

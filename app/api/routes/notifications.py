@@ -16,6 +16,7 @@ from typing import Literal, Optional
 
 import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
+from app.services.web_push import public_key as web_push_public_key, send_to_subscriptions
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -157,6 +158,28 @@ def _fanout(cursor, notification_id: int) -> int:
     return max(0, cursor.rowcount if cursor.rowcount is not None else 0)
 
 
+def _deliver_push(conn, notification_id: int, username: str | None = None) -> None:
+    """Best-effort delivery from the durable inbox; source writes remain primary."""
+    if username:
+        where = "RTRIM(username)=?"
+        params = (username,)
+    else:
+        where = "1=1"
+        params = ()
+    cur = conn.cursor()
+    cur.execute("SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE disabled_at IS NULL AND " + where, params)
+    subscriptions = [{"endpoint": r[0], "p256dh": r[1], "auth": r[2]} for r in cur.fetchall()]
+    if not subscriptions:
+        return
+    cur.execute("SELECT id,title,content,type,action_url FROM notifications WHERE id=?", (notification_id,))
+    row = cur.fetchone()
+    if not row:
+        return
+    expired = send_to_subscriptions(subscriptions, {"id": row[0], "title": row[1], "body": row[2], "type": row[3], "url": row[4] or "/user_panel", "tag": "hastama-" + str(row[0])})
+    for endpoint in expired:
+        cur.execute("UPDATE push_subscriptions SET disabled_at=SYSUTCDATETIME(), updated_at=SYSUTCDATETIME() WHERE endpoint=?", (endpoint,))
+
+
 def publish_system_notification(
     conn,
     title: str,
@@ -196,6 +219,7 @@ def publish_system_notification(
             (notification_id, value),
         )
     _fanout(conn_cursor, notification_id)
+    _deliver_push(conn, notification_id)
     return notification_id
 
 
@@ -426,6 +450,60 @@ def delete_notification(notification_id: int, request: Request):
         return {"success": True}
     finally:
         conn.close()
+
+
+class PushSubscriptionInput(BaseModel):
+    endpoint: str = Field(min_length=1, max_length=2048)
+    keys: dict[str, str]
+    user_agent: Optional[str] = Field(default=None, max_length=500)
+
+
+@router.get("/push/config")
+def push_config(request: Request):
+    _actor(request)
+    return {"public_key": web_push_public_key(), "enabled": bool(web_push_public_key())}
+
+
+@router.post("/push/subscribe")
+def push_subscribe(payload: PushSubscriptionInput, request: Request):
+    username = _actor(request)
+    p256dh = str(payload.keys.get("p256dh") or "").strip()
+    auth = str(payload.keys.get("auth") or "").strip()
+    if not p256dh or not auth:
+        raise HTTPException(status_code=422, detail="اطلاعات Subscription ناقص است.")
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+        cur.execute("""UPDATE push_subscriptions SET username=?,p256dh=?,auth=?,user_agent=?,updated_at=SYSUTCDATETIME(),disabled_at=NULL
+                       WHERE endpoint=?""", (username,p256dh,auth,payload.user_agent,payload.endpoint))
+        if cur.rowcount == 0:
+            cur.execute("INSERT INTO push_subscriptions (username,endpoint,p256dh,auth,user_agent) VALUES (?,?,?,?,?)", (username,payload.endpoint,p256dh,auth,payload.user_agent))
+        conn.commit()
+        return {"success": True}
+    finally: conn.close()
+
+
+@router.delete("/push/subscribe")
+def push_unsubscribe(payload: PushSubscriptionInput, request: Request):
+    username = _actor(request)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn); cur = conn.cursor()
+        cur.execute("UPDATE push_subscriptions SET disabled_at=SYSUTCDATETIME(),updated_at=SYSUTCDATETIME() WHERE endpoint=? AND RTRIM(username)=?", (payload.endpoint,username))
+        conn.commit(); return {"success": True}
+    finally: conn.close()
+
+
+@router.get("/push/status")
+def push_status(request: Request):
+    username = _actor(request)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn); cur=conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM push_subscriptions WHERE RTRIM(username)=? AND disabled_at IS NULL", (username,))
+        return {"enabled": bool(web_push_public_key()), "subscriptions": int(cur.fetchone()[0])}
+    finally: conn.close()
 
 
 @router.get("/notifications")

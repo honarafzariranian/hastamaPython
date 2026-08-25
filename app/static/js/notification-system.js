@@ -50,6 +50,32 @@
         return typeof window !== 'undefined' && 'Notification' in window;
     }
 
+    function urlBase64ToUint8Array(value) {
+        var padding = '='.repeat((4 - value.length % 4) % 4);
+        var raw = atob((value + padding).replace(/-/g, '+').replace(/_/g, '/'));
+        return Uint8Array.from(raw, function (char) { return char.charCodeAt(0); });
+    }
+
+    async function registerWebPush() {
+        if (!browserNotificationsSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        if (window.isSecureContext === false) return;
+        try {
+            var registration = await navigator.serviceWorker.register('/static/js/hastama-sw.js', { scope: '/' });
+            var config = await api('/api/push/config');
+            if (!config.enabled || !config.public_key) return;
+            var subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(config.public_key)
+                });
+            }
+            await api('/api/push/subscribe', { method: 'POST', body: subscription.toJSON() });
+        } catch (error) {
+            console.warn('ثبت Web Push انجام نشد:', error.message || error);
+        }
+    }
+
     function requestBrowserNotificationPermission() {
         if (!browserNotificationsSupported()) {
             announce('این مرورگر از اعلان دسکتاپ پشتیبانی نمی‌کند.', true);
@@ -63,7 +89,7 @@
             return Promise.resolve('insecure');
         }
         if (Notification.permission === 'granted') {
-            announce('اعلان‌های مرورگر فعال هستند.');
+            registerWebPush();
             return Promise.resolve('granted');
         }
         if (Notification.permission === 'denied') {
@@ -71,6 +97,7 @@
             return Promise.resolve('denied');
         }
         return Notification.requestPermission().then(function (permission) {
+            if (permission === 'granted') registerWebPush();
             announce(permission === 'granted' ? 'اعلان‌های مرورگر فعال شد.' : 'اجازه اعلان داده نشد.', permission !== 'granted');
             return permission;
         }).catch(function () {
@@ -356,6 +383,7 @@
             refreshCount();setInterval(refreshCount,60000);
         }
         document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeEditor();closeCenter();closeDetail();}});
+        if (browserNotificationsSupported() && Notification.permission === 'granted') registerWebPush();
         startBrowserNotificationPolling();
         startNotificationStream();
     });

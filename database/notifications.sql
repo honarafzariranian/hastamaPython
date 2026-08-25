@@ -56,6 +56,29 @@ BEGIN
     );
 END;
 
+IF COL_LENGTH('dbo.notifications', 'push_tag') IS NULL
+    ALTER TABLE dbo.notifications ADD push_tag NVARCHAR(160) NULL;
+
+IF OBJECT_ID(N'dbo.push_subscriptions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.push_subscriptions (
+        id BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_push_subscriptions PRIMARY KEY,
+        username NVARCHAR(255) NOT NULL,
+        endpoint NVARCHAR(2048) NOT NULL,
+        p256dh NVARCHAR(512) NOT NULL,
+        auth NVARCHAR(512) NOT NULL,
+        user_agent NVARCHAR(500) NULL,
+        created_at DATETIME2(0) NOT NULL CONSTRAINT DF_push_subscriptions_created DEFAULT SYSUTCDATETIME(),
+        updated_at DATETIME2(0) NOT NULL CONSTRAINT DF_push_subscriptions_updated DEFAULT SYSUTCDATETIME(),
+        last_used_at DATETIME2(0) NULL,
+        disabled_at DATETIME2(0) NULL,
+        CONSTRAINT UQ_push_subscriptions_endpoint UNIQUE (endpoint)
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_push_subscriptions_user' AND object_id = OBJECT_ID('dbo.push_subscriptions'))
+    CREATE INDEX IX_push_subscriptions_user ON dbo.push_subscriptions(username, disabled_at, updated_at DESC);
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_notifications_status_schedule' AND object_id = OBJECT_ID('dbo.notifications'))
     CREATE INDEX IX_notifications_status_schedule ON dbo.notifications(status, scheduled_at DESC) INCLUDE (created_at, published_at);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_notifications_admin_list' AND object_id = OBJECT_ID('dbo.notifications'))

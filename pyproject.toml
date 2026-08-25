@@ -21,7 +21,8 @@ dependencies = [
     "pdfkit>=1.0.0",
     "persiantools>=2.0.0",
     "itsdangerous>=2.0.0",
-    "python-multipart>=0.0.5"
+    "python-multipart>=0.0.5",
+    "pywebpush>=2.0.0"
 ]
 
 [dependency-groups]

@@ -18,6 +18,11 @@ MEMOIZATION_FLAG: bool = config("MEMOIZATION_FLAG", cast=bool, default=True)
 
 PROJECT_NAME: str = config("PROJECT_NAME", default="manu")
 
+# Web Push configuration. The private key is backend-only; public key is safe
+# to expose to the authenticated browser during subscription setup.
+VAPID_PUBLIC_KEY: str = config("VAPID_PUBLIC_KEY", default="")
+VAPID_SUBJECT: str = config("VAPID_SUBJECT", default="")
+
 # logging configuration
 LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO
 logging.basicConfig(

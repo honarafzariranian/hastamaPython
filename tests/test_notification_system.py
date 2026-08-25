@@ -49,6 +49,21 @@ def test_frontend_never_renders_notification_content_as_html():
     assert "setInterval(refreshCount,60000)" in javascript
 
 
+def test_web_push_service_worker_and_api_are_integrated():
+    worker = (ROOT / "app/static/js/hastama-sw.js").read_text(encoding="utf-8")
+    javascript = (ROOT / "app/static/js/notification-system.js").read_text(encoding="utf-8")
+    routes = (ROOT / "app/api/routes/notifications.py").read_text(encoding="utf-8")
+    schema = (ROOT / "database/notifications.sql").read_text(encoding="utf-8")
+    assert "addEventListener('push'" in worker
+    assert "showNotification" in worker
+    assert "clients.matchAll" in worker
+    assert "registerWebPush" in javascript
+    assert "/api/push/subscribe" in routes
+    assert "/api/push/status" in routes
+    assert "CREATE TABLE dbo.push_subscriptions" in schema
+    assert "pywebpush" in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+
 def test_browser_notifications_use_the_durable_inbox_only():
     javascript = (ROOT / "app/static/js/notification-system.js").read_text(encoding="utf-8")
     routes = (ROOT / "app/api/routes/notifications.py").read_text(encoding="utf-8")
