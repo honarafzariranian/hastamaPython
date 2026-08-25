@@ -719,10 +719,7 @@
                     <h1>مدیریت اعلان‌ها</h1>
                     <p>ایجاد، زمان‌بندی و بررسی وضعیت مطالعه اعلان‌های سازمانی</p>
                 </div>
-                <div class="notification-page-actions">
-                    <button type="button" class="notification-secondary-btn" id="adminMarkAllRead">خواندن همه اعلان‌های من</button>
-                    <button type="button" class="notification-primary-btn" id="newNotificationButton">+ اعلان جدید</button>
-                </div>
+                <button type="button" class="notification-primary-btn" id="newNotificationButton">+ اعلان جدید</button>
             </div>
 
             <div class="notification-stats" aria-label="آمار اعلان‌ها">
@@ -738,6 +735,7 @@
                 <select id="adminNotificationStatus" aria-label="فیلتر وضعیت"><option value="">همه وضعیت‌ها</option><option value="draft">پیش‌نویس</option><option value="scheduled">زمان‌بندی‌شده</option><option value="published">منتشرشده</option><option value="archived">بایگانی</option></select>
                 <select id="adminNotificationType" aria-label="فیلتر نوع"><option value="">همه انواع</option><option value="general">عمومی</option><option value="announcement">اطلاعیه</option><option value="system">سیستمی</option><option value="warning">هشدار</option><option value="information">اطلاعات</option><option value="success">موفقیت</option><option value="reminder">یادآوری</option></select>
                 <select id="adminNotificationPriority" aria-label="فیلتر اولویت"><option value="">همه اولویت‌ها</option><option value="normal">عادی</option><option value="important">مهم</option><option value="high">بالا</option><option value="critical">بحرانی</option></select>
+                <button type="button" class="notification-secondary-btn" id="adminMarkAllRead">خواندن همه پیام ها</button>
             </div>
 
             <div class="notification-table-wrap">
@@ -1625,7 +1623,6 @@
                         <p class="payroll-save-status" id="comprehensivePayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>                                    <!-- محاسبه حقوق ساعتی پرسنل غیررسمی -->
                     <div id="hourly-payroll-calculation" class="payroll-tab-content" role="tabpanel">
-                        <div class="payroll-table-hint hourly-payroll-hint">مبالغ به ریال و زمان‌ها به ساعت وارد شوند. مبلغ پایه بر اساس نرخ ساعتی × ساعت کارکرد محاسبه می‌شود.</div>
                         <div class="hourly-payroll-table-scroll">
                             <table class="payroll-table hourly-payroll-table" id="hourlyPayrollTable">
                                 <thead>
@@ -1695,10 +1692,6 @@
 
                     <!-- خلاصه جمع کل حقوق و دستمزد -->
                     <div id="payroll-summary-calculation" class="payroll-tab-content" role="tabpanel">
-                        <div class="payroll-summary-intro">
-                            <strong>خلاصه پرداخت دوره</strong>
-                            <span>جمع ارقام از محاسبه جامع و حقوق ساعتی پرسنل نمایش داده می‌شود.</span>
-                        </div>
                         <div class="payroll-summary-grid">
                             <article class="payroll-summary-card payroll-summary-card--deduction">
                                 <span>جمع کل کسورات بابت بیمه پایه و تکمیلی</span>

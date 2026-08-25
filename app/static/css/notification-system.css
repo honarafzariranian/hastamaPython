@@ -57,13 +57,6 @@
     font-size: 24px;
 }
 
-.notification-page-actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
 .notification-page-head p,
 .notification-center-head p {
     margin: 0;
