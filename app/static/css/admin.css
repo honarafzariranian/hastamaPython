@@ -3918,6 +3918,8 @@ margin-left: 15%;
     gap: 4px;
     padding: 10px 12px 0 12px;
     background: #EFF4F8;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 .payroll-tab-btn {
@@ -4273,7 +4275,10 @@ margin-left: 15%;
         position: sticky !important;
         top: 88px !important;
         z-index: 55;
-        max-height: calc(100vh - 96px);
+        /* ارتفاع پنل دقیقاً در محدوده‌ی قابل‌مشاهده‌ی کنار سایدبار بماند. */
+        height: calc(100vh - 100px) !important;
+        max-height: calc(100vh - 100px) !important;
+        min-height: 0 !important;
         overflow: hidden;
         margin-top: 88px !important;
     }
@@ -4281,7 +4286,7 @@ margin-left: 15%;
     /* فقط جدول داخل باکس اسکرول عمودی می‌گیرد؛ عنوان، تب‌ها و تنظیمات ثابت می‌مانند */
     .payroll-panel .payroll-table-scroll {
         max-height: calc(100vh - 440px);
-        min-height: 160px;
+        min-height: 0;
         overflow-y: auto;
     }
 
@@ -6158,7 +6163,7 @@ margin-left: 15%;
 /* محاسبات اضافه‌کاری و کسری‌کاری */
 .overtime-payroll-table-scroll {
     overflow: auto;
-    max-height: calc(100vh - 330px);
+    max-height: calc(100vh - 420px);
     min-height: 190px;
     border: 1.5px solid #e6ecf2;
     border-radius: 14px;
@@ -6697,7 +6702,8 @@ margin-left: 15%;
 @media (min-width: 769px) {
     .payroll-panel {
         box-sizing: border-box;
-        max-height: calc(100dvh - 112px) !important;
+        height: calc(100dvh - 8.1rem - 12px) !important;
+        max-height: calc(100dvh - 8.1rem - 12px) !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         padding-bottom: 24px;
