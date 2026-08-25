@@ -18,7 +18,7 @@ endif
 # Target section and Global definitions
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean test install run deploy down venv generate_dot_env
+.PHONY: all clean test install run run-local run-lan deploy down venv generate_dot_env
 
 all: clean test install run deploy down
 
@@ -33,12 +33,14 @@ test: install
 install: generate_dot_env venv
 	uv sync --dev
 
-run: venv
-	@if [ -n "$${SSL_CERTFILE:-}" ] && [ -n "$${SSL_KEYFILE:-}" ]; then \
-		PYTHONPATH=app/ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080 --ssl-certfile "$$SSL_CERTFILE" --ssl-keyfile "$$SSL_KEYFILE"; \
-	else \
-		PYTHONPATH=app/ uv run uvicorn main:app --reload --host 0.0.0.0 --port 8080; \
-	fi
+run: run-local
+
+run-local: venv
+	PYTHONPATH=. uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+run-lan: venv
+	@echo Use start_hastama.bat on Windows to start FastAPI behind Caddy HTTPS.
+	@echo Final URL: https://hastama.local
 
 deploy: generate_dot_env
 	docker-compose build

@@ -1,0 +1,19 @@
+{
+    # Caddy's internal CA is suitable for a controlled LAN when its root CA
+    # is installed as trusted on each client computer.
+    auto_https disable_redirects
+}
+
+https://hastama.local {
+    tls internal
+
+    reverse_proxy 127.0.0.1:8000 {
+        # Keep notification SSE connections open and disable proxy buffering.
+        flush_interval -1
+        transport http {
+            read_timeout 0
+            write_timeout 0
+            response_header_timeout 0
+        }
+    }
+}

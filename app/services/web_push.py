@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
-import os
+from app.core.config import VAPID_PUBLIC_KEY, VAPID_SUBJECT
 from typing import Iterable
 
 logger = logging.getLogger("hastama.push")
@@ -11,9 +11,9 @@ logger = logging.getLogger("hastama.push")
 
 def _settings():
     return (
-        os.getenv("VAPID_PUBLIC_KEY", "").strip(),
-        os.getenv("VAPID_PRIVATE_KEY", "").strip(),
-        os.getenv("VAPID_SUBJECT", "").strip(),
+        VAPID_PUBLIC_KEY.strip(),
+        __import__("starlette.config", fromlist=["Config"]).Config(".env")("VAPID_PRIVATE_KEY", default="").strip(),
+        VAPID_SUBJECT.strip(),
     )
 
 
