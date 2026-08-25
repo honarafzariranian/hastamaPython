@@ -17,11 +17,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "tokens=2 delims=:" %%A in ('ipconfig ^| findstr /R /C:"IPv4 Address" /C:"IPv4 Address\. ") do set "LAN_IP=%%A"
-set "LAN_IP=%LAN_IP: =%"
-if "%LAN_IP%"=="" set "LAN_IP"=the server LAN IP
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "$c=Get-NetIPConfiguration ^| Where-Object {$_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up'} ^| Select-Object -First 1; if($c){$c.IPv4Address.IPAddress}"`) do set "LAN_IP=%%A"
+if "%LAN_IP%"=="" set "LAN_IP=not detected"
 
-start "Hastama FastAPI" cmd /k "set PYTHONPATH=app&& .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1"
+powershell -NoProfile -Command "$p=Get-NetTCPConnection -State Listen -LocalPort 8000 -ErrorAction SilentlyContinue; if($p -and ($p.LocalAddress -notin @('127.0.0.1','::1'))){Write-Error 'Port 8000 is already exposed outside loopback.'; exit 1}"
+if errorlevel 1 exit /b 1
+start "Hastama FastAPI" cmd /k "set PYTHONPATH=.&& .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1"
 timeout /t 3 /nobreak >nul
 start "Hastama Caddy HTTPS" cmd /k "caddy run --config "%~dp0Caddyfile" --adapter caddyfile"
 
@@ -29,5 +30,7 @@ echo.
 echo Hastama is starting.
 echo URL: https://hastama.local
  echo Server LAN IP detected: %LAN_IP%
+echo FastAPI: 127.0.0.1:8000 ^(loopback only^)
+echo HTTPS: 443 ^(Caddy^)
 echo Add the hostname to each client hosts file if LAN DNS is unavailable.
 endlocal

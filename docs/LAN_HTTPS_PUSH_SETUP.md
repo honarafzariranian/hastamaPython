@@ -62,6 +62,18 @@ Resolve-DnsName hastama.local
 
 ## HTTPS certificate with Caddy internal CA
 
+The server hostname must resolve before Caddy can be tested. Run the included client
+helper from an elevated prompt on a workstation (replace the address):
+
+```powershell
+.\setup_hastama_client.bat 192.168.1.100 C:\path\to\root.crt
+```
+
+The helper updates only the `hastama.local` line, flushes DNS, optionally imports the
+provided root certificate, and checks HTTPS. It does not change the application or
+open firewall ports.
+
+
 The included `Caddyfile` uses `tls internal` for the hostname. Start Caddy once, then
 copy Caddy's root certificate to each client and trust it in Windows:
 
@@ -84,6 +96,24 @@ an IP URL.
 
 ## Start and stop
 
+Install Caddy using the official Windows package or the official Caddy MSI/Chocolatey
+package approved by your organization. Verify it before startup:
+
+```powershell
+caddy version
+caddy validate --config .\Caddyfile --adapter caddyfile
+```
+
+If automatic installation is desired and Chocolatey is already approved and installed:
+
+```powershell
+choco install caddy -y
+```
+
+Do not use an untrusted binary source. The startup script intentionally fails rather
+than silently downloading or executing software.
+
+
 From the project directory:
 
 ```powershell
@@ -104,6 +134,16 @@ caddy run --config .\Caddyfile --adapter caddyfile
 Do not run the script while another FastAPI/Caddy instance owns the same ports.
 
 ## Firewall
+
+Create the firewall rule once in an elevated PowerShell prompt; the command is
+intentionally not run automatically by the application:
+
+```powershell
+if (-not (Get-NetFirewallRule -DisplayName 'Hastama HTTPS LAN' -ErrorAction SilentlyContinue)) {
+  New-NetFirewallRule -DisplayName 'Hastama HTTPS LAN' -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow -RemoteAddress 192.168.1.0/24
+}
+```
+
 
 Allow only HTTPS from the LAN. Run an appropriately scoped inbound rule in an elevated
 PowerShell prompt, after confirming the local network profile and subnet:
