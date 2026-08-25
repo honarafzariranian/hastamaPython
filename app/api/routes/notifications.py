@@ -6,33 +6,29 @@ All timestamps are UTC DATETIME2 values; the browser formats them in fa-IR.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import threading
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 
 import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
+from app.core.database import connect as db_connect
 from app.services.web_push import public_key as web_push_public_key, send_to_subscriptions
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/api", tags=["notifications"])
 
-_CONNECTION_STRING = os.getenv(
-    "DATABASE_URL",
-    "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost\\SQLEXPRESS;"
-    "DATABASE=userDB;Trusted_Connection=yes;",
-)
 _schema_ready = False
 _schema_lock = threading.Lock()
 
 
 def get_connection():
-    return pyodbc.connect(_CONNECTION_STRING)
+    return db_connect()
 
 
 def _ensure_schema(conn) -> None:
@@ -322,11 +318,9 @@ def admin_list(
         cur.execute(f"SELECT COUNT(*) FROM notifications n WHERE {where}", tuple(params))
         total = int(cur.fetchone()[0])
         cur.execute(
-            f"""SELECT n.*, (SELECT STRING_AGG(t.target_value, N'||') FROM notification_targets t WHERE t.notification_id=n.id) target_values,
-                COUNT(un.id) recipients, SUM(CASE WHEN un.read_at IS NOT NULL THEN 1 ELSE 0 END) read_count
-                FROM notifications n LEFT JOIN user_notifications un ON un.notification_id = n.id
-                WHERE {where} GROUP BY n.id,n.title,n.content,n.type,n.priority,n.status,n.target_type,
-                n.action_label,n.action_url,n.created_by,n.created_at,n.updated_at,n.published_at,n.scheduled_at,n.archived_at
+            f"""SELECT n.*, (SELECT STRING_AGG(t.target_value, N'||') FROM notification_targets t WHERE t.notification_id=n.id) target_values
+                FROM notifications n
+                WHERE {where}
                 ORDER BY {order} OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             tuple(params + [(page - 1) * page_size, page_size]),
         )
@@ -339,6 +333,32 @@ def admin_list(
         stats = _dict_rows(cur)[0]
         conn.commit()
         return {"items": items, "total": total, "page": page, "page_size": page_size, "pages": max(1, (total + page_size - 1) // page_size), "stats": stats}
+    finally:
+        conn.close()
+
+
+@router.post("/admin/notifications/read-all")
+def admin_mark_all_read(request: Request):
+    """Mark every visible notification in the current admin's inbox as read."""
+    username = _actor(request, admin=True)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+        cur.execute(
+            """UPDATE un
+               SET read_at=COALESCE(un.read_at,SYSUTCDATETIME()),
+                   updated_at=SYSUTCDATETIME()
+               FROM user_notifications un
+               INNER JOIN notifications n ON n.id=un.notification_id
+               WHERE RTRIM(un.username)=?
+                 AND un.dismissed_at IS NULL
+                 AND n.status IN ('published','archived')""",
+            (username,),
+        )
+        changed = max(0, cur.rowcount or 0)
+        conn.commit()
+        return {"success": True, "updated": changed}
     finally:
         conn.close()
 
@@ -587,7 +607,7 @@ def notification_stream(request: Request):
     """Push newly delivered inbox notifications, including ticket events."""
     username = _actor(request)
 
-    def events():
+    async def events():
         seen = None
         try:
             last_event_id = int(request.headers.get("last-event-id") or 0)
@@ -627,7 +647,7 @@ def notification_stream(request: Request):
                             yield "id: " + str(item["id"]) + "\ndata: " + json.dumps(item, ensure_ascii=False) + "\n\n"
                     seen = set(current)
                 yield ": heartbeat\n\n"
-                time.sleep(2)
+                await asyncio.sleep(2)
         except (GeneratorExit, ConnectionError):
             return
 

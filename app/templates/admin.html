@@ -719,7 +719,10 @@
                     <h1>مدیریت اعلان‌ها</h1>
                     <p>ایجاد، زمان‌بندی و بررسی وضعیت مطالعه اعلان‌های سازمانی</p>
                 </div>
-                <button type="button" class="notification-primary-btn" id="newNotificationButton">+ اعلان جدید</button>
+                <div class="notification-page-actions">
+                    <button type="button" class="notification-secondary-btn" id="adminMarkAllRead">خواندن همه اعلان‌های من</button>
+                    <button type="button" class="notification-primary-btn" id="newNotificationButton">+ اعلان جدید</button>
+                </div>
             </div>
 
             <div class="notification-stats" aria-label="آمار اعلان‌ها">
@@ -739,8 +742,8 @@
 
             <div class="notification-table-wrap">
                 <table class="notification-admin-table">
-                    <thead><tr><th>اعلان</th><th>نوع / اولویت</th><th>مخاطب</th><th>وضعیت</th><th>آمار مطالعه</th><th>تاریخ</th><th>عملیات</th></tr></thead>
-                    <tbody id="adminNotificationRows"><tr><td colspan="7" class="notification-loading">در حال دریافت اعلان‌ها…</td></tr></tbody>
+                    <thead><tr><th>اعلان</th><th>نوع / اولویت</th><th>مخاطب</th><th>وضعیت</th><th>تاریخ</th><th>عملیات</th></tr></thead>
+                    <tbody id="adminNotificationRows"><tr><td colspan="6" class="notification-loading">در حال دریافت اعلان‌ها…</td></tr></tbody>
                 </table>
             </div>
             <div class="notification-pagination" id="adminNotificationPagination"></div>

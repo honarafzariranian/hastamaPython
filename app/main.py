@@ -23,6 +23,8 @@ from app.api.routes.notifications import (
     publish_system_notification_to_admins,
 )
 from app.api.routes.ticketing import router as ticketing_router
+from app.api.routes.health import router as health_router
+from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
 from core.config import API_PREFIX, DEBUG, MEMOIZATION_FLAG, PROJECT_NAME, VERSION, SECRET_KEY
@@ -31,7 +33,7 @@ from core.number_format import convert_to_persian_numbers
 from core.password_utils import get_user_table_columns, hash_password, insert_user_with_optional_hash
 
 from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Path, Body, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -40,17 +42,48 @@ from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 
 # ایجاد اپلیکیشن FastAPI
-app = FastAPI(debug=True)
+app = FastAPI(debug=DEBUG)
 
-# کلید نشست باید از محیط اجرا بیاید؛ fallback تصادفی فقط برای اجرای توسعه است.
-_session_secret = os.getenv("SESSION_SECRET_KEY") or str(SECRET_KEY or "") or os.urandom(32).hex()
-app.add_middleware(SessionMiddleware, secret_key=_session_secret)
+# Production requires an explicitly configured stable signing key.
+_session_secret = os.getenv("SESSION_SECRET_KEY") or str(SECRET_KEY or "")
+if not _session_secret and not DEBUG:
+    raise RuntimeError("SESSION_SECRET_KEY or SECRET_KEY must be configured when DEBUG=false")
+if not _session_secret:
+    _session_secret = os.urandom(32).hex()
+app.add_middleware(SessionMiddleware, secret_key=_session_secret, https_only=not DEBUG, same_site="lax")
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; frame-ancestors 'none'")
+    return response
 
 # ثبت مسیر استاتیک برای فایل‌های CSS و JavaScript
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Root-scoped Service Worker endpoint. Keeping the worker source under static/ while
+# serving it at /hastama-sw.js allows it to control the whole same-origin app.
+@app.get("/hastama-sw.js", include_in_schema=False)
+async def hastama_service_worker():
+    return FileResponse("app/static/js/hastama-sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})
+
 app.include_router(auth_router)
 app.include_router(notifications_router)
 app.include_router(ticketing_router)
+app.include_router(health_router)
+
+@app.on_event("startup")
+def start_notification_background_tasks():
+    start_background_tasks()
+
+
+@app.on_event("shutdown")
+def stop_notification_background_tasks():
+    stop_background_tasks()
 
 # تنظیمات برای HTML Templates
 templates = Jinja2Templates(directory="app/templates")

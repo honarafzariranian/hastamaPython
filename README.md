@@ -43,10 +43,11 @@ VAPID_SUBJECT=mailto:admin@example.com
 
 ```
 
-روی `localhost`، HTTP یک Secure Context محسوب می‌شود. برای استفاده‌ی شبکه‌ای، HTTP با IP
-مناسب Web Push نیست و باید HTTPS معتبر داشته باشید؛ ترجیحاً یک نام داخلی مانند
-`hastama.local` با گواهی صادرشده برای همان نام (یا گواهی دارای IP در صورت پشتیبانی CA).
-گواهی CA باید روی تمام Clientها Trusted شود. سپس:
+روی `localhost`، HTTP یک Secure Context محسوب می‌شود. برای استفاده‌ی شبکه‌ای، HTTP با IP مناسب Web Push نیست و باید HTTPS معتبر داشته باشید.
+راهکار اصولی این است که یک DNS داخلی، نام سامانه را به IP سرور resolve کند و گواهی
+سازمانی برای همان نام روی Caddy نصب شود. در این حالت کلاینت‌های عضو دامنه/مدیریت‌شده
+به‌صورت مرکزی گواهی CA را Trusted می‌کنند و نیازی به ویرایش hosts یا نصب دستی روی هر
+سیستم نیست. سپس:
 
 ```sh
 SSL_CERTFILE=/path/to/cert.pem SSL_KEYFILE=/path/to/key.pem make run

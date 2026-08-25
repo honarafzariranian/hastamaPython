@@ -43,6 +43,7 @@
 
 .notification-page-head,
 .notification-center-head {
+
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -54,6 +55,13 @@
     margin: 3px 0 6px;
     color: var(--text, #0D3B4E);
     font-size: 24px;
+}
+
+.notification-page-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .notification-page-head p,
@@ -199,9 +207,7 @@
 }
 
 .notification-title-cell strong,
-.notification-title-cell span,
-.notification-read-stat strong,
-.notification-read-stat span {
+.notification-title-cell span {
     display: block;
 }
 
@@ -214,16 +220,17 @@
     white-space: nowrap;
 }
 
-.notification-read-stat span {
-    margin-top: 3px;
-    color: var(--text-muted, #4D6B7A);
-    font-size: 11px;
+.notification-badges {
+    vertical-align: middle;
 }
 
-.notification-badges {
+.notification-badges-list {
     display: flex;
+    align-items: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
     gap: 5px;
+    min-height: 28px;
 }
 
 .notification-badge {

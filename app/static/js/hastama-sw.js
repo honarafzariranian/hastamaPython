@@ -1,4 +1,4 @@
-/* Hastama Web Push service worker. Keep this file same-origin and scope it at /. */
+/* Hastama Web Push service worker. Served at /hastama-sw.js for root scope. */
 self.addEventListener('push', function (event) {
     var fallback = { title: 'اعلان جدید هستما', body: 'یک اعلان جدید دریافت شد.' };
     var data = fallback;

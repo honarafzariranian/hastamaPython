@@ -11,6 +11,8 @@ if not exist ".venv\Scripts\python.exe" (
     echo Run: uv sync --dev
     exit /b 1
 )
+if "%HASTAMA_HOST%"=="" set "HASTAMA_HOST=hastama.local"
+
 where caddy >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Caddy is not available on PATH.
@@ -24,7 +26,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "$c=Get-NetIPConfiguration ^| Where-Object {$_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up'} ^| Select-Object -First 1; if($c){$c.IPv4Address.IPAddress}"`) do set "LAN_IP=%%A"
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -Command "$c=Get-NetIPConfiguration | Where-Object {$_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up'} | Select-Object -First 1; if($c){$c.IPv4Address.IPAddress}"`) do set "LAN_IP=%%A"
 if "%LAN_IP%"=="" set "LAN_IP=not detected"
 
 powershell -NoProfile -Command "$p=Get-NetTCPConnection -State Listen -LocalPort 8000 -ErrorAction SilentlyContinue; if($p -and ($p.LocalAddress -notin @('127.0.0.1','::1'))){Write-Error 'Port 8000 is already exposed outside loopback.'; exit 1}"
@@ -40,10 +42,10 @@ powershell -NoProfile -Command "$a=Get-NetTCPConnection -State Listen -LocalPort
 if errorlevel 1 exit /b 1
 
 echo.
-echo URL: https://hastama.local
+echo URL: https://%HASTAMA_HOST%
 echo Server LAN IP: %LAN_IP%
-echo FastAPI: 127.0.0.1:8000 ^(loopback only^)
-echo HTTPS: TCP 443 ^(Caddy^)
+echo FastAPI: 127.0.0.1:8000 (loopback only)
+echo HTTPS: TCP 443 (Caddy; internal CA, certificate auto-generated)
 echo Web Push: check VAPID configuration in .env
 echo SSE: /api/notifications/stream and /api/notifications/admin-stream
 echo ==================================================

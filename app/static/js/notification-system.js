@@ -60,9 +60,15 @@
         if (!browserNotificationsSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
         if (window.isSecureContext === false) return;
         try {
-            var registration = await navigator.serviceWorker.register('/static/js/hastama-sw.js', { scope: '/' });
+            var registration = await navigator.serviceWorker.register('/hastama-sw.js', { scope: '/' });
+            if (!registration.active && !registration.waiting && !registration.installing) {
+                throw new Error('Service Worker فعال نشد.');
+            }
             var config = await api('/api/push/config');
-            if (!config.enabled || !config.public_key) return;
+            if (!config.enabled || !config.public_key) {
+                console.info('Web Push فعال نیست: کلید VAPID روی سرور تنظیم نشده است.');
+                return;
+            }
             var subscription = await registration.pushManager.getSubscription();
             if (!subscription) {
                 subscription = await registration.pushManager.subscribe({
@@ -239,7 +245,7 @@
             type:document.getElementById('adminNotificationType').value,
             priority:document.getElementById('adminNotificationPriority').value });
         var body = document.getElementById('adminNotificationRows');
-        body.replaceChildren(); var loadingRow=el('tr'); var loading=el('td','notification-loading','در حال دریافت اعلان‌ها…'); loading.colSpan=7; loadingRow.append(loading); body.append(loadingRow);
+        body.replaceChildren(); var loadingRow=el('tr'); var loading=el('td','notification-loading','در حال دریافت اعلان‌ها…'); loading.colSpan=6; loadingRow.append(loading); body.append(loadingRow);
         try {
             var data = await api('/api/admin/notifications?' + query);
             adminState.loaded = true; adminState.items.clear(); data.items.forEach(function(item){ adminState.items.set(String(item.id), item); });
@@ -252,31 +258,42 @@
             if(count){ count.textContent=fa.format(scheduled); count.hidden=!scheduled; }
             pagination(document.getElementById('adminNotificationPagination'), data.page, data.pages, loadAdmin);
         } catch(error) {
-            body.replaceChildren(); var row=el('tr'); var cell=el('td','notification-error',error.message); cell.colSpan=7; row.append(cell); body.append(row);
+            body.replaceChildren(); var row=el('tr'); var cell=el('td','notification-error',error.message); cell.colSpan=6; row.append(cell); body.append(row);
         }
     }
 
     function badge(kind, value, map) { var b=el('span','notification-badge notification-badge--'+value); b.append(el('span','notification-badge-icon', kind==='type' ? typeIcons[value] : '●'), document.createTextNode(label(map,value))); return b; }
     function renderAdminRows(items) {
         var body=document.getElementById('adminNotificationRows'); body.replaceChildren();
-        if(!items.length){ var r=el('tr'), c=el('td','notification-empty','اعلانی مطابق فیلترها پیدا نشد.'); c.colSpan=7; r.append(c); body.append(r); return; }
+        if(!items.length){ var r=el('tr'), c=el('td','notification-empty','اعلانی مطابق فیلترها پیدا نشد.'); c.colSpan=6; r.append(c); body.append(r); return; }
         items.forEach(function(item){
             var row=el('tr');
             var title=el('td','notification-title-cell'); title.append(el('strong','',item.title),el('span','',item.content));
-            var kind=el('td','notification-badges'); kind.append(badge('type',item.type,types),badge('priority',item.priority,priorities));
+            var kind=el('td','notification-badges'); var badgeList=el('div','notification-badges-list'); badgeList.append(badge('type',item.type,types),badge('priority',item.priority,priorities)); kind.append(badgeList);
             var audience=el('td','',label(targets,item.target_type));
             var state=el('td'); state.append(badge('status',item.status,statuses));
-            var recipients=Number(item.recipients||0), read=Number(item.read_count||0), percent=recipients ? Math.round(read*100/recipients):0;
-            var stat=el('td','notification-read-stat'); stat.append(el('strong','',fa.format(read)+' / '+fa.format(recipients)),el('span','',fa.format(percent)+'٪ مطالعه'));
             var date=el('td','',formatDate(item.published_at || item.scheduled_at || item.created_at));
             var actions=el('td','notification-row-actions');
             if(item.status==='draft'||item.status==='scheduled') actions.append(actionButton('ویرایش','edit',item.id),actionButton('انتشار','publish',item.id));
             if(item.status!=='archived') actions.append(actionButton('بایگانی','archive',item.id));
             if(item.status!=='published') actions.append(actionButton('حذف','delete',item.id));
-            row.append(title,kind,audience,state,stat,date,actions); body.append(row);
+            row.append(title,kind,audience,state,date,actions); body.append(row);
         });
     }
     function actionButton(text, action, id){ var b=el('button','notification-action-btn',text); b.type='button'; b.dataset.action=action; b.dataset.id=id; return b; }
+
+    async function markAllAdminRead(){
+        var button=document.getElementById('adminMarkAllRead');
+        if(button) button.disabled=true;
+        try{
+            var result=await api('/api/admin/notifications/read-all',{method:'POST'});
+            announce(result.updated ? 'همه اعلان‌های شما خوانده شد.' : 'اعلان خوانده‌نشده‌ای برای شما وجود ندارد.');
+        }catch(error){
+            announce(error.message,true);
+        }finally{
+            if(button) button.disabled=false;
+        }
+    }
 
     async function ensureTargets(){ if(!adminState.targets) adminState.targets=await api('/api/admin/notification-targets'); return adminState.targets; }
     function openEditor(item){
@@ -354,6 +371,7 @@
     document.addEventListener('DOMContentLoaded',function(){
         if(document.getElementById('notificationAdminBox')){
             document.getElementById('newNotificationButton').onclick=function(){openEditor(null);};
+            document.getElementById('adminMarkAllRead').onclick=markAllAdminRead;
             document.querySelectorAll('[data-notification-close]').forEach(function(n){n.onclick=closeEditor;});
             document.getElementById('notificationTargetType').onchange=function(){updateTargetOptions([]);};document.getElementById('notificationContent').oninput=updateCount;
             document.querySelectorAll('[data-submit-status]').forEach(function(b){b.onclick=function(){submitNotification(b.dataset.submitStatus);};});

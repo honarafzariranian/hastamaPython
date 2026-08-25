@@ -930,7 +930,7 @@ html, body {
 
     #userTable tbody {
         display: block;
-        max-height: min(58vh, 560px);
+        max-height: min(25vh, 560px);
         overflow-y: auto;
         overflow-x: hidden;
         scrollbar-width: auto;
