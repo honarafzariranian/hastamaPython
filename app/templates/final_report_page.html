@@ -35,9 +35,23 @@
         </div>
     </div>
 
+    <!-- نوار تب‌بندی گزارش -->
     <!-- جدول حضور و غیاب نهایی -->
-    <div class="report-content-layout">
-        <div class="bala">
+    <div class="report-content-layout" data-tab="daily">
+        <div class="report-tabs" role="tablist" aria-label="بخش‌های گزارش نهایی">
+            <button type="button" class="report-tab is-active" role="tab" aria-selected="true"
+                    aria-controls="panel-daily" data-tab-target="daily">
+                <span class="report-tab__icon" aria-hidden="true">📅</span>
+                <span>جزئیات روزانهٔ ثبت‌شده</span>
+            </button>
+            <button type="button" class="report-tab" role="tab" aria-selected="false"
+                    aria-controls="panel-summary" data-tab-target="summary">
+                <span class="report-tab__icon" aria-hidden="true">📊</span>
+                <span>جداول و خلاصهٔ عملکرد</span>
+            </button>
+        </div>
+
+        <div class="bala" id="panel-daily">
         <div class="hozoorBox">
             <h2>جدول حضور و غیاب</h2>
             <table class="hozoorUsersReport-table" id="hozoorUsersReportTable">
@@ -67,7 +81,7 @@
     </div>
 
     <!-- باکس های آمار و اعداد و جداول مرخصی، پاس ساعتی و اضافه کاری -->
-    <div class="paein">
+    <div class="paein" id="panel-summary">
         <div class="left-section">
             <div class="ezafeBox">
                 <h2>جدول اضافه‌کار</h2>
