@@ -102,21 +102,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         row.innerHTML = `
-            <td>${convertToPersianNumbers(item.calculatedTime || "")}</td>
-            <td>${convertToPersianNumbers(item.overtime || "")}</td>
-            <td>${convertToPersianNumbers(item.earlyExit || "")}</td>
-            <td>${convertToPersianNumbers(item.earlyStart || "")}</td>
-            <td>${convertToPersianNumbers(item.delay || "")}</td>
-
-            <td>${convertToPersianNumbers(item.exitTime2 || "")}</td>
-            <td>${convertToPersianNumbers(item.entryTime2 || "")}</td>
-
-            <td>${convertToPersianNumbers(item.exitTime || "")}</td>
-            <td>${convertToPersianNumbers(item.entryTime || "")}</td>
-
-            <td>${item.weekday || ""}</td>
-            <td>${convertToPersianNumbers(item.date || "")}</td>
             <td>${convertToPersianNumbers(index + 1)}</td>
+            <td>${convertToPersianNumbers(item.date || "")}</td>
+            <td>${item.weekday || ""}</td>
+
+            <td>${convertToPersianNumbers(item.entryTime || "")}</td>
+            <td>${convertToPersianNumbers(item.exitTime || "")}</td>
+
+            <td>${convertToPersianNumbers(item.entryTime2 || "")}</td>
+            <td>${convertToPersianNumbers(item.exitTime2 || "")}</td>
+
+            <td>${convertToPersianNumbers(item.delay || "")}</td>
+            <td>${convertToPersianNumbers(item.earlyStart || "")}</td>
+            <td>${convertToPersianNumbers(item.earlyExit || "")}</td>
+            <td>${convertToPersianNumbers(item.overtime || "")}</td>
+            <td>${convertToPersianNumbers(item.calculatedTime || "")}</td>
         `;
         tableBody.appendChild(row);
     });
