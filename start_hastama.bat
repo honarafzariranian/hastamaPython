@@ -46,7 +46,6 @@ echo URL: https://%HASTAMA_HOST%
 echo Server LAN IP: %LAN_IP%
 echo FastAPI: 127.0.0.1:8000 (loopback only)
 echo HTTPS: TCP 443 (Caddy; internal CA, certificate auto-generated)
-echo Web Push: check VAPID configuration in .env
 echo SSE: /api/notifications/stream and /api/notifications/admin-stream
 echo ==================================================
 endlocal

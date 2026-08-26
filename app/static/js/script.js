@@ -24,11 +24,12 @@ function login() {
         if (data.success) {
             window.location.href = data.redirect;
         } else {
-            alert(data.message || 'نام کاربری یا رمز عبور اشتباه است');
+            showSystemError(data.message || 'نام کاربری یا رمز عبور اشتباه است');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        showSystemError('خطا در برقراری ارتباط با سامانه.');
     });
     
 }

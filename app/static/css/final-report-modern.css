@@ -1,0 +1,994 @@
+/* =====================================================================
+   HASTAMA final report — modern report workspace
+   این فایل بعد از لایه‌های قدیمی و تم بارگذاری می‌شود تا ظاهر این صفحه
+   مستقل، یکپارچه و بدون وابستگی به اندازه‌های ثابت قدیمی باشد.
+   ===================================================================== */
+
+:root {
+    --report-bg: #f1f7f7;
+    --report-surface: #ffffff;
+    --report-surface-soft: #f7fbfb;
+    --report-ink: #123747;
+    --report-muted: #6b8490;
+    --report-line: #dce9eb;
+    --report-primary: #087f72;
+    --report-primary-2: #0e7490;
+    --report-blue: #1686b5;
+    --report-green: #0b9278;
+    --report-amber: #c78318;
+    --report-red: #c95762;
+    --report-violet: #7464bd;
+    --report-shadow: 0 14px 40px rgba(18, 55, 71, .08);
+    --report-shadow-sm: 0 5px 18px rgba(18, 55, 71, .06);
+    --report-radius: 22px;
+}
+
+body.final-report-page {
+    display: block !important;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 4% 0%, rgba(20, 184, 166, .08), transparent 28rem),
+        linear-gradient(180deg, var(--report-bg) 0%, #f8fbfb 100%);
+    color: var(--report-ink);
+    font-family: 'Vazir', sans-serif;
+}
+
+body.final-report-page,
+body.final-report-page * {
+    font-family: 'Vazir', sans-serif;
+}
+
+body.final-report-page * {
+    box-sizing: border-box;
+}
+
+body.final-report-page .onvanha,
+body.final-report-page .bala,
+body.final-report-page .paein,
+body.final-report-page .emzaha {
+    width: min(1180px, calc(100% - 40px));
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* ─── سرصفحه ─── */
+body.final-report-page .onvanha {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    margin-top: 28px;
+    padding: clamp(24px, 4vw, 42px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 95% 10%, rgba(77, 208, 225, .22), transparent 18rem),
+        linear-gradient(135deg, #073e52 0%, #087f72 58%, #0c9a83 100%);
+    box-shadow: 0 20px 50px rgba(8, 91, 100, .2);
+    color: #fff;
+}
+
+body.final-report-page .onvanha::after {
+    position: absolute;
+    right: -55px;
+    bottom: -75px;
+    width: 220px;
+    height: 220px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 50%;
+    content: '';
+    pointer-events: none;
+}
+
+body.final-report-page .titleBox {
+    width: auto;
+    height: auto;
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #fff;
+    font-size: clamp(1.35rem, 2.6vw, 2.1rem);
+    font-weight: 900;
+    line-height: 1.6;
+    text-align: right;
+}
+
+body.final-report-page .titleBox::before {
+    display: block;
+    margin-bottom: 5px;
+    color: rgba(218, 255, 249, .78);
+    content: 'گزارش نهایی حضور و غیاب';
+    font-size: .76rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+}
+
+body.final-report-page .onvanha::before {
+    position: absolute;
+    top: 24px;
+    left: 30px;
+    color: rgba(255, 255, 255, .6);
+    content: 'HASTAMA';
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+}
+
+body.final-report-page .userInfoBox {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 17px;
+    background: rgba(255, 255, 255, .1);
+    box-shadow: none;
+    color: #fff;
+    text-align: right;
+}
+
+body.final-report-page .userInfoSection,
+body.final-report-page .userInfoName {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: auto;
+    min-width: 0;
+    padding: 14px 18px;
+}
+
+body.final-report-page .userInfoName {
+    border-right: 1px solid rgba(255, 255, 255, .16);
+}
+
+body.final-report-page .userInfoTitle {
+    color: rgba(230, 255, 251, .7);
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+body.final-report-page .userInfoValue {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: .98rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── بخش اصلی و جدول حضور ─── */
+body.final-report-page .bala {
+    margin-top: 22px;
+}
+
+body.final-report-page .hozoorBox,
+body.final-report-page .ezafeBox,
+body.final-report-page .passBox,
+body.final-report-page .hourlyPassBox,
+body.final-report-page .numberReport,
+body.final-report-page .exportButtons {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    border: 1px solid var(--report-line);
+    border-radius: var(--report-radius);
+    background: var(--report-surface);
+    box-shadow: var(--report-shadow);
+}
+
+body.final-report-page .hozoorBox {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.final-report-page .hozoorBox h2,
+body.final-report-page .ezafeBox h2,
+body.final-report-page .passBox h2,
+body.final-report-page .hourlyPassBox h2 {
+    width: auto;
+    margin: 0;
+    color: var(--report-ink);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.7;
+    text-align: right;
+}
+
+body.final-report-page .hozoorBox::before {
+    display: block;
+    padding: 18px 22px 15px;
+    border-bottom: 1px solid var(--report-line);
+    background: linear-gradient(90deg, rgba(14, 116, 144, .08), rgba(8, 127, 114, .02));
+    color: var(--report-ink);
+    content: 'جزئیات روزانهٔ ثبت‌شده';
+    font-size: .88rem;
+    font-weight: 800;
+}
+
+body.final-report-page .hozoorBox h2 {
+    display: none;
+}
+
+body.final-report-page .hozoorBox > .rt-scroll,
+body.final-report-page .hozoorBox > .rt-scroll-wrap,
+body.final-report-page .hozoorBox > div {
+    max-width: 100%;
+}
+
+body.final-report-page #hozoorUsersReportTable,
+body.final-report-page #ezafeKarUsersReportTable,
+body.final-report-page #morkhcUsersReportTable,
+body.final-report-page #hourlyPassUsersReportTable {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+    color: var(--report-ink);
+}
+
+body.final-report-page #hozoorUsersReportTable {
+    display: table;
+    max-height: none;
+    overflow: visible;
+    table-layout: auto;
+}
+
+body.final-report-page #hozoorUsersReportTable thead,
+body.final-report-page #hozoorUsersReportTable tbody,
+body.final-report-page #hozoorUsersReportTable tr {
+    display: table-row-group;
+    width: auto;
+    table-layout: auto;
+}
+
+body.final-report-page #hozoorUsersReportTable thead { display: table-header-group; }
+body.final-report-page #hozoorUsersReportTable tr { display: table-row; }
+
+body.final-report-page #hozoorUsersReportTable th,
+body.final-report-page #hozoorUsersReportTable td,
+body.final-report-page #ezafeKarUsersReportTable th,
+body.final-report-page #ezafeKarUsersReportTable td,
+body.final-report-page #morkhcUsersReportTable th,
+body.final-report-page #morkhcUsersReportTable td,
+body.final-report-page #hourlyPassUsersReportTable th,
+body.final-report-page #hourlyPassUsersReportTable td {
+    padding: 12px 10px;
+    border: 0;
+    border-bottom: 1px solid var(--report-line);
+    color: var(--report-ink);
+    font-size: .76rem;
+    line-height: 1.7;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+body.final-report-page #hozoorUsersReportTable th,
+body.final-report-page #ezafeKarUsersReportTable th,
+body.final-report-page #morkhcUsersReportTable th,
+body.final-report-page #hourlyPassUsersReportTable th {
+    background: #f5fafb;
+    color: #53717d;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+body.final-report-page #hozoorUsersReportTable tbody tr:nth-child(even),
+body.final-report-page #ezafeKarUsersReportTable tbody tr:nth-child(even),
+body.final-report-page #morkhcUsersReportTable tbody tr:nth-child(even),
+body.final-report-page #hourlyPassUsersReportTable tbody tr:nth-child(even) {
+    background: rgba(241, 247, 247, .55);
+}
+
+body.final-report-page #hozoorUsersReportTable tbody tr:hover,
+body.final-report-page #ezafeKarUsersReportTable tbody tr:hover,
+body.final-report-page #morkhcUsersReportTable tbody tr:hover,
+body.final-report-page #hourlyPassUsersReportTable tbody tr:hover {
+    background: rgba(20, 184, 166, .08);
+}
+
+body.final-report-page .holiday-row {
+    background: rgba(201, 87, 98, .08) !important;
+    color: var(--report-red);
+}
+
+/* ─── پایین صفحه: جداول جزئیات + خلاصهٔ آماری ─── */
+body.final-report-page .paein {
+    display: grid;
+    grid-template-columns: minmax(0, 1.28fr) minmax(330px, .72fr);
+    align-items: start;
+    gap: 22px;
+    margin-top: 22px;
+}
+
+body.final-report-page .left-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+body.final-report-page .ezafeBox,
+body.final-report-page .passBox,
+body.final-report-page .hourlyPassBox {
+    display: block;
+    overflow: hidden;
+    padding: 0;
+}
+
+body.final-report-page .ezafeBox h2,
+body.final-report-page .passBox h2,
+body.final-report-page .hourlyPassBox h2 {
+    text-align: right;
+}
+
+body.final-report-page .ezafeBox::before,
+body.final-report-page .passBox::before,
+body.final-report-page .hourlyPassBox::before {
+    display: block;
+    padding: 16px 20px 13px;
+    border-bottom: 1px solid var(--report-line);
+    color: var(--report-ink);
+    font-size: .88rem;
+    font-weight: 900;
+}
+
+body.final-report-page .ezafeBox::before { content: 'جدول اضافه‌کار'; }
+body.final-report-page .passBox::before { content: 'جدول مرخصی'; }
+body.final-report-page .hourlyPassBox::before { content: 'جدول پاس‌های ساعتی'; }
+body.final-report-page .ezafeBox h2,
+body.final-report-page .passBox h2,
+body.final-report-page .hourlyPassBox h2 { display: none; }
+
+body.final-report-page .ezafeBox table,
+body.final-report-page .passBox table,
+body.final-report-page .hourlyPassBox table {
+    display: table;
+    max-height: none;
+    overflow: visible;
+    table-layout: auto;
+}
+
+body.final-report-page .ezafeBox thead,
+body.final-report-page .ezafeBox tbody,
+body.final-report-page .passBox thead,
+body.final-report-page .passBox tbody,
+body.final-report-page .hourlyPassBox thead,
+body.final-report-page .hourlyPassBox tbody {
+    display: table-row-group;
+}
+
+body.final-report-page .ezafeBox thead,
+body.final-report-page .passBox thead,
+body.final-report-page .hourlyPassBox thead { display: table-header-group; }
+body.final-report-page .ezafeBox tr,
+body.final-report-page .passBox tr,
+body.final-report-page .hourlyPassBox tr { display: table-row; }
+
+body.final-report-page .paeinrast {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+body.final-report-page .report-summary-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+}
+
+body.final-report-page .report-summary-heading > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+body.final-report-page .report-summary-heading > div > span {
+    color: var(--report-muted);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+body.final-report-page .report-summary-heading h2 {
+    margin: 0;
+    color: var(--report-ink);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+body.final-report-page .report-summary-heading > strong {
+    color: var(--report-primary);
+    font-size: 1.35rem;
+}
+
+body.final-report-page .numberReport {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+    padding: 16px;
+    overflow: visible;
+    box-shadow: var(--report-shadow-sm);
+}
+
+body.final-report-page .numBox,
+body.final-report-page .numBoxInput,
+body.final-report-page .numBoxEzafeh {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    min-height: 92px;
+    height: auto;
+    margin: 0;
+    padding: 17px 14px 13px;
+    overflow: hidden;
+    border: 1px solid var(--report-line);
+    border-radius: 16px;
+    background: var(--report-surface-soft);
+    box-shadow: none;
+    color: var(--report-ink);
+    text-align: right;
+}
+
+body.final-report-page .numBoxEzafeh,
+body.final-report-page #hozoornumBoxID {
+    grid-column: span 2;
+    min-height: 112px;
+}
+
+body.final-report-page .numBox .title,
+body.final-report-page .numBoxInput .title,
+body.final-report-page .numBoxEzafeh .title {
+    position: static;
+    display: block;
+    width: auto;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--report-muted);
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.6;
+    text-align: right;
+}
+
+body.final-report-page .numBox .value,
+body.final-report-page .numBoxInput .value,
+body.final-report-page .numBoxEzafeh .value,
+body.final-report-page .overtimeSystemValue,
+body.final-report-page .overtimeSamanehValue,
+body.final-report-page .attendanceSystemValue,
+body.final-report-page .attendanceSamanehValue,
+body.final-report-page .jscode {
+    display: block;
+    margin: 0;
+    color: var(--report-ink);
+    font-size: 1.15rem;
+    font-weight: 900;
+    line-height: 1.4;
+    direction: ltr;
+    text-align: right;
+}
+
+body.final-report-page .report-dual-value,
+body.final-report-page .overtimeContainer,
+body.final-report-page .attendanceContainer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+body.final-report-page .overtimeSystem,
+body.final-report-page .overtimeSamaneh,
+body.final-report-page .attendanceSystem,
+body.final-report-page .attendanceSamaneh {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    margin: 0;
+}
+
+body.final-report-page .overtimeSystemTitle,
+body.final-report-page .overtimeSamanehTitle,
+body.final-report-page .attendanceSystemTitlegozaresh,
+body.final-report-page .attendanceSystemTitlemajmoo,
+body.final-report-page .attendanceSamanehTitle,
+body.final-report-page .attendanceSamanehTitlemovazafi {
+    margin: 0 0 3px;
+    color: var(--report-muted);
+    font-size: .65rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+body.final-report-page .report-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--report-line);
+}
+
+body.final-report-page .attendanceSamanehValueInput {
+    width: 70px;
+    height: 34px;
+    margin: 0;
+    padding: 5px 7px;
+    border: 1px solid var(--report-line);
+    border-radius: 9px;
+    background: var(--report-surface);
+    color: var(--report-ink);
+    font: 800 .9rem 'Vazir', sans-serif;
+    text-align: center;
+}
+
+body.final-report-page .report-stat-card--green { border-top: 3px solid var(--report-green); }
+body.final-report-page .report-stat-card--blue { border-top: 3px solid var(--report-blue); }
+body.final-report-page .report-stat-card--amber { border-top: 3px solid var(--report-amber); }
+body.final-report-page .report-stat-card--red { border-top: 3px solid var(--report-red); }
+body.final-report-page .report-stat-card--violet { border-top: 3px solid var(--report-violet); }
+body.final-report-page .report-stat-card--slate { border-top: 3px solid #708895; }
+
+body.final-report-page .report-actions,
+body.final-report-page .dokmeha {
+    width: 100%;
+}
+
+body.final-report-page .exportButtons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px;
+    box-shadow: var(--report-shadow-sm);
+}
+
+body.final-report-page .report-action,
+body.final-report-page .exportButtons .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    font: 700 .78rem 'Vazir', sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .15s ease, filter .15s ease;
+}
+
+body.final-report-page .report-action:hover { filter: brightness(.95); transform: translateY(-1px); }
+body.final-report-page .report-action--primary { background: linear-gradient(135deg, var(--report-primary), var(--report-primary-2)); }
+body.final-report-page .report-action--secondary { background: #547684; }
+
+body.final-report-page .report-signatures {
+    display: none;
+}
+
+/* ─── ریسپانسیو ─── */
+@media screen and (max-width: 920px) {
+    body.final-report-page .onvanha,
+    body.final-report-page .bala,
+    body.final-report-page .paein,
+    body.final-report-page .emzaha {
+        width: min(100% - 28px, 720px);
+    }
+
+    body.final-report-page .paein {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media screen and (max-width: 620px) {
+    body.final-report-page .onvanha,
+    body.final-report-page .bala,
+    body.final-report-page .paein,
+    body.final-report-page .emzaha {
+        width: calc(100% - 20px);
+    }
+
+    body.final-report-page .onvanha {
+        gap: 17px;
+        margin-top: 10px;
+        padding: 21px 17px;
+        border-radius: 22px;
+    }
+
+    body.final-report-page .onvanha::before { top: 17px; left: 18px; }
+    body.final-report-page .titleBox { margin-top: 4px; font-size: 1.25rem; }
+    body.final-report-page .titleBox::before { font-size: .68rem; }
+    body.final-report-page .userInfoBox { grid-template-columns: 1fr; }
+    body.final-report-page .userInfoName { border-top: 1px solid rgba(255, 255, 255, .16); border-right: 0; }
+    body.final-report-page .userInfoSection,
+    body.final-report-page .userInfoName { padding: 11px 14px; }
+
+    body.final-report-page .bala,
+    body.final-report-page .paein { margin-top: 14px; }
+    body.final-report-page .numberReport { padding: 12px; gap: 8px; }
+    body.final-report-page .numBox,
+    body.final-report-page .numBoxInput,
+    body.final-report-page .numBoxEzafeh { min-height: 82px; padding: 14px 11px 11px; }
+    body.final-report-page .numBoxEzafeh,
+    body.final-report-page #hozoornumBoxID { min-height: 100px; }
+    body.final-report-page .numBox .value,
+    body.final-report-page .numBoxInput .value,
+    body.final-report-page .numBoxEzafeh .value,
+    body.final-report-page .overtimeSystemValue,
+    body.final-report-page .overtimeSamanehValue,
+    body.final-report-page .attendanceSystemValue,
+    body.final-report-page .attendanceSamanehValue { font-size: 1rem; }
+
+    body.final-report-page #hozoorUsersReportTable,
+    body.final-report-page #ezafeKarUsersReportTable,
+    body.final-report-page #morkhcUsersReportTable,
+    body.final-report-page #hourlyPassUsersReportTable {
+        min-width: 620px;
+    }
+
+    body.final-report-page .hozoorBox,
+    body.final-report-page .ezafeBox,
+    body.final-report-page .passBox,
+    body.final-report-page .hourlyPassBox { overflow-x: auto; }
+
+    body.final-report-page .exportButtons { grid-template-columns: 1fr; }
+}
+
+@media screen and (max-width: 380px) {
+    body.final-report-page .numberReport { grid-template-columns: 1fr; }
+    body.final-report-page .numBoxEzafeh,
+    body.final-report-page #hozoornumBoxID { grid-column: auto; }
+}
+
+/* ─── تم تاریک ─── */
+body.dark-mode.final-report-page {
+    --report-bg: #101a27;
+    --report-surface: #182536;
+    --report-surface-soft: #1d2c40;
+    --report-ink: #e8f1f5;
+    --report-muted: #9cb0bf;
+    --report-line: #30445a;
+    background: radial-gradient(circle at 4% 0%, rgba(14, 116, 144, .18), transparent 28rem), #101a27;
+    color: var(--report-ink);
+}
+
+body.dark-mode.final-report-page .onvanha {
+    background: linear-gradient(135deg, #102d43 0%, #095e63 60%, #087b70 100%);
+}
+
+body.dark-mode.final-report-page .hozoorBox,
+body.dark-mode.final-report-page .ezafeBox,
+body.dark-mode.final-report-page .passBox,
+body.dark-mode.final-report-page .hourlyPassBox,
+body.dark-mode.final-report-page .numberReport,
+body.dark-mode.final-report-page .exportButtons {
+    background: var(--report-surface);
+    border-color: var(--report-line);
+}
+
+body.dark-mode.final-report-page #hozoorUsersReportTable th,
+body.dark-mode.final-report-page #ezafeKarUsersReportTable th,
+body.dark-mode.final-report-page #morkhcUsersReportTable th,
+body.dark-mode.final-report-page #hourlyPassUsersReportTable th {
+    background: #1d2c40;
+    color: var(--report-muted);
+}
+
+body.dark-mode.final-report-page #hozoorUsersReportTable td,
+body.dark-mode.final-report-page #hozoorUsersReportTable th,
+body.dark-mode.final-report-page #ezafeKarUsersReportTable td,
+body.dark-mode.final-report-page #ezafeKarUsersReportTable th,
+body.dark-mode.final-report-page #morkhcUsersReportTable td,
+body.dark-mode.final-report-page #morkhcUsersReportTable th,
+body.dark-mode.final-report-page #hourlyPassUsersReportTable td,
+body.dark-mode.final-report-page #hourlyPassUsersReportTable th {
+    border-bottom-color: var(--report-line);
+    color: var(--report-ink);
+}
+
+body.dark-mode.final-report-page #hozoorUsersReportTable tbody tr:nth-child(even),
+body.dark-mode.final-report-page #ezafeKarUsersReportTable tbody tr:nth-child(even),
+body.dark-mode.final-report-page #morkhcUsersReportTable tbody tr:nth-child(even),
+body.dark-mode.final-report-page #hourlyPassUsersReportTable tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, .025);
+}
+
+body.dark-mode.final-report-page .attendanceSamanehValueInput {
+    background: #172536;
+    border-color: var(--report-line);
+    color: var(--report-ink);
+}
+
+/* ─── چاپ ─── */
+@media print {
+    body.final-report-page {
+        background: #fff;
+        color: #111;
+    }
+
+    body.final-report-page .onvanha,
+    body.final-report-page .bala,
+    body.final-report-page .paein,
+    body.final-report-page .emzaha {
+        width: 100%;
+        margin: 0;
+    }
+
+    body.final-report-page .onvanha {
+        padding: 12px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    body.final-report-page .bala,
+    body.final-report-page .paein { margin-top: 10px; }
+    body.final-report-page .hozoorBox,
+    body.final-report-page .ezafeBox,
+    body.final-report-page .passBox,
+    body.final-report-page .hourlyPassBox,
+    body.final-report-page .numberReport { box-shadow: none; }
+    body.final-report-page .report-actions { display: none; }
+}
+
+/* =====================================================================
+   Summary redesign — isolated layout, independent from legacy numBox rules
+   ===================================================================== */
+body.final-report-page .report-summary-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+body.final-report-page .report-summary-panel .report-summary-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 42px;
+    padding: 0 4px;
+}
+
+body.final-report-page .report-summary-panel .report-summary-heading > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+body.final-report-page .report-summary-panel .report-summary-heading > div > span {
+    color: var(--report-muted);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+body.final-report-page .report-summary-panel .report-summary-heading h2 {
+    margin: 0;
+    color: var(--report-ink);
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.6;
+}
+
+body.final-report-page .report-summary-panel .report-summary-heading > strong {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 11px;
+    background: rgba(8, 127, 114, .1);
+    color: var(--report-primary);
+    font-size: 1.1rem;
+}
+
+body.final-report-page .report-summary-panel .report-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--report-line);
+    border-radius: 20px;
+    background: var(--report-surface);
+    box-shadow: var(--report-shadow-sm);
+}
+
+body.final-report-page .report-summary-panel .report-summary-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    min-height: 88px;
+    height: auto;
+    margin: 0;
+    padding: 16px 14px 13px;
+    overflow: hidden;
+    border: 1px solid var(--report-line);
+    border-top: 3px solid #8ca5ad;
+    border-radius: 14px;
+    background: var(--report-surface-soft);
+    box-shadow: none;
+    text-align: right;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card--wide {
+    grid-column: 1 / -1;
+    min-height: 105px;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .title {
+    position: static;
+    display: block;
+    width: auto;
+    margin: 0 0 9px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--report-muted);
+    font-size: .7rem;
+    font-weight: 750;
+    line-height: 1.6;
+    text-align: right;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .value,
+body.final-report-page .report-summary-panel .report-summary-card .jscode,
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSystemValue,
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSamanehValue,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSystemValue,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSamanehValue {
+    display: block;
+    min-width: 0;
+    margin: 0;
+    color: var(--report-ink);
+    font-size: 1.08rem;
+    font-weight: 900;
+    line-height: 1.45;
+    direction: ltr;
+    text-align: right;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .jscode {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .jscode span:last-child {
+    color: var(--report-muted);
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .overtimeContainer,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceContainer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSystem,
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSamaneh,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSystem,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSamaneh {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    margin: 0;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSystemTitle,
+body.final-report-page .report-summary-panel .report-summary-card .overtimeSamanehTitle,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSystemTitlegozaresh,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSystemTitlemajmoo,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSamanehTitle,
+body.final-report-page .report-summary-panel .report-summary-card .attendanceSamanehTitlemovazafi {
+    margin: 0 0 3px;
+    color: var(--report-muted);
+    font-size: .62rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+body.final-report-page .report-summary-panel .report-stat-divider {
+    width: 1px;
+    height: 34px;
+    background: var(--report-line);
+}
+
+body.final-report-page .report-summary-panel .attendanceSamanehValueInput {
+    width: 66px;
+    height: 32px;
+    margin: 0;
+    padding: 4px 6px;
+    border: 1px solid var(--report-line);
+    border-radius: 8px;
+    background: var(--report-surface);
+    color: var(--report-ink);
+    font: 800 .86rem 'Vazir', sans-serif;
+    text-align: center;
+}
+
+body.final-report-page .report-summary-panel .report-summary-card--green { border-top-color: var(--report-green); }
+body.final-report-page .report-summary-panel .report-summary-card--blue { border-top-color: var(--report-blue); }
+body.final-report-page .report-summary-panel .report-summary-card--amber { border-top-color: var(--report-amber); }
+body.final-report-page .report-summary-panel .report-summary-card--red { border-top-color: var(--report-red); }
+body.final-report-page .report-summary-panel .report-summary-card--violet { border-top-color: var(--report-violet); }
+body.final-report-page .report-summary-panel .report-summary-card--slate { border-top-color: #708895; }
+
+body.dark-mode.final-report-page .report-summary-panel .report-summary-heading > strong {
+    background: rgba(20, 184, 166, .14);
+}
+
+body.dark-mode.final-report-page .report-summary-panel .report-summary-grid,
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card {
+    background: var(--report-surface);
+    border-color: var(--report-line);
+}
+
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card {
+    border-top-color: #708895;
+}
+
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card--green { border-top-color: #35c7a5; }
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card--blue { border-top-color: #4bb5df; }
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card--amber { border-top-color: #e5ad4c; }
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card--red { border-top-color: #ee8991; }
+body.dark-mode.final-report-page .report-summary-panel .report-summary-card--violet { border-top-color: #aa9be8; }
+
+@media screen and (max-width: 620px) {
+    body.final-report-page .report-summary-panel .report-summary-grid { padding: 10px; gap: 8px; }
+    body.final-report-page .report-summary-panel .report-summary-card { min-height: 78px; padding: 13px 10px 11px; }
+    body.final-report-page .report-summary-panel .report-summary-card--wide { min-height: 94px; }
+    body.final-report-page .report-summary-panel .report-summary-card .title { font-size: .66rem; }
+    body.final-report-page .report-summary-panel .report-summary-card .value,
+    body.final-report-page .report-summary-panel .report-summary-card .jscode,
+    body.final-report-page .report-summary-panel .report-summary-card .overtimeSystemValue,
+    body.final-report-page .report-summary-panel .report-summary-card .overtimeSamanehValue,
+    body.final-report-page .report-summary-panel .report-summary-card .attendanceSystemValue,
+    body.final-report-page .report-summary-panel .report-summary-card .attendanceSamanehValue { font-size: .95rem; }
+}
+
+@media screen and (max-width: 380px) {
+    body.final-report-page .report-summary-panel .report-summary-grid { grid-template-columns: minmax(0, 1fr); }
+    body.final-report-page .report-summary-panel .report-summary-card--wide { grid-column: auto; }
+}

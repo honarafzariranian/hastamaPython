@@ -2311,58 +2311,273 @@ form button:active {
 /*  --- = تنظیمات مجموعه ساعت کاری همکاران ---  */
 /*  --- = تنظیمات مجموعه ساعت کاری همکاران ---  */
 
-#natigehHozoor {
-margin-left: 15%;
-    margin-right: auto;
-    width: 70%;
-    z-index: 10;
-    padding: 20px;
-    background-color: #ffffff;
-    margin-top: 1.5rem;
+/* ═══════════════════════════════════════════
+   پنل حضور و غیاب — طراحی مدرن
+   ═══════════════════════════════════════════ */
+.attendance-panel {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid rgba(14, 165, 233, 0.14);
+    border-radius: 20px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
     display: none;
-    border-radius: 20px;
     position: relative;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-#natigehHozoor .boxha {
+
+.attendance-panel__head {
     display: flex;
-    flex-wrap: wrap; /* باکس‌ها رو به خطوط جدید منتقل می‌کنه */
-    justify-content: center; /* باکس‌ها رو وسط‌چین می‌کنه */
-    gap: 20px; /* فاصله بین باکس‌ها */
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px 16px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, rgba(0, 184, 148, 0.04) 100%);
+    border-bottom: 1px solid rgba(14, 165, 233, 0.08);
 }
 
-#natigehHozoor .boxha div {
-    width: 30%; /* عرض هر باکس رو به 30% تنظیم می‌کنیم تا سه تا باکس در یک ردیف جا بشن */
-    height: 60px; /* ارتفاع هر باکس رو 30px تنظیم می‌کنیم */
+.attendance-panel__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
     display: flex;
-    align-items: center; /* متن داخل باکس رو عمودی وسط‌چین می‌کنه */
-    justify-content: center; /* متن داخل باکس رو افقی وسط‌چین می‌کنه */
-    text-align: center;
-    background-color: #ddd;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    font-size: 13px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-#natigehHozoor .box4-hozoor,
-#natigehHozoor .box5-hozoor {
-    width: 45%; /* این دو باکس پایین به عرض 45% میرن */
+.attendance-panel__icon svg {
+    width: 22px;
+    height: 22px;
 }
 
-.gozareshNahaei {
-    background-color: #6c9ec7;
-    color: white;
+.attendance-panel__title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--text, #0D3B4E);
+    line-height: 1.4;
+}
+
+.attendance-panel__subtitle {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted, #4D6B7A);
+    font-weight: 500;
+}
+
+/* ─── کارت‌های آمار ─── */
+.attendance-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    padding: 20px 24px;
+}
+
+.attendance-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--surface, #F5F7FA);
+    border: 1px solid var(--border, rgba(13, 59, 78, 0.06));
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.attendance-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+.attendance-stat__icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.attendance-stat--presence .attendance-stat__icon { background: rgba(14, 165, 233, 0.1); }
+.attendance-stat--overtime .attendance-stat__icon { background: rgba(0, 184, 148, 0.1); }
+.attendance-stat--delay .attendance-stat__icon { background: rgba(245, 158, 11, 0.1); }
+.attendance-stat--early-start .attendance-stat__icon { background: rgba(34, 197, 94, 0.1); }
+.attendance-stat--early-exit .attendance-stat__icon { background: rgba(239, 68, 68, 0.1); }
+
+.attendance-stat__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.attendance-stat__label {
+    font-size: 0.78rem;
+    color: var(--text-muted, #4D6B7A);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attendance-stat__value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text, #0D3B4E);
+    direction: ltr;
+    letter-spacing: 0.5px;
+}
+
+/* ─── فوتر پنل ─── */
+.attendance-panel__footer {
+    padding: 14px 24px 18px;
+    border-top: 1px solid rgba(14, 165, 233, 0.08);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.gozareshNahaei,
+.attendance-panel__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
     border: none;
-    padding: 6px 18px;
+    padding: 10px 22px;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 16px;
-    border-radius: 20px;
-    font-family: 'Vazir';
-    position: absolute;
-    box-shadow: 0 0px 5px 3px rgba(0, 0, 0, 0.2);
+    transition: opacity .15s ease, transform .1s ease;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
 }
 
-.gozareshNahaei:hover {background-color: #4e7a9e;}
+.gozareshNahaei svg,
+.attendance-panel__btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.gozareshNahaei:hover,
+.attendance-panel__btn:hover { opacity: .9; transform: translateY(-1px); }
+.gozareshNahaei:active,
+.attendance-panel__btn:active { transform: translateY(0); }
+
+/* ─── فرم ثبت دستی ─── */
+.attendance-form-wrap {
+    padding: 20px 24px 22px;
+}
+
+.attendance-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.attendance-form__row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.attendance-form__label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text, #0D3B4E);
+}
+
+.attendance-form__select,
+.attendance-form__input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    background: var(--surface, #F5F7FA);
+    color: var(--text, #0D3B4E);
+    border: 1.5px solid var(--border, rgba(13, 59, 78, 0.12));
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.9rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+    box-sizing: border-box;
+}
+
+.attendance-form__select:focus,
+.attendance-form__input:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+
+.attendance-form__input[readonly] {
+    cursor: pointer;
+    background: var(--surface-strong, #fff);
+}
+
+.attendance-form__times {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.attendance-form__row--time .time-container {
+    width: 100%;
+    position: relative;
+}
+
+.attendance-form__input--time {
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.attendance-form__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 4px;
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity .15s ease, transform .1s ease;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.25);
+}
+
+.attendance-form__submit svg {
+    width: 18px;
+    height: 18px;
+}
+
+.attendance-form__submit:hover { opacity: .9; transform: translateY(-1px); }
+.attendance-form__submit:active { transform: translateY(0); }
+
+/* ─── ریسپانسیو ─── */
+@media (max-width: 640px) {
+    .attendance-panel__head { padding: 16px 18px 14px; }
+    .attendance-stats { grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 18px; }
+    .attendance-stat { padding: 12px; gap: 10px; }
+    .attendance-stat__icon { width: 36px; height: 36px; font-size: 1.2rem; }
+    .attendance-stat__value { font-size: 1rem; }
+    .attendance-form-wrap { padding: 16px 18px; }
+    .attendance-form__times { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 400px) {
+    .attendance-stats { grid-template-columns: 1fr; }
+    .attendance-panel__title { font-size: 1rem; }
+}
 
 /*  --- = تنظیمات ساعت‌های هفتگی کاربر ---  */
 /*  --- = تنظیمات ساعت‌های هفتگی کاربر ---  */
@@ -2463,56 +2678,7 @@ margin-left: 15%;
 /*  --- = ثبت دستی حضور و غیاب ---  */
 /*  --- = ثبت دستی حضور و غیاب ---  */
 
-#sabtdst {
-    margin-left: 15%;
-    margin-right: auto;
-    margin-bottom: 3rem;
-    width: 70%;
-    padding: 20px;
-    background-color: #ffffff;
-    margin-top: 6rem;
-    display: none;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    position: relative;
-    text-align: center;
-}
-
-.vorodiha {
-    background: #41c3737d;
-    border-radius: 13px;
-    padding: 9px;
-    font-weight: 700;
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row-reverse;
-}
-
-#sabtdastHozoor {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    justify-content: flex-start;
-    flex-direction: row-reverse;
-    flex-wrap: wrap;
-}
-
-#usernamedast {
-    padding: 8px;
-    font-size: 14px;
-    border-radius: 10px;
-    border: 1px solid #919191;
-    font-family: 'Vazir';
-}
-
-#tarikh {
-    width: 150px;
-    padding: 6px 8px;
-    font-size: 16px;
-    cursor: pointer;
-    text-align: center;
-}
+/* sabtdst / vorodiha old styles replaced by .attendance-panel */
 
 #calendar-box {
     position: fixed;
@@ -2657,10 +2823,7 @@ margin-left: 15%;
     border-radius: 20px;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-right: 20%;
     font-weight: bold;
-    margin: 0;
-    margin-left: 4%;
 }
 
 /*  --- = پاپ‌آپ ثبت تیکت ---  */
@@ -4305,19 +4468,7 @@ margin-left: 15%;
     }
 }
 
-#natigehHozoor {
-    position: relative !important;
-    padding-bottom: 72px !important;
-    text-align: center;
-}
-
-#natigehHozoor .gozareshNahaei {
-    position: absolute;
-    right: auto;
-    bottom: 18px;
-    left: 20px;
-    margin: 0;
-}
+/* old natigehHozoor overrides replaced by .attendance-panel */
 
 @media screen and (min-width: 769px) {
     .attendance-tools-row {
@@ -4327,22 +4478,20 @@ margin-left: 15%;
         width: 100%;
     }
 
-    .attendance-tools-row > #natigehHozoor,
-    .attendance-tools-row > #sabtdst {
+    .attendance-tools-row > .attendance-panel {
         width: 70%;
         margin-left: auto;
         margin-right: auto;
     }
 
-    .attendance-tools-row:has(> #natigehHozoor[style*="display: block"]):has(> #sabtdst[style*="display: block"]) {
+    .attendance-tools-row:has(> .attendance-panel[style*="display: block"]):has(> .attendance-panel[style*="display: block"]) {
         flex-direction: row;
         align-items: flex-start;
         gap: 20px;
         width: 88%;
     }
 
-    .attendance-tools-row:has(> #natigehHozoor[style*="display: block"]):has(> #sabtdst[style*="display: block"]) > #natigehHozoor,
-    .attendance-tools-row:has(> #natigehHozoor[style*="display: block"]):has(> #sabtdst[style*="display: block"]) > #sabtdst {
+    .attendance-tools-row:has(> .attendance-panel[style*="display: block"]):has(> .attendance-panel[style*="display: block"]) > .attendance-panel {
         flex: 1 1 0;
         width: auto;
         margin: 0;
@@ -5079,96 +5228,7 @@ margin-left: 15%;
         margin-right: 2.5%;
     }
 
-    #natigehHozoor {
-        position: absolute;
-        top: 41rem;
-        padding: 4px 10px 16px 10px;
-        width: 74%;
-        height: 22rem;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-left: auto;
-    }
-
-    #natigehHozoor h2 {
-        font-size: 16px;
-        margin: 0px 0px 4px 0px;
-    }
-
-    #natigehHozoor .boxha {
-        gap: 15px;
-    }
-
-    #natigehHozoor .boxha div {
-        width: 78%;
-        font-size: 13px;
-        height: 39px;
-    }
-
-    .gozareshNahaei {
-        left: auto;
-        right: 17px;
-        font-size: 11px;
-        padding: 4px 11px;
-        bottom: auto;
-        margin-top: 13px;
-    }
-
-    #sabtdst {
-        position: absolute;
-        top: 21rem;
-        padding: 4px 10px 10px 10px;
-        width: 74%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-left: 0;
-    }
-
-    #sabtdst h2 {
-        font-size: 16px;
-        margin: 0px 0px 4px 0px;
-    }
-
-    #sabtdastHozoor {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        flex-direction: row-reverse;
-        flex-wrap: wrap;
-        gap: 0;
-        column-gap: 0px;
-    }
-
-    .formsabtdast label {
-        font-size: 16px;
-        color: #333;
-        font-weight: bold;
-        margin-left: 0px;
-        margin-right: 0px;
-    }
-
-    #usernamedast {
-        width: 47%;
-        font-size: 10px;
-        padding: 5px;
-        border-radius: 10px;
-        border: 1px solid #919191;
-        margin-right: 18%;
-    }
-
-    #tarikh {
-        width: 100px;
-        padding: 5px;
-        font-size: 10px;
-        margin-right: 41%;
-    }
-
-    #sabt-btn {
-        margin-right: 0;
-        margin-top: 3%;
-        font-size: 11px;
-        padding: 4px 11px;
-    }
+    /* old natigehHozoor / sabtdst mobile overrides replaced */
 
     .entekhab-form,
     #individualOvertimeReportForm,
@@ -5626,7 +5686,7 @@ margin-left: 15%;
     .dashboard-quick-card,
     .dashboard-chart-card,
     .dashboard-table-card,
-    #natigehHozoor .boxha div {
+    .attendance-stat {
         width: 100% !important;
         min-width: 0;
         max-width: 100%;
@@ -6757,4 +6817,498 @@ margin-left: 15%;
     border-color: rgba(14, 165, 233, .35);
     background: rgba(14, 165, 233, .1);
     color: #126393;
+}
+
+/* =====================================================================
+   Attendance workspace — final responsive design layer
+   This layer intentionally resets legacy positioning rules for these panels.
+   ===================================================================== */
+.attendance-tools-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: clamp(16px, 2vw, 28px);
+    width: min(100%, 1360px);
+    margin: 0 auto;
+    padding: clamp(12px, 2vw, 24px);
+    box-sizing: border-box;
+}
+
+#natigehHozoor.attendance-panel,
+#sabtdst.attendance-panel {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+    box-sizing: border-box;
+    background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
+    border: 1px solid rgba(14, 165, 233, .16);
+    border-radius: 24px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .08);
+    text-align: right;
+}
+
+#natigehHozoor.attendance-panel {
+    display: block;
+}
+
+#natigehHozoor.attendance-panel[style*="display: none"],
+#sabtdst.attendance-panel[style*="display: none"] {
+    display: none !important;
+}
+
+.attendance-panel__head {
+    min-width: 0;
+    padding: clamp(18px, 2.4vw, 26px);
+    border-radius: 24px 24px 0 0;
+    background: linear-gradient(135deg, rgba(14, 165, 233, .08), rgba(20, 184, 166, .04));
+}
+
+.attendance-panel__title {
+    overflow-wrap: anywhere;
+}
+
+.attendance-panel__subtitle {
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+/* Summary cards: fluid columns with no forced widths */
+#natigehHozoor .attendance-stats {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr));
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: clamp(16px, 2vw, 24px);
+    box-sizing: border-box;
+}
+
+#natigehHozoor .attendance-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+    min-height: 78px;
+    padding: 14px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#natigehHozoor .attendance-stat__info {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+#natigehHozoor .attendance-stat__label,
+#natigehHozoor .attendance-stat__value {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+#natigehHozoor .attendance-stat__value {
+    white-space: nowrap;
+}
+
+#natigehHozoor .attendance-panel__footer {
+    justify-content: flex-start;
+    padding: 0 clamp(16px, 2vw, 24px) clamp(18px, 2vw, 24px);
+    border-top: 0;
+}
+
+#natigehHozoor .attendance-panel__btn {
+    position: static !important;
+    width: auto;
+    max-width: 100%;
+    margin: 0 !important;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+/* Manual entry form */
+#sabtdst .attendance-form-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    padding: clamp(18px, 2.4vw, 26px);
+    box-sizing: border-box;
+    background: transparent;
+    border-radius: 0 0 24px 24px;
+}
+
+#sabtdst .attendance-form {
+    display: flex !important;
+    flex-direction: column;
+    gap: 16px !important;
+    width: 100%;
+    max-width: none;
+    margin: 0 !important;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#sabtdst .attendance-form br {
+    display: none !important;
+}
+
+#sabtdst .attendance-form__row {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+#sabtdst .attendance-form__label {
+    display: block;
+    width: 100%;
+    margin: 0;
+    color: #173d4d;
+    font-size: .82rem;
+    font-weight: 800;
+    line-height: 1.7;
+    text-align: right;
+}
+
+#sabtdst .attendance-form__select,
+#sabtdst .attendance-form__input {
+    display: block;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 48px;
+    margin: 0 !important;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    border: 1px solid rgba(13, 59, 78, .16);
+    border-radius: 14px;
+    background: #f8fbfd;
+    color: #173d4d;
+    font: 600 .9rem 'Vazir', sans-serif;
+    line-height: 1.5;
+}
+
+#sabtdst .attendance-form__input--time {
+    direction: ltr;
+    text-align: center;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+#sabtdst .attendance-form__select:focus,
+#sabtdst .attendance-form__input:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, .12);
+}
+
+#sabtdst .attendance-form__times {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+}
+
+#sabtdst .attendance-form__row--time,
+#sabtdst .attendance-form__row--time .time-container {
+    min-width: 0;
+    width: 100%;
+}
+
+#sabtdst .time-container {
+    position: relative;
+    display: block;
+    margin: 0;
+}
+
+#sabtdst .time-picker {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: auto;
+    right: 0;
+    width: min(220px, calc(100vw - 36px));
+    min-height: 112px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(14, 165, 233, .2);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .16);
+    z-index: 50;
+}
+
+#sabtdst .time-section {
+    margin: 0 5px;
+}
+
+#sabtdst .time-btn {
+    width: 34px;
+    height: 28px;
+    line-height: 28px;
+    border-radius: 8px;
+    color: #175b78;
+    background: #eaf6ff;
+}
+
+#sabtdst .time-btn:hover {
+    background: #d6efff;
+}
+
+#sabtdst .time-section span {
+    margin: 6px 0;
+    color: #173d4d;
+    font-weight: 800;
+}
+
+#sabtdst .attendance-form__submit {
+    position: static !important;
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    margin: 0 !important;
+    box-sizing: border-box;
+}
+
+/* Calendar is positioned by the existing JS against the viewport. */
+#sabtdst #calendar-box {
+    position: fixed;
+    width: min(320px, calc(100vw - 24px));
+    max-height: min(420px, calc(100vh - 24px));
+    padding: 14px;
+    box-sizing: border-box;
+    border: 1px solid rgba(14, 165, 233, .22);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .2);
+    overflow: auto;
+    z-index: 1000;
+}
+
+#sabtdst #calendar-header {
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#sabtdst #calendar-header select {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid rgba(13, 59, 78, .12);
+    border-radius: 10px;
+    background: #f8fbfd;
+    color: #173d4d;
+    font: 600 .78rem 'Vazir', sans-serif;
+}
+
+#sabtdst #calendar-days,
+#sabtdst #calendar-dates {
+    gap: 6px;
+}
+
+#sabtdst #calendar-days > div {
+    padding: 6px 0;
+    color: #608091;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+#sabtdst #calendar-dates button {
+    min-height: 34px;
+    border-radius: 9px;
+    color: #17617d;
+    font-size: .8rem;
+}
+
+#sabtdst #calendar-dates button:hover {
+    background: #eaf6ff;
+}
+
+#sabtdst #calendar-dates button.selected {
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #ffffff;
+}
+
+/* در دسکتاپ هر دو پنل یک ارتفاع دارند و محتوای کوتاه‌تر کشیده می‌شود. */
+@media (min-width: 901px) {
+    .attendance-tools-row {
+        align-items: stretch !important;
+    }
+
+    #natigehHozoor.attendance-panel,
+    #sabtdst.attendance-panel {
+        display: flex !important;
+        flex-direction: column;
+        align-self: stretch;
+        height: auto !important;
+    }
+
+    #natigehHozoor .attendance-panel__footer {
+        margin-top: auto;
+    }
+
+    #sabtdst .attendance-form-wrap {
+        flex: 1 1 auto;
+    }
+
+    #sabtdst .attendance-form__submit {
+        margin-top: auto !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .attendance-tools-row {
+        grid-template-columns: minmax(0, 1fr);
+        width: min(100%, 720px);
+    }
+}
+
+@media (max-width: 560px) {
+    .attendance-tools-row {
+        gap: 14px;
+        padding: 10px;
+    }
+
+    #natigehHozoor.attendance-panel,
+    #sabtdst.attendance-panel {
+        border-radius: 18px;
+    }
+
+    #natigehHozoor .attendance-panel__head,
+    #sabtdst .attendance-panel__head {
+        padding: 16px;
+        border-radius: 18px 18px 0 0;
+    }
+
+    #natigehHozoor .attendance-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+        padding: 14px;
+    }
+
+    #natigehHozoor .attendance-stat {
+        min-height: 72px;
+        padding: 10px;
+        gap: 8px;
+        border-radius: 13px;
+    }
+
+    #natigehHozoor .attendance-stat__icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.05rem;
+        border-radius: 9px;
+    }
+
+    #natigehHozoor .attendance-stat__label { font-size: .68rem; }
+    #natigehHozoor .attendance-stat__value { font-size: .92rem; }
+    #natigehHozoor .attendance-panel__footer { padding: 0 14px 16px; }
+    #natigehHozoor .attendance-panel__btn { width: 100%; justify-content: center; }
+
+    #sabtdst .attendance-form-wrap { padding: 16px; gap: 16px; }
+    #sabtdst .attendance-form__times { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+
+@media (max-width: 360px) {
+    #natigehHozoor .attendance-stats { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* =====================================================================
+   Attendance workspace — compact sizing
+   ===================================================================== */
+@media (min-width: 901px) {
+    .attendance-tools-row {
+        width: min(100%, 900px);
+        gap: 16px;
+        padding: 14px;
+    }
+
+    #natigehHozoor .attendance-panel__head,
+    #sabtdst .attendance-panel__head {
+        padding: 15px 18px 13px;
+    }
+
+    #natigehHozoor .attendance-panel__icon,
+    #sabtdst .attendance-panel__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    #natigehHozoor .attendance-panel__icon svg,
+    #sabtdst .attendance-panel__icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    #natigehHozoor .attendance-panel__title,
+    #sabtdst .attendance-panel__title {
+        font-size: 1rem;
+    }
+
+    #natigehHozoor .attendance-panel__subtitle,
+    #sabtdst .attendance-panel__subtitle {
+        font-size: .72rem;
+    }
+
+    #natigehHozoor .attendance-stats {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 8px;
+        padding: 14px 18px;
+    }
+
+    #natigehHozoor .attendance-stat {
+        min-height: 62px;
+        padding: 10px;
+        gap: 8px;
+        border-radius: 12px;
+    }
+
+    #natigehHozoor .attendance-stat__icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.1rem;
+        border-radius: 9px;
+    }
+
+    #natigehHozoor .attendance-stat__label { font-size: .68rem; }
+    #natigehHozoor .attendance-stat__value { font-size: .95rem; }
+    #natigehHozoor .attendance-panel__footer { padding: 0 18px 16px; }
+
+    #sabtdst .attendance-form-wrap {
+        gap: 12px;
+        padding: 15px 18px 17px;
+    }
+
+    #sabtdst .attendance-form { gap: 11px !important; }
+    #sabtdst .attendance-form__row { gap: 5px; }
+    #sabtdst .attendance-form__label { font-size: .75rem; }
+
+    #sabtdst .attendance-form__select,
+    #sabtdst .attendance-form__input {
+        min-height: 42px;
+        padding: 8px 11px;
+        font-size: .8rem;
+        border-radius: 11px;
+    }
+
+    #sabtdst .attendance-form__times { gap: 10px; }
+    #sabtdst .attendance-form__submit { min-height: 44px; font-size: .84rem; }
+}
+
+@media (min-width: 561px) and (max-width: 900px) {
+    .attendance-tools-row {
+        width: min(100%, 620px);
+        padding: 12px;
+    }
 }

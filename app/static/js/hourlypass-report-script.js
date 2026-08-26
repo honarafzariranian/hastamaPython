@@ -66,12 +66,12 @@ fetch(`/get_user_info_report?username=${encodeURIComponent(username)}`, {
             document.getElementById('lastName').textContent = data.data.last_name || 'اطلاعات موجود نیست';
             document.getElementById('firstName').textContent = data.data.name || 'اطلاعات موجود نیست';
         } else {
-            alert(data.message); // نمایش خطا در صورت عدم وجود اطلاعات
+            showSystemError(data.message); // نمایش خطا در صورت عدم وجود اطلاعات
         }
     })
     .catch(error => {
         console.error('خطا در دریافت اطلاعات کاربر:', error);
-        alert('خطا در دریافت اطلاعات کاربر');
+        showSystemError('خطا در دریافت اطلاعات کاربر');
     });
 
 };

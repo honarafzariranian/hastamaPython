@@ -330,13 +330,44 @@ body.dark-mode #hourlyPassBox,
 body.dark-mode #hourlyPassTotaluser,
 body.dark-mode #hourlyPassIndivisualuser,
 body.dark-mode #ticketBox,
-body.dark-mode #hozoorbox,
-body.dark-mode #natigehHozoor,
-body.dark-mode #sabtdst {
+body.dark-mode #hozoorbox {
     background-color: var(--dk-surface);
     border-color: var(--dk-border);
     color: var(--dk-text);
     box-shadow: var(--dk-shadow-sm);
+}
+
+/* ─── پنل حضور و غیاب — حالت تاریک ─── */
+body.dark-mode .attendance-panel {
+    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+body.dark-mode .attendance-panel__head {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, rgba(0, 184, 148, 0.04) 100%);
+    border-bottom-color: var(--dk-border);
+}
+body.dark-mode .attendance-panel__title { color: var(--dk-text); }
+body.dark-mode .attendance-panel__subtitle { color: var(--dk-text-2); }
+body.dark-mode .attendance-stat {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+body.dark-mode .attendance-stat__label { color: var(--dk-text-2); }
+body.dark-mode .attendance-stat__value { color: var(--dk-text); }
+body.dark-mode .attendance-panel__footer { border-top-color: var(--dk-border); }
+body.dark-mode .attendance-form-wrap { background: transparent; }
+body.dark-mode .attendance-form__label { color: var(--dk-text); }
+body.dark-mode .attendance-form__select,
+body.dark-mode .attendance-form__input {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .attendance-form__select:focus,
+body.dark-mode .attendance-form__input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
 }
 
 body.dark-mode .payroll-panel {
@@ -1822,12 +1853,7 @@ body.dark-mode .status-read {
     color: #fff;
 }
 
-/* باکس‌های کوچک نتیجهٔ حضور */
-body.dark-mode #natigehHozoor .boxha div {
-    background-color: var(--dk-surface-2);
-    border-color: var(--dk-border);
-    color: var(--dk-text);
-}
+/* باکس‌های کوچک نتیجهٔ حضور — replaced by .attendance-stat dark styles above */
 
 /* دکمه‌های خنثی (در روشن خاکستری با متن مشکی بودند) */
 body.dark-mode .confirm-changes-btn {
@@ -2137,4 +2163,114 @@ body.dark-mode .employment-status-label[data-status="unofficial"] {
     border-color: rgba(56, 189, 248, .38);
     background: rgba(14, 165, 233, .14);
     color: #7dd3fc;
+}
+
+/* =====================================================================
+   Attendance workspace — final dark-theme layer
+   ===================================================================== */
+body.dark-mode #natigehHozoor.attendance-panel,
+body.dark-mode #sabtdst.attendance-panel {
+    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .attendance-panel__head {
+    background: linear-gradient(135deg, rgba(56, 189, 248, .1), rgba(20, 184, 166, .06));
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .attendance-panel__title,
+body.dark-mode .attendance-form__label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .attendance-panel__subtitle,
+body.dark-mode .attendance-stat__label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #natigehHozoor .attendance-stat {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode #natigehHozoor .attendance-stat__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst .attendance-form__select,
+body.dark-mode #sabtdst .attendance-form__input {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst .attendance-form__select:focus,
+body.dark-mode #sabtdst .attendance-form__input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, .18);
+}
+
+body.dark-mode #sabtdst .time-picker,
+body.dark-mode #sabtdst #calendar-box {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow);
+}
+
+body.dark-mode #sabtdst #calendar-header select {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst #calendar-days > div,
+body.dark-mode #sabtdst #calendar-dates button {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #sabtdst #calendar-dates button:hover,
+body.dark-mode #sabtdst .time-btn:hover {
+    background: var(--dk-surface-3);
+}
+
+body.dark-mode #sabtdst .time-section span {
+    color: var(--dk-text);
+}
+
+/* ─── جزئیات اعلان ادمین — حالت تاریک ─── */
+body.dark-mode .admin-detail-title { color: var(--dk-text); }
+body.dark-mode .admin-detail-message {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .admin-detail-meta {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .admin-detail-meta dt { color: var(--dk-text-2); }
+body.dark-mode .admin-detail-meta dd { color: var(--dk-text); }
+body.dark-mode .admin-detail-read-badge {
+    background: rgba(56, 189, 248, .14);
+    color: #7dd3fc;
+}
+body.dark-mode .admin-detail-read-badge.is-read {
+    background: rgba(34, 197, 94, .14);
+    color: #86efac;
+}
+body.dark-mode .admin-detail-actions .notification-secondary-btn {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .notification-danger-btn {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+body.dark-mode .notification-admin-table tbody tr[data-id]:hover {
+    background: rgba(56, 189, 248, .08);
+    box-shadow: inset 0 0 0 2px rgba(56, 189, 248, .15);
 }

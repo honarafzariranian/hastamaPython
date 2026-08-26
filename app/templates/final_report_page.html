@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
@@ -12,10 +12,11 @@
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/final-report-modern.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
-<body data-no-theme-toggle>
+<body class="final-report-page" data-no-theme-toggle>
 
     <div class="onvanha">
         <div class="titleBox">
@@ -122,10 +123,17 @@
             </div>
         </div>
 
-        <div class="paeinrast">
-            <div class="numberReport">
+        <div class="paeinrast report-summary-panel">
+            <div class="report-summary-heading">
+                <div>
+                    <span>At a glance</span>
+                    <h2>خلاصهٔ عملکرد</h2>
+                </div>
+                <strong aria-hidden="true">✦</strong>
+            </div>
+            <div class="numberReport report-summary-grid">
                 <!-- ردیف اول -->
-                <div class="numBoxEzafeh">
+                <div class="numBoxEzafeh report-summary-card report-summary-card--wide report-summary-card--green">
                     <span class="title">مجموع اضافه کاری</span>
                     <div class="overtimeContainer">
                         <div class="overtimeSystem">
@@ -139,7 +147,7 @@
                     </div>
                 </div>
 
-                <div class="numBox">
+                <div class="numBox report-summary-card report-summary-card--wide report-summary-card--blue">
                     <span class="title">مجموع زمان حضور</span>
                     <div class="attendanceContainer">
                         <div class="attendanceSystem">
@@ -148,12 +156,12 @@
                         </div>
                         <div class="attendanceSamaneh">
                             <p class="attendanceSamanehTitle">سامانه</p>
-                            <span class="attendanceSamanehValue samanehTime">00:00</span>
+                            <span class="attendanceSamanehValue samanehTime" id="attendanceSamanehValue">00:00</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="numBox" id="hozoornumBoxID">
+                <div class="numBox report-summary-card report-summary-card--wide report-summary-card--violet" id="hozoornumBoxID">
                     <div class="title">گزارش حضور روزانه</div>
                     <div class="attendanceContainer">
                         <div class="attendanceSystem">
@@ -168,37 +176,31 @@
                 </div>
 
                 <!-- ردیف دوم -->
-                <div class="numBox">
+                <div class="numBox report-summary-card report-summary-card--compact report-stat-card--amber">
                     <span class="title">مجموع زمان تاخیر</span>
-                    <span class="value" id="takhiretitle">00:00</span>
+                    <span class="value" id="totalDelayID">00:00</span>
                 </div>
-                <div class="numBox">
+                <div class="numBox report-summary-card report-summary-card--compact report-stat-card--blue">
                     <span class="title">مجموع پاس های ساعتی</span>
-                    <span class="value" id="takhiretitle">00:00</span>
+                    <span class="value" id="passNumBoxID">00:00</span>
                 </div>
-                <div class="numBox">
+                <div class="numBox report-summary-card report-summary-card--compact report-stat-card--green">
                     <span class="title">مجموع شروع زودهنگام</span>
-                    <span class="value" id="takhiretitle">00:00</span>
+                    <span class="value" id="totalEarlyStartID">00:00</span>
                 </div>
-                <div class="numBox">
+                <div class="numBox report-summary-card report-summary-card--compact report-stat-card--red">
                     <span class="title">مجموع خروج زودهنگام</span>
-                    <span class="value" id="takhiretitle">00:00</span>
-                </div>
-                <div class="numBox">
-                    <span class="title">مجموع مرخصی</span>
-                    <div class="jscode">
-                        <span> روز</span>
-                        <span id="roozeMorkhc"></span>
-                    </div>
+                    <span class="value" id="totalEarlyExitID">00:00</span>
+                </div>                <div class="numBox report-summary-card report-summary-card--compact report-stat-card--slate">
+                    <span class="title">     مجموع مرخصی     </span>
+                    <strong class="jscode"><span id="roozeMorkhc">۰</span><span>روز</span></strong>
                 </div>
             </div>
 
             <div class="dokmeha">
                 <div class="exportButtons">
-                    <a href="/download_pdf">
-                        <button class="btn">دریافت فایل گزارش</button>
-                    </a>
-                    <button class="btn" onclick="window.print()">چاپ گزارش</button>
+                    <a href="/download_pdf" class="btn report-action report-action--primary"><span aria-hidden="true">↓</span>دریافت فایل گزارش</a>
+                    <button type="button" class="btn report-action report-action--secondary" onclick="window.print()"><span aria-hidden="true">⎙</span>چاپ گزارش</button>
                 </div>
             </div>
         </div>

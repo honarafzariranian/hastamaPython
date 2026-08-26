@@ -37,9 +37,6 @@ make install
 برای فعال‌سازی، پکیج پروژه را نصب کنید و این مقادیر را فقط در `.env` سمت سرور قرار دهید:
 
 ```env
-VAPID_PUBLIC_KEY=<public-key>
-VAPID_PRIVATE_KEY=<private-key>
-VAPID_SUBJECT=mailto:admin@example.com
 
 ```
 
@@ -54,10 +51,8 @@ SSL_CERTFILE=/path/to/cert.pem SSL_KEYFILE=/path/to/key.pem make run
 ```
 
 پس از ورود، یک‌بار روی زنگ اعلان کلیک و مجوز را Allow کنید. Service Worker از مسیر
-`/static/js/hastama-sw.js` ثبت می‌شود و Subscription به کاربر نشست‌شده متصل است.
 اگر Permission قبلاً رد شده، آن را از Site settings > Notifications در Chrome فعال کنید.
 
-ساخت کلید VAPID را با ابزار امن Web Push انجام دهید؛ کلید خصوصی هرگز در Frontend، لاگ یا Git قرار نگیرد.
 
 ## Deploy app
 

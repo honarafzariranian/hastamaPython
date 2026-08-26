@@ -33,7 +33,7 @@ from core.number_format import convert_to_persian_numbers
 from core.password_utils import get_user_table_columns, hash_password, insert_user_with_optional_hash
 
 from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Path, Body, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse, FileResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -64,12 +64,6 @@ async def security_headers(request: Request, call_next):
 
 # ثبت مسیر استاتیک برای فایل‌های CSS و JavaScript
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# Root-scoped Service Worker endpoint. Keeping the worker source under static/ while
-# serving it at /hastama-sw.js allows it to control the whole same-origin app.
-@app.get("/hastama-sw.js", include_in_schema=False)
-async def hastama_service_worker():
-    return FileResponse("app/static/js/hastama-sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
 app.include_router(auth_router)
 app.include_router(notifications_router)
@@ -705,6 +699,7 @@ def persian_to_english_digits(text):
 
 
 def _notify_admins_new_request(kind, username, details):
+    # درخواست‌های عملیاتی فقط برای حساب‌های دارای نقش admin ارسال می‌شوند.
     labels = {
         'leave': 'مرخصی',
         'overtime': 'اضافه‌کاری',

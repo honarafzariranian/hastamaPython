@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
             link.remove();
             setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
         } catch (error) {
-            window.alert('دریافت فایل گزارش انجام نشد. لطفاً دوباره تلاش کنید.');
+            showSystemError('دریافت فایل گزارش انجام نشد. لطفاً دوباره تلاش کنید.');
         } finally {
             downloadButton.disabled = false;
             downloadButton.textContent = originalText;

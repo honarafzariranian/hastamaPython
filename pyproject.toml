@@ -22,7 +22,6 @@ dependencies = [
     "persiantools>=2.0.0",
     "itsdangerous>=2.0.0",
     "python-multipart>=0.0.5",
-    "pywebpush>=2.0.0",
     "apscheduler>=3.10.4,<4"
 ]
 

@@ -32,11 +32,12 @@
                     <span class="topbar-clock-time" id="adminTopbarTimeText">--:--:--</span>
                 </div>
 
-                <button type="button" class="topbar-icon-btn" id="notificationsButton" aria-label="مدیریت اعلان‌ها" onclick="toggleBox('notificationAdminBox'); window.NotificationSystem && window.NotificationSystem.loadAdmin()">
+                <button type="button" class="topbar-icon-btn notification-bell" id="notificationsButton" aria-label="مدیریت اعلان‌ها" onclick="toggleBox('notificationAdminBox'); window.NotificationSystem && window.NotificationSystem.loadAdmin()">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 22C13.1046 22 14 21.1046 14 20H10C10 21.1046 10.8954 22 12 22Z" fill="currentColor"/>
                         <path d="M18 16V11C18 7.68629 16.2091 4.86798 13.25 4.21834V3.5C13.25 3.08579 12.9142 2.75 12.5 2.75C12.0858 2.75 11.75 3.08579 11.75 3.5V4.21834C8.79095 4.86798 7 7.68629 7 11V16L5 18V19H19V18L18 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
+                    <span class="topbar-badge notification-unread-badge" id="adminNotificationUnreadBadge" hidden>۰</span>
                 </button>
 
                 <div class="topbar-icon-btn theme-toggle" id="themeToggleButton" data-action="toggle-theme" role="button" tabindex="0">
@@ -732,10 +733,11 @@
 
             <div class="notification-toolbar">
                 <label class="notification-search"><span class="sr-only">جستجوی اعلان</span><input id="adminNotificationSearch" type="search" placeholder="جستجو در عنوان یا متن…"></label>
-                <select id="adminNotificationStatus" aria-label="فیلتر وضعیت"><option value="">همه وضعیت‌ها</option><option value="draft">پیش‌نویس</option><option value="scheduled">زمان‌بندی‌شده</option><option value="published">منتشرشده</option><option value="archived">بایگانی</option></select>
+                <select id="adminNotificationStatus" aria-label="فیلتر وضعیت"><option value="">همه وضعیت‌ها</option><option value="draft">پیش‌نویس</option><option value="scheduled">زمان‌بندی‌شده</option><option value="published">منتشرشده</option></select>
                 <select id="adminNotificationType" aria-label="فیلتر نوع"><option value="">همه انواع</option><option value="general">عمومی</option><option value="announcement">اطلاعیه</option><option value="system">سیستمی</option><option value="warning">هشدار</option><option value="information">اطلاعات</option><option value="success">موفقیت</option><option value="reminder">یادآوری</option></select>
                 <select id="adminNotificationPriority" aria-label="فیلتر اولویت"><option value="">همه اولویت‌ها</option><option value="normal">عادی</option><option value="important">مهم</option><option value="high">بالا</option><option value="critical">بحرانی</option></select>
                 <button type="button" class="notification-secondary-btn" id="adminMarkAllRead">خواندن همه پیام ها</button>
+                <button type="button" class="notification-secondary-btn notification-danger-btn" id="adminDeleteAllBtn">حذف همه پیام‌ها</button>
             </div>
 
             <div class="notification-table-wrap">
@@ -745,6 +747,22 @@
                 </table>
             </div>
             <div class="notification-pagination" id="adminNotificationPagination"></div>
+        </div>
+
+        <div class="notification-dialog" id="notificationDeleteConfirm" hidden>
+            <div class="notification-dialog-backdrop" data-notification-delete-close></div>
+            <section class="notification-dialog-card notification-confirm-card" role="dialog" aria-modal="true" aria-labelledby="notificationDeleteConfirmTitle">
+                <header><div><span class="notification-kicker">تأیید عملیات</span><h2 id="notificationDeleteConfirmTitle">حذف پیام</h2></div><button type="button" data-notification-delete-close aria-label="بستن">×</button></header>
+                <div class="notification-confirm-body"><p>این اعلان برای همیشه حذف شود؟</p><div class="notification-confirm-actions"><button type="button" class="notification-primary-btn notification-danger-btn" id="notificationDeleteConfirmButton">تأیید حذف</button><button type="button" class="notification-secondary-btn" data-notification-delete-close>انصراف</button></div></div>
+            </section>
+        </div>
+
+        <div class="notification-dialog" id="notificationDeleteAllConfirm" hidden>
+            <div class="notification-dialog-backdrop" data-notification-delete-all-close></div>
+            <section class="notification-dialog-card notification-confirm-card" role="dialog" aria-modal="true" aria-labelledby="notificationDeleteAllConfirmTitle">
+                <header><div><span class="notification-kicker">تأیید عملیات</span><h2 id="notificationDeleteAllConfirmTitle">حذف همه پیام‌ها</h2></div><button type="button" data-notification-delete-all-close aria-label="بستن">×</button></header>
+                <div class="notification-confirm-body"><p>آیا از حذف <strong>تمام</strong> اعلان‌ها اطمینان دارید؟ این عمل غیرقابل بازگشت است.</p><div class="notification-confirm-actions"><button type="button" class="notification-primary-btn notification-danger-btn" id="notificationDeleteAllConfirmButton">تأیید حذف همه</button><button type="button" class="notification-secondary-btn" data-notification-delete-all-close>انصراف</button></div></div>
+            </section>
         </div>
 
         <div class="notification-dialog" id="notificationEditor" hidden>
@@ -772,6 +790,15 @@
                     </footer>
                 </form>
             </section>
+        </div>
+
+        <!-- جزئیات اعلان برای ادمین -->
+        <div class="notification-detail" id="adminNotificationDetail" hidden>
+            <div class="notification-detail-backdrop" data-notification-admin-detail-close></div>
+            <article role="dialog" aria-modal="true" aria-labelledby="adminNotificationDetailTitle">
+                <button type="button" class="notification-detail-close" data-notification-admin-detail-close aria-label="بستن">×</button>
+                <div id="adminNotificationDetailBody"></div>
+            </article>
         </div>
 
         <div id="shiftBox" class="management-box" style="display:none;">
@@ -1310,111 +1337,144 @@
 
         <div class="attendance-tools-row">
         <!-- باکس نمایش زمان های کاربر -->
-        <div id="natigehHozoor" class="management-box" style="display: none;">
-            <h2>مجموع ساعت کاری</h2>
-            <div class="boxha">
-                <div class="box1-hozoor">
-                    <span>مجموع مدت زمان حضور : 00:00</span>
+        <div id="natigehHozoor" class="management-box attendance-panel" style="display: none;">
+            <div class="attendance-panel__head">
+                <div class="attendance-panel__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
-                <div class="box2-hozoor">
-                    <span>مجموع ساعات اضافه کاری : 00:00</span>
-                </div>
-                <div class="box3-hozoor">
-                    <span>مجموع مدت زمان تاخیر : 00:00</span>
-                </div>
-                <div class="box4-hozoor">
-                    <span>مجموع مدت زمان شروع زود هنگام : 00:00</span>
-                </div>
-                <div class="box5-hozoor">
-                    <span>مجموع مدت زمان خروج زود هنگام : 00:00</span>
+                <div>
+                    <h2 class="attendance-panel__title">مجموع ساعت کاری</h2>
+                    <p class="attendance-panel__subtitle">خلاصه حضور و غیاب دوره انتخاب‌شده</p>
                 </div>
             </div>
-
-            <button class="gozareshNahaei" onclick="goToFinalReport()">گزارش نهایی</button>
+            <div class="boxha attendance-stats">
+                <div class="attendance-stat attendance-stat--presence box1-hozoor">                    <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
+                    <div class="attendance-stat__info">
+                        <span class="attendance-stat__label">مجموع حضور</span>
+                        <span class="attendance-stat__value">00:00</span>
+                    </div>
+                </div>
+                <div class="attendance-stat attendance-stat--overtime box2-hozoor">
+                    <span class="attendance-stat__icon" aria-hidden="true">⚡</span>
+                    <div class="attendance-stat__info">
+                        <span class="attendance-stat__label">اضافه کاری</span>
+                        <span class="attendance-stat__value">00:00</span>
+                    </div>
+                </div>
+                <div class="attendance-stat attendance-stat--delay box3-hozoor">
+                    <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
+                    <div class="attendance-stat__info">
+                        <span class="attendance-stat__label">تاخیر</span>
+                        <span class="attendance-stat__value">00:00</span>
+                    </div>
+                </div>
+                <div class="attendance-stat attendance-stat--early-start box4-hozoor">
+                    <span class="attendance-stat__icon" aria-hidden="true">↗</span>
+                    <div class="attendance-stat__info">
+                        <span class="attendance-stat__label">شروع زودهنگام</span>
+                        <span class="attendance-stat__value">00:00</span>
+                    </div>
+                </div>
+                <div class="attendance-stat attendance-stat--early-exit box5-hozoor">
+                    <span class="attendance-stat__icon" aria-hidden="true">↙</span>
+                    <div class="attendance-stat__info">
+                        <span class="attendance-stat__label">خروج زودهنگام</span>
+                        <span class="attendance-stat__value">00:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attendance-panel__footer">
+                <button class="gozareshNahaei attendance-panel__btn" onclick="goToFinalReport()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    گزارش نهایی
+                </button>
+            </div>
         </div>
 
         <!-- باکس ثبت دستی حضور و غیاب -->
-        <div id="sabtdst" class="management-box" style="display: none;">
-            <h2>ثبت دستی ورود و خروج</h2>
-            <div class="vorodiha">
-                <form id="sabtdastHozoor" class="formsabtdast">
-                    <label for="usernamedast">: انتخاب کاربر</label>
-                    <select id="usernamedast" name="usernamedast" required>
-                        <option value="" disabled selected>انتخاب کنید</option>
-                        <option value="all_users">همه کاربران</option>
-                        {% for user in users %}
-                        <option value="{{ user.username }}">{{ user.username }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <br><br>
-
-                    <!-- تاریخ شمسی -->
-                    <label for="tarikh">: تاریخ</label>
-                    <input type="text" id="tarikh" name="tarikh" readonly autocomplete="off" />
-
-                    <div id="calendar-box" aria-hidden="true" role="dialog" aria-modal="true">
-                    <div id="calendar-header">
-                        <select id="calendar-month"></select>
-                        <select id="calendar-year" style="font-family: 'Vazir', sans-serif;"></select>
-                    </div>
-                    <div id="calendar-days">
-                        <div>ش</div><div>ی</div><div>د</div><div>س</div><div>چ</div><div>پ</div><div>ج</div>
-                    </div>
-                    <div id="calendar-dates"></div>
+        <div id="sabtdst" class="management-box attendance-panel" style="display: none;">
+            <div class="attendance-panel__head">
+                <div class="attendance-panel__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <div>
+                    <h2 class="attendance-panel__title">ثبت دستی ورود و خروج</h2>
+                    <p class="attendance-panel__subtitle">ثبت دستی ساعت حضور پرسنل</p>
+                </div>
+            </div>
+            <div class="vorodiha attendance-form-wrap">
+                <form id="sabtdastHozoor" class="formsabtdast attendance-form">
+                    <div class="attendance-form__row">
+                        <label for="usernamedast" class="attendance-form__label">انتخاب کاربر</label>
+                        <select id="usernamedast" name="usernamedast" required class="attendance-form__select">
+                            <option value="" disabled selected>انتخاب کنید</option>
+                            <option value="all_users">همه کاربران</option>
+                            {% for user in users %}
+                            <option value="{{ user.username }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
-                    <br><br>
-
-                    <!-- ساعت ورود -->
-                    <div class="time-container">
-                        <input type="text" id="vorood" name="vorood" placeholder="--:--" onclick="toggleTimePicker('vorood')">
-                        <label for="vorood">: ساعت ورود</label>
-
-                        <div class="time-picker" id="timepicker-vorood">
-                            <div class="time-section">
-                                <div class="time-btn" onclick="changeTime('vorood', 'hour', 1)">▲</div>
-                                <span id="hour-vorood">00</span>
-                                <div class="time-btn" onclick="changeTime('vorood', 'hour', -1)">▼</div>
+                    <div class="attendance-form__row">
+                        <label for="tarikh" class="attendance-form__label">تاریخ</label>
+                        <input type="text" id="tarikh" name="tarikh" readonly autocomplete="off" class="attendance-form__input" />
+                        <div id="calendar-box" class="attendance-calendar" aria-hidden="true" role="dialog" aria-modal="true">
+                            <div id="calendar-header">
+                                <select id="calendar-month"></select>
+                                <select id="calendar-year"></select>
                             </div>
-                            <span class="colon">:</span>
-                            <div class="time-section">
-                                <div class="time-btn" onclick="changeTime('vorood', 'minute', 1)">▲</div>
-                                <span id="minute-vorood">00</span>
-                                <div class="time-btn" onclick="changeTime('vorood', 'minute', -1)">▼</div>
+                            <div id="calendar-days">
+                                <div>ش</div><div>ی</div><div>د</div><div>س</div><div>چ</div><div>پ</div><div>ج</div>
                             </div>
+                            <div id="calendar-dates"></div>
                         </div>
                     </div>
 
-                    <br><br>
-
-                    <!-- ساعت خروج -->
-                    <div class="time-container">
-                        <input type="text" id="khorooj" name="khorooj" placeholder="--:--" onclick="toggleTimePicker('khorooj')">
-                        <label for="khorooj">: ساعت خروج</label>
-
-                        <div class="time-picker" id="timepicker-khorooj">
-                            <div class="time-section">
-                                <div class="time-btn" onclick="changeTime('khorooj', 'hour', 1)">▲</div>
-                                <span id="hour-khorooj">00</span>
-                                <div class="time-btn" onclick="changeTime('khorooj', 'hour', -1)">▼</div>
+                    <div class="attendance-form__times">
+                        <div class="attendance-form__row attendance-form__row--time">
+                            <label for="vorood" class="attendance-form__label">ساعت ورود</label>
+                            <div class="time-container">
+                                <input type="text" id="vorood" name="vorood" placeholder="--:--" onclick="toggleTimePicker('vorood')" class="attendance-form__input attendance-form__input--time">
+                                <div class="time-picker" id="timepicker-vorood">
+                                    <div class="time-section">
+                                        <div class="time-btn" onclick="changeTime('vorood', 'hour', 1)">▲</div>
+                                        <span id="hour-vorood">00</span>
+                                        <div class="time-btn" onclick="changeTime('vorood', 'hour', -1)">▼</div>
+                                    </div>
+                                    <span class="colon">:</span>
+                                    <div class="time-section">
+                                        <div class="time-btn" onclick="changeTime('vorood', 'minute', 1)">▲</div>
+                                        <span id="minute-vorood">00</span>
+                                        <div class="time-btn" onclick="changeTime('vorood', 'minute', -1)">▼</div>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="colon">:</span>
-                            <div class="time-section">
-                                <div class="time-btn" onclick="changeTime('khorooj', 'minute', 1)">▲</div>
-                                <span id="minute-khorooj">00</span>
-                                <div class="time-btn" onclick="changeTime('khorooj', 'minute', -1)">▼</div>
+                        </div>
+                        <div class="attendance-form__row attendance-form__row--time">
+                            <label for="khorooj" class="attendance-form__label">ساعت خروج</label>
+                            <div class="time-container">
+                                <input type="text" id="khorooj" name="khorooj" placeholder="--:--" onclick="toggleTimePicker('khorooj')" class="attendance-form__input attendance-form__input--time">
+                                <div class="time-picker" id="timepicker-khorooj">
+                                    <div class="time-section">
+                                        <div class="time-btn" onclick="changeTime('khorooj', 'hour', 1)">▲</div>
+                                        <span id="hour-khorooj">00</span>
+                                        <div class="time-btn" onclick="changeTime('khorooj', 'hour', -1)">▼</div>
+                                    </div>
+                                    <span class="colon">:</span>
+                                    <div class="time-section">
+                                        <div class="time-btn" onclick="changeTime('khorooj', 'minute', 1)">▲</div>
+                                        <span id="minute-khorooj">00</span>
+                                        <div class="time-btn" onclick="changeTime('khorooj', 'minute', -1)">▼</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <br><br>
-
                 </form>
-                <button type="button" id="sabt-btn" style="font-family: 'Vazir', sans-serif;">
+                <button type="button" id="sabt-btn" class="attendance-form__submit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                     ثبت اطلاعات
                 </button>
-                </div>
             </div>
         </div>
 
@@ -1785,8 +1845,9 @@
         <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>
 <script>window.__modernTicketing = true;</script>
 <script src="{{ url_for('static', path='js/admin.js') }}"></script>
+<script>window.__notificationToastReady = true;</script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
-<script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
+<script src="{{ url_for('static', path='js/notification-system.js') }}?v=16"></script>
     <script src="{{ url_for('static', path='vendor/persian-date/persian-date.min.js') }}"></script>
 
     

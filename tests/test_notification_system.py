@@ -49,25 +49,25 @@ def test_frontend_never_renders_notification_content_as_html():
     assert "setInterval(refreshCount,60000)" in javascript
 
 
-def test_web_push_service_worker_and_api_are_integrated():
-    worker = (ROOT / "app/static/js/hastama-sw.js").read_text(encoding="utf-8")
+def test_browser_push_is_not_present_and_internal_sse_remains():
     javascript = (ROOT / "app/static/js/notification-system.js").read_text(encoding="utf-8")
     routes = (ROOT / "app/api/routes/notifications.py").read_text(encoding="utf-8")
     schema = (ROOT / "database/notifications.sql").read_text(encoding="utf-8")
-    assert "addEventListener('push'" in worker
-    assert "showNotification" in worker
-    assert "clients.matchAll" in worker
-    assert "registerWebPush" in javascript
-    assert "/push/subscribe" in routes
-    assert "/push/status" in routes
-    assert "CREATE TABLE dbo.push_subscriptions" in schema
-    assert "pywebpush" in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert not (ROOT / "app/static/js/hastama-sw.js").exists()
+    assert "new Notification" not in javascript
+    assert "navigator.serviceWorker" not in javascript
+    assert "PushManager" not in javascript
+    assert "/push/subscribe" not in routes
+    assert "/push/status" not in routes
+    assert "push_subscriptions" not in schema
+    assert "pywebpush" not in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
 
 def test_browser_notifications_use_the_durable_inbox_only():
     javascript = (ROOT / "app/static/js/notification-system.js").read_text(encoding="utf-8")
     routes = (ROOT / "app/api/routes/notifications.py").read_text(encoding="utf-8")
     assert "new EventSource('/api/notifications/stream')" in javascript
+    assert "showRealtimeNotification" in javascript
     assert "startAdminRequestStream" not in javascript
     assert "requestLabels" not in javascript
     assert "last-event-id" in routes

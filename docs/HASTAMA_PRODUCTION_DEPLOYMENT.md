@@ -19,8 +19,8 @@ Caddy Windows service
         v
 FastAPI/Uvicorn Windows service
         |
-        +-- SQL Server / existing databases
-        +-- notification inbox and push subscriptions
+        +-- SQL Server / existing databases         +-- notification inbox and SSE stream
+
         +-- APScheduler maintenance jobs
 ```
 
@@ -32,7 +32,6 @@ FastAPI must bind to `127.0.0.1:8000`. Only Caddy binds to LAN TCP 443.
 - SQL Server and ODBC Driver 17.
 - Caddy installed and available to the service account.
 - NSSM approved and installed if using the provided service scripts.
-- VAPID values in the server-only `.env` file.
 - Internal DNS and an internal CA certificate for a no-client-touch deployment.
 
 ## Install and configure
@@ -96,7 +95,6 @@ Get-NetTCPConnection -State Listen -LocalPort 8000,443
 The application starts APScheduler with the FastAPI lifecycle. It runs:
 
 - scheduled notification publication every 30 seconds
-- push-subscription maintenance every hour
 
 Do not run multiple application scheduler instances against the same database unless the
 jobs are made leader-elected; use one Uvicorn process for this deployment or move jobs to
@@ -114,11 +112,10 @@ Back up:
 Recovery order:
 
 1. Restore SQL Server and verify `user_table`.
-2. Restore protected configuration and VAPID keys.
+2. Restore protected application configuration.
 3. Restore application files and `.venv` dependencies.
 4. Validate Caddy and start the API service.
 5. Start Caddy and verify HTTPS/SAN/DNS.
-6. Existing Push subscriptions are origin-bound; if the origin or VAPID key changes,
    clients must subscribe again.
 
 ## Chrome acceptance checklist
@@ -127,13 +124,10 @@ On a real client:
 
 1. Open the HTTPS DNS name.
 2. Confirm `window.isSecureContext === true`.
-3. Confirm `navigator.serviceWorker` and `window.PushManager` exist.
-4. Confirm `/hastama-sw.js` is active with scope `/`.
+3. Confirm the in-panel SSE connection is active.
 5. Login and allow Notifications.
-6. Confirm `registration.pushManager.getSubscription()` returns a subscription.
-7. Confirm `/api/push/status` reports an active subscription.
 8. Publish a controlled admin notification.
-9. Verify the inbox, SSE event, Chrome notification, minimized Chrome behavior, and click.
+9. Verify the inbox, SSE event, in-panel toast, counter, and read/unread behavior.
 10. Repeat on a second LAN computer.
 
 A real Windows popup, minimized-browser test, and second-client test require manual
@@ -143,8 +137,6 @@ execution and are not inferred from Python or Caddy checks.
 
 - 401: session cookie is missing or the user is not logged in.
 - 403: admin role or origin policy failed.
-- No subscription: inspect Chrome Application > Service Workers and permission settings.
-- No push: inspect VAPID configuration, subscription row, and server push logs.
 - Certificate warning: verify DNS, SAN, and enterprise CA trust.
 - SSE stalls: verify Caddy flush settings and the active `/api/notifications/stream` request.
 - Scheduled notification delayed: inspect scheduler logs and database `scheduled_at`.

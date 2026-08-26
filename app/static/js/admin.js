@@ -1333,7 +1333,7 @@ function printPayrollTablesA4() {
     var comprehensiveTable = document.getElementById('payrollComprehensiveTable');
     var hourlyTable = document.getElementById('hourlyPayrollTable');
     if (!comprehensiveTable || !hourlyTable) {
-        window.alert('جدول‌های حقوق برای چاپ آماده نیستند.');
+        showSystemError('جدول‌های حقوق برای چاپ آماده نیستند.');
         return;
     }
 
@@ -1363,7 +1363,7 @@ function printPayrollTablesA4() {
 
     if (!printWindow || !printWindow.document) {
         if (printFrame) printFrame.remove();
-        window.alert('امکان آماده‌سازی چاپ وجود ندارد.');
+        showSystemError('امکان آماده‌سازی چاپ وجود ندارد.');
         return;
     }
 
@@ -1461,7 +1461,7 @@ function openPayrollReportPreview() {
     var comprehensiveTable = document.getElementById('payrollComprehensiveTable');
     var hourlyTable = document.getElementById('hourlyPayrollTable');
     if (!comprehensiveTable || !hourlyTable) {
-        window.alert('جدول‌های حقوق برای نمایش آماده نیستند.');
+        showSystemError('جدول‌های حقوق برای نمایش آماده نیستند.');
         return;
     }
 
@@ -1505,13 +1505,13 @@ function openPayrollReportPreview() {
             ]
         }));
     } catch (error) {
-        window.alert('حجم گزارش برای نمایش بیش از حد مجاز است.');
+        showSystemError('حجم گزارش برای نمایش بیش از حد مجاز است.');
         return;
     }
 
     var previewWindow = window.open('/payroll_report_page', '_blank');
     if (!previewWindow) {
-        window.alert('صفحه گزارش توسط مرورگر مسدود شد؛ لطفاً اجازه باز شدن پنجره را فعال کنید.');
+        showSystemError('صفحه گزارش توسط مرورگر مسدود شد؛ لطفاً اجازه باز شدن پنجره را فعال کنید.');
     }
 }
 
@@ -2012,7 +2012,7 @@ function updateStatus(requestId) {
 
     // بررسی اینکه وضعیت "انتظار تایید" نباشد
     if (currentStatus === 'انتظار تایید') {
-        alert('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
+        showSystemError('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
         return; // متوقف کردن ادامه عملیات
     }
 
@@ -2027,16 +2027,16 @@ function updateStatus(requestId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('وضعیت با موفقیت تغییر کرد!');
+            showSystemSuccess('وضعیت با موفقیت تغییر کرد!');
             // فقط در صورتی که تغییرات با موفقیت انجام شد، ردیف از جدول حذف می‌شود
             setTimeout(() => removeRequestFromTable(requestId), 100); // حذف ردیف بعد از کمی تاخیر
         } else {
-            alert('خطا در به‌روزرسانی وضعیت!');
+            showSystemError('خطا در به‌روزرسانی وضعیت!');
         }
     })
     .catch(error => {
         console.error('Error updating status:', error);
-        alert('خطا در به‌روزرسانی وضعیت!');
+        showSystemError('خطا در به‌روزرسانی وضعیت!');
     });
 }
 
@@ -2181,7 +2181,7 @@ document.getElementById('generategozareshmrkReportBtn').addEventListener('click'
     const toDate = document.getElementById('toDate').value;
 
     if (!fromDate || !toDate) {
-        alert('لطفاً همه فیلدها را پر کنید');
+        showSystemError('لطفاً همه فیلدها را پر کنید');
         return;
     }
 
@@ -2241,12 +2241,12 @@ document.getElementById('generategozareshmrkReportBtn').addEventListener('click'
 
             document.getElementById('downloadReportBtn').style.display = 'block';
         } else {
-            alert(data.message || 'خطا در دریافت گزارش');
+            showSystemError(data.message || 'خطا در دریافت گزارش');
         }
     })
     .catch((error) => {
         console.error('Error:', error);
-        alert('خطا در برقراری ارتباط');
+        showSystemError('خطا در برقراری ارتباط');
     });
 });
 
@@ -2257,7 +2257,7 @@ function applyStatusChange(requestId) {
 
     // بررسی اینکه وضعیت "انتظار تایید" نباشد
     if (currentStatus === 'انتظار تایید') {
-        alert('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
+        showSystemError('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
         return; // متوقف کردن ادامه عملیات
     }
 
@@ -2272,14 +2272,14 @@ function applyStatusChange(requestId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('وضعیت با موفقیت تغییر کرد!');
+            showSystemSuccess('وضعیت با موفقیت تغییر کرد!');
         } else {
-            alert('خطا در به‌روزرسانی وضعیت!');
+            showSystemError('خطا در به‌روزرسانی وضعیت!');
         }
     })
     .catch(error => {
         console.error('Error updating status:', error);
-        alert('خطا در به‌روزرسانی وضعیت!');
+        showSystemError('خطا در به‌روزرسانی وضعیت!');
     });
 }
 
@@ -2446,7 +2446,7 @@ function updateUser() {
     const employment_status = document.getElementById("editEmploymentStatus")?.value || "official";
 
     if (!currentUsername || !username) {
-        alert("نام کاربری را وارد کنید.");
+        showSystemError("نام کاربری را وارد کنید.");
         return;
     }
 
@@ -2473,12 +2473,12 @@ function updateUser() {
             return result;
         })
         .then(() => {
-            alert("اطلاعات با موفقیت ثبت شد.");
+            showSystemSuccess("اطلاعات با موفقیت ثبت شد.");
             location.reload();
         })
         .catch(error => {
             console.error(error);
-            alert(error.message || "خطا در ثبت اطلاعات.");
+            showSystemError(error.message || "خطا در ثبت اطلاعات.");
         });
 
 }
@@ -2607,7 +2607,7 @@ function applyStatusChangeForApproval(requestId) {
 
     // بررسی اینکه وضعیت "انتظار تایید" نباشد
     if (currentStatus === 'انتظار تایید') {
-        alert('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
+        showSystemError('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
         return; // متوقف کردن ادامه عملیات
     }
 
@@ -2629,17 +2629,17 @@ function applyStatusChangeForApproval(requestId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('وضعیت با موفقیت تغییر کرد!');
+            showSystemSuccess('وضعیت با موفقیت تغییر کرد!');
             
             // حذف ردیف از جدول پس از ثبت تغییرات
             row.remove(); // حذف ردیف
         } else {
-            alert('خطا در به‌روزرسانی وضعیت!');
+            showSystemError('خطا در به‌روزرسانی وضعیت!');
         }
     })
     .catch(error => {
         console.error('Error updating status:', error);
-        alert('خطا در به‌روزرسانی وضعیت!');
+        showSystemError('خطا در به‌روزرسانی وضعیت!');
     });
 }
 
@@ -2655,7 +2655,7 @@ document.getElementById("submitReport").addEventListener("click", function() {
     const endDate = document.getElementById("end_date").value;
 
     if (!username || !startDate || !endDate) {
-        alert("لطفاً تمام فیلدها را پر کنید.");
+        showSystemError("لطفاً تمام فیلدها را پر کنید.");
         return;
     }
 
@@ -2711,7 +2711,7 @@ document.getElementById("submitReport").addEventListener("click", function() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert("خطا در دریافت داده‌ها.");
+        showSystemError("خطا در دریافت داده‌ها.");
     });
 
 });
@@ -2726,7 +2726,7 @@ document.getElementById("downloadOvertimeReport").addEventListener("click", func
 
     // جلوگیری از ذخیره "همه کاربران" یا مقدار خالی
     if (!username || username === "all_users") {
-        alert("لطفاً یک کاربر خاص انتخاب کنید.");
+        showSystemError("لطفاً یک کاربر خاص انتخاب کنید.");
         return;
     }
 
@@ -2772,14 +2772,14 @@ function confirmChanges(rowNumber, id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert("وضعیت با موفقیت تغییر کرد.");
+            showSystemSuccess("وضعیت با موفقیت تغییر کرد.");
         } else {
-            alert("خطا در تغییر وضعیت.");
+            showSystemError("خطا در تغییر وضعیت.");
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert("خطا در ارسال درخواست.");
+        showSystemError("خطا در ارسال درخواست.");
     });
 }
 
@@ -2945,7 +2945,7 @@ function applyStatusChangeForHourlyPass(rowId) {
 
     // بررسی اینکه وضعیت "انتظار تایید" نباشد
     if (currentStatus === 'انتظار تایید') {
-        alert('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
+        showSystemError('درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.');
         return; // متوقف کردن ادامه عملیات
     }
 
@@ -2967,7 +2967,7 @@ function applyStatusChangeForHourlyPass(rowId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('وضعیت با موفقیت تغییر کرد!');
+            showSystemSuccess('وضعیت با موفقیت تغییر کرد!');
             
             // بروزرسانی وضعیت نمایش داده‌شده در جدول
             statusNavbar.textContent = convertToPersianNumbers(currentStatus);  // تبدیل وضعیت به اعداد فارسی
@@ -2983,13 +2983,13 @@ function applyStatusChangeForHourlyPass(rowId) {
             const row = document.querySelector(`#statusNavbarHourly_${rowId}`).closest('tr');
             row.remove();  // حذف ردیف از جدول
         } else {
-            alert('خطا در به‌روزرسانی وضعیت!');
+            showSystemError('خطا در به‌روزرسانی وضعیت!');
         }
     })
     
     .catch(error => {
         console.error('Error updating status:', error);
-        alert('خطا در به‌روزرسانی وضعیت!');
+        showSystemError('خطا در به‌روزرسانی وضعیت!');
     });
 }
 
@@ -3046,7 +3046,7 @@ document.getElementById("submitHourlyPassReport").addEventListener("click", func
     const endDate = document.getElementById("end_date_hourlypass").value;
 
     if (!username || !startDate || !endDate) {
-        alert("لطفاً تمام فیلدها را پر کنید.");
+        showSystemError("لطفاً تمام فیلدها را پر کنید.");
         return;
     }
 
@@ -3097,7 +3097,7 @@ document.getElementById("submitHourlyPassReport").addEventListener("click", func
 
     .catch(error => {
         console.error('Error:', error);
-        alert("خطا در دریافت داده‌ها.");
+        showSystemError("خطا در دریافت داده‌ها.");
     });
 });
 
@@ -3218,14 +3218,14 @@ function confirmChangesPass(rowId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert("وضعیت با موفقیت تغییر کرد.");
+            showSystemSuccess("وضعیت با موفقیت تغییر کرد.");
         } else {
-            alert("خطا در تغییر وضعیت.");
+            showSystemError("خطا در تغییر وضعیت.");
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert("خطا در ارسال درخواست.");
+        showSystemError("خطا در ارسال درخواست.");
     });
 }
 
@@ -3413,10 +3413,10 @@ function confirmTicketStatusChange(rowId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert("وضعیت تیکت‌های مرتبط به‌روزرسانی شد.");
+            showSystemSuccess("وضعیت تیکت‌های مرتبط به‌روزرسانی شد.");
             loadTicketRequests();
         } else {
-            alert("خطایی رخ داد: " + data.error);
+            showSystemError("خطایی رخ داد: " + data.error);
         }
     })
     .catch(error => {
@@ -3478,7 +3478,7 @@ function openViewDialog(ticketId) {
         .then(data => {
             if (data.error) {
                 console.error(data.error);
-                alert('خطایی در دریافت اطلاعات تیکت رخ داده است.');
+                showSystemError('خطایی در دریافت اطلاعات تیکت رخ داده است.');
                 return;
             }
 
@@ -3540,7 +3540,7 @@ function hideViewDialog() {
 
 if (!window.__modernTicketing) document.querySelector('.ersal-icon').addEventListener('click', () => {
     if (!ticketData) {
-        alert('اطلاعات تیکت در دسترس نیست.');
+        showSystemError('اطلاعات تیکت در دسترس نیست.');
         return;
     }
 
@@ -3588,12 +3588,12 @@ if (!window.__modernTicketing) document.querySelector('.ersal-icon').addEventLis
             document.querySelector('#matnErsali').value = '';
         } else {
             console.error(data.error);
-            alert('خطا در ارسال پاسخ تیکت');
+            showSystemError('خطا در ارسال پاسخ تیکت');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('خطای سرور');
+        showSystemError('خطای سرور');
     });
 });
 
@@ -3720,19 +3720,19 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data && data.id) {
-            alert('تیکت شما با موفقیت ثبت شد!');
+            showSystemSuccess('تیکت شما با موفقیت ثبت شد!');
             closeTicketModal(); // بستن پاپ‌آپ
             const refresh = () => window.TicketingWorkspace && window.TicketingWorkspace.loadAdmin(1);
             (window.uploadTicketAttachments ? window.uploadTicketAttachments(data.id) : Promise.resolve())
                 .then(refresh)
-                .catch(error => { console.error(error); alert('تیکت ثبت شد اما بارگذاری پیوست ناموفق بود.'); refresh(); });
+                .catch(error => { console.error(error); showSystemError('تیکت ثبت شد اما بارگذاری پیوست ناموفق بود.'); refresh(); });
         } else {
-            alert('خطا در ثبت تیکت! ' + (data.message || ''));
+            showSystemError('خطا در ثبت تیکت! ' + (data.message || ''));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('مشکلی در ارسال درخواست پیش آمده است.');
+        showSystemError('مشکلی در ارسال درخواست پیش آمده است.');
     });
 });
 
@@ -3816,7 +3816,7 @@ document.getElementById("extractButton").addEventListener("click", function () {
     let endDate = document.getElementById("end_date_hozoor").value;
 
     if (!selectedUsername || !startDate || !endDate) {
-        alert("لطفاً تمام فیلدها را پر کنید.");
+        showSystemError("لطفاً تمام فیلدها را پر کنید.");
         return;
     }
 
@@ -3981,20 +3981,20 @@ document.getElementById("extractButton").addEventListener("click", function () {
                     document.getElementById("sabtdst").style.marginTop = "2rem";
                 }
 
-                document.querySelector(".box1-hozoor span").innerText =
-                    `مجموع مدت زمان حضور : ${convertNumbersToPersianNumber(formatTimeFromMinutes(totalPresenceDuration))}`;
+                document.querySelector(".box1-hozoor .attendance-stat__value").innerText =
+                    convertNumbersToPersianNumber(formatTimeFromMinutes(totalPresenceDuration));
 
-                document.querySelector(".box2-hozoor span").innerText =
-                    `مجموع ساعات اضافه کاری : ${convertNumbersToPersianNumber(totalOvertime > 0 ? formatTimeFromMinutes(totalOvertime) : "00:00")}`;
+                document.querySelector(".box2-hozoor .attendance-stat__value").innerText =
+                    convertNumbersToPersianNumber(totalOvertime > 0 ? formatTimeFromMinutes(totalOvertime) : "00:00");
 
-                document.querySelector(".box3-hozoor span").innerText =
-                    `مجموع مدت زمان تاخیر : ${convertNumbersToPersianNumber(totalDelay > 0 ? formatTimeFromMinutes(totalDelay) : "00:00")}`;
+                document.querySelector(".box3-hozoor .attendance-stat__value").innerText =
+                    convertNumbersToPersianNumber(totalDelay > 0 ? formatTimeFromMinutes(totalDelay) : "00:00");
 
-                document.querySelector(".box4-hozoor span").innerText =
-                    `مجموع مدت زمان شروع زود هنگام : ${convertNumbersToPersianNumber(totalEarlyStart > 0 ? formatTimeFromMinutes(totalEarlyStart) : "00:00")}`;
+                document.querySelector(".box4-hozoor .attendance-stat__value").innerText =
+                    convertNumbersToPersianNumber(totalEarlyStart > 0 ? formatTimeFromMinutes(totalEarlyStart) : "00:00");
 
-                document.querySelector(".box5-hozoor span").innerText =
-                    `مجموع مدت زمان خروج زود هنگام : ${convertNumbersToPersianNumber(totalEarlyExit > 0 ? formatTimeFromMinutes(totalEarlyExit) : "00:00")}`;
+                document.querySelector(".box5-hozoor .attendance-stat__value").innerText =
+                    convertNumbersToPersianNumber(totalEarlyExit > 0 ? formatTimeFromMinutes(totalEarlyExit) : "00:00");
 
                 document.getElementById("natigehHozoor").style.display = "block";
 
@@ -4063,11 +4063,11 @@ function goToFinalReport() {
     localStorage.setItem("numRecords", tableData.length);
     localStorage.setItem("hozoorReportData", JSON.stringify(tableData));
 
-    localStorage.setItem("totalPresenceTime", document.querySelector(".box1-hozoor span").innerText.split(": ")[1]);
-    localStorage.setItem("totalOvertime", document.querySelector(".box2-hozoor span").innerText.split(": ")[1]);
-    localStorage.setItem("totalDelayTime", document.querySelector(".box3-hozoor span").innerText.split(": ")[1]);
-    localStorage.setItem("totalEarlyStart", document.querySelector(".box4-hozoor span").innerText.split(": ")[1]);
-    localStorage.setItem("totalEarlyExit", document.querySelector(".box5-hozoor span").innerText.split(": ")[1]);
+    localStorage.setItem("totalPresenceTime", document.querySelector(".box1-hozoor .attendance-stat__value").innerText);
+    localStorage.setItem("totalOvertime", document.querySelector(".box2-hozoor .attendance-stat__value").innerText);
+    localStorage.setItem("totalDelayTime", document.querySelector(".box3-hozoor .attendance-stat__value").innerText);
+    localStorage.setItem("totalEarlyStart", document.querySelector(".box4-hozoor .attendance-stat__value").innerText);
+    localStorage.setItem("totalEarlyExit", document.querySelector(".box5-hozoor .attendance-stat__value").innerText);
 
     let username = document.getElementById("usernameGozareshHozoor").value;
     let start_date = document.getElementById("start_date_hozoor").value;
@@ -4166,11 +4166,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(result => {
-            alert("اطلاعات با موفقیت ثبت شد");
+            showSystemSuccess("اطلاعات با موفقیت ثبت شد");
             form.reset();
         })
         .catch(error => {
-            alert("خطا در ثبت اطلاعات: " + error.message);
+            showSystemError("خطا در ثبت اطلاعات: " + error.message);
         });
     });
 });
@@ -4300,11 +4300,11 @@ function doCheckIn(username) {
             if (!r.ok || !r.data.success) throw new Error(r.data.message || "خطا در ثبت ورود");
             var d = r.data.data || {};
             applyAttendanceState(username, d.status, d.check_in, d.check_out);
-            alert(r.data.message || "ورود با موفقیت ثبت شد.");
+            showSystemSuccess(r.data.message || "ورود با موفقیت ثبت شد.");
         })
         .catch(function (err) {
             console.error(err);
-            alert(err.message || "خطا در ثبت ورود.");
+            showSystemError(err.message || "خطا در ثبت ورود.");
             setAttendanceLoading(username, false);
         });
 }
@@ -4325,11 +4325,11 @@ function doCheckOut(username) {
             if (!r.ok || !r.data.success) throw new Error(r.data.message || "خطا در ثبت خروج");
             var d = r.data.data || {};
             applyAttendanceState(username, d.status, d.check_in, d.check_out);
-            alert(r.data.message || "خروج با موفقیت ثبت شد.");
+            showSystemSuccess(r.data.message || "خروج با موفقیت ثبت شد.");
         })
         .catch(function (err) {
             console.error(err);
-            alert(err.message || "خطا در ثبت خروج.");
+            showSystemError(err.message || "خطا در ثبت خروج.");
             setAttendanceLoading(username, false);
         });
 }
@@ -4761,7 +4761,7 @@ function setupTimeInput(id) {
             const m = parseInt(parts[1], 10);
             if (isNaN(h) || isNaN(m) || h > 23 || m > 59) {
                 input.value = "--:--";
-                alert("فرمت ساعت نامعتبر است. لطفاً مثلاً 09:16 وارد کنید.");
+                showSystemError("فرمت ساعت نامعتبر است. لطفاً مثلاً 09:16 وارد کنید.");
             }
         }
     });
@@ -4850,7 +4850,7 @@ function loadShifts() {
     const month = document.getElementById('shiftMonth').value;
 
     if (!username) {
-        alert('لطفاً ابتدا پرسنل مورد نظر را انتخاب کنید');
+        showSystemError('لطفاً ابتدا پرسنل مورد نظر را انتخاب کنید');
         return;
     }
 
@@ -4860,14 +4860,14 @@ function loadShifts() {
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                alert(data.message || 'خطا در دریافت اطلاعات شیفت‌ها');
+                showSystemError(data.message || 'خطا در دریافت اطلاعات شیفت‌ها');
                 return;
             }
             renderShiftsTable(data.shifts);
         })
         .catch(error => {
             console.error(error);
-            alert('خطا در دریافت اطلاعات شیفت‌ها');
+            showSystemError('خطا در دریافت اطلاعات شیفت‌ها');
         });
 }
 
@@ -4933,11 +4933,11 @@ function saveShift() {
     const title = document.getElementById('shiftTitle').value;
 
     if (!username) {
-        alert('لطفاً ابتدا پرسنل مورد نظر را انتخاب کنید');
+        showSystemError('لطفاً ابتدا پرسنل مورد نظر را انتخاب کنید');
         return;
     }
     if (!startDay || !endDay) {
-        alert('لطفاً بازه‌ی روز را وارد کنید');
+        showSystemError('لطفاً بازه‌ی روز را وارد کنید');
         return;
     }
 
@@ -4962,16 +4962,16 @@ function saveShift() {
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                alert(data.message || 'خطا در ذخیره‌ی شیفت');
+                showSystemError(data.message || 'خطا در ذخیره‌ی شیفت');
                 return;
             }
-            alert(data.message || 'با موفقیت ذخیره شد');
+            showSystemSuccess(data.message || 'با موفقیت ذخیره شد');
             closeShiftPopup();
             loadShifts();
         })
         .catch(error => {
             console.error(error);
-            alert('خطا در ذخیره‌ی شیفت');
+            showSystemError('خطا در ذخیره‌ی شیفت');
         });
 }
 
@@ -4982,13 +4982,13 @@ function deleteShift(shiftId) {
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                alert(data.message || 'خطا در حذف شیفت');
+                showSystemError(data.message || 'خطا در حذف شیفت');
                 return;
             }
             loadShifts();
         })
         .catch(error => {
             console.error(error);
-            alert('خطا در حذف شیفت');
+            showSystemError('خطا در حذف شیفت');
         });
 }

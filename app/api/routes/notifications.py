@@ -17,7 +17,6 @@ from typing import Literal, Optional
 import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
 from app.core.database import connect as db_connect
-from app.services.web_push import public_key as web_push_public_key, send_to_subscriptions
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -154,28 +153,6 @@ def _fanout(cursor, notification_id: int) -> int:
     return max(0, cursor.rowcount if cursor.rowcount is not None else 0)
 
 
-def _deliver_push(conn, notification_id: int, username: str | None = None) -> None:
-    """Best-effort delivery from the durable inbox; source writes remain primary."""
-    if username:
-        where = "RTRIM(username)=?"
-        params = (username,)
-    else:
-        where = "1=1"
-        params = ()
-    cur = conn.cursor()
-    cur.execute("SELECT endpoint,p256dh,auth FROM push_subscriptions WHERE disabled_at IS NULL AND " + where, params)
-    subscriptions = [{"endpoint": r[0], "p256dh": r[1], "auth": r[2]} for r in cur.fetchall()]
-    if not subscriptions:
-        return
-    cur.execute("SELECT id,title,content,type,action_url FROM notifications WHERE id=?", (notification_id,))
-    row = cur.fetchone()
-    if not row:
-        return
-    expired = send_to_subscriptions(subscriptions, {"id": row[0], "title": row[1], "body": row[2], "type": row[3], "url": row[4] or "/user_panel", "tag": "hastama-" + str(row[0])})
-    for endpoint in expired:
-        cur.execute("UPDATE push_subscriptions SET disabled_at=SYSUTCDATETIME(), updated_at=SYSUTCDATETIME() WHERE endpoint=?", (endpoint,))
-
-
 def publish_system_notification(
     conn,
     title: str,
@@ -215,7 +192,6 @@ def publish_system_notification(
             (notification_id, value),
         )
     _fanout(conn_cursor, notification_id)
-    _deliver_push(conn, notification_id)
     return notification_id
 
 
@@ -318,11 +294,13 @@ def admin_list(
         cur.execute(f"SELECT COUNT(*) FROM notifications n WHERE {where}", tuple(params))
         total = int(cur.fetchone()[0])
         cur.execute(
-            f"""SELECT n.*, (SELECT STRING_AGG(t.target_value, N'||') FROM notification_targets t WHERE t.notification_id=n.id) target_values
+            f"""SELECT n.*,
+                       (SELECT STRING_AGG(t.target_value, N'||') FROM notification_targets t WHERE t.notification_id=n.id) target_values,
+                       (SELECT MIN(un.read_at) FROM user_notifications un WHERE un.notification_id=n.id AND RTRIM(un.username)=RTRIM(?)) admin_read_at
                 FROM notifications n
                 WHERE {where}
                 ORDER BY {order} OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
-            tuple(params + [(page - 1) * page_size, page_size]),
+            tuple(params + [request.session.get("username"), (page - 1) * page_size, page_size]),
         )
         items = [_serialize(row) for row in _dict_rows(cur)]
         cur.execute("""SELECT COUNT(*) total,
@@ -440,6 +418,74 @@ def publish_notification(notification_id: int, request: Request):
         conn.close()
 
 
+@router.post("/admin/notifications/{notification_id}/read")
+def admin_mark_read(notification_id: int, request: Request):
+    """Mark this notification as read for the current admin only."""
+    username = _actor(request, admin=True)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+        cur.execute(
+            """UPDATE un
+               SET read_at=COALESCE(un.read_at,SYSUTCDATETIME()),
+                   updated_at=SYSUTCDATETIME()
+               FROM user_notifications un
+               INNER JOIN notifications n ON n.id=un.notification_id
+               WHERE un.notification_id=? AND RTRIM(un.username)=?
+                 AND un.dismissed_at IS NULL
+                 AND n.status IN ('published','archived')""",
+            (notification_id, username),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="اعلان برای شما پیدا نشد.")
+        conn.commit()
+        return {"success": True}
+    finally:
+        conn.close()
+
+
+@router.post("/admin/notifications/{notification_id}/unread")
+def admin_mark_unread(notification_id: int, request: Request):
+    """Mark this notification as unread for the current admin only."""
+    username = _actor(request, admin=True)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+        cur.execute(
+            """UPDATE un SET read_at=NULL, updated_at=SYSUTCDATETIME()
+               FROM user_notifications un
+               INNER JOIN notifications n ON n.id=un.notification_id
+               WHERE un.notification_id=? AND RTRIM(un.username)=?
+                 AND un.dismissed_at IS NULL
+                 AND n.status IN ('published','archived')""",
+            (notification_id, username),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="اعلان برای شما پیدا نشد.")
+        conn.commit()
+        return {"success": True}
+    finally:
+        conn.close()
+
+
+@router.delete("/admin/notifications/{notification_id}")
+def delete_notification(notification_id: int, request: Request):
+    _actor(request, admin=True)
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        cur = conn.cursor()
+        cur.execute("DELETE FROM notifications WHERE id=?", (notification_id,))
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="اعلان پیدا نشد.")
+        conn.commit()
+        return {"success": True}
+    finally:
+        conn.close()
+
+
 @router.post("/admin/notifications/{notification_id}/archive")
 def archive_notification(notification_id: int, request: Request):
     _actor(request, admin=True)
@@ -456,79 +502,36 @@ def archive_notification(notification_id: int, request: Request):
         conn.close()
 
 
-@router.delete("/admin/notifications/{notification_id}")
-def delete_notification(notification_id: int, request: Request):
+@router.delete("/admin/notifications/delete-all")
+def delete_all_notifications(request: Request):
+    """Delete every notification visible to the admin."""
     _actor(request, admin=True)
     conn = get_connection()
     try:
         _ensure_schema(conn)
         cur = conn.cursor()
-        cur.execute("DELETE FROM notifications WHERE id=? AND status IN ('draft','scheduled','archived')", (notification_id,))
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=409, detail="اعلان منتشرشده را ابتدا بایگانی کنید.")
+        cur.execute("DELETE FROM notifications")
+        deleted = cur.rowcount
         conn.commit()
-        return {"success": True}
+        return {"success": True, "deleted": deleted}
     finally:
         conn.close()
-
-
-class PushSubscriptionInput(BaseModel):
-    endpoint: str = Field(min_length=1, max_length=2048)
-    keys: dict[str, str]
-    user_agent: Optional[str] = Field(default=None, max_length=500)
-
-
-@router.get("/push/config")
-def push_config(request: Request):
-    _actor(request)
-    return {"public_key": web_push_public_key(), "enabled": bool(web_push_public_key())}
-
-
-@router.post("/push/subscribe")
-def push_subscribe(payload: PushSubscriptionInput, request: Request):
-    username = _actor(request)
-    p256dh = str(payload.keys.get("p256dh") or "").strip()
-    auth = str(payload.keys.get("auth") or "").strip()
-    if not p256dh or not auth:
-        raise HTTPException(status_code=422, detail="اطلاعات Subscription ناقص است.")
-    conn = get_connection()
-    try:
-        _ensure_schema(conn)
-        cur = conn.cursor()
-        cur.execute("""UPDATE push_subscriptions SET username=?,p256dh=?,auth=?,user_agent=?,updated_at=SYSUTCDATETIME(),disabled_at=NULL
-                       WHERE endpoint=?""", (username,p256dh,auth,payload.user_agent,payload.endpoint))
-        if cur.rowcount == 0:
-            cur.execute("INSERT INTO push_subscriptions (username,endpoint,p256dh,auth,user_agent) VALUES (?,?,?,?,?)", (username,payload.endpoint,p256dh,auth,payload.user_agent))
-        conn.commit()
-        return {"success": True}
-    finally: conn.close()
-
-
-@router.delete("/push/subscribe")
-def push_unsubscribe(payload: PushSubscriptionInput, request: Request):
-    username = _actor(request)
-    conn = get_connection()
-    try:
-        _ensure_schema(conn); cur = conn.cursor()
-        cur.execute("UPDATE push_subscriptions SET disabled_at=SYSUTCDATETIME(),updated_at=SYSUTCDATETIME() WHERE endpoint=? AND RTRIM(username)=?", (payload.endpoint,username))
-        conn.commit(); return {"success": True}
-    finally: conn.close()
-
-
-@router.get("/push/status")
-def push_status(request: Request):
-    username = _actor(request)
-    conn = get_connection()
-    try:
-        _ensure_schema(conn); cur=conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM push_subscriptions WHERE RTRIM(username)=? AND disabled_at IS NULL", (username,))
-        return {"enabled": bool(web_push_public_key()), "subscriptions": int(cur.fetchone()[0])}
-    finally: conn.close()
 
 
 @router.get("/notifications")
 def user_list(request: Request, page: int = Query(1, ge=1), page_size: int = Query(12, ge=5, le=50), state: Literal["all", "unread", "read"] = "all", search: str = Query("", max_length=100)):
     username = _actor(request)
+    # اعلان‌های مربوط به درخواست‌های مرخصی/اضافه‌کاری/پاس ساعتی با action_url ادمین
+    # فقط برای مدیران قابل مشاهده هستند.
+    conn = get_connection()
+    try:
+        _ensure_schema(conn)
+        role_cur = conn.cursor()
+        role_cur.execute("SELECT LOWER(RTRIM(COALESCE(role, ''))) FROM user_table WHERE RTRIM(username)=?", (username,))
+        role_row = role_cur.fetchone()
+        is_admin = bool(role_row and role_row[0] == 'admin')
+    finally:
+        conn.close()
     conn = get_connection()
     try:
         _ensure_schema(conn)
@@ -570,13 +573,8 @@ def unread_count(request: Request):
 
 
 @router.get("/notifications/poll")
-def browser_notification_poll(request: Request):
-    """Return a compact snapshot for Chrome notifications while a panel is open.
-
-    This endpoint intentionally returns state, not a second notification inbox:
-    the browser client compares snapshots and only announces changes observed
-    after the page has finished its initial load.
-    """
+def notification_poll(request: Request):
+    """Return a compact snapshot for the in-panel notification centre."""
     username = _actor(request)
     conn = get_connection()
     try:

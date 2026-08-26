@@ -96,7 +96,7 @@ scripts were dead references.
 Internal notification centre (admin + user) implemented in `js/notification-system.js` with a
 comment header: **"No third-party dependency."**
 - Uses relative `fetch(url, config)` calls to internal API routes.
-- No external push/SMS/email/WebSocket/Firebase. **Offline: Yes.**
+- No external push/SMS/email/WebSocket/Firebase or browser notification. **Offline: Yes.**
 
 ---
 

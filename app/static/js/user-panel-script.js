@@ -1087,16 +1087,16 @@ document.getElementById('leaveForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('درخواست مرخصی شما با موفقیت ثبت شد!');
+            showSystemSuccess('درخواست مرخصی شما با موفقیت ثبت شد!');
             closeLeaveModal(); 
             window.location.href = '/user_panel';
         } else {
-            alert('خطا در ثبت درخواست مرخصی!');
+            showSystemError('خطا در ثبت درخواست مرخصی!');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('مشکلی در ارسال درخواست پیش آمده است.');
+        showSystemError('مشکلی در ارسال درخواست پیش آمده است.');
     });
 });
 
@@ -1184,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })
     .catch(error => {
-        alert('خطا در ارسال درخواست: ' + error);
+        showSystemError('خطا در ارسال درخواست: ' + error);
     });
 });
 
@@ -1258,16 +1258,16 @@ document.getElementById("overtimeForm").addEventListener("submit", function(even
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('اضافه‌کار با موفقیت ثبت شد!');
+            showSystemSuccess('اضافه‌کار با موفقیت ثبت شد!');
             closeOvertimeModal(); 
             window.location.href = '/user_panel';
         } else {
-            alert('خطا در ثبت اضافه‌کار: ' + data.message);
+            showSystemError('خطا در ثبت اضافه‌کار: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('مشکلی در ارسال اطلاعات پیش آمده است.');
+        showSystemError('مشکلی در ارسال اطلاعات پیش آمده است.');
     });
 });
 
@@ -1443,15 +1443,15 @@ document.getElementById('hourlyPassForm').addEventListener('submit', function(e)
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('پاس‌ها با موفقیت ثبت شد!');
+            showSystemSuccess('پاس‌ها با موفقیت ثبت شد!');
             closeHourlyPassModal(); // بستن پاپ‌آپ
         } else {
-            alert('خطا در ثبت پاس‌ها! ' + (data.message || ''));
+            showSystemError('خطا در ثبت پاس‌ها! ' + (data.message || ''));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('مشکلی در ارسال درخواست پیش آمده است.');
+        showSystemError('مشکلی در ارسال درخواست پیش آمده است.');
     });
 });
 
@@ -1623,19 +1623,19 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data && data.id) {
-            alert('تیکت شما با موفقیت ثبت شد!');
+            showSystemSuccess('تیکت شما با موفقیت ثبت شد!');
             closeTicketModal(); // بستن پاپ‌آپ
             const refresh = () => location.reload();
             (window.uploadTicketAttachments ? window.uploadTicketAttachments(data.id) : Promise.resolve())
                 .then(refresh)
-                .catch(error => { console.error(error); alert('تیکت ثبت شد اما بارگذاری پیوست ناموفق بود.'); refresh(); });
+                .catch(error => { console.error(error); showSystemError('تیکت ثبت شد اما بارگذاری پیوست ناموفق بود.'); refresh(); });
         } else {
-            alert('خطا در ثبت تیکت! ' + (data.message || ''));
+            showSystemError('خطا در ثبت تیکت! ' + (data.message || ''));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('مشکلی در ارسال درخواست پیش آمده است.');
+        showSystemError('مشکلی در ارسال درخواست پیش آمده است.');
     });
 });
 
@@ -1742,16 +1742,16 @@ document.getElementById("ticketEditeForm").addEventListener("submit", function(e
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert("تیکت با موفقیت ویرایش شد.");
+            showSystemSuccess("تیکت با موفقیت ویرایش شد.");
             closeEditTicketModal();  // بستن پاپ‌آپ
             location.reload();  // رفرش صفحه برای نمایش تغییرات
         } else {
-            alert("خطا در ویرایش تیکت.");
+            showSystemError("خطا در ویرایش تیکت.");
         }
     })
     .catch(error => {
         console.error("Error:", error);
-        alert("مشکلی پیش آمده است.");
+        showSystemError("مشکلی پیش آمده است.");
     });
 });
 
@@ -1802,7 +1802,7 @@ document.getElementById('confirmDeleteBtn').onclick = function() {
                 // ریلود کردن صفحه
                 location.reload();
             } else {
-                alert('Error deleting ticket: ' + data.error);
+                showSystemError('Error deleting ticket: ' + data.error);
             }
         })
         .catch(error => {
@@ -1939,12 +1939,12 @@ function loadUserInfo() {
             document.getElementById('userWorkHours').textContent = data.data.work_hours ? convertToPersianNumbers(data.data.work_hours) : 'ساعت‌های کاری موجود نیست';
             document.getElementById('userSubstitute').textContent = data.data.substitute || 'جانشین موجود نیست';
         } else {
-            alert(data.message || 'خطا در دریافت اطلاعات');
+            showSystemError(data.message || 'خطا در دریافت اطلاعات');
         }
     })
     .catch(error => {
         console.error('Error fetching user info:', error);
-        alert('خطا در ارتباط با سرور');
+        showSystemError('خطا در ارتباط با سرور');
     });
 }
 window.onload = function() {
@@ -2198,7 +2198,7 @@ function openViewDialog(button) {
         .then(data => {
             if (data.error) {
                 console.error(data.error);
-                alert('خطایی در دریافت اطلاعات تیکت رخ داده است.');
+                showSystemError('خطایی در دریافت اطلاعات تیکت رخ داده است.');
                 return;
             }
 
@@ -2278,7 +2278,7 @@ if (!window.__modernTicketing) document.querySelector('#matnErsali').addEventLis
 
 function sendTicketResponse() {
     if (!ticketData) {
-        alert('اطلاعات تیکت در دسترس نیست.');
+        showSystemError('اطلاعات تیکت در دسترس نیست.');
         return;
     }
 
@@ -2326,12 +2326,12 @@ function sendTicketResponse() {
             document.querySelector('#matnErsali').value = '';
         } else {
             console.error(data.error);
-            alert('خطا در ارسال پاسخ تیکت');
+            showSystemError('خطا در ارسال پاسخ تیکت');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('خطای سرور');
+        showSystemError('خطای سرور');
     });
 }
 
@@ -2432,7 +2432,7 @@ document.addEventListener("DOMContentLoaded", function () {
                            row.querySelector(".view-btn")?.getAttribute("data-id");
 
             if (!ticketId) {
-                alert("شناسه تیکت یافت نشد!");
+                showSystemError("شناسه تیکت یافت نشد!");
                 return;
             }
 
@@ -2453,9 +2453,9 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
                 if (data.success) {
                     row.querySelector(".ticket-status").innerText = newStatus;
-                    alert("وضعیت تیکت با موفقیت به‌روزرسانی شد!");
+                    showSystemSuccess("وضعیت تیکت با موفقیت به‌روزرسانی شد!");
                 } else {
-                    alert("خطا در به‌روزرسانی وضعیت: " + (data.error || "نامشخص"));
+                    showSystemError("خطا در به‌روزرسانی وضعیت: " + (data.error || "نامشخص"));
                 }
             })
             .catch(error => console.error("خطا در ارسال درخواست:", error));

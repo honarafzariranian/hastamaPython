@@ -131,16 +131,16 @@ document.addEventListener("DOMContentLoaded", function() {
     let samanehTime = document.querySelector(".samanehTime");
     if (samanehTime) samanehTime.textContent = localStorage.getItem("totalOvertime") || "00:00";
 
-    let elemPresence = document.querySelector(".numBox:nth-child(2) .attendanceSamanehValue");
+    let elemPresence = document.querySelector("#attendanceSamanehValue");
     if (elemPresence) elemPresence.innerText = localStorage.getItem("totalPresenceTime") || "00:00";
 
-    let elemDelay = document.querySelector(".numBox:nth-child(4) .value");
+    let elemDelay = document.querySelector("#totalDelayID");
     if (elemDelay) elemDelay.innerText = localStorage.getItem("totalDelayTime") || "00:00";
 
-    let elemEarlyStart = document.querySelector(".numBox:nth-child(6) .value");
+    let elemEarlyStart = document.querySelector("#totalEarlyStartID");
     if (elemEarlyStart) elemEarlyStart.innerText = localStorage.getItem("totalEarlyStart") || "00:00";
 
-    let elemEarlyExit = document.querySelector(".numBox:nth-child(7) .value");
+    let elemEarlyExit = document.querySelector("#totalEarlyExitID");
     if (elemEarlyExit) elemEarlyExit.innerText = localStorage.getItem("totalEarlyExit") || "00:00";
 
     // اطلاعات کاربر
@@ -300,7 +300,7 @@ if (hourlyPassData) {
     let formattedTotalTime = `${convertToPersianNumbers(String(totalHours).padStart(2, '0'))}:${convertToPersianNumbers(String(remainingMinutes).padStart(2, '0'))}`;
 
     // نمایش مجموع مدت زمان در داخل div
-    let passNumBox = document.querySelector("#passNumBoxID span");
+    let passNumBox = document.querySelector("#passNumBoxID");
     if (passNumBox) {
         passNumBox.textContent = formattedTotalTime;  // تنظیم مقدار داخل <span>
     }
@@ -319,7 +319,7 @@ function convertPersianNumbersToEnglish(str) {
 }
 
 // خواندن مجموع مدت زمان حضور از سامانه
-let totalPresenceTime = document.querySelector(".numBox:nth-child(2) .attendanceSamanehValue").textContent.trim();
+let totalPresenceTime = document.querySelector("#attendanceSamanehValue").textContent.trim();
 totalPresenceTime = convertPersianNumbersToEnglish(totalPresenceTime);
 console.log("مدت زمان مجموع حضور در سامانه:", totalPresenceTime);
 

@@ -37,7 +37,7 @@ window.onload = function () {
     const username = localStorage.getItem("username");
 
     if (!username) {
-        alert('نام کاربری انتخاب نشده است.');
+        showSystemError('نام کاربری انتخاب نشده است.');
         return;
     }
 
@@ -55,12 +55,12 @@ window.onload = function () {
             document.getElementById('lastName').textContent = data.data.last_name || 'اطلاعات موجود نیست';
             document.getElementById('firstName').textContent = data.data.name || 'اطلاعات موجود نیست';
         } else {
-            alert(data.message);
+            showSystemError(data.message);
         }
     })
     .catch(error => {
         console.error('خطا در دریافت اطلاعات کاربر:', error);
-        alert('خطا در دریافت اطلاعات کاربر');
+        showSystemError('خطا در دریافت اطلاعات کاربر');
     });
 
     // نمایش نام کاربر

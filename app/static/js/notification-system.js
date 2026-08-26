@@ -16,7 +16,7 @@
     function label(map, value) { return (map[value] || value || '—'); }
     var types = { general:'عمومی', announcement:'اطلاعیه', system:'سیستمی', warning:'هشدار', information:'اطلاعات', success:'موفقیت', reminder:'یادآوری' };
     var priorities = { normal:'عادی', important:'مهم', high:'بالا', critical:'بحرانی' };
-    var statuses = { draft:'پیش‌نویس', scheduled:'زمان‌بندی‌شده', published:'منتشرشده', archived:'بایگانی' };
+    var statuses = { draft:'پیش‌نویس', scheduled:'زمان‌بندی‌شده', published:'منتشرشده', archived:'منتشرشده' };
     var targets = { all:'همه کاربران', selected:'کاربران منتخب', role:'نقش کاربری', department:'واحد سازمانی' };
     var typeIcons = { general:'●', announcement:'◆', system:'⚙', warning:'!', information:'i', success:'✓', reminder:'◷' };
     function formatDate(value) { try { return value ? faDate.format(new Date(value)) : '—'; } catch (_) { return '—'; } }
@@ -37,147 +37,28 @@
         return payload;
     }
 
-    /* اعلان بومی Chrome برای زمانی که کاربر در تب دیگری یا نرم‌افزار دیگری است. */
-    var browserNotificationState = {
-        initialized: false,
-        timer: null,
-        notifications: Object.create(null),
-        polling: false,
-        stream: null,
-        testSent: false
-    };
-    function browserNotificationsSupported() {
-        return typeof window !== 'undefined' && 'Notification' in window;
+    /* اعلان داخلی سامانه؛ بدون Permission مرورگر و بدون خروجی خارج از پنل. */
+    var notificationState = { seen: Object.create(null), stream: null };
+    function showRealtimeNotification(item) {
+        if (!item || notificationState.seen[String(item.id)]) return;
+        notificationState.seen[String(item.id)] = true;
+        refreshCount();
+        refreshAdminCount();
+        announce(item.content || 'یک اعلان جدید دریافت شد.', false, { title: item.title || 'اعلان جدید' });
+        if (document.getElementById('notificationRecentList')) loadUser(1, true);
     }
-
-    function urlBase64ToUint8Array(value) {
-        var padding = '='.repeat((4 - value.length % 4) % 4);
-        var raw = atob((value + padding).replace(/-/g, '+').replace(/_/g, '/'));
-        return Uint8Array.from(raw, function (char) { return char.charCodeAt(0); });
-    }
-
-    async function registerWebPush() {
-        if (!browserNotificationsSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
-        if (window.isSecureContext === false) return;
-        try {
-            var registration = await navigator.serviceWorker.register('/hastama-sw.js', { scope: '/' });
-            if (!registration.active && !registration.waiting && !registration.installing) {
-                throw new Error('Service Worker فعال نشد.');
-            }
-            var config = await api('/api/push/config');
-            if (!config.enabled || !config.public_key) {
-                console.info('Web Push فعال نیست: کلید VAPID روی سرور تنظیم نشده است.');
-                return;
-            }
-            var subscription = await registration.pushManager.getSubscription();
-            if (!subscription) {
-                subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(config.public_key)
-                });
-            }
-            await api('/api/push/subscribe', { method: 'POST', body: subscription.toJSON() });
-        } catch (error) {
-            console.warn('ثبت Web Push انجام نشد:', error.message || error);
-        }
-    }
-
-    function requestBrowserNotificationPermission() {
-        if (!browserNotificationsSupported()) {
-            announce('این مرورگر از اعلان دسکتاپ پشتیبانی نمی‌کند.', true);
-            return Promise.resolve('unsupported');
-        }
-        if (window.isSecureContext === false) {
-            var hostHint = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'آدرس فعلی باید با http://localhost باز شود.'
-                : 'اگر روی همین سیستم هستید با http://localhost وارد شوید؛ برای دسترسی شبکه‌ای HTTPS لازم است.';
-            announce('اعلان Chrome در این آدرس فعال نمی‌شود. ' + hostHint, 'warning');
-            return Promise.resolve('insecure');
-        }
-        if (Notification.permission === 'granted') {
-            registerWebPush();
-            return Promise.resolve('granted');
-        }
-        if (Notification.permission === 'denied') {
-            announce('اعلان‌ها مسدود هستند؛ آن‌ها را از تنظیمات سایت Chrome فعال کنید.', true);
-            return Promise.resolve('denied');
-        }
-        return Notification.requestPermission().then(function (permission) {
-            if (permission === 'granted') registerWebPush();
-            announce(permission === 'granted' ? 'اعلان‌های مرورگر فعال شد.' : 'اجازه اعلان داده نشد.', permission !== 'granted');
-            return permission;
-        }).catch(function () {
-            announce('دریافت اجازه اعلان مرورگر ناموفق بود.', true);
-            return 'error';
-        });
-    }
-
-    function sendBrowserNotification(title, body, tag, actionUrl) {
-        if (!browserNotificationsSupported() || Notification.permission !== 'granted' || window.isSecureContext === false) return;
-        try {
-            var notification = new Notification(title, {
-                body: body,
-                icon: '/static/images/newlogo.png',
-                tag: tag || 'hastama-notification'
-            });
-            notification.onclick = function () {
-                window.focus();
-                notification.close();
-                if (actionUrl && actionUrl.charAt(0) === '/') window.location.assign(actionUrl);
-            };
-        } catch (error) {
-            console.warn('اعلان مرورگر ارسال نشد:', error);
-        }
-    }
-
-    function pollBrowserNotifications() {
-        if (!browserNotificationsSupported() || browserNotificationState.polling) return;
-        browserNotificationState.polling = true;
-        api('/api/notifications/poll').then(function (data) {
-            var notifications = data.notifications || [];
-            if (!browserNotificationState.initialized) {
-                notifications.forEach(function (item) { browserNotificationState.notifications[String(item.id)] = true; });
-                browserNotificationState.initialized = true;
-                return;
-            }
-            notifications.forEach(function (item) {
-                var key = String(item.id);
-                if (browserNotificationState.notifications[key]) return;
-                browserNotificationState.notifications[key] = true;
-                sendBrowserNotification(
-                    item.title || 'اعلان جدید هستما',
-                    item.content || 'یک اعلان جدید دریافت شد.',
-                    'notification-' + key,
-                    item.action_url
-                );
-            });
-        }).catch(function () { /* قطع موقت شبکه نباید رابط کاربری را مختل کند. */ })
-            .then(function () { browserNotificationState.polling = false; });
-    }
-
-    function startBrowserNotificationPolling() {
-        if (!browserNotificationsSupported()) return;
-        pollBrowserNotifications();
-        // این poll پشتیبان SSE است؛ وضعیت polling از هم‌پوشانی جلوگیری می‌کند.
-        browserNotificationState.timer = setInterval(pollBrowserNotifications, 5000);
-    }
-
     function startNotificationStream() {
-        if (!browserNotificationsSupported() || typeof EventSource === 'undefined') return;
+        if (typeof EventSource === 'undefined') return;
         var stream = new EventSource('/api/notifications/stream');
+        notificationState.stream = stream;
         stream.onmessage = function (event) {
-            try {
-                var item = JSON.parse(event.data || '{}');
-                var key = String(item.id || '');
-                if (!key || browserNotificationState.notifications[key]) return;
-                browserNotificationState.notifications[key] = true;
-                sendBrowserNotification(
-                    item.title || 'اعلان جدید هستما',
-                    item.content || 'یک اعلان جدید دریافت شد.',
-                    'notification-' + key,
-                    item.action_url
-                );
-            } catch (_) { /* داده‌ی خراب از stream نباید رابط کاربری را متوقف کند. */ }
+            try { showRealtimeNotification(JSON.parse(event.data || '{}')); } catch (_) { /* داده خراب stream نادیده گرفته می‌شود. */ }
+        };
+        stream.onerror = function () {
+            // SSE ممکن است موقتاً قطع شود؛ شمارنده‌ها با polling پشتیبان تازه می‌مانند.
+            refreshCount();
+            refreshAdminCount();
+            if (document.getElementById('notificationRecentList')) loadUser(1, true);
         };
     }
 
@@ -268,30 +149,80 @@
         if(!items.length){ var r=el('tr'), c=el('td','notification-empty','اعلانی مطابق فیلترها پیدا نشد.'); c.colSpan=6; r.append(c); body.append(r); return; }
         items.forEach(function(item){
             var row=el('tr');
+            row.className = item.admin_read_at ? 'notification-row-is-read' : 'notification-row-is-unread';
+            row.setAttribute('data-read', item.admin_read_at ? 'true' : 'false');
+            row.setAttribute('data-id', item.id);
             var title=el('td','notification-title-cell'); title.append(el('strong','',item.title),el('span','',item.content));
             var kind=el('td','notification-badges'); var badgeList=el('div','notification-badges-list'); badgeList.append(badge('type',item.type,types),badge('priority',item.priority,priorities)); kind.append(badgeList);
             var audience=el('td','',label(targets,item.target_type));
             var state=el('td'); state.append(badge('status',item.status,statuses));
+            var readState=el('span','notification-read-state',item.admin_read_at?'خوانده شده':'خوانده نشده');
+            state.append(readState);
             var date=el('td','',formatDate(item.published_at || item.scheduled_at || item.created_at));
             var actions=el('td','notification-row-actions');
             if(item.status==='draft'||item.status==='scheduled') actions.append(actionButton('ویرایش','edit',item.id),actionButton('انتشار','publish',item.id));
-            if(item.status!=='archived') actions.append(actionButton('بایگانی','archive',item.id));
-            if(item.status!=='published') actions.append(actionButton('حذف','delete',item.id));
+            actions.append(iconActionButton('✓', 'خوانده‌شده', 'read', item.id), iconActionButton('↶', 'خوانده‌نشده', 'unread', item.id), iconActionButton('×', 'حذف پیام', 'delete', item.id));
             row.append(title,kind,audience,state,date,actions); body.append(row);
         });
     }
     function actionButton(text, action, id){ var b=el('button','notification-action-btn',text); b.type='button'; b.dataset.action=action; b.dataset.id=id; return b; }
+    function iconActionButton(icon, labelText, action, id){
+        var b=el('button','notification-action-btn notification-icon-action');
+        b.type='button'; b.dataset.action=action; b.dataset.id=id;
+        if(action==='delete'){
+            var image=el('img','notification-action-icon');
+            image.src='/static/images/trash.png'; image.alt=labelText; b.append(image);
+        } else {
+            var icon=el('span','notification-action-svg');
+            var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+            svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('aria-hidden','true');
+            var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+            path.setAttribute('d', action==='read'?'m5 12 4 4L19 6':'M9 7 4 12l5 5M4 12h11a5 5 0 0 0 5-5');
+            svg.appendChild(path); icon.appendChild(svg); b.append(icon);
+        }
+        var tooltip=el('span','notification-action-tooltip',labelText); b.append(tooltip);
+        b.title=labelText; b.setAttribute('aria-label', labelText); return b;
+    }
 
     async function markAllAdminRead(){
         var button=document.getElementById('adminMarkAllRead');
         if(button) button.disabled=true;
         try{
             var result=await api('/api/admin/notifications/read-all',{method:'POST'});
+            setAdminUnread(0);
             announce(result.updated ? 'همه اعلان‌های شما خوانده شد.' : 'اعلان خوانده‌نشده‌ای برای شما وجود ندارد.');
         }catch(error){
             announce(error.message,true);
         }finally{
             if(button) button.disabled=false;
+        }
+    }
+
+    var pendingDeleteAll = false;
+    function openDeleteAllConfirm(){
+        pendingDeleteAll = true;
+        var dialog = document.getElementById('notificationDeleteAllConfirm');
+        if(dialog){ dialog.hidden = false; document.body.classList.add('notification-dialog-open'); }
+    }
+    function closeDeleteAllConfirm(){
+        pendingDeleteAll = false;
+        var dialog = document.getElementById('notificationDeleteAllConfirm');
+        if(dialog){ dialog.hidden = true; document.body.classList.remove('notification-dialog-open'); }
+    }
+    async function confirmDeleteAll(){
+        if(!pendingDeleteAll) return;
+        closeDeleteAllConfirm();
+        var button = document.getElementById('adminDeleteAllBtn');
+        if(button) button.disabled = true;
+        try{
+            var result = await api('/api/admin/notifications/delete-all', {method:'DELETE'});
+            setAdminUnread(0);
+            announce(result.deleted ? 'همه اعلان‌ها حذف شدند (' + fa.format(result.deleted) + ' مورد).' : 'هیچ اعلانی برای حذف وجود نداشت.');
+            loadAdmin(1);
+        }catch(error){
+            announce(error.message, true);
+        }finally{
+            if(button) button.disabled = false;
         }
     }
 
@@ -333,14 +264,69 @@
         catch(error){ document.getElementById('notificationFormError').textContent=error.message; }
         finally { buttons.forEach(function(b){b.disabled=false;}); }
     }
-    async function adminAction(action,id){
+    var pendingDeleteId = null;
+    function openDeleteConfirm(id){
+        pendingDeleteId = String(id);
+        var dialog = document.getElementById('notificationDeleteConfirm');
+        if(dialog){ dialog.hidden = false; document.body.classList.add('notification-dialog-open'); }
+    }
+    function closeDeleteConfirm(){
+        pendingDeleteId = null;
+        var dialog = document.getElementById('notificationDeleteConfirm');
+        if(dialog){ dialog.hidden = true; document.body.classList.remove('notification-dialog-open'); }
+    }
+    async function confirmDelete(){
+        var id = pendingDeleteId;
+        closeDeleteConfirm();
+        if(id) await adminAction('delete', id, true);
+    }
+    async function adminAction(action,id,confirmed){
         if(action==='edit'){openEditor(adminState.items.get(String(id)));return;}
-        if(action==='delete'&&!confirm('این اعلان برای همیشه حذف شود؟'))return;
-        if(action==='archive'&&!confirm('این اعلان بایگانی شود؟'))return;
-        try{await api('/api/admin/notifications/'+id+(action==='publish'?'/publish':action==='archive'?'/archive':''),{method:action==='delete'?'DELETE':'POST'});announce(action==='publish'?'اعلان منتشر شد.':'تغییرات انجام شد.');loadAdmin();}catch(error){announce(error.message,true);}
+        if(action==='delete'&&!confirmed){ openDeleteConfirm(id); return; }
+        try{
+            var endpoint = action === 'publish' ? '/publish' : action === 'read' ? '/read' : '';
+            var method=action==='delete'?'DELETE':'POST';
+            var url = action === 'read' ? '/api/admin/notifications/' + id + '/read' : action === 'unread' ? '/api/admin/notifications/' + id + '/unread' : '/api/admin/notifications/' + id + endpoint;
+            await api(url,{method:method});
+            if(action==='read' || action==='unread'){
+                var current=adminState.items.get(String(id));
+                if(current) current.admin_read_at=action==='read'?new Date().toISOString():null;
+                var row=document.querySelector('#adminNotificationRows button[data-id="'+CSS.escape(String(id))+'"]');
+                if(row){
+                    var tableRow=row.closest('tr');
+                    tableRow.classList.toggle('notification-row-is-unread', action==='unread');
+                    tableRow.classList.toggle('notification-row-is-read', action==='read');
+                    tableRow.setAttribute('data-read', action==='read'?'true':'false');
+                    var stateNode=tableRow.querySelector('.notification-read-state');
+                    if(stateNode) stateNode.textContent=action==='read'?'خوانده شده':'خوانده نشده';
+                    var stateButton=tableRow.querySelector('[data-action="'+action+'"]');
+                    if(stateButton){
+                        stateButton.disabled = true;
+                        stateButton.classList.add('is-applied');
+                    }
+                }
+                refreshAdminCount();
+            }
+            announce(action==='delete'?'پیام حذف شد.':(action==='read'||action==='unread')?'وضعیت پیام اعمال شد.':action==='publish'?'اعلان منتشر شد.':'تغییرات انجام شد.');
+            if(action!=='read') loadAdmin();
+        }catch(error){announce(error.message,true);}
     }
 
-    function setUnread(count){ ['notificationUnreadBadge','sidebarNotificationCount'].forEach(function(id){var n=document.getElementById(id);if(n){n.textContent=count>99?'۹۹+':fa.format(count);n.hidden=!count;}}); }
+    function setUnread(count){
+        count = Math.max(0, Number(count) || 0);
+        ['notificationUnreadBadge','sidebarNotificationCount'].forEach(function(id){var n=document.getElementById(id);if(n){n.textContent=count>99?'۹۹+':fa.format(count);n.hidden=!count;}});
+    }
+    function setAdminUnread(count){
+        count = Math.max(0, Number(count) || 0);
+        var node=document.getElementById('adminNotificationUnreadBadge');
+        if(node){node.textContent=count>99?'۹۹+':fa.format(count);node.hidden=!count;}
+    }
+    async function refreshAdminCount(){
+        try{var d=await api('/api/notifications/unread-count');setAdminUnread(d.unread);}catch(_) {}
+    }
+    async function refreshNotificationList(){
+        if (document.getElementById('notificationRecentList')) loadUser(1, true);
+    }
     async function loadUser(page, recent){
         userState.page=page||1; var query=new URLSearchParams({page:userState.page,page_size:recent?5:12,state:recent?'all':userState.state,search:recent?'':userState.search});
         var container=document.getElementById(recent?'notificationRecentList':'notificationUserList'); if(!container)return;
@@ -363,34 +349,77 @@
         if(!item.read_at){item.read_at=new Date().toISOString();api('/api/notifications/'+item.id+'/read',{method:'POST'}).then(refreshCount).catch(function(){});}
     }
     function closeDetail(){var d=document.getElementById('notificationDetail');if(d)d.hidden=true;document.body.classList.remove('notification-dialog-open');}
+
+    /* ─── جزئیات اعلان برای پنل ادمین ─── */
+    function showAdminDetail(id){
+        var item=adminState.items.get(String(id));
+        if(!item)return;
+        var dialog=document.getElementById('adminNotificationDetail');
+        var body=document.getElementById('adminNotificationDetailBody');
+        if(!dialog||!body)return;
+        body.replaceChildren();
+        var wrap=el('div','admin-detail-wrap');
+        var head=el('div','admin-detail-head');
+        head.append(el('h2','admin-detail-title',item.title));
+        var badgeRow=el('div','admin-detail-badge-row');
+        var badges=el('div','admin-detail-badges');
+        badges.append(badge('type',item.type,types),badge('priority',item.priority,priorities),badge('status',item.status,statuses));
+        badgeRow.append(badges,el('span','admin-detail-read-badge'+(item.admin_read_at?' is-read':''),item.admin_read_at?'خوانده شده':'خوانده نشده'));
+        head.append(badgeRow);
+        wrap.append(head);
+        var msg=el('div','admin-detail-message');
+        msg.appendChild(document.createTextNode(item.content));
+        wrap.append(msg);
+        var meta=el('dl','admin-detail-meta');
+        meta.append(el('dt','','مخاطب'),el('dd','',label(targets,item.target_type)));
+        if(item.target_values){meta.append(el('dt','','انتخاب‌شدگان'),el('dd','',String(item.target_values).split('||').filter(Boolean).join('، ')));}
+        meta.append(el('dt','','زمان انتشار'),el('dd','',formatDate(item.published_at||item.scheduled_at||item.created_at)));
+        meta.append(el('dt','','ایجادکننده'),el('dd','',item.created_by||'—'));
+        if(item.read_by_count!=null) meta.append(el('dt','','تعداد خوانندگان'),el('dd','',fa.format(Number(item.read_by_count||0))));
+        if(item.delivered_count!=null) meta.append(el('dt','','تعداد تحویل‌شده'),el('dd','',fa.format(Number(item.delivered_count||0))));
+        if(item.action_url){meta.append(el('dt','','پیوند'),el('dd','',item.action_url));}
+        if(item.action_label){meta.append(el('dt','','برچسب دکمه'),el('dd','',item.action_label));}
+        if(item.scheduled_at){meta.append(el('dt','','زمان‌بندی انتشار'),el('dd','',formatDate(item.scheduled_at)));}
+        wrap.append(meta);
+        var actions=el('div','admin-detail-actions');
+        if(!item.admin_read_at){var markRead=el('button','notification-primary-btn','خوانده‌شده');markRead.onclick=function(){adminAction('read',item.id);showAdminDetail(id);};actions.append(markRead);}
+        if(item.status==='draft'||item.status==='scheduled'){var editBtn=el('button','notification-secondary-btn','ویرایش');editBtn.onclick=function(){closeAdminDetail();openEditor(item);};actions.append(editBtn);}
+        var deleteBtn=el('button','notification-danger-btn','حذف');deleteBtn.onclick=function(){closeAdminDetail();adminAction('delete',item.id);};actions.append(deleteBtn);
+        wrap.append(actions);
+        body.append(wrap);
+        dialog.hidden=false;
+        document.body.classList.add('notification-dialog-open');
+    }
+    function closeAdminDetail(){var d=document.getElementById('adminNotificationDetail');if(d)d.hidden=true;document.body.classList.remove('notification-dialog-open');}
     function openCenter(){var c=document.getElementById('notificationCenter');if(!c)return;c.hidden=false;document.body.classList.add('notification-dialog-open');var d=document.getElementById('notificationDropdown');if(d)d.hidden=true;loadUser(1,false);}
     function closeCenter(){var c=document.getElementById('notificationCenter');if(c)c.hidden=true;document.body.classList.remove('notification-dialog-open');}
     async function markAll(){try{await api('/api/notifications/read-all',{method:'POST'});setUnread(0);loadUser(1,true);if(!document.getElementById('notificationCenter').hidden)loadUser(1,false);announce('همه اعلان‌ها خوانده شدند.');}catch(error){announce(error.message,true);}}
     async function refreshCount(){try{var d=await api('/api/notifications/unread-count');setUnread(d.unread);}catch(_) {}}
 
     document.addEventListener('DOMContentLoaded',function(){
+        // محتوای اولیه فقط تا زمان دریافت پاسخ API نمایش داده می‌شود؛ خطا هم جایگزینش می‌کند.
+        if (document.getElementById('notificationRecentList')) loadUser(1, true);
+
         if(document.getElementById('notificationAdminBox')){
             document.getElementById('newNotificationButton').onclick=function(){openEditor(null);};
             document.getElementById('adminMarkAllRead').onclick=markAllAdminRead;
+            document.getElementById('notificationDeleteConfirmButton').onclick=confirmDelete;
+            document.querySelectorAll('[data-notification-delete-close]').forEach(function(n){n.onclick=closeDeleteConfirm;});
+            document.getElementById('adminDeleteAllBtn').onclick=openDeleteAllConfirm;
+            document.getElementById('notificationDeleteAllConfirmButton').onclick=confirmDeleteAll;
+            document.querySelectorAll('[data-notification-delete-all-close]').forEach(function(n){n.onclick=closeDeleteAllConfirm;});
             document.querySelectorAll('[data-notification-close]').forEach(function(n){n.onclick=closeEditor;});
             document.getElementById('notificationTargetType').onchange=function(){updateTargetOptions([]);};document.getElementById('notificationContent').oninput=updateCount;
             document.querySelectorAll('[data-submit-status]').forEach(function(b){b.onclick=function(){submitNotification(b.dataset.submitStatus);};});
-            document.getElementById('adminNotificationRows').onclick=function(e){var b=e.target.closest('[data-action]');if(b)adminAction(b.dataset.action,b.dataset.id);};
+            document.getElementById('adminNotificationRows').onclick=function(e){var b=e.target.closest('[data-action]');if(b){adminAction(b.dataset.action,b.dataset.id);return;}var row=e.target.closest('tr');if(row&&row.dataset.id){showAdminDetail(row.dataset.id);}};
             ['adminNotificationStatus','adminNotificationType','adminNotificationPriority'].forEach(function(id){document.getElementById(id).onchange=function(){loadAdmin(1);};});
             document.getElementById('adminNotificationSearch').oninput=function(){clearTimeout(debounceTimer);debounceTimer=setTimeout(function(){loadAdmin(1);},350);};
+            document.querySelectorAll('[data-notification-admin-detail-close]').forEach(function(n){n.onclick=closeAdminDetail;});
+            refreshAdminCount();
+            setInterval(refreshAdminCount,5000);
         }
-        var adminBell=document.getElementById('notificationsButton');
-        if(adminBell) adminBell.addEventListener('click', function () {
-            requestBrowserNotificationPermission().then(function (permission) {
-                // یک تست واقعی فقط در اولین کلیک انجام می‌شود تا کاربر بداند مجوز درست است.
-                if (permission === 'granted' && !browserNotificationState.testSent) {
-                    browserNotificationState.testSent = true;
-                    sendBrowserNotification('اعلان آزمایشی هستما', 'اعلان Chrome برای پنل ادمین فعال است.', 'admin-notification-test');
-                }
-            });
-        });
         var bell=document.getElementById('notificationBell');if(bell){
-            bell.onclick=function(e){e.stopPropagation();requestBrowserNotificationPermission();var d=document.getElementById('notificationDropdown');d.hidden=!d.hidden;bell.setAttribute('aria-expanded',String(!d.hidden));if(!d.hidden)loadUser(1,true);};
+            bell.onclick=function(e){e.stopPropagation();var d=document.getElementById('notificationDropdown');d.hidden=!d.hidden;bell.setAttribute('aria-expanded',String(!d.hidden));if(!d.hidden)loadUser(1,true);};
             document.addEventListener('click',function(e){var d=document.getElementById('notificationDropdown');if(!d.hidden&&!d.contains(e.target)&&e.target!==bell)d.hidden=true;});
             document.querySelectorAll('[data-action="open-notification-center"]').forEach(function(n){n.addEventListener('click',openCenter);});
             document.querySelectorAll('[data-notification-center-close]').forEach(function(n){n.onclick=closeCenter;});document.querySelectorAll('[data-notification-detail-close]').forEach(function(n){n.onclick=closeDetail;});
@@ -398,12 +427,13 @@
             document.querySelectorAll('[data-notification-state]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-notification-state]').forEach(function(x){x.classList.remove('active');});b.classList.add('active');userState.state=b.dataset.notificationState;loadUser(1,false);};});
             document.getElementById('userNotificationSearch').oninput=function(e){userState.search=e.target.value;clearTimeout(debounceTimer);debounceTimer=setTimeout(function(){loadUser(1,false);},350);};
             ['notificationRecentList','notificationUserList'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){var button=e.target.closest('.notification-action-btn');if(button){e.stopPropagation();mutateUser(button.dataset.action,button.dataset.id);return;}var card=e.target.closest('.notification-user-item');if(card)showDetail(userState.items.get(card.dataset.id));});document.getElementById(id).addEventListener('keydown',function(e){var card=e.target.closest('.notification-user-item');if(card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();showDetail(userState.items.get(card.dataset.id));}});});
-            refreshCount();setInterval(refreshCount,60000);
+            refreshCount();
+            setInterval(refreshCount,60000);
         }
-        document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeEditor();closeCenter();closeDetail();}});
-        if (browserNotificationsSupported() && Notification.permission === 'granted') registerWebPush();
-        startBrowserNotificationPolling();
+        document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeEditor();closeCenter();closeDetail();closeAdminDetail();closeDeleteConfirm();closeDeleteAllConfirm();}});
         startNotificationStream();
     });
-    window.NotificationSystem={loadAdmin:loadAdmin,openCenter:openCenter,announce:announce,requestBrowserNotificationPermission:requestBrowserNotificationPermission};
+    window.NotificationSystem={loadAdmin:loadAdmin,openCenter:openCenter,announce:announce,refresh:refreshNotificationList};
+    window.showSystemSuccess=function(message){ announce(message, false); };
+    window.showSystemError=function(message){ announce(message, true); };
 })();

@@ -24,27 +24,14 @@ def publish_due_notifications() -> None:
         logger.exception("scheduled notification sweep failed")
 
 
-def cleanup_expired_subscriptions() -> None:
-    """Disable subscriptions that have been invalidated by a push provider."""
-    # Provider expiry is handled immediately on 404/410. This maintenance job
-    # removes no data; it only records that stale rows remain soft-disabled.
-    try:
-        with connection() as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM push_subscriptions WHERE disabled_at IS NOT NULL")
-            count = int(cur.fetchone()[0])
-        logger.info("push subscription maintenance completed disabled=%d", count)
-    except Exception:
-        logger.exception("push subscription maintenance failed")
-
-
 def start_background_tasks() -> BackgroundScheduler:
     global _scheduler
     if _scheduler and _scheduler.running:
         return _scheduler
     scheduler = BackgroundScheduler(timezone=timezone.utc, daemon=True)
-    scheduler.add_job(publish_due_notifications, "interval", seconds=30, id="publish-due", replace_existing=True)
-    scheduler.add_job(cleanup_expired_subscriptions, "interval", hours=1, id="cleanup-push", replace_existing=True)
+    # Scheduled notifications are also published by the create/update request;
+    # this short sweep is only a safety net for notifications waiting in the DB.
+    scheduler.add_job(publish_due_notifications, "interval", seconds=1, id="publish-due", replace_existing=True)
     scheduler.start()
     _scheduler = scheduler
     logger.info("notification background scheduler started")

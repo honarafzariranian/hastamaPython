@@ -102,6 +102,26 @@
 .notification-primary-btn:focus-visible,
 .notification-secondary-btn:focus-visible,
 .notification-action-btn:focus-visible,
+.notification-unread-badge {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    z-index: 2;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #22c55e;
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--surface, #fff);
+}
+
 .notification-bell:focus-visible {
     outline: 3px solid rgba(56, 182, 255, 0.35);
     outline-offset: 2px;
@@ -182,6 +202,7 @@
 
 .notification-admin-table th,
 .notification-admin-table td {
+    transition: background-color .2s ease, color .2s ease;
     padding: 14px 12px;
     color: var(--text, #0D3B4E);
     text-align: right;
@@ -197,6 +218,44 @@
 
 .notification-title-cell {
     max-width: 270px;
+}
+
+.notification-admin-table tr.notification-row-is-unread {
+    background: color-mix(in srgb, var(--secondary, #38B6FF) 7%, var(--surface-strong, #fff));
+}
+
+.notification-admin-table tr.notification-row-is-unread td:first-child {
+    border-right: 4px solid var(--secondary, #38B6FF);
+}
+
+.notification-admin-table tr.notification-row-is-unread .notification-title-cell strong,
+.notification-admin-table tr.notification-row-is-unread .notification-title-cell span {
+    color: var(--text, #0D3B4E);
+    font-weight: 900;
+}
+
+.notification-admin-table tr.notification-row-is-read {
+    opacity: .76;
+}
+
+.notification-read-state {
+    display: inline-flex;
+    margin-inline-start: 7px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: var(--surface-muted, #E9F4FB);
+    color: var(--text-muted, #4D6B7A);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.notification-row-is-unread .notification-read-state {
+    background: #fff8df;
+    color: #8a5800;
+}
+
+@supports not (color: color-mix(in srgb, red 20%, transparent)) {
+    .notification-admin-table tr.notification-row-is-unread { background: #f0f9ff; }
 }
 
 .notification-title-cell strong,
@@ -290,6 +349,95 @@
 
 .notification-action-btn:hover {
     background: var(--surface-muted, #E9F4FB);
+}
+
+.notification-icon-action {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    line-height: 1;
+}
+
+.notification-action-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.notification-action-svg {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+}
+
+.notification-action-svg svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.notification-action-tooltip {
+    position: absolute;
+    right: 50%;
+    bottom: calc(100% + 8px);
+    z-index: 10;
+    padding: 6px 9px;
+    background: #173d4d;
+    color: #fff;
+    border-radius: 6px;
+    font: 400 11px 'Vazir', sans-serif;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(50%, 4px);
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.notification-action-tooltip::after {
+    position: absolute;
+    right: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: #173d4d;
+    content: '';
+    transform: translateX(50%) rotate(45deg);
+}
+
+.notification-icon-action:hover .notification-action-tooltip,
+.notification-icon-action:focus-visible .notification-action-tooltip {
+    opacity: 1;
+    transform: translate(50%, 0);
+}
+
+.notification-icon-action[data-action="read"] {
+    color: #087d60;
+}
+
+.notification-icon-action[data-action="unread"] {
+    color: #8a5800;
+}
+
+.notification-icon-action[data-action="delete"] {
+    color: #b42318;
+}
+
+.notification-icon-action.is-applied {
+    opacity: .45;
+    cursor: default;
+}
+
+.notification-icon-action:focus-visible {
+    outline: 3px solid rgba(56, 182, 255, .35);
+    outline-offset: 2px;
 }
 
 .notification-loading,
@@ -436,6 +584,28 @@
     margin-top: 20px;
 }
 
+.notification-confirm-body {
+    padding: 22px 24px;
+    color: var(--text, #0D3B4E);
+}
+
+.notification-confirm-body p {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.notification-confirm-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.notification-danger-btn {
+    background: #d64545;
+}
+
 .notification-form-error {
     min-height: 22px;
     margin-top: 10px;
@@ -448,6 +618,7 @@
 }
 
 .notification-bell {
+    position: relative;
     appearance: none;
     padding: 0;
     border: 0;
@@ -1016,4 +1187,168 @@
         left: auto;
         bottom: auto;
     }
+}
+
+/* ─── ردیف جدول ادمین: حالت کلیک‌پذیر ─── */
+.notification-admin-table tbody tr[data-id] {
+    cursor: pointer;
+    transition: background-color .15s ease, box-shadow .15s ease;
+}
+
+.notification-admin-table tbody tr[data-id]:hover {
+    background: color-mix(in srgb, var(--secondary, #38B6FF) 10%, var(--surface-strong, #fff));
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--secondary, #38B6FF) 18%, transparent);
+}
+
+.notification-admin-table tbody tr[data-id]:active {
+    background: color-mix(in srgb, var(--secondary, #38B6FF) 16%, var(--surface-strong, #fff));
+}
+
+.notification-admin-table tbody tr[data-id]:hover .notification-title-cell strong,
+.notification-admin-table tbody tr[data-id]:hover .notification-title-cell span {
+    color: var(--text, #0D3B4E);
+}
+
+@supports not (color: color-mix(in srgb, red 20%, transparent)) {
+    .notification-admin-table tbody tr[data-id]:hover { background: #eef6ff; }
+    .notification-admin-table tbody tr[data-id]:active { background: #dbeeff; }
+}
+
+/* ─── پاپ‌آپ جزئیات اعلان ادمین ─── */
+.admin-detail-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.admin-detail-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.admin-detail-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text, #0D3B4E);
+    line-height: 1.5;
+    padding-left: 50px;
+}
+
+.admin-detail-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-left: 50px;
+}
+
+.admin-detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.admin-detail-read-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #fff8df;
+    color: #8a5800;
+    margin-inline-end: auto;
+}
+
+.admin-detail-read-badge.is-read {
+    background: #eafaf4;
+    color: #087d60;
+}
+
+.admin-detail-message {
+    padding: 18px 20px;
+    margin: 12px 0 16px;
+    background: var(--surface, #F5F7FA);
+    border: 1px solid var(--border, rgba(13, 59, 78, 0.08));
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 2;
+    color: var(--text, #0D3B4E);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.admin-detail-meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+    padding: 16px 20px;
+    background: var(--surface-strong, #fff);
+    border: 1px solid var(--border, rgba(13, 59, 78, 0.08));
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.admin-detail-meta dt {
+    color: var(--text-muted, #4D6B7A);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-detail-meta dd {
+    margin: 0;
+    color: var(--text, #0D3B4E);
+    word-break: break-word;
+}
+
+.admin-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.admin-detail-actions .notification-primary-btn,
+.admin-detail-actions .notification-secondary-btn {
+    min-height: 40px;
+    padding: 9px 20px;
+    font-size: 13px;
+}
+
+.notification-danger-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 9px 20px;
+    border: 0;
+    border-radius: 12px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+}
+
+.notification-danger-btn:hover {
+    opacity: .9;
+}
+
+.notification-danger-btn:focus-visible {
+    outline: 3px solid rgba(239, 68, 68, 0.4);
+    outline-offset: 2px;
+}
+
+.notification-dialog-open .notification-admin-table tbody tr[data-id]:hover {
+    background: initial;
+    box-shadow: initial;
 }
