@@ -427,3 +427,38 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+// ─── تب‌بندی گزارش نهایی ───────────────────────────────────────────────
+// صفحهٔ گزارش نهایی به دو تب تقسیم شده است:
+//   ۱) «جزئیات روزانهٔ ثبت‌شده» (جدول حضور و غیاب)
+//   ۲) «جداول و خلاصهٔ عملکرد» (جداول اضافه‌کاری/مرخصی/پاس + خلاصه + دکمه‌ها)
+(function () {
+    function initReportTabs() {
+        var layout = document.querySelector(".report-content-layout");
+        if (!layout) return;
+
+        var tabs = document.querySelectorAll(".report-tabs .report-tab");
+        if (!tabs.length) return;
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                var target = tab.getAttribute("data-tab-target");
+                if (!target) return;
+
+                tabs.forEach(function (t) {
+                    var active = t === tab;
+                    t.classList.toggle("is-active", active);
+                    t.setAttribute("aria-selected", active ? "true" : "false");
+                });
+
+                layout.setAttribute("data-tab", target);
+            });
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initReportTabs);
+    } else {
+        initReportTabs();
+    }
+})();
