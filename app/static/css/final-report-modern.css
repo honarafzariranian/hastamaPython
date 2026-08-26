@@ -992,3 +992,448 @@ body.dark-mode.final-report-page .report-summary-panel .report-summary-card--vio
     body.final-report-page .report-summary-panel .report-summary-grid { grid-template-columns: minmax(0, 1fr); }
     body.final-report-page .report-summary-panel .report-summary-card--wide { grid-column: auto; }
 }
+
+/* =====================================================================
+   Compact report header — reduced footprint without losing hierarchy
+   ===================================================================== */
+@media screen and (min-width: 621px) {
+    body.final-report-page .onvanha {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 22px;
+        width: min(900px, calc(100% - 40px));
+        min-height: 0;
+        margin-top: 16px;
+        padding: 16px 22px;
+        border-radius: 20px;
+    }
+
+    body.final-report-page .onvanha::after {
+        width: 130px;
+        height: 130px;
+        right: -42px;
+        bottom: -55px;
+    }
+
+    body.final-report-page .onvanha::before {
+        top: 13px;
+        left: 20px;
+        font-size: .58rem;
+    }
+
+    body.final-report-page .titleBox {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin: 0;
+        font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+        line-height: 1.45;
+    }
+
+    body.final-report-page .titleBox::before { display: none; }
+
+    body.final-report-page .userInfoBox {
+        flex: 0 1 385px;
+        width: min(385px, 44%);
+        min-width: 300px;
+        border-radius: 12px;
+    }
+
+    body.final-report-page .userInfoSection,
+    body.final-report-page .userInfoName {
+        gap: 2px;
+        padding: 9px 12px;
+    }
+
+    body.final-report-page .userInfoTitle { font-size: .62rem; }
+    body.final-report-page .userInfoValue { font-size: .8rem; }
+}
+
+@media screen and (max-width: 620px) {
+    body.final-report-page .onvanha {
+        gap: 11px;
+        width: calc(100% - 20px);
+        margin-top: 8px;
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    body.final-report-page .onvanha::before { display: none; }
+    body.final-report-page .onvanha::after { display: none; }
+    body.final-report-page .titleBox::before { display: none; }
+    body.final-report-page .titleBox {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.45;
+    }
+
+    body.final-report-page .userInfoBox {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-radius: 12px;
+    }
+
+    body.final-report-page .userInfoSection,
+    body.final-report-page .userInfoName {
+        gap: 2px;
+        padding: 8px 10px;
+    }
+
+    body.final-report-page .userInfoName {
+        border-top: 0;
+        border-right: 1px solid rgba(255, 255, 255, .16);
+    }
+
+    body.final-report-page .userInfoTitle { font-size: .6rem; }
+    body.final-report-page .userInfoValue { font-size: .76rem; }
+}
+
+@media screen and (max-width: 360px) {
+    body.final-report-page .userInfoBox { grid-template-columns: minmax(0, 1fr); }
+    body.final-report-page .userInfoName {
+        border-top: 1px solid rgba(255, 255, 255, .16);
+        border-right: 0;
+    }
+}
+
+/* =====================================================================
+   Report workspace layout — جدول اصلی در کنار جزئیات و خلاصه
+   ===================================================================== */
+body.final-report-page .report-content-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
+    align-items: start;
+    gap: 20px;
+    width: min(1180px, calc(100% - 40px));
+    margin: 22px auto 0;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .bala,
+body.final-report-page .report-content-layout > .paein {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+body.final-report-page .report-content-layout > .bala {
+    grid-column: 2;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .bala .hozoorBox {
+    width: 100%;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .paein {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .paein > .left-section {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .paein > .left-section,
+body.final-report-page .report-content-layout > .paein > .paeinrast,
+body.final-report-page .report-content-layout > .paein .ezafeBox,
+body.final-report-page .report-content-layout > .paein .passBox,
+body.final-report-page .report-content-layout > .paein .hourlyPassBox,
+body.final-report-page .report-content-layout > .paein .report-summary-panel {
+    min-width: 0;
+    max-width: none;
+}
+
+body.final-report-page .report-content-layout > .paein .ezafeBox,
+body.final-report-page .report-content-layout > .paein .passBox,
+body.final-report-page .report-content-layout > .paein .hourlyPassBox {
+    width: 100%;
+}
+
+body.final-report-page .report-content-layout > .paein > .paeinrast {
+    display: flex;
+    width: 100%;
+    margin: 0;
+}
+
+body.final-report-page .report-content-layout .rt-scroll-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+}
+
+body.final-report-page .report-content-layout .rt-scroll {
+    max-width: none;
+}
+
+@media screen and (max-width: 980px) {
+    body.final-report-page .report-content-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        width: min(720px, calc(100% - 28px));
+        margin-top: 16px;
+    }
+
+    body.final-report-page .report-content-layout > .bala,
+    body.final-report-page .report-content-layout > .paein {
+        grid-column: auto;
+    }
+
+    body.final-report-page .report-content-layout > .paein {
+        gap: 16px;
+    }
+}
+
+@media screen and (max-width: 620px) {
+    body.final-report-page .report-content-layout {
+        width: calc(100% - 20px);
+        gap: 14px;
+        margin-top: 14px;
+    }
+
+    body.final-report-page .report-content-layout > .paein > .left-section {
+        gap: 12px;
+    }
+}
+
+@media print {
+    body.final-report-page .report-content-layout {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    body.final-report-page .report-content-layout > .bala,
+    body.final-report-page .report-content-layout > .paein {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* =====================================================================
+   Final layout guard — جلوگیری قطعی از فشردگی، هم‌پوشانی و اورفلو
+   ===================================================================== */
+body.final-report-page .report-content-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    width: min(100% - 20px, 720px);
+    margin: 16px auto 0;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .bala,
+body.final-report-page .report-content-layout > .paein {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    grid-column: auto;
+    width: 100% !important;
+    min-width: 0;
+    margin: 0;
+    position: relative;
+}
+
+body.final-report-page .report-content-layout > .bala {
+    order: 1;
+}
+
+body.final-report-page .report-content-layout > .paein {
+    order: 2;
+    gap: 14px;
+}
+
+body.final-report-page .report-content-layout > .bala .hozoorBox,
+body.final-report-page .report-content-layout > .paein .ezafeBox,
+body.final-report-page .report-content-layout > .paein .passBox,
+body.final-report-page .report-content-layout > .paein .hourlyPassBox,
+body.final-report-page .report-content-layout > .paein .report-summary-panel {
+    width: 100% !important;
+    max-width: none;
+    min-width: 0;
+    margin-inline: 0;
+}
+
+body.final-report-page .report-content-layout > .paein > .left-section,
+body.final-report-page .report-content-layout > .paein > .paeinrast {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    width: 100% !important;
+    min-width: 0;
+    margin: 0;
+}
+
+body.final-report-page .report-content-layout .hozoorBox,
+body.final-report-page .report-content-layout .ezafeBox,
+body.final-report-page .report-content-layout .passBox,
+body.final-report-page .report-content-layout .hourlyPassBox,
+body.final-report-page .report-content-layout .report-summary-grid {
+    overflow: hidden;
+}
+
+/* اسکرول فقط روی لایهٔ داخلی جدول انجام می‌شود؛ کارت‌ها هرگز از ستون بیرون نمی‌زنند. */
+body.final-report-page .report-content-layout .rt-scroll-wrap {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+body.final-report-page .report-content-layout .rt-scroll {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+body.final-report-page .report-content-layout #hozoorUsersReportTable {
+    min-width: 920px;
+}
+
+body.final-report-page .report-content-layout #ezafeKarUsersReportTable {
+    min-width: 560px;
+}
+
+body.final-report-page .report-content-layout #morkhcUsersReportTable {
+    min-width: 520px;
+}
+
+body.final-report-page .report-content-layout #hourlyPassUsersReportTable {
+    min-width: 460px;
+}
+
+body.final-report-page .report-content-layout .report-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* فقط در نمایشگرهای واقعاً عریض دو ستون فعال می‌شود تا هیچ محتوایی فشرده نشود. */
+@media screen and (min-width: 1400px) {
+    body.final-report-page .report-content-layout {
+        display: grid;
+        grid-template-columns: minmax(340px, .9fr) minmax(0, 2.1fr);
+        align-items: start;
+        gap: 24px;
+        width: min(100%, 90%);
+        margin-top: 22px;
+    }
+
+    /* در RTL ستون ۲ سمت چپ و ستون ۱ سمت راست است. */
+    body.final-report-page .report-content-layout > .bala {
+        grid-column: 2;
+        grid-row: 1;
+        order: initial;
+    }
+
+    body.final-report-page .report-content-layout > .paein {
+        grid-column: 1;
+        grid-row: 1;
+        order: initial;
+    }
+}
+
+@media print {
+    body.final-report-page .report-content-layout {
+        display: block;
+        width: 100%;
+        margin: 10px 0 0;
+    }
+
+    body.final-report-page .report-content-layout > .bala,
+    body.final-report-page .report-content-layout > .paein {
+        display: block;
+        width: 100% !important;
+        margin: 0 0 10px;
+    }
+
+    body.final-report-page .report-content-layout .rt-scroll-wrap,
+    body.final-report-page .report-content-layout .rt-scroll {
+        overflow: visible;
+    }
+}
+
+/* =====================================================================
+   Report workspace surface — زمینهٔ یکپارچه و فاصلهٔ امن از انتهای صفحه
+   ===================================================================== */
+body.final-report-page .report-content-layout {
+    position: relative;
+    isolation: isolate;
+    padding: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(8, 127, 114, .14);
+    border-radius: 30px;
+    background-color: #eaf4f4;
+    background-image:
+        linear-gradient(rgba(8, 127, 114, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(8, 127, 114, .035) 1px, transparent 1px),
+        radial-gradient(circle at 8% 8%, rgba(14, 116, 144, .15), transparent 24rem),
+        radial-gradient(circle at 92% 92%, rgba(8, 127, 114, .11), transparent 26rem),
+        linear-gradient(135deg, #edf8f7 0%, #e6f1f3 100%);
+    background-size: 34px 34px, 34px 34px, auto, auto, auto;
+    box-shadow: 0 22px 60px rgba(18, 55, 71, .09);
+    margin-bottom: clamp(48px, 8vh, 96px);
+}
+
+body.final-report-page .report-content-layout::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .24), transparent 42%);
+    content: '';
+    pointer-events: none;
+}
+
+body.final-report-page .report-content-layout > .bala,
+body.final-report-page .report-content-layout > .paein {
+    z-index: 1;
+}
+
+body.dark-mode.final-report-page .report-content-layout {
+    border-color: rgba(92, 211, 190, .17);
+    background-color: #132536;
+    background-image:
+        linear-gradient(rgba(92, 211, 190, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(92, 211, 190, .035) 1px, transparent 1px),
+        radial-gradient(circle at 8% 8%, rgba(14, 116, 144, .2), transparent 24rem),
+        radial-gradient(circle at 92% 92%, rgba(8, 127, 114, .17), transparent 26rem),
+        linear-gradient(135deg, #142a3b 0%, #102333 100%);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .22);
+}
+
+@media screen and (max-width: 620px) {
+    body.final-report-page .report-content-layout {
+        padding: 10px;
+        border-radius: 22px;
+        margin-bottom: 42px;
+    }
+}
+
+@media print {
+    body.final-report-page .report-content-layout {
+        padding: 0;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        margin-bottom: 10px;
+    }
+
+    body.final-report-page .report-content-layout::before {
+        display: none;
+    }
+}
