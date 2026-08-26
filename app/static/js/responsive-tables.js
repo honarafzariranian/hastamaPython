@@ -1223,7 +1223,7 @@
     /* ----- صفحهٔ گزارش نهایی (تحلیلی/چاپی) → Pattern B ----- */
     {
       sel: '.hozoorBox #hozoorUsersReportTable', pattern: 'scroll',
-      stickyEnd: 2, stickyHead: true, maxHeight: '60vh', minWidth: 920,
+      stickyStart: 2, stickyHead: true, maxHeight: '60vh', minWidth: 920,
       label: 'جدول حضور و غیاب'
     },
     {
