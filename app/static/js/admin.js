@@ -179,8 +179,6 @@ function toggleBox(boxId, iconContainer) {
         if (boxId === 'vacationRequestBox') {
             selectedBox.style.display = 'inline-table';
         } else if (boxId === 'payrollBox') {
-            // باکس حقوق و دستمزد به‌صورت block نمایش داده می‌شود تا جدول پهن
-            // داخل کانتینر خودش اسکرول شود و کل صفحه را بیرون نزند.
             selectedBox.style.display = 'block';
         } else {
             selectedBox.style.display = 'flex';

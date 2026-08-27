@@ -24,6 +24,7 @@ from app.api.routes.notifications import (
 )
 from app.api.routes.ticketing import router as ticketing_router
 from app.api.routes.health import router as health_router
+from app.api.routes.call_system import router as call_system_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
@@ -52,15 +53,45 @@ if not _session_secret:
     _session_secret = os.urandom(32).hex()
 app.add_middleware(SessionMiddleware, secret_key=_session_secret, https_only=not DEBUG, same_site="lax")
 
-@app.middleware("http")
-async def security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
-    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-    response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; frame-ancestors 'none'")
-    return response
+from starlette.types import ASGIApp, Receive, Scope, Send
+
+
+class _SecurityHeadersMiddleware:
+    """Raw ASGI middleware — does NOT wrap via BaseHTTPMiddleware,
+    so WebSocket upgrades pass through untouched."""
+
+    _HEADERS = [
+        (b"x-content-type-options", b"nosniff"),
+        (b"x-frame-options", b"DENY"),
+        (b"referrer-policy", b"strict-origin-when-cross-origin"),
+        (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
+        (b"content-security-policy",
+         b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; frame-ancestors 'none'"),
+    ]
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            # WebSocket / lifespan — pass straight through
+            await self.app(scope, receive, send)
+            return
+
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                existing = {k for k, _ in headers}
+                for k, v in self._HEADERS:
+                    if k not in existing:
+                        headers.append((k, v))
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, _send)
+
+
+app.add_middleware(_SecurityHeadersMiddleware)
 
 # ثبت مسیر استاتیک برای فایل‌های CSS و JavaScript
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -69,6 +100,7 @@ app.include_router(auth_router)
 app.include_router(notifications_router)
 app.include_router(ticketing_router)
 app.include_router(health_router)
+app.include_router(call_system_router)
 
 @app.on_event("startup")
 def start_notification_background_tasks():
@@ -110,6 +142,20 @@ cursor = conn.cursor()
 @app.get("/login")
 async def home(request: Request):
     return templates.TemplateResponse(request, "login.html", {"request": request})
+
+@app.get("/call-display", response_class=HTMLResponse)
+async def call_display(request: Request):
+    """TV display page for the sample collection call system."""
+    return templates.TemplateResponse(request, "call-display.html", {"request": request})
+
+@app.get("/call-management", response_class=HTMLResponse)
+async def call_management(request: Request):
+    """Standalone call management page — requires admin authentication."""
+    username = get_user_from_session(request)
+    is_admin = get_is_admin_from_session(request)
+    if not username or not is_admin:
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse(request, "call-management.html", {"request": request})
 
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری

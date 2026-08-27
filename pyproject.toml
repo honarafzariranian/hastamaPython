@@ -22,7 +22,8 @@ dependencies = [
     "persiantools>=2.0.0",
     "itsdangerous>=2.0.0",
     "python-multipart>=0.0.5",
-    "apscheduler>=3.10.4,<4"
+    "apscheduler>=3.10.4,<4",
+    "websockets>=12.0"
 ]
 
 [dependency-groups]

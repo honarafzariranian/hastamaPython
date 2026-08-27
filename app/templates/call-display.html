@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه فراخوان نمونه‌گیری — نمایشگر</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/vazir.css">
+    <link rel="stylesheet" href="/static/css/call-display.css">
+</head>
+<body class="call-display-page">
+
+    <!-- Audio activation overlay (browser autoplay policy) -->
+    <div class="call-display-activate" id="activateOverlay">
+        <div class="call-display-activate-inner">
+            <div class="call-display-activate-icon">🔊</div>
+            <h2>فعال‌سازی صدای فراخوان</h2>
+            <p>برای شنیدن اعلان‌های صوتی فراخوان کلیک کنید</p>
+            <button class="call-display-activate-btn" id="activateBtn">فعال‌سازی</button>
+        </div>
+    </div>
+
+    <!-- Main display -->
+    <div class="call-display-main">
+        <!-- Header -->
+        <div class="call-display-header">
+            <div class="call-display-logo">
+                <img src="/static/images/newlogo.png" alt="هستما" class="call-display-logo-img">
+            </div>
+            <h1 class="call-display-title">سامانه فراخوان نمونه‌گیری</h1>
+            <div class="call-display-status" id="displayStatus">
+                <span class="call-display-status-dot call-display-status-dot--connecting" id="statusDot"></span>
+                <span class="call-display-status-text" id="statusText">در حال اتصال...</span>
+            </div>
+        </div>
+
+        <!-- Active calls grid — shows up to 5 recent calls -->
+        <div class="call-display-active-grid" id="activeGrid">
+            <div class="call-display-slot" id="slot0">
+                <div class="call-display-slot-number"></div>
+                <div class="call-display-slot-dept"></div>
+            </div>
+            <div class="call-display-slot" id="slot1">
+                <div class="call-display-slot-number"></div>
+                <div class="call-display-slot-dept"></div>
+            </div>
+            <div class="call-display-slot" id="slot2">
+                <div class="call-display-slot-number"></div>
+                <div class="call-display-slot-dept"></div>
+            </div>
+            <div class="call-display-slot" id="slot3">
+                <div class="call-display-slot-number"></div>
+                <div class="call-display-slot-dept"></div>
+            </div>
+            <div class="call-display-slot" id="slot4">
+                <div class="call-display-slot-number"></div>
+                <div class="call-display-slot-dept"></div>
+            </div>
+        </div>
+
+        <!-- Last call message -->
+        <div class="call-display-current" id="currentCall">
+            <div class="call-display-message" id="callMessage"></div>
+        </div>
+
+        <!-- Waiting state -->
+        <div class="call-display-waiting" id="waitingState">
+            <div class="call-display-waiting-icon">⏳</div>
+            <div class="call-display-waiting-text">در انتظار فراخوان...</div>
+        </div>
+    </div>
+
+    <!-- Audio element for future local audio files -->
+    <audio id="callAudio" preload="auto"></audio>
+
+    <script src="/static/js/call-display.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه فراخوان نمونه‌گیری</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/fonts/Vazir.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: 'Vazir';
+            src: url('/static/fonts/Vazir.woff2') format('woff2'),
+                 url('/static/fonts/Vazir.woff') format('woff'),
+                 url('/static/fonts/Vazir.ttf') format('truetype');
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/call-system-standalone.css">
+</head>
+<body class="call-system-page">
+
+    <!-- ── Header ── -->
+    <header class="cs-header">
+        <div class="cs-header-inner">
+            <div class="cs-header-brand">
+                <img src="/static/images/newlogo.png" alt="هستما" class="cs-header-logo">
+                <div class="cs-header-text">
+                    <span class="cs-header-title">سامانه فراخوان نمونه‌گیری</span>
+                    <span class="cs-header-sub">پنل مدیریت فراخوان</span>
+                </div>
+            </div>
+            <div class="cs-header-actions">
+                <div class="cs-display-status" id="csDisplayStatus">
+                    <span class="cs-status-dot cs-status-dot--disconnected" id="csStatusDot"></span>
+                    <span class="cs-status-text" id="csStatusText">اتصال قطع است</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main content ── -->
+    <main class="cs-main">
+        <div class="cs-container">
+
+            <!-- Call controls -->
+            <div class="cs-card cs-card--controls">
+                <h2 class="cs-card-title">فراخوان شماره</h2>
+                <div class="cs-form">
+                    <div class="cs-field">
+                        <label for="csNumberInput">شماره پذیرش</label>
+                        <input type="text" id="csNumberInput" class="cs-input" placeholder="مثلاً ۵۱۲" autocomplete="off" inputmode="numeric">
+                    </div>
+                    <div class="cs-field">
+                        <label for="csDeptSelect">بخش</label>
+                        <select id="csDeptSelect" class="cs-select">
+                            <option value="نمونه‌گیری">نمونه‌گیری</option>
+                            <option value="خون‌گیری">خون‌گیری</option>
+                            <option value="رادیولوژی">رادیولوژی</option>
+                            <option value="سونوگرافی">سونوگرافی</option>
+                            <option value="آزمایشگاه">آزمایشگاه</option>
+                        </select>
+                    </div>
+                    <div class="cs-btn-row">
+                        <button type="button" id="csCallBtn" class="cs-btn cs-btn--primary">فراخوان شماره</button>
+                        <button type="button" id="csRepeatBtn" class="cs-btn cs-btn--secondary">تکرار آخرین فراخوان</button>
+                    </div>
+                    <div class="cs-btn-row">
+                        <button type="button" id="csTestDisplayBtn" class="cs-btn cs-btn--test">تست نمایشگر</button>
+                        <button type="button" id="csTestVoiceBtn" class="cs-btn cs-btn--voice">تست صدا</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current call -->
+            <div class="cs-card cs-card--current">
+                <h2 class="cs-card-title">فراخوان جاری</h2>
+                <div class="cs-current-display" id="csCurrentCard">
+                    <div class="cs-current-number" id="csCurrentNumber"></div>
+                    <div class="cs-current-dept" id="csCurrentDept"></div>
+                    <div class="cs-current-time" id="csCurrentTime"></div>
+                    <div class="cs-current-empty" id="csCurrentEmpty">هنوز فراخوانی ثبت نشده است</div>
+                </div>
+            </div>
+
+            <!-- Recent calls -->
+            <div class="cs-card cs-card--recent">
+                <h2 class="cs-card-title">آخرین فراخوان‌ها</h2>
+                <div class="cs-recent-list" id="csRecentList">
+                    <div class="cs-recent-empty">هنوز فراخوانی ثبت نشده است</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="cs-toast" id="csToast"></div>
+
+    <script src="/static/js/call-system-standalone.js"></script>
+</body>
+</html>

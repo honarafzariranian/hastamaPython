@@ -1,0 +1,319 @@
+/* =====================================================================
+   سامانه فراخوان نمونه‌گیری — TV Display Page Styles
+   Optimized for 16:9 large screens, full-screen browsers, and
+   long viewing distance.  No Internet access required.
+   ===================================================================== */
+
+/* ── Reset & base ── */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    background: linear-gradient(160deg, #0c1929 0%, #0f2940 40%, #0a1628 100%);
+    color: #e2e8f0;
+    direction: rtl;
+    user-select: none;
+}
+
+/* ── Audio activation overlay ── */
+.call-display-activate {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 22, 40, .95);
+    backdrop-filter: blur(12px);
+}
+
+.call-display-activate[hidden] {
+    display: none;
+}
+
+.call-display-activate-inner {
+    text-align: center;
+    max-width: 480px;
+    padding: 40px;
+}
+
+.call-display-activate-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.call-display-activate-inner h2 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 12px;
+    color: #e2e8f0;
+}
+
+.call-display-activate-inner p {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 28px;
+}
+
+.call-display-activate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding: 0 48px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #fff;
+    font: 800 1.1rem 'Vazir', Tahoma, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, .35);
+    transition: transform .2s, box-shadow .2s;
+}
+
+.call-display-activate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(14, 165, 233, .45);
+}
+
+/* ── Main layout ── */
+.call-display-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 3vh 4vw;
+    gap: 2vh;
+}
+
+/* ── Header ── */
+.call-display-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.call-display-logo-img {
+    height: 48px;
+    width: auto;
+    opacity: .85;
+    filter: brightness(1.2);
+}
+
+.call-display-title {
+    font-size: clamp(1rem, 2.5vw, 1.8rem);
+    font-weight: 900;
+    color: #38bdf8;
+    letter-spacing: .02em;
+}
+
+.call-display-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: clamp(.6rem, 1vw, .8rem);
+    font-weight: 600;
+    color: #64748b;
+}
+
+.call-display-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.call-display-status-dot--connected {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, .6);
+}
+
+.call-display-status-dot--disconnected {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, .5);
+}
+
+.call-display-status-dot--connecting {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, .5);
+    animation: cd-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cd-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+}
+
+/* ── Active calls grid (5 slots) ── */
+.call-display-active-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: clamp(10px, 1.5vw, 20px);
+    width: 100%;
+    max-width: 1000px;
+}
+
+.call-display-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: clamp(12px, 2vh, 30px) clamp(8px, 1vw, 16px);
+    background: rgba(255, 255, 255, .04);
+    border: 2px solid rgba(255, 255, 255, .08);
+    border-radius: 20px;
+    min-height: clamp(80px, 16vh, 180px);
+    transition: all .4s ease;
+}
+
+.call-display-slot.is-active {
+    background: rgba(14, 165, 233, .1);
+    border-color: rgba(14, 165, 233, .35);
+}
+
+.call-display-slot.is-active.is-latest {
+    background: rgba(14, 165, 233, .18);
+    border-color: rgba(14, 165, 233, .5);
+    box-shadow: 0 0 30px rgba(14, 165, 233, .15);
+    animation: cd-fadeIn .4s ease-out;
+}
+
+.call-display-slot.is-empty {
+    opacity: .25;
+    border-style: dashed;
+}
+
+@keyframes cd-fadeIn {
+    from { opacity: 0; transform: scale(.93); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.call-display-slot-number {
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    font-weight: 900;
+    color: #38bdf8;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(56, 189, 248, .25);
+    direction: ltr;
+    text-align: center;
+    letter-spacing: .03em;
+}
+
+.call-display-slot.is-empty .call-display-slot-number {
+    color: #334155;
+}
+
+.call-display-slot.is-latest .call-display-slot-number {
+    font-size: clamp(2.2rem, 5.5vw, 5rem);
+    color: #7dd3fc;
+    text-shadow: 0 0 40px rgba(56, 189, 248, .4);
+}
+
+.call-display-slot-dept {
+    font-size: clamp(.6rem, 1vw, .9rem);
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+}
+
+.call-display-slot.is-latest .call-display-slot-dept {
+    color: #38bdf8;
+}
+
+/* ── Current message ── */
+.call-display-current {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 800px;
+    padding: 1vh 4vw;
+}
+
+.call-display-current.is-active {
+    display: flex;
+}
+
+.call-display-message {
+    font-size: clamp(1rem, 2.5vw, 1.6rem);
+    font-weight: 700;
+    color: #e2e8f0;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ── Waiting state ── */
+.call-display-waiting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    opacity: .5;
+}
+
+.call-display-waiting[hidden] {
+    display: none;
+}
+
+.call-display-waiting-icon {
+    font-size: 3rem;
+    animation: cd-breathe 3s ease-in-out infinite;
+}
+
+@keyframes cd-breathe {
+    0%, 100% { opacity: .5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+.call-display-waiting-text {
+    font-size: clamp(.9rem, 1.8vw, 1.2rem);
+    font-weight: 700;
+    color: #64748b;
+}
+
+
+/* ── Test mode visual ── */
+.call-display-slot.is-test {
+    border-color: rgba(139, 92, 246, .3) !important;
+    background: rgba(139, 92, 246, .08) !important;
+}
+
+.call-display-slot.is-test .call-display-slot-number {
+    color: #a78bfa;
+    text-shadow: 0 0 30px rgba(167, 139, 250, .3);
+}
+
+.call-display-slot.is-test .call-display-slot-dept {
+    color: #a78bfa;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .call-display-active-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .call-display-active-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .call-display-main {
+        padding: 2vh 3vw;
+        gap: 3vh;
+    }
+}
