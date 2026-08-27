@@ -814,8 +814,8 @@ body.final-report-page .report-summary-panel .report-summary-heading > strong {
 
 body.final-report-page .report-summary-panel .report-summary-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
     width: 100%;
     margin: 0;
     padding: 12px;
@@ -833,10 +833,10 @@ body.final-report-page .report-summary-panel .report-summary-card {
     justify-content: center;
     width: auto;
     min-width: 0;
-    min-height: 88px;
+    min-height: 62px;
     height: auto;
     margin: 0;
-    padding: 16px 14px 13px;
+    padding: 9px 8px 7px;
     overflow: hidden;
     border: 1px solid var(--report-line);
     border-top: 3px solid #8ca5ad;
@@ -847,22 +847,28 @@ body.final-report-page .report-summary-panel .report-summary-card {
 }
 
 body.final-report-page .report-summary-panel .report-summary-card--wide {
-    grid-column: 1 / -1;
-    min-height: 105px;
+    grid-column: auto !important;
+    min-height: 72px;
+}
+
+body.final-report-page .report-summary-panel .numBoxEzafeh,
+body.final-report-page .report-summary-panel #hozoornumBoxID {
+    grid-column: auto !important;
+    min-height: 72px;
 }
 
 body.final-report-page .report-summary-panel .report-summary-card .title {
     position: static;
     display: block;
     width: auto;
-    margin: 0 0 9px;
+    margin: 0 0 6px;
     padding: 0;
     border: 0;
     background: transparent;
     color: var(--report-muted);
-    font-size: .7rem;
+    font-size: .65rem;
     font-weight: 750;
-    line-height: 1.6;
+    line-height: 1.5;
     text-align: right;
 }
 
@@ -876,9 +882,9 @@ body.final-report-page .report-summary-panel .report-summary-card .attendanceSam
     min-width: 0;
     margin: 0;
     color: var(--report-ink);
-    font-size: 1.08rem;
+    font-size: .88rem;
     font-weight: 900;
-    line-height: 1.45;
+    line-height: 1.35;
     direction: ltr;
     text-align: right;
 }
@@ -976,7 +982,7 @@ body.dark-mode.final-report-page .report-summary-panel .report-summary-card--red
 body.dark-mode.final-report-page .report-summary-panel .report-summary-card--violet { border-top-color: #aa9be8; }
 
 @media screen and (max-width: 620px) {
-    body.final-report-page .report-summary-panel .report-summary-grid { padding: 10px; gap: 8px; }
+    body.final-report-page .report-summary-panel .report-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px; gap: 6px; }
     body.final-report-page .report-summary-panel .report-summary-card { min-height: 78px; padding: 13px 10px 11px; }
     body.final-report-page .report-summary-panel .report-summary-card--wide { min-height: 94px; }
     body.final-report-page .report-summary-panel .report-summary-card .title { font-size: .66rem; }
@@ -1191,7 +1197,14 @@ body.final-report-page .report-content-layout .rt-scroll {
     }
 
     body.final-report-page .report-content-layout > .paein {
+        flex-direction: column;
+        flex-wrap: wrap;
         gap: 16px;
+    }
+
+    body.final-report-page .report-content-layout > .paein > .left-section,
+    body.final-report-page .report-content-layout > .paein > .paeinrast {
+        flex: 1 1 100%;
     }
 }
 
@@ -1246,13 +1259,19 @@ body.final-report-page .report-content-layout > .paein {
     position: relative;
 }
 
+body.final-report-page .report-content-layout > .paein {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 14px;
+}
+
 body.final-report-page .report-content-layout > .bala {
     order: 1;
 }
 
 body.final-report-page .report-content-layout > .paein {
     order: 2;
-    gap: 14px;
 }
 
 body.final-report-page .report-content-layout > .bala .hozoorBox,
@@ -1269,13 +1288,22 @@ body.final-report-page .report-content-layout > .paein .report-summary-panel {
 body.final-report-page .report-content-layout > .paein > .left-section,
 body.final-report-page .report-content-layout > .paein > .paeinrast {
     display: flex;
-    flex: 0 0 auto;
+    flex: 1 1 0;
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
-    width: 100% !important;
     min-width: 0;
     margin: 0;
+}
+
+body.final-report-page .report-content-layout > .paein > .left-section {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+body.final-report-page .report-content-layout > .paein > .paeinrast {
+    flex: 1 1 300px;
+    min-width: 280px;
 }
 
 body.final-report-page .report-content-layout .hozoorBox,
@@ -1317,7 +1345,7 @@ body.final-report-page .report-content-layout #hourlyPassUsersReportTable {
 }
 
 body.final-report-page .report-content-layout .report-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 /* فقط در نمایشگرهای واقعاً عریض دو ستون فعال می‌شود تا هیچ محتوایی فشرده نشود. */
@@ -1370,6 +1398,7 @@ body.final-report-page .report-content-layout .report-summary-grid {
    ===================================================================== */
 body.final-report-page .report-content-layout {
     position: relative;
+    display: flex;
     isolation: isolate;
     padding: 20px;
     overflow: hidden;

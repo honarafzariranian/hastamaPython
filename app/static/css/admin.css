@@ -4030,6 +4030,49 @@ form button:active {
     max-width: 100%;
 }
 
+/* --- attendance panels side by side --- */
+.attendance-panels-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: min(88%, 100%) !important;
+    max-width: calc(100% - 80px);
+    margin: 0 auto 4px auto !important;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+.attendance-panels-row > .attendance-panel {
+    flex: 1 1 0;
+    min-width: 320px;
+    width: auto !important;
+    margin: 0 !important;
+    border: 1px solid #ccc !important;
+    border-radius: 24px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.attendance-panels-row > .attendance-panel:first-child {
+    border-bottom: 1px solid #ccc !important;
+    padding-bottom: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+@media (max-width: 768px) {
+    .attendance-panels-row {
+        flex-direction: column;
+    }
+    .attendance-panels-row > .attendance-panel {
+        min-width: 0;
+        width: 100% !important;
+    }
+}
+
 /* --- payroll panel --- */
 .payroll-panel {
     background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
@@ -4445,6 +4488,7 @@ form button:active {
         overflow: hidden;
         margin-top: 88px !important;
     }
+
 
     /* فقط جدول داخل باکس اسکرول عمودی می‌گیرد؛ عنوان، تب‌ها و تنظیمات ثابت می‌مانند */
     .payroll-panel .payroll-table-scroll {
