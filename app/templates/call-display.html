@@ -10,72 +10,116 @@
 </head>
 <body class="call-display-page">
 
-    <!-- Audio activation overlay (browser autoplay policy) -->
-    <div class="call-display-activate" id="activateOverlay">
-        <div class="call-display-activate-inner">
-            <div class="call-display-activate-icon">🔊</div>
-            <h2>فعال‌سازی صدای فراخوان</h2>
-            <p>برای شنیدن اعلان‌های صوتی فراخوان کلیک کنید</p>
-            <button class="call-display-activate-btn" id="activateBtn">فعال‌سازی</button>
+    <!-- Animated background particles -->
+    <div class="cd-bg-particles">
+        <div class="cd-particle cd-particle--1"></div>
+        <div class="cd-particle cd-particle--2"></div>
+        <div class="cd-particle cd-particle--3"></div>
+        <div class="cd-particle cd-particle--4"></div>
+        <div class="cd-particle cd-particle--5"></div>
+    </div>
+
+    <!-- Audio activation overlay -->
+    <div class="cd-overlay" id="activateOverlay">
+        <div class="cd-overlay-card">
+            <div class="cd-overlay-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+            </div>
+            <h2 class="cd-overlay-title">فعال‌سازی صدای فراخوان</h2>
+            <p class="cd-overlay-desc">برای شنیدن اعلان‌های صوتی، روی دکمه زیر کلیک کنید</p>
+            <button class="cd-overlay-btn" id="activateBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;margin-left:8px">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                فعال‌سازی صدا
+            </button>
         </div>
     </div>
 
-    <!-- Main display -->
-    <div class="call-display-main">
-        <!-- Header -->
-        <div class="call-display-header">
-            <div class="call-display-logo">
-                <img src="/static/images/newlogo.png" alt="هستما" class="call-display-logo-img">
+    <!-- Top bar: Logo + Title + Status -->
+    <header class="cd-topbar">
+        <div class="cd-topbar-right">
+            <div class="cd-lab-logo" id="labLogo">
+                <img src="/static/images/newlogo.png" alt="لوگوی آزمایشگاه" class="cd-lab-logo-img" id="labLogoImg">
+                <span class="cd-lab-logo-placeholder" id="labLogoPlaceholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px">
+                        <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                    </svg>
+                    لوگوی آزمایشگاه
+                </span>
             </div>
-            <h1 class="call-display-title">سامانه فراخوان نمونه‌گیری</h1>
-            <div class="call-display-status" id="displayStatus">
-                <span class="call-display-status-dot call-display-status-dot--connecting" id="statusDot"></span>
-                <span class="call-display-status-text" id="statusText">در حال اتصال...</span>
+            <div class="cd-topbar-text">
+                <h1 class="cd-title">سامانه فراخوان نمونه‌گیری</h1>
+                <div class="cd-subtitle">آزمایشگاه دکتر امینی</div>
+            </div>
+        </div>
+        <div class="cd-topbar-left">
+            <div class="cd-conn-status" id="displayStatus">
+                <span class="cd-conn-dot cd-conn-dot--connecting" id="statusDot"></span>
+                <span class="cd-conn-label" id="statusText">در حال اتصال...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content area -->
+    <main class="cd-content">
+
+        <!-- Hero: newest call -->
+        <div class="cd-hero" id="cdHero">
+            <div class="cd-hero-inner" id="heroInner">
+                <div class="cd-hero-waiting" id="heroWaiting">
+                    <div class="cd-hero-waiting-ring">
+                        <svg viewBox="0 0 120 120" class="cd-hero-waiting-svg">
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(56,189,248,0.08)" stroke-width="4"/>
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="4" stroke-dasharray="327" stroke-dashoffset="80" stroke-linecap="round" class="cd-hero-waiting-arc"/>
+                        </svg>
+                        <div class="cd-hero-waiting-icon">⏳</div>
+                    </div>
+                    <div class="cd-hero-waiting-text">در انتظار فراخوان</div>
+                </div>
+                <div class="cd-hero-call" id="heroCall" style="display:none">
+                    <div class="cd-hero-glow"></div>
+                    <div class="cd-hero-number" id="heroNumber"></div>
+                    <div class="cd-hero-dept" id="heroDept"></div>
+                    <div class="cd-hero-message" id="heroMessage"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Active calls grid — shows up to 5 recent calls -->
-        <div class="call-display-active-grid" id="activeGrid">
-            <div class="call-display-slot" id="slot0">
-                <div class="call-display-slot-number"></div>
-                <div class="call-display-slot-dept"></div>
-            </div>
-            <div class="call-display-slot" id="slot1">
-                <div class="call-display-slot-number"></div>
-                <div class="call-display-slot-dept"></div>
-            </div>
-            <div class="call-display-slot" id="slot2">
-                <div class="call-display-slot-number"></div>
-                <div class="call-display-slot-dept"></div>
-            </div>
-            <div class="call-display-slot" id="slot3">
-                <div class="call-display-slot-number"></div>
-                <div class="call-display-slot-dept"></div>
-            </div>
-            <div class="call-display-slot" id="slot4">
-                <div class="call-display-slot-number"></div>
-                <div class="call-display-slot-dept"></div>
+        <!-- Previous calls row -->
+        <div class="cd-previous" id="cdPrevious">
+            <div class="cd-previous-label">فراخوان‌های قبلی</div>
+            <div class="cd-previous-grid" id="previousGrid">
+                <div class="cd-prev-slot" id="slot1"><div class="cd-prev-num"></div><div class="cd-prev-dept"></div></div>
+                <div class="cd-prev-slot" id="slot2"><div class="cd-prev-num"></div><div class="cd-prev-dept"></div></div>
+                <div class="cd-prev-slot" id="slot3"><div class="cd-prev-num"></div><div class="cd-prev-dept"></div></div>
+                <div class="cd-prev-slot" id="slot4"><div class="cd-prev-num"></div><div class="cd-prev-dept"></div></div>
             </div>
         </div>
+    </main>
 
-        <!-- Last call message -->
-        <div class="call-display-current" id="currentCall">
-            <div class="call-display-message" id="callMessage"></div>
-        </div>
+    <!-- Bottom bar: branding -->
+    <footer class="cd-footer">
+        <span class="cd-footer-brand">سامانه فراخوان نمونه‌گیری</span>
+        <span class="cd-footer-sep">|</span>
+        <span class="cd-footer-company">محصول شرکت هنر افزار ایرانیان</span>
+        <span class="cd-footer-tm">&#x00AE;</span>
+    </footer>
 
-        <!-- Waiting state -->
-        <div class="call-display-waiting" id="waitingState">
-            <div class="call-display-waiting-icon">⏳</div>
-            <div class="call-display-waiting-text">در انتظار فراخوان...</div>
-        </div>
+    <!-- Audio status -->
+    <div class="cd-audio-pill cd-audio-pill--inactive" id="audioStatus">
+        <span class="cd-audio-pill-dot"></span>
+        برای فعال‌سازی صدا کلیک کنید
     </div>
 
-    <!-- Audio status indicator -->
-    <div class="call-display-audio-status call-display-audio-status--inactive" id="audioStatus">
-        برای فعالسازی صدا کلیک کنید
-    </div>
-
-    <!-- Audio element for local MP3 playback -->
+    <!-- Audio element -->
     <audio id="callAudio" preload="auto"></audio>
 
     <script src="/static/js/call-display.js"></script>
