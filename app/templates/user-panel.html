@@ -15,6 +15,7 @@
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/hastama-ux.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
@@ -1226,7 +1227,9 @@
         </div>
 
 
-            <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>        <script>window.__modernTicketing = true;</script>
+            <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>
+<script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
+        <script>window.__modernTicketing = true;</script>
         <script src="{{ url_for('static', path='js/user-panel-script.js') }}"></script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>

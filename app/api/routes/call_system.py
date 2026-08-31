@@ -41,7 +41,7 @@ def _ensure_schema(conn) -> None:
             return
         db_dir = Path(__file__).resolve().parents[3] / "database"
         cursor = conn.cursor()
-        for sql_file in ["reception_calls.sql", "display_queue.sql"]:
+        for sql_file in ["reception_calls.sql", "display_queue.sql", "waiting_queue.sql"]:
             sql_path = db_dir / sql_file
             if sql_path.exists():
                 cursor.execute(sql_path.read_text(encoding="utf-8"))
@@ -485,6 +485,143 @@ async def get_display_queue():
         conn.close()
     return JSONResponse({"success": True, "queue": queue})
 
+
+# ---------------------------------------------------------------------------
+# Waiting Queue (reception → sample collection)
+# ---------------------------------------------------------------------------
+
+@router.get("/calls/waiting-queue")
+async def get_waiting_queue():
+    """Return all waiting items (not yet called)."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        rows = cursor.execute(
+            """SELECT id, reception_number, department, added_by, status, created_at, called_at
+               FROM dbo.waiting_queue
+               WHERE status = 'waiting'
+               ORDER BY id ASC"""
+        ).fetchall()
+        columns = [d[0] for d in cursor.description]
+        result = []
+        for row in rows:
+            d = dict(zip(columns, row))
+            d["persian_number"] = to_persian_numbers(str(d["reception_number"]))
+            d["created_at"] = _iso(d.pop("created_at", None))
+            d["called_at"] = _iso(d.pop("called_at", None))
+            result.append(d)
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "items": result})
+
+
+@router.post("/calls/waiting-queue")
+async def add_to_waiting_queue(request: Request):
+    """Add a number to the waiting queue."""
+    username = _actor(request, admin=True)
+    body = await request.json()
+    number = str(body.get("number", "")).strip()
+    department = str(body.get("department", "نمونه‌گیری")).strip()
+    if not number:
+        raise HTTPException(status_code=422, detail="شماره پذیرش را وارد کنید.")
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO dbo.waiting_queue (reception_number, department, added_by)
+               VALUES (?, ?, ?)""",
+            (number, department, username),
+        )
+        new_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+        conn.commit()
+    finally:
+        conn.close()
+
+    return JSONResponse({
+        "success": True,
+        "message": "شماره " + to_persian_numbers(number) + " به صف اضافه شد.",
+        "id": int(new_id) if new_id else 0,
+    })
+
+
+@router.delete("/calls/waiting-queue/{item_id}")
+async def remove_from_waiting_queue(item_id: int):
+    """Remove an item from the waiting queue."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM dbo.waiting_queue WHERE id = ?", (item_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "message": "از صف حذف شد."})
+
+
+@router.post("/calls/waiting-queue/{item_id}/call")
+async def call_from_queue(request: Request, item_id: int):
+    """Mark a waiting queue item as called (triggers call system)."""
+    username = _actor(request, admin=True)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        row = cursor.execute(
+            """SELECT reception_number, department FROM dbo.waiting_queue
+               WHERE id = ? AND status = 'waiting'""",
+            (item_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="مورد مورد نظر یافت نشد.")
+        number = str(row[0]).strip()
+        department = str(row[1]).strip()
+
+        # Mark as called
+        cursor.execute(
+            """UPDATE dbo.waiting_queue SET status = 'called', called_at = SYSUTCDATETIME()
+               WHERE id = ?""",
+            (item_id,),
+        )
+
+        # Add to display queue
+        _queue_remove(conn, number)
+        _queue_add(conn, number, department, username)
+
+        # Store in reception_calls history
+        cursor.execute(
+            """INSERT INTO dbo.reception_calls (reception_number, department, called_by, is_test, called_at)
+               VALUES (?, ?, ?, 0, SYSUTCDATETIME())""",
+            (number, department, username),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Broadcast via WebSocket
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    event = {
+        "type": "reception_call",
+        "data": {
+            "number": number,
+            "persian_number": to_persian_numbers(number),
+            "department": department,
+            "message": f"لطفاً به بخش {department} مراجعه کنید.",
+            "voice": f"شماره {to_persian_numbers(number)}، لطفاً به بخش {department} مراجعه کنید.",
+            "timestamp": now,
+            "is_test": False,
+        },
+    }
+    sent = await display_manager.broadcast(event)
+
+    return JSONResponse({
+        "success": True,
+        "message": "فراخوان شماره " + to_persian_numbers(number) + " ارسال شد.",
+        "display_count": sent,
+    })
 
 
 

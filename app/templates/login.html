@@ -5,10 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سامانه هستما</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/login-style.css') }}">
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/login-style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/hastama-ux.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
@@ -70,7 +71,11 @@
                     <a href="#" class="forgot-password">فراموشی رمز عبور؟</a>
                 </div>
 
-                <button type="submit" class="btn">ورود</button>
+                                <button type="submit" class="btn" id="loginBtn">
+                    <span class="h-ux-btn-text">ورود</span>
+                    <span class="h-ux-btn-spinner"></span>
+                    <span class="h-ux-btn-loading-text">در حال ورود...</span>
+                </button>
             </form>
         </div>
     </div>
@@ -97,6 +102,7 @@
     </div>
 
     <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
+    <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
     <script src="{{ url_for('static', path='js/script.js') }}"></script>
 </body>
 

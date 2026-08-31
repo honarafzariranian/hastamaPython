@@ -1,7 +1,23 @@
-// تابع ورود
+// تابع ورود — با پشتیبانی UX infrastructure
 function login() {
     var username = document.getElementById('username').value;
     var password = document.getElementById('password').value;
+    var loginBtn = document.getElementById('loginBtn');
+
+    if (!username || !password) {
+        showSystemError('لطفاً نام کاربری و رمز عبور را وارد کنید.');
+        return;
+    }
+
+    // Double-submit protection
+    if (window.HastamaUX && window.HastamaUX.submitLock) {
+        if (!window.HastamaUX.submitLock('login')) return;
+    }
+
+    // Button loading state
+    if (window.HastamaUX && loginBtn) {
+        window.HastamaUX.btnLoad(loginBtn, 'در حال ورود...');
+    }
 
     // ارسال درخواست به سرور برای اعتبارسنجی
     fetch('/login_user', {
@@ -22,16 +38,33 @@ function login() {
     })
     .then(data => {
         if (data.success) {
-            window.location.href = data.redirect;
+            if (window.HastamaUX && loginBtn) {
+                window.HastamaUX.btnDone(loginBtn, '✓ ورود موفق');
+            }
+            // Brief delay to show success state, then redirect
+            setTimeout(function () {
+                window.location.href = data.redirect;
+            }, 400);
         } else {
+            if (window.HastamaUX && loginBtn) {
+                window.HastamaUX.btnReset(loginBtn);
+            }
+            if (window.HastamaUX && window.HastamaUX.submitUnlock) {
+                window.HastamaUX.submitUnlock('login');
+            }
             showSystemError(data.message || 'نام کاربری یا رمز عبور اشتباه است');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        if (window.HastamaUX && loginBtn) {
+            window.HastamaUX.btnReset(loginBtn);
+        }
+        if (window.HastamaUX && window.HastamaUX.submitUnlock) {
+            window.HastamaUX.submitUnlock('login');
+        }
         showSystemError('خطا در برقراری ارتباط با سامانه.');
     });
-    
 }
 
 // اضافه کردن گوش‌دهنده برای کلید Enter

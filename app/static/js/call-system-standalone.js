@@ -203,7 +203,7 @@
             return;
         }
         var dept = document.getElementById('csDeptSelect');
-        var deptVal = dept ? dept.value : '\u0646\u0645\u0648\u0646\u0647\u065c\u06af\u06cc\u0631\u06cc';
+        var deptVal = dept ? dept.value : '\u0646\u0645\u0648\u0646\u0647\u200c\u06af\u06cc\u0631\u06cc';
 
         setLoading(callBtn, true);
         fetch('/api/calls', {
@@ -433,6 +433,160 @@
         }, reconnectDelay);
     }
 
+    /* ====================================================================
+       WAITING QUEUE (reception → sample collection)
+       ==================================================================== */
+    var waitingList = null;
+    var waitingEmpty = null;
+    var waitingCountEl = null;
+    var waitingInput = null;
+    var waitingDept = null;
+    var waitingAddBtn = null;
+    var waitingData = []; // [{id, reception_number, department, added_by, created_at, persian_number}]
+
+    function renderWaitingQueue() {
+        if (!waitingList) return;
+        // Clear existing items (keep the empty placeholder)
+        var items = waitingList.querySelectorAll('.cs-waiting-item');
+        items.forEach(function (it) { it.remove(); });
+
+        if (waitingData.length === 0) {
+            if (waitingEmpty) waitingEmpty.style.display = '';
+            if (waitingCountEl) waitingCountEl.textContent = '0';
+            return;
+        }
+        if (waitingEmpty) waitingEmpty.style.display = 'none';
+        if (waitingCountEl) waitingCountEl.textContent = String(waitingData.length);
+
+        waitingData.forEach(function (item) {
+            var el = document.createElement('div');
+            el.className = 'cs-waiting-item';
+            el.setAttribute('data-id', item.id);
+
+            var numSpan = document.createElement('span');
+            numSpan.className = 'cs-waiting-num';
+            numSpan.textContent = item.persian_number || item.reception_number;
+
+            var deptSpan = document.createElement('span');
+            deptSpan.className = 'cs-waiting-dept';
+            deptSpan.textContent = item.department || '';
+
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'cs-waiting-time';
+            timeSpan.textContent = fmtTime(item.created_at);
+
+            var actionsDiv = document.createElement('div');
+            actionsDiv.className = 'cs-waiting-actions';
+
+            // Call button
+            var callBtnEl = document.createElement('button');
+            callBtnEl.className = 'cs-waiting-btn cs-waiting-btn--call';
+            callBtnEl.title = '\u0641\u0631\u0627\u062e\u0648\u0627\u0646';
+            callBtnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+            callBtnEl.addEventListener('click', function (e) {
+                e.stopPropagation();
+                callFromWaitingQueue(item.id);
+            });
+
+            // Remove button
+            var rmBtnEl = document.createElement('button');
+            rmBtnEl.className = 'cs-waiting-btn cs-waiting-btn--remove';
+            rmBtnEl.title = '\u062d\u0630\u0641';
+            rmBtnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+            rmBtnEl.addEventListener('click', function (e) {
+                e.stopPropagation();
+                removeFromWaitingQueue(item.id);
+            });
+
+            actionsDiv.appendChild(callBtnEl);
+            actionsDiv.appendChild(rmBtnEl);
+
+            el.appendChild(numSpan);
+            el.appendChild(deptSpan);
+            el.appendChild(timeSpan);
+            el.appendChild(actionsDiv);
+            waitingList.appendChild(el);
+        });
+    }
+
+    function loadWaitingQueue() {
+        fetch('/api/calls/waiting-queue')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (!res.success || !res.items) return;
+            waitingData = res.items;
+            renderWaitingQueue();
+        })
+        .catch(function () {});
+    }
+
+    function addToWaitingQueue() {
+        var num = waitingInput ? waitingInput.value.trim() : '';
+        if (!num) {
+            showToast('\u0644\u0637\u0641\u0627\u064b \u0634\u0645\u0627\u0631\u0647 \u0631\u0627 \u0648\u0627\u0631\u062f \u06a9\u0646\u06cc\u062f.', 'error');
+            if (waitingInput) waitingInput.focus();
+            return;
+        }
+        var dept = waitingDept ? waitingDept.value : '\u0646\u0645\u0648\u0646\u0647\u200c\u06af\u06cc\u0631\u06cc';
+        setLoading(waitingAddBtn, true);
+        fetch('/api/calls/waiting-queue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: num, department: dept })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            setLoading(waitingAddBtn, false);
+            if (res.success) {
+                // Reload the full queue to get proper data
+                loadWaitingQueue();
+                showToast(res.message || '\u0628\u0647 \u0635\u0641 \u0636\u0645\u0646\u0647 \u0634\u062f.', 'success');
+                if (waitingInput) { waitingInput.value = ''; waitingInput.focus(); }
+            } else {
+                showToast(res.detail || '\u062e\u0637\u0627', 'error');
+            }
+        })
+        .catch(function () {
+            setLoading(waitingAddBtn, false);
+            showToast('\u0636\u0645\u0646 \u0628\u0647 \u0635\u0641 \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+        });
+    }
+
+    function removeFromWaitingQueue(id) {
+        fetch('/api/calls/waiting-queue/' + id, { method: 'DELETE' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                waitingData = waitingData.filter(function (d) { return d.id !== id; });
+                renderWaitingQueue();
+                showToast(res.message || '\u0627\u0632 \u0635\u0641 \u062d\u0630\u0641 \u0634\u062f.', 'success');
+            } else {
+                showToast(res.detail || '\u062e\u0637\u0627', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('\u062d\u0630\u0641 \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+        });
+    }
+
+    function callFromWaitingQueue(id) {
+        fetch('/api/calls/waiting-queue/' + id + '/call', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                // Remove from local waiting data
+                waitingData = waitingData.filter(function (d) { return d.id !== id; });
+                renderWaitingQueue();
+                showToast(res.message || '\u0641\u0631\u0627\u062e\u0648\u0627\u0646 \u0627\u0631\u0633\u0627\u0644 \u0634\u062f.', 'success');
+            } else {
+                showToast(res.detail || '\u062e\u0637\u0627', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('\u0641\u0631\u0627\u062e\u0648\u0627\u0646 \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+        });
+    }
+
     /* ── Init ── */
     function init() {
         numberInput = document.getElementById('csNumberInput');
@@ -445,6 +599,14 @@
         recentList = document.getElementById('csRecentList');
         historyEmpty = document.getElementById('csHistoryEmpty');
         queueCountEl = document.getElementById('csQueueCount');
+
+        // Waiting queue elements
+        waitingList = document.getElementById('csWaitingList');
+        waitingEmpty = document.getElementById('csWaitingEmpty');
+        waitingCountEl = document.getElementById('csWaitingCount');
+        waitingInput = document.getElementById('csWaitingInput');
+        waitingDept = document.getElementById('csWaitingDept');
+        waitingAddBtn = document.getElementById('csWaitingAddBtn');
 
         // Collect queue slot elements
         var heroSlot = document.getElementById('csQueueHero');
@@ -459,14 +621,21 @@
         if (testDisplayBtn) testDisplayBtn.addEventListener('click', testDisplay);
         if (testVoiceBtn) testVoiceBtn.addEventListener('click', testVoice);
         if (resetBtn) resetBtn.addEventListener('click', resetDisplay);
+        if (waitingAddBtn) waitingAddBtn.addEventListener('click', addToWaitingQueue);
 
         if (numberInput) {
             numberInput.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); makeCall(); }
             });
         }
+        if (waitingInput) {
+            waitingInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); addToWaitingQueue(); }
+            });
+        }
 
         loadDisplayQueue();
+        loadWaitingQueue();
         loadRecent();
         loadStatus();
         loadAudioStatus();
