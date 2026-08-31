@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <!-- Top bar: Logo + Title + Status -->
+    <!-- Top bar: Logo + Title -->
     <header class="cd-topbar">
         <div class="cd-topbar-right">
             <div class="cd-lab-logo" id="labLogo">
@@ -58,12 +58,6 @@
             <div class="cd-topbar-text">
                 <h1 class="cd-title">سامانه فراخوان نمونه‌گیری</h1>
                 <div class="cd-subtitle">آزمایشگاه دکتر امینی</div>
-            </div>
-        </div>
-        <div class="cd-topbar-left">
-            <div class="cd-conn-status" id="displayStatus">
-                <span class="cd-conn-dot cd-conn-dot--connecting" id="statusDot"></span>
-                <span class="cd-conn-label" id="statusText">در حال اتصال...</span>
             </div>
         </div>
     </header>
@@ -105,19 +99,36 @@
         </div>
     </main>
 
-    <!-- Bottom bar: branding -->
+    <!-- Connection status card (bottom-left) -->
+    <div class="cd-status-card" id="statusCard">
+        <div class="cd-status-row cd-status-row--conn" id="displayStatus">
+            <div class="cd-status-icon-wrap cd-status-icon-wrap--connecting" id="connIconWrap">
+                <svg class="cd-status-svg cd-status-svg--connecting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="cd-status-svg cd-status-svg--connected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+                <svg class="cd-status-svg cd-status-svg--disconnected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="2" y1="2" x2="22" y2="22"/>
+                    <path d="M6.7 6.7 2 12s3 7 10 7a20.5 20.5 0 0 0 5.3-1.3"/>
+                    <path d="M17.2 17.2 22 12s-3-7-10-7a19.5 19.5 0 0 0-4 1.3"/>
+                </svg>
+            </div>
+            <span class="cd-status-text" id="statusText">در حال اتصال...</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
     <footer class="cd-footer">
         <span class="cd-footer-brand">سامانه فراخوان نمونه‌گیری</span>
         <span class="cd-footer-sep">|</span>
         <span class="cd-footer-company">محصول شرکت هنر افزار ایرانیان</span>
         <span class="cd-footer-tm">&#x00AE;</span>
     </footer>
-
-    <!-- Audio status -->
-    <div class="cd-audio-pill cd-audio-pill--inactive" id="audioStatus">
-        <span class="cd-audio-pill-dot"></span>
-        برای فعال‌سازی صدا کلیک کنید
-    </div>
 
     <!-- Audio element -->
     <audio id="callAudio" preload="auto"></audio>

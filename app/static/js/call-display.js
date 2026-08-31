@@ -8,15 +8,16 @@
     /* ── DOM ── */
     var activateOverlay = document.getElementById('activateOverlay');
     var activateBtn = document.getElementById('activateBtn');
-    var statusDot = document.getElementById('statusDot');
     var statusText = document.getElementById('statusText');
+    var connIconWrap = document.getElementById('connIconWrap');
+    var connRow = document.querySelector('.cd-status-row--conn');
     var heroCall = document.getElementById('heroCall');
     var heroWaiting = document.getElementById('heroWaiting');
     var heroNumber = document.getElementById('heroNumber');
     var heroDept = document.getElementById('heroDept');
     var heroMessage = document.getElementById('heroMessage');
     var audioEl = document.getElementById('callAudio');
-    var audioStatus = document.getElementById('audioStatus');
+
     var previousGrid = document.getElementById('previousGrid');
     var cdPrevious = document.getElementById('cdPrevious');
 
@@ -55,33 +56,34 @@
 
     /* ── Status ── */
     function setStatus(state) {
-        if (!statusDot) return;
-        var map = {
-            connected: 'cd-conn-dot--connected',
-            disconnected: 'cd-conn-dot--disconnected',
-            connecting: 'cd-conn-dot--connecting'
+        if (!statusText) return;
+        // Update icon wrapper class
+        if (connIconWrap) {
+            connIconWrap.className = 'cd-status-icon-wrap cd-status-icon-wrap--' + state;
+        }
+        // Update row class
+        if (connRow) {
+            connRow.className = 'cd-status-row cd-status-row--conn cd-status-row--' + state;
+        }
+        // Show/hide the correct icon
+        var svgs = {
+            connecting: document.querySelector('.cd-status-svg--connecting'),
+            connected: document.querySelector('.cd-status-svg--connected'),
+            disconnected: document.querySelector('.cd-status-svg--disconnected')
         };
-        statusDot.className = 'cd-conn-dot ' + (map[state] || map.connecting);
+        Object.keys(svgs).forEach(function(k) {
+            if (svgs[k]) svgs[k].style.display = (k === state) ? '' : 'none';
+        });
         var labels = {
             connected: '\u0645\u062a\u0635\u0644',
-            disconnected: '\u0627\u062a\u0635\u0627\u0644 \u0642\u0637\u0639 \u0627\u0633\u062a',
+            disconnected: '\u0642\u0637\u0639',
             connecting: '\u062f\u0631 \u062d\u0627\u0644 \u0627\u062a\u0635\u0627\u0644...'
         };
-        if (statusText) statusText.textContent = labels[state] || state;
+        statusText.textContent = labels[state] || state;
     }
 
-    /* ── Audio status ── */
-    function setAudioStatus(state) {
-        if (!audioStatus) return;
-        var cls = 'cd-audio-pill cd-audio-pill--';
-        var txt = '';
-        if (state === 'active')  { txt = '\u0635\u062f\u0627 \u0641\u0639\u0627\u0644 \u0627\u0633\u062a'; cls += 'active'; }
-        else if (state === 'inactive') { txt = '\u0628\u0631\u0627\u06cc \u0641\u0639\u0627\u0644\u0633\u0627\u0632\u06cc \u0635\u062f\u0627 \u06a9\u0644\u06cc\u06a9 \u06a9\u0646\u06cc\u062f'; cls += 'inactive'; }
-        else if (state === 'loading') { txt = '\u062f\u0631 \u062d\u0627\u0644 \u067e\u062e\u0634...'; cls += 'loading'; }
-        else if (state === 'error')   { txt = '\u062e\u0637\u0627'; cls += 'error'; }
-        audioStatus.textContent = txt;
-        audioStatus.className = cls;
-    }
+    /* ── Audio status (no-op — UI removed) ── */
+    function setAudioStatus() {}
 
     /* ── Audio activation ── */
     function initAudio() {
@@ -274,10 +276,6 @@
                 document.exitFullscreen().catch(function () {});
             }
         });
-
-        document.addEventListener('click', function () {
-            if (!audioReady) initAudio();
-        }, { once: true });
     }
 
     if (document.readyState === 'loading') {
