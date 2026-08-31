@@ -76,7 +76,7 @@
 
             if (d) {
                 count++;
-                if (numEl) numEl.textContent = d.persian_number || d.number || '';
+                if (numEl) numEl.textContent = d.persian_number || d.reception_number || '';
                 if (deptEl) deptEl.textContent = d.department || '';
                 slot.classList.add('is-active');
                 slot.classList.remove('is-empty');
@@ -90,7 +90,7 @@
                         return function (e) {
                             e.stopPropagation();
                             var item = queueData[idx];
-                            if (item) removeFromDisplay(item.number, idx);
+                            if (item) removeFromDisplay(item.reception_number || item.number, idx);
                         };
                     })(i));
                     slot.appendChild(rmBtn);
@@ -109,12 +109,14 @@
 
     /* ── Add call to queue ── */
     function addToQueue(data) {
-        if (!data || !data.number) return;
-        var num = String(data.number).replace(/[^\d]/g, '');
+        var rawNum = data.reception_number || data.number;
+        if (!data || !rawNum) return;
+        var num = String(rawNum).replace(/[^\d]/g, '');
         // Check if already in queue — if so, skip
         for (var i = 0; i < QUEUE_MAX; i++) {
-            if (queueData[i] && String(queueData[i].number).replace(/[^\d]/g, '') === num) {
-                return;
+            if (queueData[i]) {
+                var existing = queueData[i].reception_number || queueData[i].number;
+                if (String(existing).replace(/[^\d]/g, '') === num) return;
             }
         }
         // Shift queue
@@ -167,7 +169,7 @@
         var item = document.createElement('div');
         item.className = 'cs-history-item';
         item.innerHTML =
-            '<span class="cs-history-num">' + escHtml(data.persian_number || data.number) + '</span>' +
+            '<span class="cs-history-num">' + escHtml(data.persian_number || data.reception_number) + '</span>' +
             '<span class="cs-history-dept">' + escHtml(data.department || '') + '</span>' +
             '<span class="cs-history-time">' + fmtTime(data.timestamp) + '</span>';
         recentList.insertBefore(item, recentList.firstChild);
