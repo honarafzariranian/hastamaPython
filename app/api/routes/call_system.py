@@ -337,6 +337,68 @@ async def test_voice(request: Request):
     })
 
 
+@router.post("/calls/test-audio")
+async def test_audio(request: Request, number: int = 1):
+    """Send a test call with a specific number to test local MP3 audio playback."""
+    _actor(request, admin=True)
+
+    if number < 1 or number > 2000:
+        raise HTTPException(status_code=422, detail="شماره باید بین ۱ تا ۲۰۰۰ باشد.")
+
+    # Verify the audio file exists on disk
+    audio_dir = Path(__file__).resolve().parents[3] / "app" / "static" / "audio" / "sample_call" / "fa-IR-DilaraNeural"
+    audio_file = audio_dir / f"{number:04d}.mp3"
+    audio_exists = audio_file.exists() and audio_file.stat().st_size > 100
+
+    department = "نمونه‌گیری"
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+    event = {
+        "type": "reception_call",
+        "data": {
+            "number": str(number),
+            "persian_number": to_persian_numbers(str(number)),
+            "department": department,
+            "message": "تست صدا — فراخوان شماره " + to_persian_numbers(str(number)),
+            "voice": "شماره " + to_persian_numbers(str(number)) + "، لطفاً به بخش " + department + " مراجعه کنید.",
+            "timestamp": now,
+            "is_test": True,
+            "audio_available": audio_exists,
+        },
+    }
+    sent = await display_manager.broadcast(event)
+    return JSONResponse({
+        "success": True,
+        "message": "تست صدا ارسال شد." + ("" if audio_exists else " (فایل صوتی موجود نیست)"),
+        "display_count": sent,
+        "audio_available": audio_exists,
+    })
+
+
+@router.get("/calls/audio-status")
+async def audio_status():
+    """Check how many audio files exist in the audio directory."""
+    audio_dir = Path(__file__).resolve().parents[3] / "app" / "static" / "audio" / "sample_call" / "fa-IR-DilaraNeural"
+    if not audio_dir.exists():
+        return JSONResponse({
+            "success": True,
+            "total_files": 0,
+            "total_expected": 2000,
+            "directory": str(audio_dir),
+            "exists": False,
+        })
+
+    count = sum(1 for f in audio_dir.iterdir()
+                if f.suffix == ".mp3" and f.stat().st_size > 100)
+    return JSONResponse({
+        "success": True,
+        "total_files": count,
+        "total_expected": 2000,
+        "directory": str(audio_dir),
+        "exists": True,
+    })
+
+
 @router.get("/calls/recent")
 async def recent_calls(request: Request, limit: int = 20):
     """Return the most recent non-test calls."""

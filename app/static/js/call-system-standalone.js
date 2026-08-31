@@ -182,18 +182,47 @@
         });
     }
 
-    /* ── API: Test voice ── */
+    /* ── API: Test voice (local MP3) ── */
     function testVoice() {
         setLoading(testVoiceBtn, true);
-        fetch('/api/calls/test-voice', { method: 'POST' })
+        // Send test with number 1 to play local 0001.mp3
+        fetch('/api/calls/test-audio?number=1', { method: 'POST' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             setLoading(testVoiceBtn, false);
-            showToast(res.message || 'تست صدا ارسال شد.', 'success');
+            var msg = res.message || 'Test audio sent.';
+            if (res.audio_available === false) {
+                msg += ' Audio file not available.';
+            }
+            showToast(msg, res.audio_available === false ? 'error' : 'success');
         })
         .catch(function () {
             setLoading(testVoiceBtn, false);
-            showToast('تست صدا انجام نشد.', 'error');
+            showToast('Test audio failed.', 'error');
+        });
+    }
+
+    /* ── Load audio file status ── */
+    var audioStatusEl = null;
+    function loadAudioStatus() {
+        audioStatusEl = document.getElementById('csAudioStatus');
+        fetch('/api/calls/audio-status')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (!audioStatusEl) return;
+            if (res.exists) {
+                audioStatusEl.textContent = 'Audio files: ' + res.total_files + ' / ' + res.total_expected;
+                audioStatusEl.className = 'cs-audio-status cs-audio-status--ok';
+            } else {
+                audioStatusEl.textContent = 'No audio files found';
+                audioStatusEl.className = 'cs-audio-status cs-audio-status--missing';
+            }
+        })
+        .catch(function () {
+            if (audioStatusEl) {
+                audioStatusEl.textContent = 'Error loading audio status';
+                audioStatusEl.className = 'cs-audio-status cs-audio-status--error';
+            }
         });
     }
 
@@ -302,6 +331,7 @@
 
         loadRecent();
         loadStatus();
+        loadAudioStatus();
         connectWS();
     }
 

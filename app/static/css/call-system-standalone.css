@@ -476,3 +476,32 @@ body.dark-mode .cs-current-empty,
 body.dark-mode .cs-recent-empty {
     color: #64748b;
 }
+
+/* ── Audio status indicator ── */
+.cs-audio-status {
+    margin-top: 12px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: .8rem;
+    font-weight: 700;
+    text-align: center;
+    transition: all .3s ease;
+}
+
+.cs-audio-status--ok {
+    background: rgba(34, 197, 94, .08);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, .2);
+}
+
+.cs-audio-status--missing {
+    background: rgba(245, 158, 11, .08);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, .2);
+}
+
+.cs-audio-status--error {
+    background: rgba(239, 68, 68, .08);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, .2);
+}
