@@ -196,6 +196,39 @@
         if (heroMessage) heroMessage.textContent = heroData.message || '';
     }
 
+    /* ── Reset all displays ── */
+    function resetDisplay() {
+        heroData = null;
+        for (var i = 0; i < MAX_PREV; i++) prevData[i] = null;
+        renderHero();
+        renderPrev();
+    }
+
+    /* ── Remove a call from display ── */
+    function removeCall(number) {
+        var num = String(number).replace(/[^\d]/g, '');
+        // Check hero
+        if (heroData && String(heroData.number).replace(/[^\d]/g, '') === num) {
+            heroData = null;
+            renderHero();
+        }
+        // Check previous slots
+        for (var i = 0; i < MAX_PREV; i++) {
+            if (prevData[i] && String(prevData[i].number).replace(/[^\d]/g, '') === num) {
+                prevData[i] = null;
+            }
+        }
+        // Compact: fill gaps
+        var compacted = [];
+        for (var j = 0; j < MAX_PREV; j++) {
+            if (prevData[j]) compacted.push(prevData[j]);
+        }
+        for (var k = 0; k < MAX_PREV; k++) {
+            prevData[k] = k < compacted.length ? compacted[k] : null;
+        }
+        renderPrev();
+    }
+
     /* ── Render previous slots ── */
     function renderPrev() {
         for (var i = 0; i < MAX_PREV; i++) {
@@ -239,6 +272,8 @@
                 var msg = JSON.parse(evt.data);
                 if (msg.type === 'pong') return;
                 if (msg.type === 'reception_call' && msg.data) displayCall(msg.data);
+                if (msg.type === 'remove_call' && msg.data) removeCall(msg.data.number);
+                if (msg.type === 'reset_display') resetDisplay();
             } catch (e) { /* ignore */ }
         };
 
@@ -259,6 +294,23 @@
     }
 
     /* ── Init ── */
+    /* --- Load display queue from server on init --- */
+    function loadDisplayQueue() {
+        fetch('/api/calls/display-queue')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (!res.success || !res.queue || res.queue.length === 0) return;
+            // Queue is ordered by position: 0=hero, 1-4=previous
+            heroData = res.queue[0] || null;
+            for (var i = 1; i < QUEUE_MAX; i++) {
+                prevData[i - 1] = res.queue[i] || null;
+            }
+            renderHero();
+            renderPrev();
+        })
+        .catch(function () {});
+    }
+
     function init() {
         if (activateOverlay) {
             activateOverlay.hidden = false;
@@ -267,6 +319,7 @@
             initAudio();
         }
 
+        loadDisplayQueue();
         connect();
 
         document.addEventListener('dblclick', function () {

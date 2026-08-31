@@ -39,12 +39,15 @@ def _ensure_schema(conn) -> None:
     with _schema_lock:
         if _schema_ready:
             return
-        migration = Path(__file__).resolve().parents[3] / "database" / "reception_calls.sql"
+        db_dir = Path(__file__).resolve().parents[3] / "database"
         cursor = conn.cursor()
-        cursor.execute(migration.read_text(encoding="utf-8"))
+        for sql_file in ["reception_calls.sql", "display_queue.sql"]:
+            sql_path = db_dir / sql_file
+            if sql_path.exists():
+                cursor.execute(sql_path.read_text(encoding="utf-8"))
         conn.commit()
         _schema_ready = True
-        logger.info("reception_calls schema ensured")
+        logger.info("call system schemas ensured")
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +99,76 @@ class DisplayManager:
 
 
 display_manager = DisplayManager()
+
+# ---------------------------------------------------------------------------
+# Display Queue helpers (persistent state across refreshes)
+# ---------------------------------------------------------------------------
+MAX_DISPLAY_SLOTS = 5
+
+
+def _queue_add(conn, number: str, department: str, username: str) -> None:
+    """Add a number to the display queue, shifting older entries."""
+    cursor = conn.cursor()
+    # Shift existing entries: position 3->4, 2->3, 1->2, 0->1
+    for pos in range(MAX_DISPLAY_SLOTS - 1, 0, -1):
+        cursor.execute(
+            "UPDATE dbo.display_queue SET slot_position = ? WHERE slot_position = ?",
+            (pos, pos - 1),
+        )
+    # Delete the oldest if queue is full
+    cursor.execute(
+        "DELETE FROM dbo.display_queue WHERE slot_position = ?",
+        (MAX_DISPLAY_SLOTS - 1,),
+    )
+    # Insert new call at position 0 (hero)
+    cursor.execute(
+        "INSERT INTO dbo.display_queue (reception_number, department, called_by, slot_position) VALUES (?, ?, ?, 0)",
+        (number, department, username),
+    )
+    conn.commit()
+
+
+def _queue_remove(conn, number: str) -> None:
+    """Remove a specific number from the display queue."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM dbo.display_queue WHERE reception_number = ?",
+        (number,),
+    )
+    # Compact: re-number positions to fill gaps
+    rows = cursor.execute(
+        "SELECT id FROM dbo.display_queue ORDER BY slot_position ASC"
+    ).fetchall()
+    for idx, row in enumerate(rows):
+        cursor.execute(
+            "UPDATE dbo.display_queue SET slot_position = ? WHERE id = ?",
+            (idx, row[0]),
+        )
+    conn.commit()
+
+
+def _queue_clear(conn) -> None:
+    """Clear all entries from the display queue."""
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM dbo.display_queue")
+    conn.commit()
+
+
+def _queue_get(conn) -> list[dict]:
+    """Return the current display queue ordered by position."""
+    cursor = conn.cursor()
+    rows = cursor.execute(
+        "SELECT reception_number, department, called_by, slot_position, created_at FROM dbo.display_queue ORDER BY slot_position ASC"
+    ).fetchall()
+    columns = [d[0] for d in cursor.description]
+    result = []
+    for row in rows:
+        d = dict(zip(columns, row))
+        d["persian_number"] = to_persian_numbers(str(d["reception_number"]))
+        d["called_at"] = _iso(d.pop("created_at", None))
+        result.append(d)
+    return result
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -181,7 +254,7 @@ async def create_call(request: Request, payload: CallInput):
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
-    # Store in database
+    # Store in database + display queue
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -191,7 +264,9 @@ async def create_call(request: Request, payload: CallInput):
                VALUES (?, ?, ?, 0, SYSUTCDATETIME())""",
             (number, department, username),
         )
-        conn.commit()
+        # Deduplicate: remove this number from queue before re-adding at position 0
+        _queue_remove(conn, number)
+        _queue_add(conn, number, department, username)
     except Exception:
         logger.exception("failed to store reception call")
         raise HTTPException(status_code=500, detail="فراخوان انجام نشد. لطفاً دوباره تلاش کنید.")
@@ -248,7 +323,7 @@ async def repeat_last_call(request: Request):
     department = str(row[1]).strip()
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
-    # Store repeat
+    # Store repeat + update display queue
     conn2 = _get_connection()
     try:
         _ensure_schema(conn2)
@@ -258,7 +333,8 @@ async def repeat_last_call(request: Request):
                VALUES (?, ?, ?, 0, SYSUTCDATETIME())""",
             (number, department, username),
         )
-        conn2.commit()
+        _queue_remove(conn2, number)
+        _queue_add(conn2, number, department, username)
     finally:
         conn2.close()
 
@@ -394,8 +470,77 @@ async def audio_status():
         "success": True,
         "total_files": count,
         "total_expected": 2000,
-        "directory": str(audio_dir),
-        "exists": True,
+        "directory": str(audio_dir),        "exists": True,
+    })
+
+
+@router.get("/calls/display-queue")
+async def get_display_queue():
+    """Return the current display queue (what's on TV right now)."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        queue = _queue_get(conn)
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "queue": queue})
+
+
+
+
+
+@router.post("/calls/reset-display")
+async def reset_display(request: Request):
+    """Broadcast a reset event to clear all numbers from TV displays."""
+    _actor(request, admin=True)
+
+    # Clear persistent display queue
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        _queue_clear(conn)
+    finally:
+        conn.close()
+
+    event = {"type": "reset_display", "data": {}}
+    sent = await display_manager.broadcast(event)
+    return JSONResponse({
+        "success": True,
+        "message": "تمام شماره‌ها از نمایشگر پاک شد.",
+        "display_count": sent,
+    })
+
+
+@router.post("/calls/remove")
+async def remove_call(request: Request):
+    """Broadcast a remove event to TV displays to remove a specific number."""
+    _actor(request, admin=True)
+
+    body = await request.json()
+    number = str(body.get("number", "")).strip()
+    if not number:
+        raise HTTPException(status_code=422, detail="شماره مورد نظر را وارد کنید.")
+
+    # Remove from persistent display queue
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        _queue_remove(conn, number)
+    finally:
+        conn.close()
+
+    event = {
+        "type": "remove_call",
+        "data": {
+            "number": number,
+            "persian_number": to_persian_numbers(number),
+        },
+    }
+    sent = await display_manager.broadcast(event)
+    return JSONResponse({
+        "success": True,
+        "message": "شماره " + to_persian_numbers(number) + " از نمایشگر حذف شد.",
+        "display_count": sent,
     })
 
 
