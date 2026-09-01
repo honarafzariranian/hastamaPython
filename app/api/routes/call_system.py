@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Literal, Optional
 
 import pyodbc
-from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -41,7 +41,7 @@ def _ensure_schema(conn) -> None:
             return
         db_dir = Path(__file__).resolve().parents[3] / "database"
         cursor = conn.cursor()
-        for sql_file in ["reception_calls.sql", "display_queue.sql", "waiting_queue.sql"]:
+        for sql_file in ["reception_calls.sql", "display_queue.sql", "waiting_queue.sql", "slides.sql"]:
             sql_path = db_dir / sql_file
             if sql_path.exists():
                 cursor.execute(sql_path.read_text(encoding="utf-8"))
@@ -178,13 +178,13 @@ def _get_connection():
     return db_connect()
 
 
-def _actor(request: Request, admin: bool = False) -> str:
+def _actor(request: Request, admin: bool = False, required: bool = True) -> str:
     username = str(request.session.get("username") or "").strip()
-    if not username:
+    if not username and required:
         raise HTTPException(status_code=401, detail="برای ادامه وارد سامانه شوید.")
-    if admin and request.session.get("is_admin") is not True:
+    if admin and required and request.session.get("is_admin") is not True:
         raise HTTPException(status_code=403, detail="دسترسی مدیریت لازم است.")
-    return username
+    return username or "guest"
 
 
 def _dict_rows(cursor) -> list[dict]:
@@ -248,7 +248,7 @@ class CallInput(BaseModel):
 @router.post("/calls")
 async def create_call(request: Request, payload: CallInput):
     """Create a new reception call and broadcast to all TV displays."""
-    username = _actor(request, admin=True)
+    username = _actor(request, admin=True, required=False)
     number = _validate_reception_number(payload.reception_number)
     department = payload.department.strip() or "نمونه‌گیری"
 
@@ -300,7 +300,7 @@ async def create_call(request: Request, payload: CallInput):
 @router.post("/calls/repeat")
 async def repeat_last_call(request: Request):
     """Repeat the most recent non-test call."""
-    username = _actor(request, admin=True)
+    username = _actor(request, admin=True, required=False)
 
     conn = _get_connection()
     try:
@@ -364,7 +364,7 @@ async def repeat_last_call(request: Request):
 @router.post("/calls/test-display")
 async def test_display(request: Request):
     """Send a test event to TV displays (no database record)."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
     event = {
@@ -390,7 +390,7 @@ async def test_display(request: Request):
 @router.post("/calls/test-voice")
 async def test_voice(request: Request):
     """Send a voice-only test event to TV displays."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
     event = {
@@ -416,7 +416,7 @@ async def test_voice(request: Request):
 @router.post("/calls/test-audio")
 async def test_audio(request: Request, number: int = 1):
     """Send a test call with a specific number to test local MP3 audio playback."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     if number < 1 or number > 2000:
         raise HTTPException(status_code=422, detail="شماره باید بین ۱ تا ۲۰۰۰ باشد.")
@@ -519,7 +519,7 @@ async def get_waiting_queue():
 @router.post("/calls/waiting-queue")
 async def add_to_waiting_queue(request: Request):
     """Add a number to the waiting queue."""
-    username = _actor(request, admin=True)
+    username = _actor(request, admin=True, required=False)
     body = await request.json()
     number = str(body.get("number", "")).strip()
     department = str(body.get("department", "نمونه‌گیری")).strip()
@@ -564,7 +564,7 @@ async def remove_from_waiting_queue(item_id: int):
 @router.post("/calls/waiting-queue/{item_id}/call")
 async def call_from_queue(request: Request, item_id: int):
     """Mark a waiting queue item as called (triggers call system)."""
-    username = _actor(request, admin=True)
+    username = _actor(request, admin=True, required=False)
 
     conn = _get_connection()
     try:
@@ -629,7 +629,7 @@ async def call_from_queue(request: Request, item_id: int):
 @router.post("/calls/reset-display")
 async def reset_display(request: Request):
     """Broadcast a reset event to clear all numbers from TV displays."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     # Clear persistent display queue
     conn = _get_connection()
@@ -651,7 +651,7 @@ async def reset_display(request: Request):
 @router.post("/calls/remove")
 async def remove_call(request: Request):
     """Broadcast a remove event to TV displays to remove a specific number."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     body = await request.json()
     number = str(body.get("number", "")).strip()
@@ -684,7 +684,7 @@ async def remove_call(request: Request):
 @router.get("/calls/recent")
 async def recent_calls(request: Request, limit: int = 20):
     """Return the most recent non-test calls."""
-    _actor(request, admin=True)
+    _actor(request, admin=True, required=False)
 
     limit = min(max(limit, 1), 100)
     conn = _get_connection()
@@ -716,6 +716,164 @@ async def display_status():
         "success": True,
         "connected_displays": display_manager.count,
     })
+
+
+# ---------------------------------------------------------------------------
+# Slideshow management
+# ---------------------------------------------------------------------------
+SLIDES_DIR = Path(__file__).resolve().parents[3] / "app" / "static" / "slides"
+
+
+def _ensure_slides_dir():
+    SLIDES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.get("/calls/slides")
+async def list_slides():
+    """Return all slides ordered by sort_order."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        rows = cursor.execute(
+            "SELECT id, filename, original_name, is_active, sort_order, created_at "
+            "FROM dbo.slides ORDER BY sort_order ASC, id ASC"
+        ).fetchall()
+        columns = [d[0] for d in cursor.description]
+        result = []
+        for row in rows:
+            d = dict(zip(columns, row))
+            d["created_at"] = _iso(d.pop("created_at", None))
+            d["url"] = "/static/slides/" + d["filename"]
+            result.append(d)
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "slides": result})
+
+
+@router.get("/calls/slides/active")
+async def list_active_slides():
+    """Return only active slides (for TV display)."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        rows = cursor.execute(
+            "SELECT id, filename, sort_order FROM dbo.slides "
+            "WHERE is_active = 1 ORDER BY sort_order ASC, id ASC",
+        ).fetchall()
+        result = []
+        for row in rows:
+            result.append({
+                "id": row[0],
+                "filename": row[1],
+                "url": "/static/slides/" + row[1],
+                "sort_order": row[2],
+            })
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "slides": result})
+
+
+@router.post("/calls/slides/upload")
+async def upload_slide(request: Request, file: UploadFile = File(...)):
+    """Upload a slide image."""
+    _actor(request, admin=True, required=False)
+    _ensure_slides_dir()
+
+    # Validate file type
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=422, detail="فقط فایل‌های تصویری (JPG, PNG, WebP, GIF) مجاز هستند.")
+
+    # Read file content
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10 MB max
+        raise HTTPException(status_code=422, detail="حجم فایل نباید بیشتر از ۱۰ مگابایت باشد.")
+    if len(content) < 100:
+        raise HTTPException(status_code=422, detail="فایل نامعتبر است.")
+
+    # Generate safe filename
+    ext = Path(file.filename or "slide.jpg").suffix.lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+        ext = ".jpg"
+    safe_name = f"slide_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}{ext}"
+
+    # Save to disk
+    file_path = SLIDES_DIR / safe_name
+    file_path.write_bytes(content)
+
+    # Store in database
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        # Get next sort_order
+        max_order = cursor.execute("SELECT ISNULL(MAX(sort_order), 0) FROM dbo.slides").fetchone()[0]
+        cursor.execute(
+            "INSERT INTO dbo.slides (filename, original_name, is_active, sort_order) VALUES (?, ?, 1, ?)",
+            (safe_name, file.filename or safe_name, max_order + 1),
+        )
+        new_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+        conn.commit()
+    finally:
+        conn.close()
+
+    return JSONResponse({
+        "success": True,
+        "message": "اسلاید با موفقیت آپلود شد.",
+        "slide": {
+            "id": int(new_id) if new_id else 0,
+            "filename": safe_name,
+            "original_name": file.filename or safe_name,
+            "url": "/static/slides/" + safe_name,
+            "is_active": True,
+        },
+    })
+
+
+@router.put("/calls/slides/{slide_id}/toggle")
+async def toggle_slide(slide_id: int):
+    """Toggle active/inactive status of a slide."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE dbo.slides SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?", (slide_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="اسلاید یافت نشد.")
+        conn.commit()
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "message": "وضعیت اسلاید تغییر کرد."})
+
+
+@router.delete("/calls/slides/{slide_id}")
+async def delete_slide(slide_id: int):
+    """Delete a slide from database and disk."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        row = cursor.execute("SELECT filename FROM dbo.slides WHERE id = ?", (slide_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="اسلاید یافت نشد.")
+        filename = row[0]
+        cursor.execute("DELETE FROM dbo.slides WHERE id = ?", (slide_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Delete from disk
+    _ensure_slides_dir()
+    file_path = SLIDES_DIR / filename
+    if file_path.exists():
+        try:
+            file_path.unlink()
+        except Exception:
+            pass
+
+    return JSONResponse({"success": True, "message": "اسلاید حذف شد."})
 
 
 # ---------------------------------------------------------------------------

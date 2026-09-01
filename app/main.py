@@ -150,11 +150,7 @@ async def call_display(request: Request):
 
 @app.get("/call-management", response_class=HTMLResponse)
 async def call_management(request: Request):
-    """Standalone call management page — requires admin authentication."""
-    username = get_user_from_session(request)
-    is_admin = get_is_admin_from_session(request)
-    if not username or not is_admin:
-        return RedirectResponse(url="/login", status_code=303)
+    """Standalone call management page — no authentication required."""
     return templates.TemplateResponse(request, "call-management.html", {"request": request})
 
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری

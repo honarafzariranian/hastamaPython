@@ -452,11 +452,11 @@
 
         if (waitingData.length === 0) {
             if (waitingEmpty) waitingEmpty.style.display = '';
-            if (waitingCountEl) waitingCountEl.textContent = '0';
+            if (waitingCountEl) waitingCountEl.textContent = '۰';
             return;
         }
         if (waitingEmpty) waitingEmpty.style.display = 'none';
-        if (waitingCountEl) waitingCountEl.textContent = String(waitingData.length);
+        if (waitingCountEl) waitingCountEl.textContent = toPersianNum(waitingData.length);
 
         waitingData.forEach(function (item) {
             var el = document.createElement('div');
@@ -587,6 +587,174 @@
         });
     }
 
+    /* --- Persian number helper --- */
+    function toPersianNum(n) {
+        var persianDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+        return String(n).replace(/[0-9]/g, function(d) { return persianDigits[parseInt(d)]; });
+    }
+
+    /* ====================================================================
+       SLIDESHOW MANAGEMENT
+       ==================================================================== */
+    var slidesList = null;
+    var slidesEmpty = null;
+    var slidesCountEl = null;
+    var slideUploadBtn = null;
+    var slideFileInput = null;
+    var slidesData = [];
+
+    function renderSlides() {
+        if (!slidesList) return;
+        var items = slidesList.querySelectorAll('.cs-slide-item');
+        items.forEach(function (it) { it.remove(); });
+
+        if (slidesData.length === 0) {
+            if (slidesEmpty) slidesEmpty.style.display = '';
+            if (slidesCountEl) slidesCountEl.textContent = '۰';
+            return;
+        }
+        if (slidesEmpty) slidesEmpty.style.display = 'none';
+        if (slidesCountEl) slidesCountEl.textContent = toPersianNum(slidesData.length);
+
+        slidesData.forEach(function (slide) {
+            var el = document.createElement('div');
+            el.className = 'cs-slide-item' + (slide.is_active ? '' : ' is-inactive');
+            el.setAttribute('data-id', slide.id);
+
+            var thumb = document.createElement('img');
+            thumb.className = 'cs-slide-thumb';
+            thumb.src = slide.url;
+            thumb.alt = slide.original_name;
+            thumb.loading = 'lazy';
+
+            var info = document.createElement('div');
+            info.className = 'cs-slide-info';
+
+            var name = document.createElement('div');
+            name.className = 'cs-slide-name';
+            name.textContent = slide.original_name;
+
+            var status = document.createElement('div');
+            status.className = 'cs-slide-status ' + (slide.is_active ? 'cs-slide-status--active' : 'cs-slide-status--inactive');
+            status.textContent = slide.is_active ? 'فعال' : 'غیرفعال';
+
+            info.appendChild(name);
+            info.appendChild(status);
+
+            var actions = document.createElement('div');
+            actions.className = 'cs-slide-actions';
+
+            var toggleBtn = document.createElement('button');
+            toggleBtn.className = 'cs-slide-btn cs-slide-btn--toggle';
+            toggleBtn.title = slide.is_active ? 'غیرفعال کردن' : 'فعال کردن';
+            toggleBtn.innerHTML = slide.is_active
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+            toggleBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleSlide(slide.id);
+            });
+
+            var deleteBtn = document.createElement('button');
+            deleteBtn.className = 'cs-slide-btn cs-slide-btn--delete';
+            deleteBtn.title = 'حذف اسلاید';
+            deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+            deleteBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                deleteSlide(slide.id, slide.original_name);
+            });
+
+            actions.appendChild(toggleBtn);
+            actions.appendChild(deleteBtn);
+
+            el.appendChild(thumb);
+            el.appendChild(info);
+            el.appendChild(actions);
+            slidesList.appendChild(el);
+        });
+    }
+
+    function loadSlides() {
+        fetch('/api/calls/slides')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (!res.success || !res.slides) return;
+            slidesData = res.slides;
+            renderSlides();
+        })
+        .catch(function () {});
+    }
+
+    function uploadSlide() {
+        var files = slideFileInput ? slideFileInput.files : null;
+        if (!files || files.length === 0) {
+            showToast('\u0644\u0637\u0641\u0627\u064b \u0641\u0627\u06cc\u0644 \u0627\u0637\u0644\u0627\u0639\u06cc \u0627\u0646\u062a\u062e\u0627\u0628 \u06a9\u0646\u06cc\u062f.', 'error');
+            return;
+        }
+        var file = files[0];
+        var formData = new FormData();
+        formData.append('file', file);
+
+        if (slideUploadBtn) slideUploadBtn.disabled = true;
+        fetch('/api/calls/slides/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (slideUploadBtn) slideUploadBtn.disabled = false;
+            if (res.success) {
+                showToast(res.message || '\u0627\u0633\u0644\u0627\u06cc\u062f \u0622\u067e\u0644\u0648\u062f \u0634\u062f.', 'success');
+                if (slideFileInput) slideFileInput.value = '';
+                loadSlides();
+            } else {
+                showToast(res.detail || '\u062e\u0637\u0627', 'error');
+            }
+        })
+        .catch(function () {
+            if (slideUploadBtn) slideUploadBtn.disabled = false;
+            showToast('\u0622\u067e\u0644\u0648\u062f \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+        });
+    }
+
+    function toggleSlide(id) {
+        fetch('/api/calls/slides/' + id + '/toggle', { method: 'PUT' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                loadSlides();
+                showToast(res.message || '\u062a\u063a\u06cc\u06cc\u0631 \u0635\u0648\u0631\u062a.', 'success');
+            } else {
+                showToast(res.detail || '\u062e\u0637\u0627', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('\u062e\u0637\u0627 \u062f\u0631 \u062a\u063a\u06cc\u06cc\u0631.', 'error');
+        });
+    }
+
+    function deleteSlide(id, name) {
+        showModal(
+            '\u062d\u0630\u0641 \u0627\u0633\u0644\u0627\u06cc\u062f',
+            '\u0622\u06cc\u0627 \u0627\u0632 \u062d\u0630\u0641 \u0627\u0633\u0644\u0627\u06cc\u062f \u060c ' + name + ' \u0627\u0637\u0645\u06cc\u0646\u0627\u0646 \u062f\u0627\u0631\u06cc\u062f\u061f',
+            function () {
+                fetch('/api/calls/slides/' + id, { method: 'DELETE' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    if (res.success) {
+                        loadSlides();
+                        showToast(res.message || '\u0627\u0633\u0644\u0627\u06cc\u062f \u062d\u0630\u0641 \u0634\u062f.', 'success');
+                    } else {
+                        showToast(res.detail || '\u062e\u0637\u0627', 'error');
+                    }
+                })
+                .catch(function () {
+                    showToast('\u062d\u0630\u0641 \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+                });
+            }
+        );
+    }
+
     /* ── Init ── */
     function init() {
         numberInput = document.getElementById('csNumberInput');
@@ -623,6 +791,18 @@
         if (resetBtn) resetBtn.addEventListener('click', resetDisplay);
         if (waitingAddBtn) waitingAddBtn.addEventListener('click', addToWaitingQueue);
 
+        // Slideshow elements
+        slidesList = document.getElementById('csSlidesList');
+        slidesEmpty = document.getElementById('csSlidesEmpty');
+        slidesCountEl = document.getElementById('csSlideCount');
+        slideUploadBtn = document.getElementById('csSlideUploadBtn');
+        slideFileInput = document.getElementById('csSlideFileInput');
+
+        if (slideUploadBtn) slideUploadBtn.addEventListener('click', function () {
+            if (slideFileInput) slideFileInput.click();
+        });
+        if (slideFileInput) slideFileInput.addEventListener('change', uploadSlide);
+
         if (numberInput) {
             numberInput.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); makeCall(); }
@@ -639,6 +819,7 @@
         loadRecent();
         loadStatus();
         loadAudioStatus();
+        loadSlides();
         connectWS();
     }
 

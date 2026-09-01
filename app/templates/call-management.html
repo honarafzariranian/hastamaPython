@@ -112,6 +112,43 @@
                     </div>
                     <div class="cs-audio-info" id="csAudioStatus"></div>
                 </div>
+
+                <!-- Slideshow management card -->
+                <div class="cs-card cs-card--slides">
+                    <div class="cs-card-header">
+                        <div class="cs-card-icon cs-card-icon--slides">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                                <line x1="7" y1="2" x2="7" y2="22"/>
+                                <line x1="17" y1="2" x2="17" y2="22"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <line x1="2" y1="7" x2="7" y2="7"/>
+                                <line x1="2" y1="17" x2="7" y2="17"/>
+                                <line x1="17" y1="7" x2="22" y2="7"/>
+                                <line x1="17" y1="17" x2="22" y2="17"/>
+                            </svg>
+                        </div>
+                        <h2 class="cs-card-title">اسلایدشوی نمایشگر</h2>
+                        <span class="cs-queue-badge cs-queue-badge--slides" id="csSlideCount">0</span>
+                    </div>
+                    <!-- Upload area -->
+                    <div class="cs-slides-upload" id="csSlideUploadArea">
+                        <input type="file" id="csSlideFileInput" accept="image/*" multiple hidden>
+                        <button type="button" class="cs-slides-upload-btn" id="csSlideUploadBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            آپلود تصویر اسلاید
+                        </button>
+                        <div class="cs-slides-upload-hint">JPG، PNG، WebP — حداکثر ۱۰ مگابایت</div>
+                    </div>
+                    <!-- Slides list -->
+                    <div class="cs-slides-list" id="csSlidesList">
+                        <div class="cs-slides-empty" id="csSlidesEmpty">هنوز اسلایدی آپلود نشده است</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Right column: Display queue + history -->
