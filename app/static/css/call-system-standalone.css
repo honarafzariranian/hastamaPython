@@ -431,6 +431,10 @@ html { height: 100%; overflow: hidden; }
 .cs-card--history {
     height: 36.8%;
 }
+
+.cs-card--slides {
+    height: 50.6%;
+}
 /* ── Slides management ── */
 .cs-card--slides { grid-column: 1 / -1; }
 .cs-card-icon--slides { background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); }
