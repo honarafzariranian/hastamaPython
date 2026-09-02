@@ -43,7 +43,7 @@
                 <p>برای دسترسی به داشبورد اطلاعات خود را وارد کنید.</p>
             </div>
 
-            <form class="login-form" onsubmit="event.preventDefault(); login();">
+            <form class="login-form">
                 <div class="form-group">
                     <div class="input-wrapper">
                         <input type="text" id="username" name="username" required autocomplete="username">
@@ -71,7 +71,7 @@
                     <a href="#" class="forgot-password">فراموشی رمز عبور؟</a>
                 </div>
 
-                                <button type="submit" class="btn" id="loginBtn">
+                                <button type="button" class="btn h-ux-btn" id="loginBtn">
                     <span class="h-ux-btn-text">ورود</span>
                     <span class="h-ux-btn-spinner"></span>
                     <span class="h-ux-btn-loading-text">در حال ورود...</span>
@@ -101,9 +101,32 @@
         </svg>
     </div>
 
-    <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
     <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
     <script src="{{ url_for('static', path='js/script.js') }}"></script>
+    <script>
+    /* Prevent Chrome autofill from auto-submitting the form */
+    (function() {
+        var loginBtn = document.getElementById('loginBtn');
+        var usernameInput = document.getElementById('username');
+        var passwordInput = document.getElementById('password');
+
+        /* Button click → login */
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            login();
+        });
+
+        /* Enter key → login */
+        function handleEnter(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                login();
+            }
+        }
+        usernameInput.addEventListener('keydown', handleEnter);
+        passwordInput.addEventListener('keydown', handleEnter);
+    })();
+    </script>
 </body>
 
 </html>

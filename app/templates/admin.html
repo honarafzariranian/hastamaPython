@@ -124,42 +124,42 @@
             <!-- سایدبار یکپارچه سمت راست (آیکون‌ها از هر دو نوار منتقل شدند) -->
             <aside class="sidebar-right rightSidebar" id="mainSidebar">
                 <button type="button" class="mobile-sidebar-close" aria-label="بستن منو" onclick="closeMobileSidebar()">×</button>
-                <div class="icon-container active" onclick="toggleBox('dashboardBox', this)">
+                <div class="icon-container active" onclick="navTo('dashboardBox', this, '/admin/dashboard')">
                     <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="icon-label">داشبورد</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('coworkerBox', this)">
+                <div class="icon-container" onclick="navTo('coworkerBox', this, '/admin/coworkers')">
                     <img src="/static/images/coworker-icon.png" alt="همکاران" class="sidebar-icon" data-default-src="/static/images/coworker-icon.png" data-active-src="/static/images/coworker-icon-purple.png">
                     <span class="icon-label">مدیریت کارکنان</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('vacationBox', this)">
+                <div class="icon-container" onclick="navTo('vacationBox', this, '/admin/vacation')">
                     <img src="/static/images/leaveRequest.png" alt="مرخصی" class="sidebar-icon" data-default-src="/static/images/leaveRequest.png" data-active-src="/static/images/leaveRequest-purple.png">
                     <span class="icon-label">مدیریت مرخصی ها</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('overtimeBox', this)">
+                <div class="icon-container" onclick="navTo('overtimeBox', this, '/admin/overtime')">
                     <img src="/static/images/overtime.png" alt="اضافه کاری" class="sidebar-icon" data-default-src="/static/images/overtime.png" data-active-src="/static/images/overtime-purple.png">
                     <span class="icon-label">مدیریت اضافه کاری ها</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('hourlyPassBox', this)">
+                <div class="icon-container" onclick="navTo('hourlyPassBox', this, '/admin/hourly-pass')">
                     <img src="/static/images/clock.png" alt="پاس ساعتی" class="sidebar-icon" data-default-src="/static/images/clock.png" data-active-src="/static/images/clock-purple.png">
                     <span class="icon-label">مدیریت پاس های ساعتی</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('ticketBox', this)">
+                <div class="icon-container" onclick="navTo('ticketBox', this, '/admin/tickets')">
                     <img src="/static/images/chat.png" alt="تیکت‌ها" class="sidebar-icon" data-default-src="/static/images/chat.png" data-active-src="/static/images/chat-purple.png">
                     <span class="icon-label">مدیریت تیکت ها</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('shiftBox', this)">
+                <div class="icon-container" onclick="navTo('shiftBox', this, '/admin/shifts')">
                     <img src="/static/images/clock.png" alt="مدیریت شیفت‌ها" class="sidebar-icon" data-default-src="/static/images/clock.png" data-active-src="/static/images/clock-purple.png">
                     <span class="icon-label">مدیریت شیفت‌ها</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('hozoorbox', this)">
+                <div class="icon-container" onclick="navTo('hozoorbox', this, '/admin/attendance')">
                     <img src="/static/images/user-check.png" alt="مدیریت حضور" class="sidebar-icon" data-default-src="/static/images/user-check.png" data-active-src="/static/images/user-check-purple.png">
                     <span class="icon-label">مدیریت ساعت زن</span>
                 </div>
@@ -169,7 +169,7 @@
                     <span class="icon-label">ثبت تیکت</span>
                 </div>
 
-                <div class="icon-container" onclick="toggleBox('payrollBox', this)">
+                <div class="icon-container" onclick="navTo('payrollBox', this, '/admin/payroll')">
                     <img src="/static/images/answer-icon.png" alt="حقوق و دستمزد" class="sidebar-icon" data-default-src="/static/images/answer-icon.png" data-active-src="/static/images/answer-icon-purple.png">
                     <span class="icon-label">حقوق و دستمزد</span>
                 </div>
@@ -1847,7 +1847,7 @@
         <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>
 <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
 <script>window.__modernTicketing = true;</script>
-<script src="{{ url_for('static', path='js/admin.js') }}"></script>
+<script src="{{ url_for('static', path='js/admin.js') }}?v=2"></script>
 <script>window.__notificationToastReady = true;</script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}?v=16"></script>

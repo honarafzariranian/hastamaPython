@@ -135,6 +135,44 @@ function closeSuccessMessage() {
     }, 450);
 }
 
+// ─── SPA URL Routing ──────────────────────────────────────────────
+var SECTION_URLS = {
+    'dashboardBox':  '/admin/dashboard',
+    'coworkerBox':   '/admin/coworkers',
+    'vacationBox':   '/admin/vacation',
+    'overtimeBox':   '/admin/overtime',
+    'hourlyPassBox': '/admin/hourly-pass',
+    'ticketBox':     '/admin/tickets',
+    'shiftBox':      '/admin/shifts',
+    'hozoorbox':     '/admin/attendance',
+    'payrollBox':    '/admin/payroll'
+};
+var URL_TO_SECTION = {};
+for (var k in SECTION_URLS) { URL_TO_SECTION[SECTION_URLS[k]] = k; }
+
+function navTo(boxId, el, url) {
+    toggleBox(boxId, el);
+    if (url && window.history && window.history.pushState) {
+        window.history.pushState({box: boxId}, '', url);
+    }
+}
+window.addEventListener('popstate', function(e) {
+    var section = e.state && e.state.box ? e.state.box : URL_TO_SECTION[window.location.pathname];
+    if (section) {
+        var el = document.querySelector('.icon-container[onclick*="' + section + '"]');
+        toggleBox(section, el);
+    }
+});
+// On page load, read URL and show correct section
+(function() {
+    var section = URL_TO_SECTION[window.location.pathname];
+    if (section) {
+        var el = document.querySelector('.icon-container[onclick*="' + section + '"]');
+        toggleBox(section, el);
+        window.history.replaceState({box: section}, '', window.location.pathname);
+    }
+})();
+
 // تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها
 // تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها
 // تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها// تابع نمایش باکس ها

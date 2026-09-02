@@ -1593,6 +1593,19 @@ async def admin(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ─── Admin Section Routes (SPA) ─────────────────────────────────────────────
+ADMIN_SECTIONS = {'dashboard', 'coworkers', 'vacation', 'overtime', 'hourly-pass', 'tickets', 'shifts', 'attendance', 'payroll'}
+
+@app.get("/admin/{section}", response_class=HTMLResponse)
+async def admin_section(request: Request, section: str):
+    username = get_user_from_session(request)
+    is_admin = get_is_admin_from_session(request)
+    if not username or not is_admin:
+        return RedirectResponse(url="/login", status_code=303)
+    # Serve the same admin.html — JS on client reads URL to show correct section
+    # Reuse the same template data by calling admin()
+    return await admin(request)
+
 # ذخیره و بازیابی محاسبات حقوق و دستمزد ادمین
 PAYROLL_CALCULATION_TYPES = {"overtime", "comprehensive", "hourly", "summary"}
 

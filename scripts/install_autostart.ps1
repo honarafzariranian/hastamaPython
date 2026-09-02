@@ -1,96 +1,83 @@
 <#
 .SYNOPSIS
-    Registers Hastama server as a Windows Scheduled Task that starts at boot
-    without requiring user login.
-
-.DESCRIPTION
-    Creates a scheduled task named "HastamaServer" that:
-    - Runs at system startup (no login required)
-    - Restarts automatically on failure
-    - Logs output to logs/hastama-autostart.log
-    - Runs uvicorn on 0.0.0.0:5000
-
-    Run this script once with Administrator privileges to install.
-    To uninstall: schtasks /Delete /TN "HastamaServer" /F
+    Registers Hastama server as a Windows Scheduled Task that starts at boot.
 #>
-
-$ErrorActionPreference = "Stop"
 
 $TaskName = "HastamaServer"
 $InstallRoot = Split-Path -Parent $PSScriptRoot
-$Python = Join-Path $InstallRoot ".venv\Scripts\python.exe"
+$BatFile = Join-Path $InstallRoot "scripts\run_server.bat"
 $LogsDir = Join-Path $InstallRoot "logs"
-$LogFile = Join-Path $LogsDir "hastama-autostart.log"
-$Host_ = "0.0.0.0"
-$Port = "5000"
 
 # --- Validate ---
-if (-not (Test-Path $Python)) {
-    Write-Error "Python not found: $Python`nRun 'uv sync' first."
+if (-not (Test-Path $BatFile)) {
+    Write-Error "Batch file not found: $BatFile"
     exit 1
 }
 
 New-Item -ItemType Directory -Force $LogsDir | Out-Null
 
 # --- Remove old task if exists ---
-$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-if ($existing) {
-    Write-Host "Removing existing task '$TaskName'..."
-    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+schtasks /Delete /TN $TaskName /F 2>$null
+
+# --- Get current user ---
+$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+Write-Host ""
+Write-Host "Current user: $currentUser"
+Write-Host ""
+
+# --- Ask for password ---
+$password = Read-Host -Prompt "Enter Windows password for $currentUser" -AsSecureString
+$plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)
+)
+
+# --- Create task via schtasks ---
+$schtasksArgs = @(
+    "/Create"
+    "/TN", $TaskName
+    "/TR", "`"cmd.exe`" /c `"$BatFile`""
+    "/SC", "ONSTART"
+    "/RL", "HIGHEST"
+    "/RU", $currentUser
+    "/RP", $plainPassword
+    "/F"
+)
+
+$result = & schtasks @schtasksArgs 2>&1
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Error "Failed to create task:`n$result"
+    exit 1
 }
 
-# --- Build action: redirect stdout+stderr via cmd /c ---
-$action = New-ScheduledTaskAction `
-    -Execute "cmd.exe" `
-    -Argument "/c `"$Python`" -m uvicorn app.main:app --host $Host_ --port $Port > `"$LogFile`" 2>&1" `
-    -WorkingDirectory $InstallRoot
-
-# --- Trigger: at system startup ---
-$trigger = New-ScheduledTaskTrigger -AtStartup
-
-# --- Settings ---
-$settings = New-ScheduledTaskSettingsSet `
-    -ExecutionTimeLimit ([TimeSpan]::Zero) `
-    -RestartCount 999 `
-    -RestartInterval (New-TimeSpan -Minutes 1) `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -MultipleInstances IgnoreNew
-
-# --- Principal: run as SYSTEM, highest privilege ---
-$principal = New-ScheduledTaskPrincipal `
-    -UserId "SYSTEM" `
-    -LogonType ServiceAccount `
-    -RunLevel Highest
-
-# --- Register ---
-Register-ScheduledTask `
-    -TaskName $TaskName `
-    -Action $action `
-    -Trigger $trigger `
-    -Settings $settings `
-    -Principal $principal `
-    -Description "Hastama Sample Collection Call System - Auto-starts at boot on $Host_`:$Port" `
-    -Force
+# --- Fix power settings: don't stop on battery, start when available ---
+$task = Get-ScheduledTask -TaskName $TaskName
+$task.Settings.DisallowStartIfOnBatteries = $false
+$task.Settings.StopIfGoingOnBatteries = $false
+$task.Settings.StartWhenAvailable = $true
+$task.Settings.ExecutionTimeLimit = 'PT0S'
+Set-ScheduledTask -InputObject $task -User $currentUser -Password $plainPassword
 
 # --- Start immediately ---
-Start-ScheduledTask -TaskName $TaskName
+schtasks /Run /TN $TaskName
 
 Write-Host ""
 Write-Host "=================================================="
 Write-Host " Hastama Auto-Start Installed Successfully"
 Write-Host "=================================================="
 Write-Host " Task Name  : $TaskName"
-Write-Host " Python     : $Python"
-Write-Host " Address    : http://${Host_}:${Port}"
-Write-Host " Logs       : $LogFile"
-Write-Host " Trigger    : At system startup (no login needed)"
+Write-Host " User       : $currentUser"
+Write-Host " Batch      : $BatFile"
+Write-Host " Address    : http://0.0.0.0:5000"
+Write-Host " Logs       : $LogsDir\hastama-autostart.log"
+Write-Host " Trigger    : At system startup"
 Write-Host ""
 Write-Host " Server is now starting..."
 Write-Host ""
-Write-Host "To check status:  Get-ScheduledTask -TaskName '$TaskName'"
-Write-Host "To start now:     Start-ScheduledTask -TaskName '$TaskName'"
-Write-Host "To stop:          Stop-ScheduledTask -TaskName '$TaskName'"
-Write-Host "To uninstall:     schtasks /Delete /TN '$TaskName' /F"
+Write-Host " Commands:"
+Write-Host "   Check:   schtasks /Query /TN $TaskName"
+Write-Host "   Start:   schtasks /Run /TN $TaskName"
+Write-Host "   Stop:    schtasks /End /TN $TaskName"
+Write-Host "   Delete:  schtasks /Delete /TN $TaskName /F"
 Write-Host "=================================================="

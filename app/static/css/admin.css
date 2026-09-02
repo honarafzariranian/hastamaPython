@@ -6899,8 +6899,9 @@ form button:active {
     text-align: right;
 }
 
-#natigehHozoor.attendance-panel {
-    display: block;
+#natigehHozoor.attendance-panel,
+#sabtdst.attendance-panel {
+    display: none;
 }
 
 #natigehHozoor.attendance-panel[style*="display: none"],
