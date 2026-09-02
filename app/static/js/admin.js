@@ -210,6 +210,14 @@ function toggleBox(boxId, iconContainer) {
         box.classList.remove('is-visible');
     });
 
+    // ردیف خلاصه/ثبت دستی حضور و غیاب، خودش management-box نیست؛
+    // بنابراین باید جداگانه مخفی شود تا در بخش‌هایی مثل مدیریت شیفت‌ها دیده نشود.
+    const attendancePanelsRow = document.getElementById('attendancePanelsRow');
+    if (attendancePanelsRow) {
+        attendancePanelsRow.style.display = 'none';
+        attendancePanelsRow.classList.remove('is-visible');
+    }
+
     // نمایش باکس انتخابی
     const selectedBox = document.getElementById(boxId);
     if (selectedBox) {
@@ -288,6 +296,12 @@ function toggleBox(boxId, iconContainer) {
         const hozoorbox = document.getElementById('hozoorbox');
         if (hozoorbox) {
             hozoorbox.style.display = 'block';
+        }
+
+        const attendancePanelsRow = document.getElementById('attendancePanelsRow');
+        if (attendancePanelsRow) {
+            attendancePanelsRow.classList.add('is-visible');
+            attendancePanelsRow.style.display = 'flex';
         }
 
         const sabtdst = document.getElementById('sabtdst');
