@@ -1973,13 +1973,17 @@ form button:hover {background-color: #506bff;}
     font-size: 12px;
     font-family: 'Vazir', sans-serif;
     border: 1px solid #d8e1e8;
-    border-radius: 0 8px 8px 0;
+    border-radius: 8px;
     background: #fbfdff;
     color: #1f3345;
     direction: ltr;
     text-align: center;
     box-sizing: border-box;
     transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.apply-all-row .apply-all-input {
+    border-radius: 0 8px 8px 0 !important;
 }
 
 .apply-all-row input:focus {
