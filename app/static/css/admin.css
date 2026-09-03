@@ -833,191 +833,345 @@ html, body {
 /*  --- = مدیریت کارکنان ---  */
 /*  --- = مدیریت کارکنان ---  */
 /*  --- = مدیریت کارکنان ---  */
+/* ===== باکس اطلاعات کاربران — طراحی مدرن ===== */
 #userInfoBox {
     display: flex;
     flex-direction: column;
+    width: min(94vw, 1400px);
+    padding: 0;
+    background: #fff;
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(15, 23, 42, 0.06);
+    font-family: 'Vazir', sans-serif;
+    text-align: right;
+    position: relative;
+    margin: 0 auto 4px auto !important;
+    overflow: hidden;
+}
+
+/* هدر باکس اطلاعات کاربران */
+.userInfo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e8edf2;
+    direction: rtl;
+}
+
+.userInfo-header-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: min(94vw, 1400px); /* فضای کافی برای نمایش کامل جدول کاربران */
-    padding: 20px; /* فاصله داخلی */
-    background-color: #ffffff; /* رنگ پس‌زمینه */
-    border: 1px solid #ccc; /* حاشیه */
-    border-radius: 20px; /* گوشه‌های گرد */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* سایه */
-    font-family: 'Vazir', sans-serif;
-    text-align: center;
-    position: relative;
-    /* فاصله ثابت در دسکتاپ؛ درصد نسبت به عرض مانیتور محاسبه می‌شد و ناپایدار بود */
-    margin-top: 108px !important;
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    border-radius: 8px;
+    font-size: 16px;
+    flex-shrink: 0;
 }
 
-/* تنظیم استایل عنوان */
-#userInfoBox h2 {
-    margin-bottom: 15px; /* فاصله زیر عنوان */
-    margin-top: 0;
-    font-size: 1.5em;
-    color: #333; /* رنگ متن عنوان */
+.userInfo-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f3345;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* تنظیم استایل محتوای باکس */
-#userInfoBox p {
-    font-size: 1.2em;
-    color: #555; /* رنگ متن محتوای باکس */
-}
-
-/* جدول کاربران در ظرف مستقل پیمایش می‌شود تا ستون‌های انتهایی بریده نشوند. */
+/* جدول کاربران — بدون اسکرول‌بار */
 .user-table-scroll {
     width: 100%;
     max-width: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: auto;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .user-table-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    display: none;
 }
 
-.user-table-scroll::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: #a9bbc5;
+/* جدول مدیریت کاربران — مدرن و فشرده */
+#userTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    font-family: 'Vazir', sans-serif;
+    table-layout: auto;
+    text-align: center;
+    direction: rtl;
 }
 
-.user-table-scroll::-webkit-scrollbar-track {
-    border-radius: 999px;
-    background: #edf3f6;
+#userTable thead th {
+    padding: 8px 10px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    border: 0;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
 }
 
-/* جدول مستقل مدیریت کاربران در دسکتاپ */
-@media screen and (min-width: 769px) {
-    #userTable {
-        width: 100%;
-        min-width: 1120px;
-        border: 1px solid #e2e8f0;
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #fff;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.05);
-        font-family: 'Vazir', sans-serif;
-        table-layout: fixed;
-        text-align: center;
-        direction: rtl;
-    }
-
-    #userTable thead,
-    #userTable tbody,
-    #userTable tbody tr {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
-    }
-
-    #userTable thead th {
-        padding: 12px 14px;
-        background: #f8fafc;
-        color: #1e293b;
-        border: 0;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.5;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    #userTable tbody {
-        display: block;
-        max-height: min(25vh, 560px);
-        overflow-y: auto;
-        overflow-x: hidden;
-        scrollbar-width: auto;
-        scrollbar-gutter: stable;
-    }
-
-    #userTable tbody::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    #userTable tbody::-webkit-scrollbar-thumb {
-        border-radius: 999px;
-        background: #a9bbc5;
-    }
-
-    #userTable tbody::-webkit-scrollbar-track {
-        background: #edf3f6;
-    }
-
-    #userTable tbody td {
-        padding: 11px 14px;
-        border: 0;
-        border-bottom: 1px solid #f1f5f9;
-        color: #334155;
-        font-size: 13.5px;
-        font-weight: 500;
-        line-height: 1.6;
-        text-align: center;
-        vertical-align: middle;
-        overflow-wrap: anywhere;
-    }
-
-    #userTable tbody tr:nth-child(even) td {
-        background: rgba(15, 23, 42, 0.02);
-    }
-
-    #userTable tbody tr:hover td {
-        background: #f1f5f9;
-    }
-
-    #userTable tbody tr:last-child td {
-        border-bottom: 0;
-    }
-
-    #userTable th:nth-child(1), #userTable td:nth-child(1) { width: 4%; }
-    #userTable th:nth-child(2), #userTable td:nth-child(2) { width: 10%; }
-    #userTable th:nth-child(3), #userTable td:nth-child(3) { width: 11%; }
-    #userTable th:nth-child(4), #userTable td:nth-child(4) { width: 12%; }
-    #userTable th:nth-child(5), #userTable td:nth-child(5) { width: 11%; }
-    #userTable th:nth-child(6), #userTable td:nth-child(6) { width: 7%; }
-    #userTable th:nth-child(7), #userTable td:nth-child(7) { width: 7%; }
-    #userTable th:nth-child(8), #userTable td:nth-child(8) { width: 10%; }
-    #userTable th:nth-child(9), #userTable td:nth-child(9) { width: 10%; }
-    #userTable th:nth-child(10), #userTable td:nth-child(10) { width: 18%; }
-
-    #userTable td:nth-child(4),
-    #userTable td:nth-child(6),
-    #userTable td:nth-child(7),
-    #userTable td:nth-child(8),
-    #userTable td:nth-child(9),
-    #userTable td:last-child {
-        white-space: nowrap;
-    }
-
-    #userTable td:last-child {
-        min-width: 200px;
-    }
+#userTable tbody td {
+    padding: 7px 10px;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
 }
 
-/* استایل برای دکمه‌های تغییرات */
-.edit-btn, .delete-btn {
-    padding: 5px 10px;
-    font-size: 0.9em;
-    margin: 2px;
+#userTable tbody tr {
+    transition: background 0.15s ease;
+}
+
+#userTable tbody tr:nth-child(even) td {
+    background: rgba(15, 23, 42, 0.015);
+}
+
+#userTable tbody tr:hover td {
+    background: #f0f7ff;
+}
+
+#userTable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* عرض ستون‌ها */
+#userTable th:nth-child(1), #userTable td:nth-child(1) { width: 3%; }
+#userTable th:nth-child(2), #userTable td:nth-child(2) { width: 10%; }
+#userTable th:nth-child(3), #userTable td:nth-child(3) { width: 9%; }
+#userTable th:nth-child(4), #userTable td:nth-child(4) { width: 11%; }
+#userTable th:nth-child(5), #userTable td:nth-child(5) { width: 12%; }
+#userTable th:nth-child(6), #userTable td:nth-child(6) { width: 7%; }
+#userTable th:nth-child(7), #userTable td:nth-child(7) { width: 7%; }
+#userTable th:nth-child(8), #userTable td:nth-child(8) { width: 10%; }
+#userTable th:nth-child(9), #userTable td:nth-child(9) { width: 9%; }
+#userTable th:nth-child(10), #userTable td:nth-child(10) { width: 8%; }
+
+#userTable td:nth-child(4),
+#userTable td:nth-child(6),
+#userTable td:nth-child(7),
+#userTable td:nth-child(8),
+#userTable td:nth-child(9),
+#userTable td:last-child {
+    white-space: nowrap;
+}
+
+#userTable td:last-child {
+    min-width: 160px;
+}
+
+/* سلول عملیات */
+/* ===== جدول کاربران — بازطراحی کامل ===== */
+
+/* سلول عملیات */
+.userTable-actions-cell {
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.userTable-actions-cell > * {
+    display: inline;
+    vertical-align: middle;
+}
+
+.userTable-actions-cell form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+/* آیکون‌های عملیات — اندازه یکسان */
+.userTable-actions-cell .trash-icon-form .trash-icon,
+.userTable-actions-cell .edit-btn,
+.userTable-actions-cell .attendance-action-btn {
+    width: 28px;
+    height: 28px;
+    margin: 0 5px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: unset;
+}
+
+/* دکمه حذف — قرمز کمرنگ */
+.userTable-actions-cell .trash-icon {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.userTable-actions-cell .trash-icon svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    stroke: #dc2626;
+}
+
+.userTable-actions-cell .trash-icon:hover {
+    background-color: #fde2e2;
+    transform: scale(1.05);
+}
+
+/* دکمه ویرایش — زرد */
+.userTable-actions-cell .edit-btn {
+    background-color: rgba(234, 179, 8, 0.15);
+    color: #b45309;
+}
+
+.userTable-actions-cell .edit-btn svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    stroke: #b45309;
+}
+
+.userTable-actions-cell .edit-btn:hover {
+    background-color: rgba(234, 179, 8, 0.28);
+    transform: scale(1.05);
+}
+
+/* دکمه ثبت ورود — سبز کمرنگ */
+.userTable-actions-cell .attendance-action-btn--checkin {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+.userTable-actions-cell .attendance-action-btn--checkin svg {
+    stroke: #16a34a;
+}
+
+.userTable-actions-cell .attendance-action-btn--checkin:hover {
+    background-color: rgba(34, 197, 94, 0.22);
+    transform: scale(1.05);
+}
+
+/* دکمه ثبت خروج — نارنجی کمرنگ */
+.userTable-actions-cell .attendance-action-btn--checkout {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.userTable-actions-cell .attendance-action-btn--checkout svg {
+    stroke: #d97706;
+}
+
+.userTable-actions-cell .attendance-action-btn--checkout:hover {
+    background-color: rgba(245, 158, 11, 0.22);
+    transform: scale(1.05);
+}
+
+/* دکمه تکمیل شده — خاکستری کمرنگ */
+.userTable-actions-cell .attendance-action-btn--done {
+    background: rgba(156, 163, 175, 0.12);
+    color: #6b7280;
+}
+
+.userTable-actions-cell .attendance-action-btn--done svg {
+    stroke: #6b7280;
+}
+
+/* دکمه حضور */
+.userTable-actions-cell .attendance-action-btn {
     color: #fff;
 }
 
-.edit-btn {background-color: #4caf50; /* سبز برای ویرایش */}
+.userTable-actions-cell .attendance-action-btn svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
 
-.delete-btn {background-color: #f44336; /* قرمز برای حذف */}
+.userTable-actions-cell .attendance-action-btn:hover {
+    transform: scale(1.05);
+}
 
-.edit-btn:hover {background-color: #45a049;}
+/* ===== توالت‌ها ===== */
+#userTable .tooltip-text-table,
+#userTable .tooltip-text-table-del,
+#userTable .tooltip-text-table-att {
+    visibility: hidden;
+    background-color: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 4px 8px;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Vazir';
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 100;
+    white-space: nowrap;
+    pointer-events: none;
+}
 
-.delete-btn:hover {background-color: #e53935;}
+#userTable .tooltip-text-table::after,
+#userTable .tooltip-text-table-del::after,
+#userTable .tooltip-text-table-att::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(15, 23, 42, 0.85);
+}
+
+#userTable .edit-btn:hover .tooltip-text-table,
+#userTable .trash-icon:hover .tooltip-text-table-del,
+#userTable .attendance-action-btn:hover .tooltip-text-table-att {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* دکمه‌های عمومی (غیر از جدول) */
+.delete-btn {
+    padding: 7px 20px;
+    background-color: #f44336;
+    color: white;
+    font-size: 14px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+    font-family: 'Vazir';
+}
 
 /* استایل کلی برای ابزارک متن */
 .tooltip-container {
@@ -1202,140 +1356,13 @@ form button:hover {background-color: #506bff;}
 }
 
 /* استایل برای دکمه‌های تغییرات */
-.edit-btn, .trash-icon {
-    padding: 5px;
-    font-size: 0.9em;
-    margin: 2px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #fff;
-    background-color: transparent; /* حذف رنگ پس‌زمینه */
-    background: #fff;
-    box-shadow: unset;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    position: relative; /* برای نمایش tooltip در مکان درست */
-    overflow: visible;
-    z-index: 3;
-    vertical-align: middle;
-}
-
-/* استایل هاور */
-.edit-btn:hover, .trash-icon:hover {
-    background-color: #f1f1f1; /* رنگ پس‌زمینه هنگام هاور */
-    z-index: 30;
-}
-
-/* استایل برای متن tooltip */
-.tooltip-text-table {
-    visibility: hidden;
-    width: 50px;
-    height: 30px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    font-family: 'Vazir';
-    opacity: 0;
-    transition: opacity 0.3s;
-    z-index: 20;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-.tooltip-text-table::after {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 5px solid rgba(0, 0, 0, 0.8);
-}
-
-/* نمایش tooltip هنگام هاور */
-.edit-btn:hover .tooltip-text-table,
-.trash-icon:hover .tooltip-text-table-del,
-.trash-icon-form:hover .tooltip-text-table-del {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* استایل برای آیکون‌ها */
-.edit-btn img, .trash-icon img {
-    display: block;
-    width: 20px;
-    height: 20px;
-    position: relative;
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* استایل برای متن tooltip */
-.tooltip-text-table-del {
-    visibility: hidden;
-    width: 40px;
-    height: 30px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    font-family: 'Vazir';
-    opacity: 0;
-    transition: opacity 0.3s;
-    z-index: 20;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-/* نمایش tooltip هنگام هاور */
-.edit-btn:hover .tooltip-text-table-del, .trash-icon:hover .tooltip-text-table-del {
-    visibility: visible;
-    opacity: 1;
-}
-
-.trash-icon-form {
-    padding: 0px;
-    font-size: 0.9em;
-    margin: 2px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #fff;
-    background-color: transparent; /* حذف رنگ پس‌زمینه */
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    position: relative; /* برای نمایش tooltip در مکان درست */
-    overflow: visible;
-    z-index: 3;
-    vertical-align: middle;
-}
-
-.trash-icon-form:hover {
-    z-index: 30;
-}
+/* قبلاً در بخش جدول کاربران تعریف شده */
 
 /* استایل برای مدال تایید حذف */
 .modal {
     display: none; /* به طور پیش‌فرض مخفی است */
     position: fixed;
-    z-index: 1;
+    z-index: 9999;
     left: 0;
     top: 0;
     width: 100%;
@@ -1361,18 +1388,146 @@ form button:hover {background-color: #506bff;}
     margin-top: 0;
 }
 
-#confirmDeleteBtn {
-    padding: 7px 20px;
-    background-color: #4caf50;
-    color: white;
-    font-size: 14px;
-    border: none;
-    border-radius: 20px;
+/* ===== باکس تایید حذف — مدرن ===== */
+.confirm-delete-popup {
+    background: #fff;
+    width: min(420px, calc(100% - 32px));
+    margin: 12% auto;
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
+}
+
+.confirm-delete-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #e8edf2;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    direction: rtl;
+    gap: 12px;
+}
+
+.confirm-delete-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f3345;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.confirm-delete-header-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+    border-radius: 10px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.close-btn-confirm-delete {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.06);
+    color: #64748b;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-right: 20%;
-    font-weight: bold;
-    font-family: 'Vazir';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s ease, color .2s ease, transform .15s ease;
+}
+
+.close-btn-confirm-delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+.confirm-delete-body {
+    padding: 20px 24px;
+    direction: rtl;
+    text-align: right;
+}
+
+.confirm-delete-body p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.8;
+    font-family: 'Vazir', sans-serif;
+}
+
+.confirm-delete-footer {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 14px 24px 18px;
+    border-top: 1px solid #e8edf2;
+    background: #f8fafc;
+    direction: rtl;
+}
+
+.confirm-delete-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border: 0;
+    padding: 10px 24px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transition: box-shadow .2s ease, transform .15s ease;
+}
+
+.confirm-delete-btn-danger:hover {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+}
+
+.confirm-delete-btn-danger:active {
+    transform: scale(0.97);
+}
+
+.confirm-delete-btn-danger svg {
+    pointer-events: none;
+}
+
+.confirm-delete-btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 10px 24px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    border-radius: 10px;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.confirm-delete-btn-cancel:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
 }
 
 .cancel-btn {
@@ -1403,52 +1558,128 @@ form button:hover {background-color: #506bff;}
 }
 
 /* استایل کلی پاپ‌آپ */
+/* ===== ویرایش اطلاعات کاربر — مودال مدرن ===== */
 .modal-virayesh {
     display: none;
     position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     overflow: auto;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    animation: modalFadeIn .25s ease;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* محتوای پاپ‌آپ */
 .popup-content-virayesh {
-    background: white;
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    width: 27rem;
+    background: #fff;
+    width: min(520px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     position: relative;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+    animation: modalSlideUp .3s cubic-bezier(.22,1,.36,1);
 }
 
-.popup-content-virayesh h2 {
-    text-align: center;
+.popup-content-virayesh .popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid #e8edf2;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 18px 18px 0 0;
+    direction: rtl;
+    gap: 12px;
+    min-height: 56px;
+}
+
+.popup-content-virayesh .popup-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f3345;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.popup-content-virayesh .popup-header h2 .popup-header-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 18px;
 }
 
 /* دکمه بستن */
 .close-btn-virayesh {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 3px 10px;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.06);
+    color: #64748b;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s ease, color .2s ease, transform .15s ease;
+}
+
+.close-btn-virayesh:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+.close-btn-virayesh:active {
+    transform: scale(0.9);
+}
+
+/* بدنه فرم */
+.border-vir {
+    border: 0;
+    border-radius: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    background: transparent;
+}
 
 /* ===== status dropdown adjustments ===== */
-/* Ensure table cells and containers allow the dropdown to overflow and position it absolutely */
 .request-table td {
-    overflow: visible; /* allow dropdown to extend outside cell */
+    overflow: visible;
 }
 
 .status-container {
-    position: relative; /* anchor for absolute dropdown */
+    position: relative;
     overflow: visible;
 }
 
@@ -1466,7 +1697,7 @@ form button:hover {background-color: #506bff;}
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-    display: none; /* toggled by JS */
+    display: none;
     z-index: 2147483647;
     direction: rtl;
     text-align: right;
@@ -1484,8 +1715,6 @@ form button:hover {background-color: #506bff;}
     background-color: #f8fafc;
 }
 
-/* فقط والدهای dropdown درخواست مرخصی نباید آن را clip کنند.
-   اعمال overflow: visible روی همه management-boxها، اسکرول داخلی داشبورد و گزارش حقوق را خراب می‌کند. */
 #vacationRequestBox,
 .request-table,
 .request-table tbody,
@@ -1493,178 +1722,449 @@ form button:hover {background-color: #506bff;}
     overflow: visible !important;
 }
 
-/* In some browsers table cells create clipping; force visible on cells */
 .request-table td,
 .request-table th {
     overflow: visible !important;
 }
 
-    cursor: pointer;
-    font-size: 14px;
-    border-radius: 4px;
-    font-family: 'Vazir';
-}
-
-.close-btn-virayesh:hover {
+.close-btn-virayesh-legacy:hover {
     background-color: #d32f2f;
 }
 
-/* فرم ویرایش */
+/* فرم ویرایش — طراحی مدرن */
 #editUserForm {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 74%;
-    margin: 0 auto;
-}
-
-.form-row {
-    display: flex;
-    flex-direction: column; /* تغییر به ستون برای چیدمان عمودی */
-    gap: 10px; /* فاصله بین برچسب و فیلد */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+    padding: 24px 28px 20px;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
     direction: rtl;
-}
-
-.form-row label {
-    font-size: 16px;
-    color: #333;
-    min-width: 90px; /* تنظیم عرض ثابت برای هماهنگی */
     text-align: right;
 }
 
-.form-row .inputKarbr {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%; /* تنظیم عرض به 100% برای پر کردن عرض فرم */
-    max-width: 300px; /* حداکثر عرض فیلد */
-    box-sizing: border-box;
+#editUserForm .form-row.full-width,
+#editUserForm .form-row.form-row-inline {
+    grid-column: 1 / -1;
 }
 
-.form-row select {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: 'Vazir';
-    width: 100%;
+#editUserForm .form-row.form-row-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+#editUserForm .form-row.form-row-inline .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     direction: rtl;
 }
 
-/* دکمه ذخیره */
-.save-btn {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 3px 15px;
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 5px;
-    align-self: flex-end;
-    font-family: 'Vazir';
-    margin: 15px;
+.popup-content-virayesh .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    direction: rtl;
+    text-align: right;
 }
 
-.save-btn:hover {background-color: #45a049;}
+.popup-content-virayesh .form-row label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #415466;
+    margin: 0;
+    text-align: right;
+    display: block;
+}
 
-.border-vir {
-    border: 1px solid #ccc;
+.popup-content-virayesh .form-row .inputKarbr,
+.popup-content-virayesh .form-row select {
+    box-sizing: border-box;
+    min-height: 42px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-family: 'Vazir', sans-serif;
+    border: 1px solid #d8e1e8;
     border-radius: 10px;
-    width: 90%;
-    margin: 40px auto 0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #fbfbf5;
+    background: #fbfdff;
+    color: #1f3345;
+    width: 100%;
+    direction: rtl;
+    transition: border-color .2s ease, box-shadow .2s ease;
 }
 
+.popup-content-virayesh .form-row .inputKarbr:focus,
+.popup-content-virayesh .form-row select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.popup-content-virayesh .form-row .inputKarbr::placeholder {
+    color: #94a3b8;
+}
+
+/* دکمه‌های فوتر */
+.popup-content-virayesh .popup-footer {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 16px 28px 22px;
+    border-top: 1px solid #e8edf2;
+    background: #f8fafc;
+    border-radius: 0 0 18px 18px;
+}
+
+/* دکمه ذخیره — مدرن */
+.save-btn,
+.popup-content-virayesh .save-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    color: #fff;
+    border: 0;
+    padding: 10px 28px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: box-shadow .2s ease, transform .15s ease;
+}
+
+.popup-content-virayesh .save-btn:hover {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.popup-content-virayesh .save-btn:active {
+    transform: scale(0.97);
+}
+
+/* ===== تعریف کاربر جدید — طراحی مدرن ===== */
 #newUserBox {
+    width: min(94vw, 1100px);
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    position: relative;
+    margin: 0px auto 0 !important;
+    padding: 0;
+    background: #fff;
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(15, 23, 42, 0.06);
+    font-family: 'Vazir', sans-serif;
+}
+
+#newUserBox .new-user-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 10px;
+    border-bottom: 1px solid #e8edf2;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 18px 18px 0 0;
+    direction: rtl;
+    gap: 10px;
+}
+
+#newUserBox .new-user-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f3345;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#newUserBox .new-user-header .header-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+/* فرم تعریف کاربر — گرید مدرن */
+.new-user-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+    padding: 16px 20px 14px;
+    width: 100%;
+    box-sizing: border-box;
+    direction: rtl;
+    text-align: right;
+}
+
+.new-user-form .form-row-krbrjadid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    direction: rtl;
+    text-align: right;
+}
+
+.new-user-form .form-row-krbrjadid.full-width {
+    grid-column: 1 / -1;
+}
+
+.new-user-form .form-row-krbrjadid.inline-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+}
+
+.new-user-form .form-row-krbrjadid.inline-row.five-col {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+/* ردیف ساعات روزهای هفته — افقی */
+.new-user-form .form-row-krbrjadid.schedule-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e8edf2;
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ردیف اعمال بر همه روزها */
+.apply-all-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.apply-all-row label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.apply-all-group {
+    display: flex;
+    align-items: center;
+    direction: ltr;
+    flex-direction: row-reverse;
+}
+
+.apply-all-row input {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: 'Vazir', sans-serif;
+    border: 1px solid #d8e1e8;
+    border-radius: 0 8px 8px 0;
+    background: #fbfdff;
+    color: #1f3345;
+    direction: ltr;
+    text-align: center;
+    box-sizing: border-box;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.apply-all-row input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.apply-all-row input::placeholder {
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.apply-all-btn {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    color: #fff;
+    border: none;
+    border-right: 0;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: box-shadow .2s ease;
+    box-shadow: unset;
+    margin-right: -1px;
+}
+
+.apply-all-btn:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* جدول افقی ۷ ستونه روزها */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.schedule-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
-    width: 63rem;
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    font-family: 'Vazir', sans-serif;
+    gap: 4px;
+}
+
+.schedule-col .day-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
     text-align: center;
-    height: 438px;
-    overflow-y: hidden;
-    padding: 0 20px;
 }
 
-#newUserBox h2{margin-bottom: 15px;}
-
-#viray-gap {gap: 2px;}
-
-.form-row-krbrjadid {
-    display: flex;
-    flex-direction: column; /* نمایش برچسب و فیلد به صورت عمودی */
-    align-items: flex-start; /* تراز عمودی برچسب‌ها و فیلدها */
-    gap: 5px;
-    width: calc(25% - 20px); /* هر فیلد 25% از عرض صفحه را می‌گیرد، به علاوه فاصله بین ستون‌ها */
-}
-
-.form-row-krbrjadid label {
-    font-size: 16px;
-    color: #333;
-    font-weight: bold;
-    text-align: right; /* تنظیم عنوان‌ها به سمت راست */
+.schedule-col input {
     width: 100%;
-    margin: 0;
-}
-
-.form-row-krbrjadid input {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
+    height: 28px;
+    padding: 4px 6px;
+    font-size: 11px;
+    font-family: 'Vazir', sans-serif;
+    border: 1px solid #d8e1e8;
     border-radius: 8px;
-    width: 100%; /* عرض فیلدها به اندازه 100% از عرض ردیف */
+    background: #fbfdff;
+    color: #1f3345;
+    direction: ltr;
+    text-align: center;
     box-sizing: border-box;
-    direction: rtl; /* جهت نوشتاری به راست به چپ */
-    text-align: right; /* متن داخل فیلد هم به سمت راست تنظیم می‌شود */
+    transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-/* تنظیم placeholder به سمت راست */
-.form-row-krbrjadid input::placeholder {text-align: right;}
+.schedule-col input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
 
-.form-row-krbrjadid select {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-family: 'Vazir';
-    width: 100%;
+.schedule-col input::placeholder {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.new-user-form .inline-row .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     direction: rtl;
 }
 
+.new-user-form .form-row-krbrjadid label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #415466;
+    margin: 0;
+    text-align: right;
+    display: block;
+}
+
+.new-user-form .form-row-krbrjadid input,
+.new-user-form .form-row-krbrjadid select {
+    box-sizing: border-box;
+    min-height: 30px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: 'Vazir', sans-serif;
+    border: 1px solid #d8e1e8;
+    border-radius: 8px;
+    background: #fbfdff;
+    color: #1f3345;
+    width: 100%;
+    direction: rtl;
+    text-align: right;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.new-user-form .form-row-krbrjadid input:focus,
+.new-user-form .form-row-krbrjadid select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.new-user-form .form-row-krbrjadid input::placeholder {
+    color: #94a3b8;
+}
+
+/* فوتر با دکمه‌ها */
+.new-user-footer {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px 20px 14px;
+    border-top: 1px solid #e8edf2;
+    background: #f8fafc;
+    border-radius: 0 0 18px 18px;
+    direction: rtl;
+}
+
+.new-user-footer .save-btn-krbrjad {
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    color: #fff;
+    border: 0;
+    padding: 10px 28px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: box-shadow .2s ease, transform .15s ease;
+    width: auto;
+    bottom: auto;
+    left: auto;
+    margin: 0;
+    position: relative;
+}
+
+.new-user-footer .save-btn-krbrjad:hover {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.new-user-footer .save-btn-krbrjad:active {
+    transform: scale(0.97);
+}
+
+#viray-gap {gap: 2px;}
+
+/* Legacy overrides — keep for shift popup compatibility */
 .form-container {
     display: flex;
     align-items: flex-start;
     gap: 20px;
     width: 75%;
-    justify-content: center; /* برای وسط چین کردن فرم و دکمه */
+    justify-content: center;
     margin: 0 auto;
-    flex-wrap: wrap; /* این مورد به شما کمک می‌کند تا محتوا به طور صحیح در صورت نیاز به خط بعدی منتقل شود */
-    position: relative; /* تنظیم موقعیت نسبی برای قرار دادن دکمه در گوشه پایین */
+    flex-wrap: wrap;
+    position: relative;
     border: 1px solid #ddd;
     border-radius: 15px;
     padding: 15px;
     background: white;
     box-shadow: 0px 0px 13px rgba(0, 0, 0, 0.2);
-}
-
-.form-krbrjadid {
-    justify-content: flex-start; /* چیدن المان‌ها به سمت چپ */
-    flex-direction: row-reverse; /* ترتیب چیدمان المان‌ها را معکوس می‌کند */
-    display: flex;
-    flex-wrap: wrap; /* اجازه به المان‌ها برای پیچیدن به خط بعدی */
-    gap: 20px; /* فاصله بین ستون‌ها */
-    align-items: flex-start; /* تراز عمودی */
-    width: 100%; /* عرض کامل فرم */
-    max-width: 800px; /* حداکثر عرض فرم */
-    margin: 0 auto; /* برای وسط چین کردن فرم در صفحه */
 }
 
 form button,
@@ -1685,18 +2185,16 @@ form button,
 .ok-btn,
 .show-shift-krbrinmah,
 .add-shift-krbrinmah,
-.update-button,
-.close-btn-peygham,
-.close-btn-virayesh {
-    background: linear-gradient(90deg, #22c55e 0%, #14b8a6 45%, #0ea5e9 100%);
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    font-family: 'Vazir';
-    box-shadow: 0 10px 18px rgba(34, 197, 94, 0.22);
-}
+.update-button,    .close-btn-peygham {
+        background: linear-gradient(90deg, #22c55e 0%, #14b8a6 45%, #0ea5e9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        font-family: 'Vazir';
+        box-shadow: 0 10px 18px rgba(34, 197, 94, 0.22);
+    }
 
 form button:hover,
 .save-btn:hover,
@@ -1716,11 +2214,9 @@ form button:hover,
 .ok-btn:hover,
 .show-shift-krbrinmah:hover,
 .add-shift-krbrinmah:hover,
-.update-button:hover,
-.close-btn-peygham:hover,
-.close-btn-virayesh:hover {
-    filter: brightness(1.04);
-}
+.update-button:hover,    .close-btn-peygham:hover {
+        filter: brightness(1.04);
+    }
 
 .update-button:active,
 .confirm-changes-btn:active,
@@ -3508,39 +4004,7 @@ form button:active {
 }
 
 /* استایل برای متن tooltip */
-.tooltip-text-table-del {
-    visibility: hidden;
-    width: 46px;
-    height: 30px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    font-family: 'Vazir';
-    opacity: 0;
-    transition: opacity 0.3s;
-    z-index: 9999;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-/* فلش کوچک برای بالا */
-.tooltip-text-table-del::after {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 5px solid rgba(0, 0, 0, 0.8); /* رنگ فلش */
-}
+/* قبلاً در بخش جدول کاربران تعریف شده */
 
 /* استایل برای متن tooltip */
 .tooltip-text-table-view {
@@ -3623,21 +4087,7 @@ form button:active {
 
 /* استایل برای دکمه‌های تغییرات */
 .trash-btn, .view-btn, .check-btn,
-.edit-btn, .trash-icon {
-    padding: 5px;
-    font-size: 0.9em;
-    margin: 2px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #fff;
-    background-color: transparent;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: visible;
-}
+/* قبلاً در بخش جدول کاربران تعریف شده */
 
 /* استایل هاور */
 .trash-btn:hover, .view-btn:hover ,.check-btn:hover {
@@ -4030,6 +4480,63 @@ form button:active {
     max-width: 100%;
 }
 
+/* ===== حالت نمایش همزمان دو باکس (همکاران) — هر کدام نصف ارتفاع سایدبار ===== */
+/* وقتی هر دو userInfoBox و newUserBox همزمان دیده می‌شوند */
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox {
+    position: fixed !important;
+    top: 8rem !important;
+    right: calc(78px + 1rem) !important;
+    left: 2rem !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc((100vh - 8rem - 12px - 1rem) / 2) !important;
+    margin: 0 !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    display: flex !important;
+    flex-direction: column;
+    z-index: 50;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox .user-table-scroll {
+    max-height: none !important;
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox .userInfo-header {
+    flex-shrink: 0;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox {
+    position: fixed !important;
+    top: calc(8rem + (100vh - 8rem - 12px - 1rem) / 2 + 1rem) !important;
+    right: calc(78px + 1rem) !important;
+    left: 2rem !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc((100vh - 8rem - 12px - 1rem) / 2) !important;
+    margin: 0 !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    display: flex !important;
+    flex-direction: column;
+    z-index: 50;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox .new-user-header {
+    flex-shrink: 0;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox #newUserForm {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox .new-user-footer {
+    flex-shrink: 0;
+}
+
 /* --- attendance panels side by side --- */
 .attendance-panels-row {
     display: flex;
@@ -4201,8 +4708,9 @@ form button:active {
 
 .payroll-config-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
     gap: 14px;
+    align-items: end;
 }
 
 .payroll-config-item {
@@ -4742,7 +5250,7 @@ form button:active {
 
     .edit-btn, .trash-icon { margin: -3px; }
 
-    .edit-btn img, .trash-icon img {
+    .edit-btn svg, .trash-icon svg {
         width: 12px;
         height: 12px;
     }
@@ -4761,6 +5269,40 @@ form button:active {
         font-size: 15px;
         margin-bottom: 8px;
         margin-top: 3px;
+    }
+
+    .new-user-form {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .new-user-form .form-row-krbrjadid.inline-row {
+        grid-template-columns: 1fr;
+    }
+
+    .new-user-form .form-row-krbrjadid.inline-row .form-field {
+        grid-column: 1;
+    }
+
+    .new-user-form .schedule-row .schedule-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .new-user-form .schedule-row .apply-all-row {
+        flex-wrap: wrap;
+    }
+
+    .new-user-header {
+        padding: 10px 16px 8px;
+    }
+
+    .new-user-header h2 {
+        font-size: 13px;
+    }
+
+    .new-user-footer {
+        padding: 8px 16px 12px;
     }
 
     .form-krbrjadid {
@@ -6129,36 +6671,47 @@ form button:active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 64px;
-    margin: 2px 0;
-    padding: 6px 10px;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 0;
     border: none;
-    border-radius: 20px;
+    border-radius: 8px;
+    position: relative;
     font-family: 'Vazir', sans-serif;
     font-size: 13px;
     font-weight: bold;
-    color: #fff;
     cursor: pointer;
     transition: background-color 0.2s ease, opacity 0.2s ease;
     white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.attendance-action-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 .attendance-action-btn--checkin {
-    background-color: #4caf50;
+    background-color: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
 }
 .attendance-action-btn--checkin:hover:not(:disabled) {
-    background-color: #45a049;
+    background-color: rgba(34, 197, 94, 0.22);
 }
 
 .attendance-action-btn--checkout {
-    background-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.12);
+    color: #d97706;
 }
 .attendance-action-btn--checkout:hover:not(:disabled) {
-    background-color: #d97706;
+    background-color: rgba(245, 158, 11, 0.22);
 }
 
 .attendance-action-btn--done {
-    background-color: #9ca3af;
+    background-color: rgba(156, 163, 175, 0.12);
+    color: #6b7280;
     cursor: default;
 }
 
@@ -6293,7 +6846,7 @@ form button:active {
 
 .overtime-payroll-table th,
 .overtime-payroll-table td {
-    min-width: 92px;
+    width: fit-content;
 }
 
 .overtime-payroll-table .payroll-col-name {
@@ -7366,5 +7919,47 @@ form button:active {
     .attendance-tools-row {
         width: min(100%, 620px);
         padding: 12px;
+    }
+}
+
+/* ===== پاپ‌آپ ویرایش — ریسپانسیو ===== */
+@media (max-width: 640px) {
+    .modal-virayesh {
+        padding: 10px;
+        align-items: flex-end;
+    }
+
+    .popup-content-virayesh {
+        width: 100%;
+        border-radius: 18px 18px 0 0;
+        max-height: 85vh;
+    }
+
+    .popup-content-virayesh .popup-header {
+        padding: 18px 20px 14px;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .popup-content-virayesh .popup-header h2 {
+        font-size: 16px;
+    }
+
+    #editUserForm {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 20px;
+    }
+
+    #editUserForm .form-row.full-width,
+    #editUserForm .form-row.form-row-inline {
+        grid-column: 1;
+    }
+
+    #editUserForm .form-row.form-row-inline {
+        grid-template-columns: 1fr;
+    }
+
+    .popup-content-virayesh .popup-footer {
+        padding: 14px 20px 18px;
     }
 }

@@ -1268,13 +1268,15 @@ class ReportData:
         self.total_remaining = total_remaining
 
 class UserData:
-    def __init__(self, username, department, work_hours, substitute, name, employment_status="official"):
+    def __init__(self, username, department, work_hours, substitute, name, employment_status="official", is_active="active", password=""):
         self.username = username
         self.department = department
         self.work_hours = work_hours
         self.substitute = substitute
         self.name = name
         self.employment_status = employment_status or "official"
+        self.is_active = (is_active or "active").strip().lower()
+        self.password = password or ""
 
 class PassData:
     def __init__(self, row_number, username, total_pass_time):
@@ -1315,6 +1317,17 @@ def ensure_employment_status_column(cursor):
         IF COL_LENGTH(N'dbo.user_table', N'employment_status') IS NULL
         BEGIN
             ALTER TABLE dbo.user_table ADD employment_status NVARCHAR(20) NULL;
+        END
+    """)
+
+
+def ensure_is_active_column(cursor):
+    """ستون فعال/غیرفعال بودن کاربر را اضافه می‌کند (پیش‌فرض: 'active')."""
+    cursor.execute("""
+        IF COL_LENGTH(N'dbo.user_table', N'is_active') IS NULL
+        BEGIN
+            ALTER TABLE dbo.user_table ADD is_active NVARCHAR(10) NULL;
+            UPDATE dbo.user_table SET is_active = 'active' WHERE is_active IS NULL;
         END
     """)
 
@@ -1436,6 +1449,7 @@ async def _render_admin_page(request: Request):
         conn = get_db_connection()
         cursor = conn.cursor()
         ensure_employment_status_column(cursor)
+        ensure_is_active_column(cursor)
         conn.commit()
 
         # دریافت اطلاعات از جدول leave_report
@@ -1447,7 +1461,7 @@ async def _render_admin_page(request: Request):
 
         # دریافت اطلاعات از جدول user_table
         cursor.execute("""
-            SELECT username, department, work_hours, substitute, name, employment_status
+            SELECT username, department, work_hours, substitute, name, employment_status, is_active, password
             FROM user_table
         """)
         users_data = cursor.fetchall()
@@ -1460,7 +1474,9 @@ async def _render_admin_page(request: Request):
             UserData(
                 username=user[0], department=user[1], work_hours=user[2], substitute=user[3],
                 name=user[4], employment_status=str(user[5] or "official").strip().lower()
-                if str(user[5] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official"
+                if str(user[5] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official",
+                is_active=user[6],
+                password=str(user[7] or "")
             )
             for user in users_data
         ]
@@ -1780,6 +1796,7 @@ async def add_user(
                               'Trusted_Connection=yes;')
         cursor = conn.cursor()
         ensure_employment_status_column(cursor)
+        ensure_is_active_column(cursor)
         employment_status = str(employment_status or "official").strip().lower()
         if employment_status not in EMPLOYMENT_STATUS_VALUES:
             employment_status = "official"
@@ -1841,6 +1858,9 @@ async def update_user(request: Request):
         work_hours = data.get("work_hours")
         department = data.get("department")
         employment_status = str(data.get("employment_status") or "").strip().lower()
+        is_active = str(data.get("is_active") or "active").strip().lower()
+        if is_active not in ('active', 'inactive'):
+            is_active = 'active'
 
         if not current_username or not username:
             return {"success": False, "error": "نام کاربری الزامی است."}
@@ -1851,12 +1871,17 @@ async def update_user(request: Request):
         # رمز عبور خالی یعنی رمز فعلی حفظ شود؛ رمز جدید با همان سازوکار ورود ذخیره می‌شود.
         password_value = str(password).strip() if password is not None else ""
         ensure_employment_status_column(cursor)
+        ensure_is_active_column(cursor)
         columns = get_user_table_columns(cursor)
         set_clauses = ["username = ?", "substitute = ?", "work_hours = ?", "department = ?"]
         params = [username, substitute, work_hours, department]
         if employment_status in EMPLOYMENT_STATUS_VALUES:
             set_clauses.append("employment_status = ?")
             params.append(employment_status)
+
+        if 'is_active' in columns:
+            set_clauses.append("is_active = ?")
+            params.append(is_active)
 
         if password_value:
             set_clauses.append("password = ?")

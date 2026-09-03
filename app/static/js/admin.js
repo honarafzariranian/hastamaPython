@@ -2453,9 +2453,9 @@ window.onclick = function(event) {
 // پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران
 // پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران
 
-function openEditPopup(username, substitute, work_hours, department, employmentStatus) {
+function openEditPopup(username, substitute, work_hours, department, employmentStatus, isActive, currentPassword) {
     // پاپ‌آپ را نمایش می‌دهیم
-    document.getElementById('editPopup').style.display = 'block';
+    document.getElementById('editPopup').style.display = 'flex';
 
     // نام کاربری قبلی برای پیدا کردن رکورد در زمان تغییر نام حفظ می‌شود
     document.getElementById('editOriginalUsername').value = username;
@@ -2464,8 +2464,15 @@ function openEditPopup(username, substitute, work_hours, department, employmentS
     document.getElementById('editUsername').value = username;
     document.getElementById('editPassword').value = '';
 
+    // نمایش رمز عبور فعلی (فقط خواندنی)
+    var currentPasswordField = document.getElementById('editCurrentPassword');
+    if (currentPasswordField) currentPasswordField.value = currentPassword || '—';
+
     var employmentStatusSelect = document.getElementById('editEmploymentStatus');
     if (employmentStatusSelect) employmentStatusSelect.value = employmentStatus || 'official';
+
+    var isActiveSelect = document.getElementById('editIsActive');
+    if (isActiveSelect) isActiveSelect.value = isActive || 'active';
 
     // انتخاب مقدار جانشین
     var substituteSelect = document.getElementById('editSubstitute');
@@ -2481,6 +2488,18 @@ function openEditPopup(username, substitute, work_hours, department, employmentS
     departmentSelect.value = department;  // مقدار انتخابی را به مقدار department تغییر می‌دهیم
 }
 
+function openEditPopupFromData(btn) {
+    openEditPopup(
+        btn.getAttribute('data-edit-username'),
+        btn.getAttribute('data-edit-substitute'),
+        btn.getAttribute('data-edit-work-hours'),
+        btn.getAttribute('data-edit-department'),
+        btn.getAttribute('data-edit-employment'),
+        btn.getAttribute('data-edit-active'),
+        btn.getAttribute('data-edit-password')
+    );
+}
+
 function closeEditPopup() {
     // پاپ‌آپ را مخفی می‌کنیم
     document.getElementById('editPopup').style.display = 'none';
@@ -2494,6 +2513,7 @@ function updateUser() {
     const work_hours = document.getElementById("editWorkHours").value;
     const department = document.getElementById("editDepartment").value;
     const employment_status = document.getElementById("editEmploymentStatus")?.value || "official";
+    const is_active = document.getElementById("editIsActive")?.value || "active";
 
     if (!currentUsername || !username) {
         showSystemError("نام کاربری را وارد کنید.");
@@ -2512,7 +2532,8 @@ function updateUser() {
             substitute: substitute,
             work_hours: work_hours,
             department: department,
-            employment_status: employment_status
+            employment_status: employment_status,
+            is_active: is_active
         })
     })
         .then(async response => {
@@ -3651,28 +3672,21 @@ if (!window.__modernTicketing) document.querySelector('.ersal-icon').addEventLis
 // تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی// تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی// تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی
 // تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی// تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی// تنظیمات باز و بسته کردن پاپ تعریف ساعت هفتگی
 
-document.getElementById("openSchedulePopup").addEventListener("click", function() {
-    // دریافت مقادیر از فرم تعریف کاربر
-    document.getElementById("hiddenName").value = document.getElementById("newFirstName").value;
-    document.getElementById("hiddenLastName").value = document.getElementById("newLastName").value;
-    document.getElementById("hiddenDepartment").value = document.getElementById("newDepartment").value;
-    document.getElementById("hiddenWorkHours").value = document.getElementById("newWorkHours").value;
-    document.getElementById("hiddenSubstitute").value = document.getElementById("newSubstitute").value;
-    document.getElementById("hiddenEmploymentStatus").value = document.getElementById("newEmploymentStatus").value;
-    document.getElementById("hiddenUsername").value = document.getElementById("newUsername").value;
-    document.getElementById("hiddenPassword").value = document.getElementById("nemPassword").value;
-    document.getElementById("hiddenRole").value = document.getElementById("newRole").value;
-    document.getElementById("hiddenHozoorNum").value = document.getElementById("newhozoorNum").value;
+// فرم تعریف کاربر جدید مستقیماً ارسال می‌شود (بدون پاپ‌آپ)
 
-    // نمایش پاپ‌آپ
-    document.getElementById("overlaySaatHaftehgi").style.display = "block";
-    document.getElementById("schedulePopup").style.display = "block";
-});
-
-document.getElementById("closePopupSaatHaftehgi").addEventListener("click", function() {
-    document.getElementById("overlaySaatHaftehgi").style.display = "none";
-    document.getElementById("schedulePopup").style.display = "none";
-});
+// اعمال ساعت بر همه روزها
+var applyAllBtn = document.getElementById('applyAllBtn');
+if (applyAllBtn) {
+    applyAllBtn.addEventListener('click', function () {
+        var val = document.getElementById('applyAllDays').value;
+        if (!val) return;
+        var dayIds = ['shanbeh', 'yekshanbeh', 'doshanbeh', 'seshanbeh', 'chrshanbeh', 'panjshanbeh', 'jomeh'];
+        dayIds.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.value = val;
+        });
+    });
+}
 
 // تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج
 // تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج
@@ -4238,9 +4252,9 @@ var ATTENDANCE_STATUS_LABELS = {
 };
 
 var ATTENDANCE_BUTTON_LABELS = {
-    "not_checked_in": "ثبت ورود",
-    "checked_in": "ثبت خروج",
-    "checked_out": "تکمیل شده"
+    "not_checked_in": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
+    "checked_in": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    "checked_out": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 };
 
 // آخرین وضعیت تأییدشده توسط سرور، برای بازگردانی UI پس از خطا
@@ -4282,7 +4296,15 @@ function applyAttendanceState(username, status, checkIn, checkOut) {
     var btn = findAttendanceButton(username);
     if (btn) {
         btn.disabled = false;
-        btn.textContent = ATTENDANCE_BUTTON_LABELS[status] || "—";
+        // فقط آیکون SVG را جایگزین کن، span tooltip را حفظ کن
+        var oldSvg = btn.querySelector('svg');
+        var newSvgHtml = ATTENDANCE_BUTTON_LABELS[status] || '';
+        if (oldSvg && newSvgHtml) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = newSvgHtml;
+            var newSvg = tmp.querySelector('svg');
+            if (newSvg) oldSvg.replaceWith(newSvg);
+        }
         btn.setAttribute("data-action", status);
         btn.classList.remove("attendance-action-btn--checkin", "attendance-action-btn--checkout", "attendance-action-btn--done", "attendance-action-btn--loading");
         btn.classList.add(
@@ -4307,7 +4329,6 @@ function setAttendanceLoading(username, loading) {
     if (loading) {
         btn.disabled = true;
         btn.classList.add("attendance-action-btn--loading");
-        btn.textContent = btn.getAttribute("data-action") === "not_checked_in" ? "در حال ثبت ورود…" : "در حال ثبت خروج…";
     } else {
         btn.classList.remove("attendance-action-btn--loading");
         // بازگردانی از حافظهٔ کش (آخرین وضعیت تأییدشده)

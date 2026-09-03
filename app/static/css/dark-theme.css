@@ -1118,7 +1118,8 @@ body.dark-mode .dropdown-content,
 body.dark-mode .leave-date-picker,
 body.dark-mode .calendar-dropdown,
 body.dark-mode .settings-panel-dialog,
-body.dark-mode .profile-panel-dialog {
+body.dark-mode .profile-panel-dialog,
+body.dark-mode .confirm-delete-popup {
     background-color: var(--dk-surface);
     border-color: var(--dk-border);
     color: var(--dk-text);
@@ -1129,8 +1130,26 @@ body.dark-mode .modal-content h2,
 body.dark-mode .modal-content label,
 body.dark-mode .modal-content p,
 body.dark-mode .popup-content h2,
-body.dark-mode .popup-content label {
+body.dark-mode .popup-content label,
+body.dark-mode .confirm-delete-header h2,
+body.dark-mode .confirm-delete-body p {
     color: var(--dk-text);
+}
+
+body.dark-mode .confirm-delete-header {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .confirm-delete-footer {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .confirm-delete-btn-cancel {
+    background: var(--dk-surface-3);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
 }
 
 body.dark-mode .modal-content input,

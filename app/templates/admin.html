@@ -356,21 +356,25 @@
 
         <!-- باکس اطلاعات کاربران -->
         <div class="management-box" id="userInfoBox" style="display:none;">
-            <h2>اطلاعات کاربران</h2>
+            <div class="userInfo-header">
+                <span class="userInfo-header-icon">👥</span>
+                <h2>اطلاعات کاربران</h2>
+            </div>
             <div class="user-table-scroll" role="region" aria-label="جدول اطلاعات کاربران، قابل پیمایش افقی">
                 <table id="userTable">
                 <thead>
                     <tr>
-                        <th class="radif">ردیف</th>
+                        <th class="radif">#</th>
                         <th class="nam-karbr">نام کاربر</th>
-                        <th class="dapart">بخش فعالیت</th>
-                        <th class="saat-kari">ساعت‌های کاری</th>
+                        <th class="dapart">بخش</th>
+                        <th class="saat-kari">ساعت کاری</th>
                         <th class="janeshin">جانشین</th>
-                        <th class="saat-vorood">ساعت ورود</th>
-                        <th class="saat-khorooj">ساعت خروج</th>
-                        <th class="vaziat-hozoor">وضعیت حضور</th>
-                        <th class="vaziat-estekhdam">وضعیت استخدام</th>
-                        <th class="taghirat">تغییرات</th>
+                        <th class="saat-vorood">ورود</th>
+                        <th class="saat-khorooj">خروج</th>
+                        <th class="vaziat-hozoor">حضور</th>
+                        <th class="vaziat-estekhdam">نوع استخدام</th>
+                        <th class="vaziat-faaliat">وضعیت</th>
+                        <th class="taghirat">عملیات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -389,25 +393,30 @@
                                 {% if user.employment_status == 'unofficial' %}غیر رسمی{% else %}رسمی{% endif %}
                             </span>
                         </td>
-                        <td>
-                            <!-- دکمه حذف با ارسال اطلاعات به روت /admin -->
+                        <td class="is-active-cell">
+                            <span class="is-active-label" data-active="{{ user.is_active or 'active' }}">
+                                {% if user.is_active == 'inactive' %}غیرفعال{% else %}فعال{% endif %}
+                            </span>
+                        </td>
+                        <td class="userTable-actions-cell">
                             <form method="POST" action="{{ url_for('admin') }}" class="trash-icon-form"
                                 id="form-{{ user.username }}">
                                 <input type="hidden" name="username" value="{{ user.username }}">
                                 <button type="button" class="trash-icon" onclick="showConfirmDialog('{{ user.username }}')">
-                                    <img src="/static/images/trash.png" alt="حذف">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                                     <span class="tooltip-text-table-del">حذف</span>
                                 </button>
                             </form>
 
                             <button class="edit-btn"
-                                onclick="openEditPopup('{{ user.username }}', '{{ user.substitute }}', '{{ user.work_hours }}', '{{ user.department }}', '{{ user.employment_status }}')">
-                                <img src="/static/images/writing.png" alt="ویرایش">
+                                onclick="openEditPopupFromData(this)" data-edit-username="{{ user.username }}" data-edit-substitute="{{ user.substitute }}" data-edit-work-hours="{{ user.work_hours }}" data-edit-department="{{ user.department }}" data-edit-employment="{{ user.employment_status }}" data-edit-active="{{ user.is_active or 'active' }}" data-edit-password="{{ user.password }}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 <span class="tooltip-text-table">ویرایش</span>
                             </button>
 
                             <button type="button" class="attendance-action-btn" data-username="{{ user.username }}" disabled>
-                                ثبت حضور
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                                <span class="tooltip-text-table-att">ثبت ورود دستی</span>
                             </button>
 
                         </td>
@@ -420,23 +429,36 @@
 
         <!-- باکس تعریف کاربر جدید -->
         <div id="newUserBox" class="management-box" style="display:none;">
-            <h2>تعریف کاربر جدید</h2>
+            <!-- هدر -->
+            <div class="new-user-header">
+                <h2>
+                    <span class="header-icon">👤</span>
+                    تعریف کاربر جدید
+                </h2>
+            </div>
 
             <!-- فرم تعریف کاربر جدید -->
-            <div class="form-container">
-                <form id="newUserForm" class="form-krbrjadid">
+            <form id="newUserForm" class="new-user-form" method="POST" action="{{ url_for('add_user') }}">
 
-                    <div class="form-row-krbrjadid">
+                <!-- ردیف ۱: نام + نام خانوادگی + نام کاربری + رمز عبور + بخش فعالیت -->
+                <div class="form-row-krbrjadid inline-row five-col">
+                    <div class="form-field">
                         <label for="newFirstName">نام</label>
-                        <input type="text" id="newFirstName" name="name" required autocomplete="off">
+                        <input type="text" id="newFirstName" name="name" required autocomplete="off" placeholder="نام">
                     </div>
-
-                    <div class="form-row-krbrjadid">
+                    <div class="form-field">
                         <label for="newLastName">نام خانوادگی</label>
-                        <input type="text" id="newLastName" name="last_name" required autocomplete="off">
+                        <input type="text" id="newLastName" name="last_name" required autocomplete="off" placeholder="نام خانوادگی">
                     </div>
-
-                    <div class="form-row-krbrjadid">
+                    <div class="form-field">
+                        <label for="newUsername">نام کاربری</label>
+                        <input type="text" id="newUsername" name="username" required autocomplete="off" placeholder="نام کاربری">
+                    </div>
+                    <div class="form-field">
+                        <label for="nemPassword">رمز عبور</label>
+                        <input type="password" id="nemPassword" name="password" required autocomplete="off" placeholder="رمز عبور">
+                    </div>
+                    <div class="form-field">
                         <label for="newDepartment">بخش فعالیت</label>
                         <select id="newDepartment" name="department" required>
                             <option value="" disabled selected>انتخاب کنید</option>
@@ -455,33 +477,42 @@
                             <option value="هماتولوژی">هماتولوژی</option>
                         </select>
                     </div>
+                </div>
 
-                    <div class="form-row-krbrjadid">
+                <!-- ردیف ۲: ساعت کاری + وضعیت استخدام + نوع کاربری + جانشین + کد ساعت زن -->
+                <div class="form-row-krbrjadid inline-row five-col">
+                    <div class="form-field">
                         <label for="newWorkHours">ساعت کاری</label>
                         <select id="newWorkHours" name="work_hours">
                             <option value="" disabled selected>انتخاب کنید</option>
-                            <option value="16:00 - 09:00">16:00 - 09:00</option>
-                            <option value="14:00 - 07:00">14:00 - 07:00</option>
-                            <option value="15:00 - 08:00">15:00 - 08:00</option>
-                            <option value="20:00 - 14:00">20:00 - 14:00</option>
-                            <option value="18:00 - 13:00">18:00 - 13:00</option>
-                            <option value="13:30 - 06:30">13:30 - 06:30</option>
-                            <option value="20:00 - 13:00">20:00 - 13:00</option>
-                            <option value="14:30 - 07:30">14:30 - 07:30</option>
-                            <option value="20:30 - 13:30">20:30 - 13:30</option>
-                            <option value="00:00 - 00:00">"00:00 - 00:00</option>
+                            <option value="16:00 - 09:00">۱۶:۰۰ - ۰۹:۰۰</option>
+                            <option value="14:00 - 07:00">۱۴:۰۰ - ۰۷:۰۰</option>
+                            <option value="15:00 - 08:00">۱۵:۰۰ - ۰۸:۰۰</option>
+                            <option value="20:00 - 14:00">۲۰:۰۰ - ۱۴:۰۰</option>
+                            <option value="18:00 - 13:00">۱۸:۰۰ - ۱۳:۰۰</option>
+                            <option value="13:30 - 06:30">۱۳:۳۰ - ۰۶:۳۰</option>
+                            <option value="20:00 - 13:00">۲۰:۰۰ - ۱۳:۰۰</option>
+                            <option value="14:30 - 07:30">۱۴:۳۰ - ۰۷:۳۰</option>
+                            <option value="20:30 - 13:30">۲۰:۳۰ - ۱۳:۳۰</option>
+                            <option value="00:00 - 00:00">۰۰:۰۰ - ۰۰:۰۰</option>
                         </select>
                     </div>
-
-                    <div class="form-row-krbrjadid">
+                    <div class="form-field">
                         <label for="newEmploymentStatus">وضعیت استخدام</label>
                         <select id="newEmploymentStatus" name="employment_status" required>
                             <option value="official" selected>رسمی</option>
                             <option value="unofficial">غیر رسمی</option>
                         </select>
                     </div>
-
-                    <div class="form-row-krbrjadid">
+                    <div class="form-field">
+                        <label for="newRole">نوع کاربری</label>
+                        <select id="newRole" name="role" required>
+                            <option value="" disabled selected>انتخاب کنید</option>
+                            <option value="admin">مدیر</option>
+                            <option value="user">کاربر عادی</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
                         <label for="newSubstitute">جانشین</label>
                         <select id="newSubstitute" name="substitute">
                             <option value="" disabled selected>انتخاب کنید</option>
@@ -506,90 +537,87 @@
                             <option value="عبدالله بهمدی">عبدالله بهمدی</option>
                         </select>
                     </div>
-
-                    <div class="form-row-krbrjadid">
-                        <label for="newUsername">نام کاربری</label>
-                        <input type="text" id="newUsername" name="username" required autocomplete="off">
-                    </div>
-
-                    <div class="form-row-krbrjadid">
-                        <label for="nemPassword">رمز عبور</label>
-                        <input type="text" id="nemPassword" name="password" required autocomplete="off">
-                    </div>
-
-                    <div class="form-row-krbrjadid">
-                        <label for="newRole">نوع کاربری</label>
-                        <select id="newRole" name="role" required>
-                            <option value="" disabled selected>انتخاب کنید</option>
-                            <option value="admin">مدیر</option>
-                            <option value="user">کاربر عادی</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-row-krbrjadid">
+                    <div class="form-field">
                         <label for="newhozoorNum">کد ساعت زن</label>
-                        <input type="text" id="newhozoorNum" name="hozoorNum" placeholder="باید 8 رقمی وارد کنید" required>
-                    </div>
-
-                </form>
-            </div>
-
-            <!-- دکمه ذخیره -->
-            <button type="submit" class="save-btn-krbrjad" id="openSchedulePopup">انتخاب ساعات روزهای هفته</button>
-        </div>
-
-        <!-- باکس انتخاب ساعات -->
-        <!-- پس‌زمینه‌ی تیره -->
-        <div id="overlaySaatHaftehgi" class="overlaySaatHafteh"></div>
-        <div id="schedulePopup" class="popupSaatHaftehgi">
-            <h2>انتخاب ساعات روزهای هفته</h2>
-            <form id="scheduleForm" method="POST" action="{{ url_for('add_user') }}">
-                <!-- فیلدهای مخفی برای اطلاعات کاربر -->
-                <input type="hidden" id="hiddenName" name="name">
-                <input type="hidden" id="hiddenLastName" name="last_name">
-                <input type="hidden" id="hiddenDepartment" name="department">
-                <input type="hidden" id="hiddenWorkHours" name="work_hours">
-                <input type="hidden" id="hiddenSubstitute" name="substitute">
-                <input type="hidden" id="hiddenEmploymentStatus" name="employment_status">
-                <input type="hidden" id="hiddenUsername" name="username">
-                <input type="hidden" id="hiddenPassword" name="password">
-                <input type="hidden" id="hiddenRole" name="role">
-                <input type="hidden" id="hiddenHozoorNum" name="hozoorNum">
-
-                <div class="schedule-container">
-                    <!-- بخش روزهای هفته -->
-                    <div class="days-column">
-                        <div class="day-label">شنبه</div>
-                        <div class="day-label">یکشنبه</div>
-                        <div class="day-label">دوشنبه</div>
-                        <div class="day-label">سه‌شنبه</div>
-                        <div class="day-label">چهارشنبه</div>
-                        <div class="day-label">پنج‌شنبه</div>
-                    </div>
-
-                    <!-- بخش فیلدهای ورودی -->
-                    <div class="fields-column">
-                        <input type="text" id="shanbeh" name="shanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="yekshanbeh" name="yekshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="doshanbeh" name="doshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="seshanbeh" name="seshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="chrshanbeh" name="chrshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="panjshanbeh" name="panjshanbeh" placeholder="12:00 - 24:00">
+                        <input type="text" id="newhozoorNum" name="hozoorNum" placeholder="۸ رقمی" required autocomplete="off">
                     </div>
                 </div>
-            
-                <!-- دکمه‌ها -->
-                <button type="submit" id="zakhireHaftegiKarbar" onclick="submitForm()">ذخیره کاربر</button>
-                <button type="button" id="closePopupSaatHaftehgi">انصراف</button>
-            </form>  
+
+                <!-- ردیف ۳: ساعات روزهای هفته -->
+                <div class="form-row-krbrjadid schedule-row">
+                    <!-- اعمال بر همه روزها -->
+                    <div class="apply-all-row">
+                        <label for="applyAllDays">اعمال بر همه روزها:</label>
+                        <div class="apply-all-group">
+                            <input type="text" id="applyAllDays" class="apply-all-input" placeholder="مثلاً ۰۸:۰۰ - ۱۶:۰۰">
+                            <button type="button" id="applyAllBtn" class="apply-all-btn">اعمال</button>
+                        </div>
+                    </div>
+                    <!-- جدول افقی روزها -->
+                    <div class="schedule-grid">
+                        <div class="schedule-col">
+                            <div class="day-label">شنبه</div>
+                            <input type="text" id="shanbeh" name="shanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">یکشنبه</div>
+                            <input type="text" id="yekshanbeh" name="yekshanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">دوشنبه</div>
+                            <input type="text" id="doshanbeh" name="doshanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">سه‌شنبه</div>
+                            <input type="text" id="seshanbeh" name="seshanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">چهارشنبه</div>
+                            <input type="text" id="chrshanbeh" name="chrshanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">پنج‌شنبه</div>
+                            <input type="text" id="panjshanbeh" name="panjshanbeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                        <div class="schedule-col">
+                            <div class="day-label">جمعه</div>
+                            <input type="text" id="jomeh" name="jomeh" placeholder="۰۸:۰۰ - ۱۶:۰۰">
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+            <!-- فوتر -->
+            <div class="new-user-footer">
+                <button type="submit" form="newUserForm" class="save-btn-krbrjad">ذخیره کاربر</button>
+            </div>
         </div>
 
         <!-- پنجره مدال تایید حذف -->
         <div id="confirmDeleteModal" class="modal">
-            <div class="modal-content">
-                <h2>آیا مطمئن به حذف کاربر هستید؟</h2>
-                <button id="confirmDeleteBtn" class="delete-btn">تایید</button>
-                <button class="cancel-btn" onclick="closeConfirmDialog()">انصراف</button>
+            <div class="confirm-delete-popup">
+                <div class="confirm-delete-header">
+                    <h2>
+                        <span class="confirm-delete-header-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </span>
+                        تایید حذف کاربر
+                    </h2>
+                    <button class="close-btn-confirm-delete" onclick="closeConfirmDialog()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="confirm-delete-body">
+                    <p>آیا از حذف این کاربر اطمینان دارید؟ این عملیات قابل بازگشت نیست.</p>
+                </div>
+                <div class="confirm-delete-footer">
+                    <button id="confirmDeleteBtn" class="confirm-delete-btn-danger">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        بله، حذف شود
+                    </button>
+                    <button class="confirm-delete-btn-cancel" onclick="closeConfirmDialog()">انصراف</button>
+                </div>
             </div>
         </div>
 
@@ -621,20 +649,29 @@
         <!-- پاپ‌آپ ویرایش -->
         <div id="editPopup" class="modal-virayesh">
             <div class="popup-content-virayesh">
-                <!-- دکمه بستن -->
-                <button class="close-btn-virayesh" onclick="closeEditPopup()">بستن</button>
-                <div class="border-vir">
-                    <!-- عنوان پاپ‌آپ -->
-                    <h2>ویرایش اطلاعات کاربر</h2>
+                <!-- هدر -->
+                <div class="popup-header">
+                    <h2>
+                        <span class="popup-header-icon">✏️</span>
+                        ویرایش اطلاعات کاربر
+                    </h2>
+                    <button class="close-btn-virayesh" onclick="closeEditPopup()">×</button>
+                </div>
 
-                    <!-- فرم ویرایش -->
-                    <form id="editUserForm" method="POST" action="{{ url_for('update_user') }}" class="form-vira">
+                <!-- فرم ویرایش -->
+                <form id="editUserForm" method="POST" action="{{ url_for('update_user') }}" class="form-vira">
                         <input type="hidden" id="editOriginalUsername" name="current_username">
-                        <div class="form-row">
-                            <label for="editUsername">نام کاربری:</label>
-                            <input type="text" id="editUsername" name="editUsername" value="" class="inputKarbr" placeholder="نام کاربری را وارد کنید" required autocomplete="off">
+                        <div class="form-row form-row-inline">
+                            <div class="form-field">
+                                <label for="editUsername">نام کاربری:</label>
+                                <input type="text" id="editUsername" name="editUsername" value="" class="inputKarbr" placeholder="نام کاربری را وارد کنید" required autocomplete="off">
+                            </div>
+                            <div class="form-field">
+                                <label for="editCurrentPassword">رمز عبور فعلی:</label>
+                                <input type="text" id="editCurrentPassword" class="inputKarbr" readonly style="background:#f1f5f9; color:#64748b; cursor:not-allowed; font-family:monospace; letter-spacing:1px;">
+                            </div>
                         </div>
-                        <div class="form-row">
+                        <div class="form-row full-width">
                             <label for="editPassword">رمز عبور جدید:</label>
                             <input type="password" id="editPassword" name="password" value="" class="inputKarbr" placeholder="برای حفظ رمز قبلی خالی بگذارید" autocomplete="new-password">
                         </div>
@@ -682,6 +719,13 @@
                             </select>
                         </div>
                         <div class="form-row">
+                            <label for="editIsActive">وضعیت فعالیت:</label>
+                            <select id="editIsActive" name="is_active" required>
+                                <option value="active">فعال</option>
+                                <option value="inactive">غیرفعال</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
                             <label for="editSubstitute">جانشین:</label>
                             <select id="editSubstitute" name="substitute" required>
                                 <option value="بدون جانشین">بدون جانشین</option>
@@ -707,8 +751,9 @@
                         </div>
                     </form>
 
-                    <!-- دکمه ذخیره خارج از فرم -->
-                    <button type="button" class="save-btn" onclick="updateUser()">ذخیره</button>
+                <!-- فوتر -->
+                <div class="popup-footer">
+                    <button type="button" class="save-btn" onclick="updateUser()">ذخیره تغییرات</button>
                 </div>
             </div>
         </div>
@@ -811,7 +856,7 @@
                         <label for="shiftUsername">پرسنل</label>
                         <select id="shiftUsername" name="shiftUsername" required>
                             <option value="" disabled selected>انتخاب کنید</option>
-                            {% for user in users %}
+                            {% for user in users if (user.is_active or 'active') == 'active' %}
                             <option value="{{ user.username }}">{{ user.username }}</option>
                             {% endfor %}
                         </select>
@@ -985,7 +1030,7 @@
                 <select id="userSelect" style="font-family: 'Vazir', sans-serif; margin-right: -3px;">
                     <option value="" disabled selected>انتخاب کنید</option>
                     <option value="all">همه کاربران</option>
-                    {% for user in users %}
+                    {% for user in users if (user.is_active or 'active') == 'active' %}
                     <option value="{{ user.username }}">{{ user.username }}</option>
                     {% endfor %}
                 </select>
@@ -1091,7 +1136,7 @@
                 <select id="usernameEzafeReport" name="usernameEzafeReport" required style="font-family: 'Vazir', sans-serif; margin-right: 4px;">
                     <option value="" disabled selected>انتخاب کنید</option>
                     <option value="all_users">همه کاربران</option> <!-- گزینه جدید -->
-                    {% for user in users %}
+                    {% for user in users if (user.is_active or 'active') == 'active' %}
                     <option value="{{ user.username }}">{{ user.username }}</option>
                     {% endfor %}
                 </select>
@@ -1182,13 +1227,13 @@
             <h2>مدیریت پاس‌های ساعتی</h2>
             <form id="individualHourlyPassReportForm" class="hourlypassform">
                 <label for="usernameHourlypass">: انتخاب کاربر</label>
-                <select id="usernameHourlypass" name="usernameHourlypass" required style="margin-right: 4px;">
-                    <option value="" disabled selected>انتخاب کنید</option>
-                    <option value="all_users">همه کاربران</option>
-                    {% for user in users %}
-                    <option value="{{ user.username }}">{{ user.username }}</option>
-                    {% endfor %}
-                </select>
+                <select id="usernameHourlypass" name="usernameHourlypass" required style="margin-right: 4px;">                        <option value="" disabled selected>انتخاب کنید</option>
+                        <option value="all_users">همه کاربران</option>
+                        {% for user in users if (user.is_active or 'active') == 'active' %}
+                        <option value="{{ user.username }}">{{ user.username }}</option>
+                        {% endfor %}
+
+                    </select>
 
                 <label for="start_date">: از تاریخ</label>
                 <input type="text" id="start_date_hourlypass" style="margin-right: 2%;" name="start_date" required>
@@ -1288,7 +1333,7 @@
                     <select id="usernameGozareshHozoor" name="usernameGozareshHozoor" required>
                         <option value="" disabled selected>انتخاب کنید</option>
                         <option value="all_users">همه کاربران</option>
-                        {% for user in users %}
+                        {% for user in users if (user.is_active or 'active') == 'active' %}
                         <option value="{{ user.username }}">{{ user.username }}</option>
                         {% endfor %}
                     </select>
@@ -1411,7 +1456,7 @@
                         <select id="usernamedast" name="usernamedast" required class="attendance-form__select">
                             <option value="" disabled selected>انتخاب کنید</option>
                             <option value="all_users">همه کاربران</option>
-                            {% for user in users %}
+                            {% for user in users if (user.is_active or 'active') == 'active' %}
                             <option value="{{ user.username }}">{{ user.username }}</option>
                             {% endfor %}
                         </select>
@@ -1520,7 +1565,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for user in users if (user.employment_status or 'official') == 'official' %}
+                                    {% for user in users if (user.employment_status or 'official') == 'official' and (user.is_active or 'active') == 'active' %}
                                     <tr class="overtime-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
@@ -1603,10 +1648,9 @@
                                     <span>ساعت موظفی</span>
                                     <input type="text" id="payrollMandatoryHours" value="۱۷۶" inputmode="numeric" autocomplete="off">
                                 </label>
-                            </div>
-                            <div class="payroll-period-actions">
-                                <button type="button" class="payroll-period-display-btn" id="payrollDisplayPeriodBtn" onclick="showPayrollPeriod()">نمایش</button>
-                                <span class="payroll-period-status" id="payrollPeriodStatus" role="status" aria-live="polite">برای بارگذاری اطلاعات دوره، ماه و سال را انتخاب کنید.</span>
+                                <div class="payroll-config-item payroll-config-item--btn">
+                                    <button type="button" class="payroll-period-display-btn" id="payrollDisplayPeriodBtn" onclick="showPayrollPeriod()">نمایش</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1636,7 +1680,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for user in users %}
+                                    {% for user in users if (user.is_active or 'active') == 'active' %}
                                     <tr class="payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-index">{{ loop.index }}</td>
                                         <td class="payroll-col-name">
@@ -1708,7 +1752,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for user in users if user.employment_status == 'unofficial' %}
+                                    {% for user in users if user.employment_status == 'unofficial' and (user.is_active or 'active') == 'active' %}
                                     <tr class="payroll-row hourly-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">

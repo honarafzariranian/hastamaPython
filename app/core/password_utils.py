@@ -54,15 +54,15 @@ def insert_user_with_optional_hash(cursor, user_id: int, username: str, password
         cursor.execute('''
             INSERT INTO user_table (
                 id, username, password, password_hash, name, last_name, department, substitute, work_hours, role,
-                hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
         ''', (user_id, username, password, password_hash, name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))
     else:
         cursor.execute('''
             INSERT INTO user_table (
                 id, username, password, name, last_name, department, substitute, work_hours, role,
-                hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
         ''', (user_id, username, password, name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))
