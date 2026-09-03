@@ -1413,8 +1413,19 @@ def format_time(seconds):
 # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت
 # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت # تابع صفحه مدیریت
 
-@app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin")
 async def admin(request: Request):
+    username = get_user_from_session(request)
+    is_admin = get_is_admin_from_session(request)
+
+    if not username or not is_admin:
+        return RedirectResponse(url="/login", status_code=303)
+
+    return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+
+async def _render_admin_page(request: Request):
+    """Shared template-rendering logic for every /admin/* route."""
     username = get_user_from_session(request)
     is_admin = get_is_admin_from_session(request)
 
@@ -1561,7 +1572,7 @@ async def admin(request: Request):
             user_to_delete = request.form['username']
             cursor.execute("DELETE FROM user_table WHERE username = ?", (user_to_delete,))
             conn.commit()
-            return RedirectResponse(url="/admin")  # پس از حذف، دوباره صفحه را لود می‌کند
+            return RedirectResponse(url="/admin/dashboard")  # پس از حذف، دوباره صفحه را لود می‌کند
 
         return templates.TemplateResponse(request, "admin.html", {
             "request": request,
@@ -1596,15 +1607,13 @@ async def admin(request: Request):
 # ─── Admin Section Routes (SPA) ─────────────────────────────────────────────
 ADMIN_SECTIONS = {'dashboard', 'coworkers', 'vacation', 'overtime', 'hourly-pass', 'tickets', 'shifts', 'attendance', 'payroll'}
 
+@app.get("/admin/dashboard", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    return await _render_admin_page(request)
+
 @app.get("/admin/{section}", response_class=HTMLResponse)
 async def admin_section(request: Request, section: str):
-    username = get_user_from_session(request)
-    is_admin = get_is_admin_from_session(request)
-    if not username or not is_admin:
-        return RedirectResponse(url="/login", status_code=303)
-    # Serve the same admin.html — JS on client reads URL to show correct section
-    # Reuse the same template data by calling admin()
-    return await admin(request)
+    return await _render_admin_page(request)
 
 # ذخیره و بازیابی محاسبات حقوق و دستمزد ادمین
 PAYROLL_CALCULATION_TYPES = {"overtime", "comprehensive", "hourly", "summary"}
@@ -1806,10 +1815,11 @@ async def add_user(
         conn.close()
 
         # ذخیره پیام در session نیاز به starlette-session دارد، یا حذفش کن
-        # request.session["message"] = "کاربر با موفقیت ذخیره شد."
-        return RedirectResponse(url="/admin", status_code=303)
+        # request.session["message"] = "کاربر با موفقیت ذخیره شد."return RedirectResponse(url="/admin/dashboard", status_code=303)
 
     except Exception as e:
+
+
         return {"error": f"خطا در ذخیره کاربر: {str(e)}"}
 
 

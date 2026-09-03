@@ -29,7 +29,7 @@ async def login(request: Request):
 
         if role == "admin":
             request.session["is_admin"] = True
-            return JSONResponse({"success": True, "redirect": "/admin"})
+            return JSONResponse({"success": True, "redirect": "/admin/dashboard"})
         else:
             request.session["is_admin"] = False
             return JSONResponse({"success": True, "redirect": "/user_panel"})
