@@ -4074,16 +4074,23 @@ form button:active {
 }
 
 /* --- payroll panel --- */
-.payroll-panel {
+#payrollBox.payroll-panel {
     background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
     border-radius: 18px;
     padding: 16px 24px 20px;
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
-    margin-top: 108px !important;
-    width: min(93%, 100%) !important;
-    margin-left: 2rem !important;
+    position: fixed !important;
+    top: 8rem !important;
+    bottom: 12px !important;
+    left: 10% !important;
+    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    z-index: 58;
+    overflow: auto;
 }
 
 /* عنوان بالای پنل + زیرمجموعه‌ی آن (باکس تب‌ها) */
@@ -4477,16 +4484,22 @@ form button:active {
 @media (min-width: 769px) {
 
     /* باکس زیر نوار بالایی چسبان می‌ماند و با اسکرول صفحه جابه‌جا نمی‌شود */
-    .payroll-panel {
-        position: sticky !important;
-        top: 88px !important;
-        z-index: 55;
-        /* ارتفاع پنل دقیقاً در محدوده‌ی قابل‌مشاهده‌ی کنار سایدبار بماند. */
-        height: calc(100vh - 100px) !important;
-        max-height: calc(100vh - 100px) !important;
-        min-height: 0 !important;
+    #payrollBox.payroll-panel {
+        position: fixed !important;
+        top: 8rem !important;
+        bottom: 12px !important;
+        left: 1% !important;
+        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
+        width: 94% !important;
+        max-width: none !important;
+        z-index: 58;
+        height: auto !important;
         overflow: hidden;
-        margin-top: 88px !important;
+        margin: 0 !important;
+    }
+
+    .page-shell.sidebar-expanded #payrollBox.payroll-panel {
+        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
     }
 
 
@@ -6804,10 +6817,8 @@ form button:active {
 
 /* نوار دکمه‌های تب‌های حقوق باید داخل خود پنل قابل دسترسی باشد. */
 @media (min-width: 769px) {
-    .payroll-panel {
+    #payrollBox.payroll-panel {
         box-sizing: border-box;
-        height: calc(100dvh - 8.1rem - 12px) !important;
-        max-height: calc(100dvh - 8.1rem - 12px) !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         padding-bottom: 24px;

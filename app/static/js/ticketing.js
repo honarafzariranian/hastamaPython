@@ -396,6 +396,10 @@
     function closeTicketModal() {
         const modal = $('#ticketModal');
         if (!modal) return;
+        // Move focus away before hiding to avoid aria-hidden conflict
+        if (modal.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
         modal.style.display = 'none';
