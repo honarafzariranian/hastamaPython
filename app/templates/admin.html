@@ -419,6 +419,11 @@
                                 <span class="tooltip-text-table-att">ثبت ورود دستی</span>
                             </button>
 
+                            <button type="button" class="manual-checkout-btn" data-username="{{ user.username }}" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                <span class="tooltip-text-table-att">ثبت خروج دستی</span>
+                            </button>
+
                         </td>
                     </tr>
                     {% endfor %}
@@ -971,298 +976,336 @@
 
         <!-- محتوای باکس‌ها -->
         <!-- باکس مدیریت درخواست‌های مرخصی -->
-        <div id="vacationRequestBox" class="management-box" style="display:none;">
-            <h2>مدیریت درخواست‌های مرخصی</h2>
-            <table class="request-table" id="leaveRequestsTable">
-                <thead>
-                    <tr>
-                        <th class="krbr-morkhc-drkhst">ثبت تغییرات</th>
-                        <th class="aztrkh-morkhc-drkhst">وضعیت درخواست</th>
-                        <th class="tatrkh-morkhc-drkhst">جانشین</th>
-                        <th class="rooz-morkhc-drkhst">تعداد روزها</th>
-                        <th class="jnshn-morkhc-drkhst">تا تاریخ</th>
-                        <th class="vaziat-morkhc-drkhst">از تاریخ</th>
-                        <th class="sabt-morkhc-drkhst">نام کاربر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="krbr-morkhc-drkhst"></td>
-                        <td class="aztrkh-morkhc-drkhst"></td>
-                        <td class="tatrkh-morkhc-drkhst"></td>
-                        <td class="rooz-morkhc-drkhst"></td>
-                        <td class="jnshn-morkhc-drkhst"></td>
-                        <td class="vaziat-morkhc-drkhst"></td>
-                        <td class="sabt-morkhc-drkhst"></td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- باکس یکپارچه مدیریت مرخصی (ادغام درخواست‌ها + گزارشات + گزارش انفرادی) -->
+        <div id="vacationBox" class="management-box vacation-panel" style="display:none;">
+            <div class="vacation-heading">
+                <h2>مدیریت مرخصی پرسنل</h2>
+                <span class="vacation-heading-bar"></span>
+
+                <div class="vacation-frame">
+                    <div class="vacation-tabs" role="tablist">
+                        <button class="vacation-tab-btn active" role="tab" aria-selected="true" data-vtab="leave-requests" onclick="switchVacationTab('leave-requests', this)">درخواست‌های مرخصی</button>
+                        <button class="vacation-tab-btn" role="tab" aria-selected="false" data-vtab="vacation-reports" onclick="switchVacationTab('vacation-reports', this)">گزارشات مرخصی</button>
+                        <button class="vacation-tab-btn" role="tab" aria-selected="false" data-vtab="individual-report" onclick="switchVacationTab('individual-report', this)">گزارش انفرادی</button>
+                    </div>
+
+                    <!-- تب ۱: درخواست‌های مرخصی -->
+                    <div id="leave-requests" class="vacation-tab-content active" role="tabpanel">
+                        <table class="request-table" id="leaveRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th class="krbr-morkhc-drkhst">ثبت تغییرات</th>
+                                    <th class="aztrkh-morkhc-drkhst">وضعیت درخواست</th>
+                                    <th class="tatrkh-morkhc-drkhst">جانشین</th>
+                                    <th class="rooz-morkhc-drkhst">تعداد روزها</th>
+                                    <th class="jnshn-morkhc-drkhst">تا تاریخ</th>
+                                    <th class="vaziat-morkhc-drkhst">از تاریخ</th>
+                                    <th class="sabt-morkhc-drkhst">نام کاربر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="krbr-morkhc-drkhst"></td>
+                                    <td class="aztrkh-morkhc-drkhst"></td>
+                                    <td class="tatrkh-morkhc-drkhst"></td>
+                                    <td class="rooz-morkhc-drkhst"></td>
+                                    <td class="jnshn-morkhc-drkhst"></td>
+                                    <td class="vaziat-morkhc-drkhst"></td>
+                                    <td class="sabt-morkhc-drkhst"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تب ۲: گزارشات مرخصی -->
+                    <div id="vacation-reports" class="vacation-tab-content" role="tabpanel">
+                        <h2>گزارشات مرخصی‌ها</h2>
+                        <table class="vacation-table">
+                            <thead>
+                                <tr>
+                                    <th class="bghmnd-morkhc-gzrsh">کل مرخصی‌های باقی‌مانده</th>
+                                    <th class="stfdeh-morkhc-gzrsh">کل مرخصی‌های استفاده شده</th>
+                                    <th class="krbr-morkhc-gzrsh">نام کاربر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                <tr>
+                                    <td class="bghmnd-morkhc-gzrsh">{{ report.total_remaining }}</td>
+                                    <td class="stfdeh-morkhc-gzrsh">{{ report.total_used }}</td>
+                                    <td class="krbr-morkhc-gzrsh">{{ report.username }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تب ۳: گزارش انفرادی -->
+                    <div id="individual-report" class="vacation-tab-content" role="tabpanel">
+                        <div class="vacation-config">
+                            <div class="vacation-config-title">پارامترهای گزارش</div>
+                            <div class="vacation-config-grid">
+                                <div class="vacation-config-item">
+                                    <span>انتخاب کاربر</span>
+                                    <select id="userSelect">
+                                        <option value="" disabled selected>انتخاب کنید</option>
+                                        <option value="all">همه کاربران</option>
+                                        {% for user in users if (user.is_active or 'active') == 'active' %}
+                                        <option value="{{ user.username }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="vacation-config-item">
+                                    <span>از تاریخ</span>
+                                    <input type="text" id="fromDate" name="fromDate" placeholder="1404/01/01" autocomplete="off">
+                                </div>
+                                <div class="vacation-config-item">
+                                    <span>تا تاریخ</span>
+                                    <input type="text" id="toDate" name="toDate" placeholder="1404/01/01" autocomplete="off">
+                                </div>
+                                <div class="vacation-config-item vacation-config-actions">
+                                    <button type="button" id="generategozareshmrkReportBtn">تهیه گزارش</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="vacation-report-result" style="display:none;" id="vacationReportResult">
+                            <div class="vacation-report-toolbar">
+                                <button id="downloadReportBtn">دریافت گزارش</button>
+                            </div>
+                            <table class="individual-report-table" id="individualReportTablemrkc" data-rt="cards">
+                                <thead>
+                                    <tr>
+                                        <th class="sbt-morkhc-nfrdi">ثبت تغییرات</th>
+                                        <th class="drkhst-morkhc-nfrdi">وضعیت درخواست</th>
+                                        <th class="jnshn-morkhc-nfrdi">جانشین</th>
+                                        <th class="rooz-morkhc-nfrdi">تعداد روز</th>
+                                        <th class="tatrkh-morkhc-nfrdi">تا تاریخ</th>
+                                        <th class="aztarkh-morkhc-nfrdi">از تاریخ</th>
+                                        <th class="krbr-morkhc-nfrdi">نام کاربر</th>
+                                        <th class="rdf-morkhc-nfrdi">ردیف</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- باکس گزارش مرخصی های کاربران به صورت مختصر -->
-        <div id="vacationBox" class="management-box" style="display:none;">
-            <h2>گزارشات مرخصی‌ها</h2>
-            <table class="vacation-table">
-                <thead>
-                    <tr>
-                        <th class="bghmnd-morkhc-gzrsh">کل مرخصی‌های باقی‌مانده</th>
-                        <th class="stfdeh-morkhc-gzrsh">کل مرخصی‌های استفاده شده</th>
-                        <th class="krbr-morkhc-gzrsh">نام کاربر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for report in reports %}
-                    <tr>
-                        <td class="bghmnd-morkhc-gzrsh">{{ report.total_remaining }}</td>
-                        <td class="stfdeh-morkhc-gzrsh">{{ report.total_used }}</td>
-                        <td class="krbr-morkhc-gzrsh">{{ report.username }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- باکس یکپارچه مدیریت اضافه‌کاری‌ها -->
+        <div id="overtimeBox" class="management-box overtime-panel" style="display:none;">
+            <div class="overtime-heading">
+                <h2>مدیریت اضافه‌کاری‌ها</h2>
+                <span class="overtime-heading-bar"></span>
+
+                <div class="overtime-frame">
+                    <div class="overtime-tabs" role="tablist">
+                        <button class="overtime-tab-btn active" role="tab" aria-selected="true" data-otab="overtime-requests" onclick="switchOvertimeTab('overtime-requests', this)">درخواست‌های اضافه‌کاری</button>
+                        <button class="overtime-tab-btn" role="tab" aria-selected="false" data-otab="overtime-all-report" onclick="switchOvertimeTab('overtime-all-report', this)">گزارش کلی</button>
+                        <button class="overtime-tab-btn" role="tab" aria-selected="false" data-otab="overtime-individual-report" onclick="switchOvertimeTab('overtime-individual-report', this)">گزارش انفرادی</button>
+                    </div>
+
+                    <!-- تب ۱: درخواست‌های اضافه‌کاری -->
+                    <div id="overtime-requests" class="overtime-tab-content active" role="tabpanel">
+                        <table class="overTime-table" id="overTimeRequestTable">
+                            <thead>
+                                <tr>
+                                    <th class="sbt-ezafe-drkhst">ثبت تغییرات</th>
+                                    <th class="vaziat-ezafe-drkhst">وضعیت درخواست</th>
+                                    <th class="tzht-ezafe-drkhst">توضیحات</th>
+                                    <th class="mdt-ezafe-drkhst">مدت زمان اضافه کاری</th>
+                                    <th class="trkh-ezafe-drkhst">تاریخ درخواست</th>
+                                    <th class="krbr-ezafe-drkhst">نام کاربر</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <!-- تب ۲: گزارش کلی -->
+                    <div id="overtime-all-report" class="overtime-tab-content" role="tabpanel">
+                        <table class="overTime-allreport-table" id="overTimeReportTable">
+                            <thead>
+                                <tr>
+                                    <th class="overtimeezafetime">کل مدت زمان اضافه کاری</th>
+                                    <th class="overtimekarbar">نام کاربر</th>
+                                    <th class="overtimeRadif">ردیف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in overtime_reports %}
+                                <tr>
+                                    <td>{{ report.total_ezafe_time }}</td>
+                                    <td>{{ report.username }}</td>
+                                    <td>{{ report.row_number }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تب ۳: گزارش انفرادی -->
+                    <div id="overtime-individual-report" class="overtime-tab-content" role="tabpanel">
+                        <div class="overtime-config">
+                            <div class="overtime-config-title">پارامترهای گزارش</div>
+                            <div class="overtime-config-grid">
+                                <div class="overtime-config-item">
+                                    <span>انتخاب کاربر</span>
+                                    <select id="usernameEzafeReport">
+                                        <option value="" disabled selected>انتخاب کنید</option>
+                                        <option value="all_users">همه کاربران</option>
+                                        {% for user in users if (user.is_active or 'active') == 'active' %}
+                                        <option value="{{ user.username }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="overtime-config-item">
+                                    <span>از تاریخ</span>
+                                    <input type="text" id="start_date" name="start_date" placeholder="1404/01/01" autocomplete="off">
+                                </div>
+                                <div class="overtime-config-item">
+                                    <span>تا تاریخ</span>
+                                    <input type="text" id="end_date" name="end_date" placeholder="1404/01/01" autocomplete="off">
+                                </div>
+                                <div class="overtime-config-item overtime-config-actions">
+                                    <button type="button" id="submitReport">تهیه گزارش</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overtime-report-result" style="display:none;" id="overtimeReportResult">
+                            <div class="overtime-report-toolbar">
+                                <button id="downloadOvertimeReport">دریافت گزارش</button>
+                            </div>
+                            <table class="overTimeindivisualReport-table" id="overTimeIndivisualReportTable">
+                                <thead>
+                                    <tr>
+                                        <th class="sbt-ezafe-gzrsh">ثبت تغییرات</th>
+                                        <th class="vaziat-ezafe-gzrsh">وضعیت درخواست</th>
+                                        <th class="tzht-ezafe-gzrsh">توضیحات</th>
+                                        <th class="mdt-ezafe-gzrsh">مدت زمان اضافه کاری</th>
+                                        <th class="trkh-ezafe-gzrsh">تاریخ درخواست</th>
+                                        <th class="krbr-ezafe-gzrsh">نام کاربر</th>
+                                        <th class="rdf-ezafe-gzrsh">ردیف</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- باکس تهیه گزارش انفرادی زیر گزارشات مرخصی‌ها -->
-        <div id="individualReportBox" class="management-box" style="display:none;">
-            <h2>تهیه گزارش انفرادی</h2>
-            <form class="entekhab-form" onsubmit="return false;">
-                <label for="userSelect">: انتخاب کاربر</label>
-                <select id="userSelect" style="font-family: 'Vazir', sans-serif; margin-right: -3px;">
-                    <option value="" disabled selected>انتخاب کنید</option>
-                    <option value="all">همه کاربران</option>
-                    {% for user in users if (user.is_active or 'active') == 'active' %}
-                    <option value="{{ user.username }}">{{ user.username }}</option>
-                    {% endfor %}
-                </select>
+        <!-- باکس یکپارچه مدیریت پاس‌های ساعتی (ادغام درخواست‌ها + گزارش کلی + گزارش انفرادی) -->
+        <div id="hourlyPassBox" class="management-box hourlyPass-panel" style="display:none;">
+            <div class="hourlyPass-heading">
+                <h2>مدیریت پاس‌های ساعتی</h2>
+                <span class="hourlyPass-heading-bar"></span>
 
-                <label for="fromDate">: از تاریخ</label>
-                <input type="text" id="fromDate" name="fromDate" placeholder="1403/01/01"
-                    style="font-family: 'Vazir', sans-serif; margin-right: 2%;" autocomplete="off">
+                <div class="hourlyPass-frame">
+                    <div class="hourlyPass-tabs" role="tablist">
+                        <button class="hourlyPass-tab-btn active" role="tab" aria-selected="true" onclick="switchHourlyPassTab('hp-requests', this)">درخواست‌های پاس ساعتی</button>
+                        <button class="hourlyPass-tab-btn" role="tab" aria-selected="false" onclick="switchHourlyPassTab('hp-all-report', this)">گزارش کلی</button>
+                        <button class="hourlyPass-tab-btn" role="tab" aria-selected="false" onclick="switchHourlyPassTab('hp-individual', this)">گزارش انفرادی</button>
+                    </div>
 
-                <label for="toDate">: تا تاریخ</label>
-                <input type="text" id="toDate" name="toDate" placeholder="1403/01/01"
-                    style="font-family: 'Vazir', sans-serif; margin-right: 2%;" autocomplete="off">
+                    <!-- تب ۱: درخواست‌های پاس ساعتی -->
+                    <div id="hp-requests" class="hourlyPass-tab-content active" role="tabpanel">
+                        <table class="hourlyPassReport-table" id="hourlyPassReportTable">
+                            <thead>
+                                <tr>
+                                    <th>ثبت تغییرات</th>
+                                    <th>وضعیت درخواست</th>
+                                    <th>مدت زمان پاس</th>
+                                    <th>عنوان پاس</th>
+                                    <th>تاریخ درخواست</th>
+                                    <th>نام کاربر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- ردیف‌ها در اینجا اضافه می‌شوند -->
+                            </tbody>
+                        </table>
+                    </div>
 
-                <button type="submit" id="generategozareshmrkReportBtn" style="font-family: 'Vazir', sans-serif;">تهیه گزارش</button>
-            </form>
+                    <!-- تب ۲: گزارش کلی -->
+                    <div id="hp-all-report" class="hourlyPass-tab-content" role="tabpanel">
+                        <h2>گزارش کلی پاس‌های ساعتی</h2>
+                        <table class="hourlyPassTotaluserReport-table" id="hourlyPassTotaluserReportTable">
+                            <thead>
+                                <tr>
+                                    <th class="hourlyPassezafetime">کل مدت زمان پاس</th>
+                                    <th class="hourlyPasskarbar">نام کاربر</th>
+                                    <th class="hourlyPassRadif">ردیف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pass_report in pass_reports %}
+                                <tr>
+                                    <td>{{ pass_report.total_pass_time }}</td>
+                                    <td>{{ pass_report.username }}</td>
+                                    <td>{{ pass_report.row_number }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
 
-            <table class="individual-report-table" id="individualReportTablemrkc">
-                <thead>
-                    <tr>
-                        <th class="sbt-morkhc-nfrdi">ثبت تغییرات</th>
-                        <th class="drkhst-morkhc-nfrdi">وضعیت درخواست</th>
-                        <th class="jnshn-morkhc-nfrdi">جانشین</th>
-                        <th class="rooz-morkhc-nfrdi">تعداد روز</th>
-                        <th class="tatrkh-morkhc-nfrdi">تا تاریخ</th>
-                        <th class="aztarkh-morkhc-nfrdi">از تاریخ</th>
-                        <th class="krbr-morkhc-nfrdi">نام کاربر</th>
-                        <th class="rdf-morkhc-nfrdi">ردیف</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="sbt-morkhc-nfrdi"></td>
-                        <td class="drkhst-morkhc-nfrdi"></td>
-                        <td class="jnshn-morkhc-nfrdi"></td>
-                        <td class="rooz-morkhc-nfrdi"></td>
-                        <td class="tatrkh-morkhc-nfrdi"></td>
-                        <td class="aztarkh-morkhc-nfrdi"></td>
-                        <td class="krbr-morkhc-nfrdi"></td>
-                        <td class="rdf-morkhc-nfrdi"></td>
-                    </tr>
-                </tbody>
-            </table>
+                    <!-- تب ۳: گزارش انفرادی -->
+                    <div id="hp-individual" class="hourlyPass-tab-content" role="tabpanel">
+                        <div class="hourlyPass-config">
+                            <div class="hourlyPass-config-title">تنظیمات گزارش</div>
+                            <div class="hourlyPass-config-grid">
+                                <div class="hourlyPass-config-item">
+                                    <span>انتخاب کاربر</span>
+                                    <select id="usernameHourlypass" name="usernameHourlypass" required>
+                                        <option value="" disabled selected>انتخاب کنید</option>
+                                        <option value="all_users">همه کاربران</option>
+                                        {% for user in users if (user.is_active or 'active') == 'active' %}
+                                        <option value="{{ user.username }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="hourlyPass-config-item">
+                                    <span>از تاریخ</span>
+                                    <input type="text" id="start_date_hourlypass" name="start_date" required>
+                                </div>
+                                <div class="hourlyPass-config-item">
+                                    <span>تا تاریخ</span>
+                                    <input type="text" id="end_date_hourlypass" name="end_date" required>
+                                </div>
+                                <div class="hourlyPass-config-actions">
+                                    <button type="button" id="submitHourlyPassReport">تهیه گزارش</button>
+                                </div>
+                            </div>
+                        </div>
 
-            <button id="downloadReportBtn">دریافت گزارش</button>
-
-        </div>
-
-        <!-- باکس مدیریت درخواست های اضافه کاری ها -->
-        <div id="overtimeBox" class="management-box" style="display:none;">
-            <h2>مدیریت اضافه‌کاری‌ها</h2>
-            <table class="overTime-table" id="overTimeRequestTable">
-                <thead>
-                    <tr>
-                        <th class="sbt-ezafe-drkhst">ثبت تغییرات</th>
-                        <th class="vaziat-ezafe-drkhst">وضعیت درخواست</th>
-                        <th class="tzht-ezafe-drkhst">توضیحات</th>
-                        <th class="mdt-ezafe-drkhst">مدت زمان اضافه کاری</th>
-                        <th class="trkh-ezafe-drkhst">تاریخ درخواست</th>
-                        <th class="krbr-ezafe-drkhst">نام کاربر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="sbt-ezafe-drkhst"></td>
-                        <td class="vaziat-ezafe-drkhst"></td>
-                        <td class="tzht-ezafe-drkhst"></td>
-                        <td class="mdt-ezafe-drkhst"></td>
-                        <td class="trkh-ezafe-drkhst"></td>
-                        <td class="krbr-ezafe-drkhst"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- باکس گزارش کلی اضافه کاری های کاربران -->
-        <div id="OverTimeReportBox" class="management-box" style="display:none;">
-            <h2>گزارش کلی اضافه کاری های کاربران</h2>
-
-            <table class="overTime-allreport-table" id="overTimeReportTable">
-                <thead>
-                    <tr>
-                        <th class="overtimeezafetime">کل مدت زمان اضافه کاری</th>
-                        <th class="overtimekarbar">نام کاربر</th>
-                        <th class="overtimeRadif">ردیف</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for report in overtime_reports %}
-                    <tr>
-                        <td>{{ report.total_ezafe_time }}</td>
-                        <td>{{ report.username }}</td>
-                        <td>{{ report.row_number }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- باکس گزارش انفرادی اضافه کاری های کاربران -->
-        <div id="OverTimeIndivisualReportBox" class="management-box" style="display:none;">
-            <h2>گزارش انفرادی اضافه کاری های کاربران</h2>
-            <form id="individualOvertimeReportForm" class="enferadiEzafeUsers">
-                <label for="usernameEzafeReport">: انتخاب کاربر</label>
-                <select id="usernameEzafeReport" name="usernameEzafeReport" required style="font-family: 'Vazir', sans-serif; margin-right: 4px;">
-                    <option value="" disabled selected>انتخاب کنید</option>
-                    <option value="all_users">همه کاربران</option> <!-- گزینه جدید -->
-                    {% for user in users if (user.is_active or 'active') == 'active' %}
-                    <option value="{{ user.username }}">{{ user.username }}</option>
-                    {% endfor %}
-                </select>
-                <label for="start_date">: از تاریخ</label>
-                <input type="text" id="start_date" name="start_date" placeholder="1403/01/01" required style="margin-right: 2%;">
-
-                <label for="end_date">: تا تاریخ</label>
-                <input type="text" id="end_date" name="end_date" placeholder="1403/01/01" required style="margin-right: 2.4%;">
-
-                <button type="button" id="submitReport" style="font-family: 'Vazir', sans-serif;">تهیه گزارش</button>
-            </form>
-
-            <table class="overTimeindivisualReport-table" id="overTimeIndivisualReportTable">
-                <thead>
-                    <tr>
-                        <th class="sbt-ezafe-gzrsh">ثبت تغییرات</th>
-                        <th class="vaziat-ezafe-gzrsh">وضعیت درخواست</th>
-                        <th class="tzht-ezafe-gzrsh">توضیحات</th>
-                        <th class="mdt-ezafe-gzrsh">مدت زمان اضافه کاری</th>
-                        <th class="trkh-ezafe-gzrsh">تاریخ درخواست</th>
-                        <th class="krbr-ezafe-gzrsh">نام کاربر</th>
-                        <th class="rdf-ezafe-gzrsh">ردیف</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="sbt-ezafe-gzrsh"></td>
-                        <td class="vaziat-ezafe-gzrsh"></td>
-                        <td class="tzht-ezafe-gzrsh"></td>
-                        <td class="mdt-ezafe-gzrsh"></td>
-                        <td class="trkh-ezafe-gzrsh"></td>
-                        <td class="krbr-ezafe-gzrsh"></td>
-                        <td class="rdf-ezafe-gzrsh"></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- دکمه دریافت گزارش -->
-            <button id="downloadOvertimeReport">دریافت گزارش</button>
-        </div>
-
-        <!-- باکس مدیریت پاس های ساعتی -->
-        <div id="hourlyPassBox" class="management-box" style="display:none;">
-            <h2>مدیریت پاس‌های ساعتی</h2>
-            <table class="hourlyPassReport-table" id="hourlyPassReportTable">
-                <thead>
-                    <tr>
-                        <th>ثبت تغییرات</th>
-                        <th>وضعیت درخواست</th>
-                        <th>مدت زمان پاس</th>
-                        <th>عنوان پاس</th>
-                        <th>تاریخ درخواست</th>
-                        <th>نام کاربر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- ردیف‌ها در اینجا اضافه می‌شوند -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- باکس گزارش کلی پاس های ساعتی کلیه کاربران -->
-        <div id="hourlyPassTotaluser" class="management-box" style="display:none;">
-            <h2>مدیریت پاس‌های ساعتی</h2>
-            <table class="hourlyPassTotaluserReport-table" id="hourlyPassTotaluserReportTable">
-                <thead>
-                    <tr>
-                        <th class="hourlyPassezafetime">کل مدت زمان پاس</th>
-                        <th class="hourlyPasskarbar">نام کاربر</th>
-                        <th class="hourlyPassRadif">ردیف</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pass_report in pass_reports %}
-                    <tr>
-                        <td>{{ pass_report.total_pass_time }}</td>
-                        <td>{{ pass_report.username }}</td>
-                        <td>{{ pass_report.row_number }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-        </div>
-
-        <!-- باکس گزارش انفرادی پاس های ساعتی کاربران -->
-        <div id="hourlyPassIndivisualuser" class="management-box" style="display:none;">
-            <h2>مدیریت پاس‌های ساعتی</h2>
-            <form id="individualHourlyPassReportForm" class="hourlypassform">
-                <label for="usernameHourlypass">: انتخاب کاربر</label>
-                <select id="usernameHourlypass" name="usernameHourlypass" required style="margin-right: 4px;">                        <option value="" disabled selected>انتخاب کنید</option>
-                        <option value="all_users">همه کاربران</option>
-                        {% for user in users if (user.is_active or 'active') == 'active' %}
-                        <option value="{{ user.username }}">{{ user.username }}</option>
-                        {% endfor %}
-
-                    </select>
-
-                <label for="start_date">: از تاریخ</label>
-                <input type="text" id="start_date_hourlypass" style="margin-right: 2%;" name="start_date" required>
-
-                <label for="end_date">: تا تاریخ</label>
-                <input type="text" id="end_date_hourlypass" style="margin-right: 2.5%;" name="end_date" required>
-
-                <button type="button" id="submitHourlyPassReport" style="font-family: 'Vazir', sans-serif;">تهیه گزارش</button>
-
-            </form>
-
-            <table class="hourlyPassIndivisualuserReport-table" id="hourlyPassIndivisualuserReportTable">
-                <thead>
-                    <tr>
-                        <th>ثبت تغییرات</th>
-                        <th>وضعیت درخواست</th>
-                        <th>مدت زمان پاس</th>
-                        <th>عنوان پاس</th>
-                        <th>تاریخ درخواست</th>
-                        <th>نام کاربر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- ردیف‌ها در اینجا اضافه می‌شوند -->
-                </tbody>
-            </table>
-
-            <!-- دکمه دریافت گزارش -->
-            <button id="downloadHourlyPassReport">دریافت گزارش</button>
+                        <div id="hourlyPassReportResult" style="display:none;">
+                            <div class="hourlyPass-report-toolbar">
+                                <button id="downloadHourlyPassReport" style="display:none;">دریافت گزارش</button>
+                            </div>
+                            <table class="hourlyPassIndivisualuserReport-table" id="hourlyPassIndivisualuserReportTable">
+                                <thead>
+                                    <tr>
+                                        <th>ثبت تغییرات</th>
+                                        <th>وضعیت درخواست</th>
+                                        <th>مدت زمان پاس</th>
+                                        <th>عنوان پاس</th>
+                                        <th>تاریخ درخواست</th>
+                                        <th>نام کاربر</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- ردیف‌ها در اینجا اضافه می‌شوند -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- مرکز مدیریت تیکت‌ها: صندوق ورودی، فهرست و فضای مکالمه -->
@@ -1538,6 +1581,7 @@
                         <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="comprehensive-calculation" onclick="switchPayrollTab('comprehensive-calculation', this)">محاسبه جامع</button>
                         <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="hourly-payroll-calculation" onclick="switchPayrollTab('hourly-payroll-calculation', this)">حقوق ساعتی پرسنل غیررسمی</button>
                         <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="payroll-summary-calculation" onclick="switchPayrollTab('payroll-summary-calculation', this)">جمع کل پرداخت‌ها</button>
+                        <button class="payroll-tab-btn" role="tab" aria-selected="false" data-tab="karaneh-calculation" onclick="switchPayrollTab('karaneh-calculation', this)">محاسبه کارانه</button>
                     </div>
 
                     <div id="overtime-calculation" class="payroll-tab-content active" role="tabpanel">
@@ -1837,6 +1881,102 @@
                             <button type="button" class="payroll-print-btn" onclick="openPayrollReportPreview()">نمایش گزارش چاپی</button>
                         </div>
                         <p class="payroll-save-status" id="summaryPayrollSaveStatus" role="status" aria-live="polite"></p>
+                    </div>
+
+                    <div id="karaneh-calculation" class="payroll-tab-content" role="tabpanel">
+                        <div class="karaneh-summary-grid" id="karanehSummaryGrid">
+                            <div class="karaneh-summary-card">
+                                <span class="karaneh-summary-label">مجموع پاس اول وقت</span>
+                                <span class="karaneh-summary-value" id="karanehTotalFirst">۰ ساعت و ۰ دقیقه</span>
+                            </div>
+                            <div class="karaneh-summary-card">
+                                <span class="karaneh-summary-label">مجموع پاس بین وقت</span>
+                                <span class="karaneh-summary-value" id="karanehTotalBetween">۰ ساعت و ۰ دقیقه</span>
+                            </div>
+                            <div class="karaneh-summary-card">
+                                <span class="karaneh-summary-label">مجموع پاس آخر وقت</span>
+                                <span class="karaneh-summary-value" id="karanehTotalLast">۰ ساعت و ۰ دقیقه</span>
+                            </div>
+                            <div class="karaneh-summary-card">
+                                <span class="karaneh-summary-label">مجموع کل پاس‌ها</span>
+                                <span class="karaneh-summary-value" id="karanehTotalAll">۰ ساعت و ۰ دقیقه</span>
+                            </div>
+                            <div class="karaneh-summary-card karaneh-summary-card--valid">
+                                <span class="karaneh-summary-label">پاس‌های مجاز</span>
+                                <span class="karaneh-summary-value" id="karanehValidCount">۰</span>
+                            </div>
+                            <div class="karaneh-summary-card karaneh-summary-card--invalid">
+                                <span class="karaneh-summary-label">پاس‌های غیرمجاز</span>
+                                <span class="karaneh-summary-value" id="karanehInvalidCount">۰</span>
+                            </div>
+                        </div>
+                        <div class="overtime-payroll-table-scroll">
+                            <table class="payroll-table karaneh-payroll-table" id="karanehPayrollTable">
+                                <thead>
+                                    <tr class="payroll-table-group">
+                                        <th rowspan="2" class="payroll-col-name">پرسنل</th>
+                                        <th colspan="3">پاس اول وقت</th>
+                                        <th colspan="3">پاس بین وقت</th>
+                                        <th colspan="3">پاس آخر وقت</th>
+                                        <th rowspan="2">جمع کل</th>
+                                        <th rowspan="2">وضعیت</th>
+                                    </tr>
+                                    <tr class="payroll-table-subhead">
+                                        <th>ساعت</th>
+                                        <th>دقیقه</th>
+                                        <th>مجاز/غیرمجاز</th>
+                                        <th>ساعت</th>
+                                        <th>دقیقه</th>
+                                        <th>مجاز/غیرمجاز</th>
+                                        <th>ساعت</th>
+                                        <th>دقیقه</th>
+                                        <th>مجاز/غیرمجاز</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users if (user.is_active or 'active') == 'active' %}
+                                    <tr class="karaneh-payroll-row" data-username="{{ user.username }}">
+                                        <td class="payroll-col-name">
+                                            <div class="payroll-person">
+                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-meta">{{ user.department or '' }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="karaneh-result" data-karaneh="firstHours">۰</td>
+                                        <td class="karaneh-result" data-karaneh="firstMinutes">۰</td>
+                                        <td class="karaneh-result" data-karaneh="firstStatus">—</td>
+                                        <td class="karaneh-result" data-karaneh="betweenHours">۰</td>
+                                        <td class="karaneh-result" data-karaneh="betweenMinutes">۰</td>
+                                        <td class="karaneh-result" data-karaneh="betweenStatus">—</td>
+                                        <td class="karaneh-result" data-karaneh="lastHours">۰</td>
+                                        <td class="karaneh-result" data-karaneh="lastMinutes">۰</td>
+                                        <td class="karaneh-result" data-karaneh="lastStatus">—</td>
+                                        <td class="karaneh-result" data-karaneh="totalMinutes">۰</td>
+                                        <td class="karaneh-result" data-karaneh="overallStatus">در حال دریافت…</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="payroll-total-row karaneh-total-row">
+                                        <td class="payroll-col-name">مجموع کل</td>
+                                        <td data-karaneh-total="firstHours">۰</td>
+                                        <td data-karaneh-total="firstMinutes">۰</td>
+                                        <td>—</td>
+                                        <td data-karaneh-total="betweenHours">۰</td>
+                                        <td data-karaneh-total="betweenMinutes">۰</td>
+                                        <td>—</td>
+                                        <td data-karaneh-total="lastHours">۰</td>
+                                        <td data-karaneh-total="lastMinutes">۰</td>
+                                        <td>—</td>
+                                        <td data-karaneh-total="totalMinutes">۰</td>
+                                        <td>—</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="overtime-payroll-actions" aria-label="عملیات محاسبه کارانه">
+                            <button type="button" class="overtime-payroll-refresh" onclick="loadKaranehData(true)">محاسبه مجدد</button>
+                        </div>
                     </div>
                 </div>
             </div>

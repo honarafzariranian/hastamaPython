@@ -320,15 +320,9 @@ body.dark-mode #dashboardBox,
 body.dark-mode #userInfoBox,
 body.dark-mode #newUserBox,
 body.dark-mode #shiftBox,
-body.dark-mode #vacationRequestBox,
 body.dark-mode #vacationBox,
-body.dark-mode #individualReportBox,
 body.dark-mode #overtimeBox,
-body.dark-mode #OverTimeReportBox,
-body.dark-mode #OverTimeIndivisualReportBox,
 body.dark-mode #hourlyPassBox,
-body.dark-mode #hourlyPassTotaluser,
-body.dark-mode #hourlyPassIndivisualuser,
 body.dark-mode #ticketBox,
 body.dark-mode #hozoorbox {
     background-color: var(--dk-surface);
@@ -403,6 +397,201 @@ body.dark-mode .payroll-tab-btn.active {
 }
 
 body.dark-mode .payroll-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .vacation-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .vacation-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .vacation-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .vacation-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-tab-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .vacation-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .vacation-config-item input,
+body.dark-mode .vacation-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .vacation-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .overtime-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .overtime-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .overtime-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .overtime-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .overtime-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .overtime-config-item input,
+body.dark-mode .overtime-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .overtime-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* ─── پنل پاس ساعتی — حالت تاریک ─── */
+body.dark-mode .hourlyPass-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .hourlyPass-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .hourlyPass-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .hourlyPass-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .hourlyPass-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-tab-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .hourlyPass-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .hourlyPass-config-item input,
+body.dark-mode .hourlyPass-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .hourlyPass-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
     color: var(--dk-text);
 }
 
@@ -616,7 +805,7 @@ body.dark-mode .payroll-summary-card--total strong { color: #7dd3fc; }
 
 body.dark-mode .management-box h2,
 body.dark-mode #userInfoBox h2,
-body.dark-mode #vacationRequestBox h2,
+body.dark-mode .vacation-tab-content h2,
 body.dark-mode .table-title,
 body.dark-mode .shift-popup-content h2 {
     color: var(--dk-text);
@@ -1168,7 +1357,6 @@ body.dark-mode .bishtar input,
 body.dark-mode #userSelect,
 body.dark-mode #usernameHozoor,
 body.dark-mode #usernameGozareshHozoor,
-body.dark-mode #usernameHourlypass,
 body.dark-mode #usernameEzafeReport,
 body.dark-mode #usernamedast,
 body.dark-mode #substitute,
@@ -1690,6 +1878,46 @@ body.dark-mode .overtime-payroll-save-status.is-error {
     color: #fca5a5;
 }
 
+/* محاسبه کارانه */
+body.dark-mode .karaneh-summary-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .karaneh-summary-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .karaneh-summary-value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .karaneh-summary-card--valid {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, .1);
+}
+
+body.dark-mode .karaneh-summary-card--valid .karaneh-summary-value {
+    color: #4ade80;
+}
+
+body.dark-mode .karaneh-summary-card--invalid {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, .1);
+}
+
+body.dark-mode .karaneh-summary-card--invalid .karaneh-summary-value {
+    color: #f87171;
+}
+
+body.dark-mode .karaneh-valid {
+    color: #4ade80;
+}
+
+body.dark-mode .karaneh-invalid {
+    color: #f87171;
+}
+
 /* =============================================================================
    ۹) لایهٔ موبایل جدول‌ها — responsive-tables.css
    توکن‌های آن به `.dark-theme` وابسته‌اند؛ برای اطمینان `.dark-mode` هم اضافه شد.
@@ -1959,12 +2187,14 @@ body.dark-mode .attendance-action-btn--checkin:hover:not(:disabled) {
 }
 
 body.dark-mode .attendance-action-btn--checkout,
-body.dark-mode .checkout-confirm-submit {
+body.dark-mode .checkout-confirm-submit,
+body.dark-mode .manual-checkout-btn {
     background-color: rgba(251, 191, 36, 0.18);
     color: var(--dk-warn);
 }
 body.dark-mode .attendance-action-btn--checkout:hover:not(:disabled),
-body.dark-mode .checkout-confirm-submit:hover {
+body.dark-mode .checkout-confirm-submit:hover,
+body.dark-mode .manual-checkout-btn:hover:not(:disabled) {
     background-color: rgba(251, 191, 36, 0.28);
 }
 

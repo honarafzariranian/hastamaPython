@@ -33,7 +33,7 @@ document.addEventListener('click', function (event) {
 // دریافت اطلاعات کاربر از سشن و نمایش در صفحه// دریافت اطلاعات کاربر از سشن و نمایش در صفحه// دریافت اطلاعات کاربر از سشن و نمایش در صفحه
 // دریافت اطلاعات کاربر از سشن و نمایش در صفحه// دریافت اطلاعات کاربر از سشن و نمایش در صفحه// دریافت اطلاعات کاربر از سشن و نمایش در صفحه
 
-window.onload = function () {
+window.addEventListener('load', function () {
     const username = localStorage.getItem("username");
 
     if (!username) {
@@ -89,7 +89,7 @@ window.onload = function () {
     // پاک کردن داده‌ها بعد از لود
     localStorage.removeItem("overtimeReports");
     localStorage.removeItem("username");
-};
+});
 
 function convertToPersianNumbers(input) {
     const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];

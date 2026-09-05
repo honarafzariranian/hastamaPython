@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.removeItem("hourlyPassReportData");
 });
 
-window.onload = function() {
+window.addEventListener('load', function() {
     // ارسال درخواست برای دریافت نام کاربری از سشن
     const username = localStorage.getItem("hourlyPassUsername");  // یا هر متغیری که داری
 fetch(`/get_user_info_report?username=${encodeURIComponent(username)}`, {
@@ -74,7 +74,7 @@ fetch(`/get_user_info_report?username=${encodeURIComponent(username)}`, {
         showSystemError('خطا در دریافت اطلاعات کاربر');
     });
 
-};
+});
 
 // تابع تبدیل اعداد به فارسی
 function convertToPersianNumbers(number) {

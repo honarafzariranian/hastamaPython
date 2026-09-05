@@ -870,7 +870,7 @@ function updatePresenceRing() {
 
 window.addEventListener('load', function() {
     updatePresenceRing();
-    setInterval(updatePresenceRing, 1000);
+    setInterval(updatePresenceRing, 30000);
 });
 
 function closeMobileSidebar() {
@@ -1947,7 +1947,7 @@ function loadUserInfo() {
         showSystemError('خطا در ارتباط با سرور');
     });
 }
-window.onload = function() {
+window.addEventListener('load', function() {
     loadReceivers();
     loadUserInfo();
     loadUsersForEdit();
@@ -1963,7 +1963,7 @@ window.onload = function() {
     
     // بروزرسانی عدد در صفحه
     numberElement.innerText = persianNumber;
-};
+});
 
 // ماه‌های شمسی
 // ماه‌های شمسی

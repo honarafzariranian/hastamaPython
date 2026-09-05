@@ -62,8 +62,11 @@ function updateTopbarClock() {
         hour12: false
     }).format(now);
 
-    dateEl.textContent = convertToPersianNumbers(persianDate);
-    timeEl.textContent = convertToPersianNumbers(persianTime);
+    /* فقط وقتی محتوا تغییر کرده باشد DOM را لمس کن — جلوگیری از layout-shift مداوم */
+    var dateText = convertToPersianNumbers(persianDate);
+    var timeText = convertToPersianNumbers(persianTime);
+    if (dateEl.textContent !== dateText) dateEl.textContent = dateText;
+    if (timeEl.textContent !== timeText) timeEl.textContent = timeText;
 }
 
 function renderDashboardBarHeights() {
@@ -99,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-setInterval(updateTopbarClock, 1000);
+setInterval(updateTopbarClock, 30000);
 
 // فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع// فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع// فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع
 // فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع// فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع// فارسی کردن اعداد جدول گزارش کلی افراد به صورت جامع
@@ -116,9 +119,11 @@ function convertToPersian() {
     });
 }
 
-window.onload = function() {
+// addEventListener به‌جای window.onload — تا اسکریپت‌های تزریق‌شدهٔ شخص‌ثالث
+// نتوانند با بازنویسی window.onload این هندلر را غیرفعال کنند.
+window.addEventListener('load', function() {
     convertToPersian();
-};
+});
 
 // بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر
 // بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر// بستن پیام با کلیک روی ضربدر
@@ -222,63 +227,10 @@ function toggleBox(boxId, iconContainer) {
     const selectedBox = document.getElementById(boxId);
     if (selectedBox) {
         selectedBox.classList.add('is-visible');
-        if (boxId === 'vacationRequestBox') {
-            selectedBox.style.display = 'inline-table';
-        } else if (boxId === 'payrollBox') {
+        if (boxId === 'payrollBox') {
             selectedBox.style.display = 'block';
         } else {
             selectedBox.style.display = 'flex';
-        }
-    }
-
-    // اگر مدیریت مرخصی‌ها انتخاب شده باشد، باکس‌های زیر را نیز نمایش دهید
-    if (boxId === 'vacationBox') {
-        const requestBox = document.getElementById('vacationRequestBox');
-        if (requestBox) {
-            requestBox.classList.add('is-visible');
-            requestBox.style.display = 'inline-table';
-        }
-
-        const individualReportBox = document.getElementById('individualReportBox');
-        if (individualReportBox) {
-            individualReportBox.classList.add('is-visible');
-            individualReportBox.style.display = 'inline-table';
-        }
-    }
-
-    // اگر مدیریت اضافه‌کاری‌ها انتخاب شده باشد، باکس‌های زیر را نیز نمایش دهید
-    if (boxId === 'overtimeBox') {
-        const overTimeReportBox = document.getElementById('OverTimeReportBox');
-        if (overTimeReportBox) {
-            overTimeReportBox.classList.add('is-visible');
-            overTimeReportBox.style.display = 'block';
-        }
-
-        const OverTimeIndivisualReportBox = document.getElementById('OverTimeIndivisualReportBox');
-        if (OverTimeIndivisualReportBox) {
-            OverTimeIndivisualReportBox.classList.add('is-visible');
-            OverTimeIndivisualReportBox.style.display = 'block';
-        }
-    }
-
-    // اگر مدیریت پاس‌های ساعتی انتخاب شده باشد، باکس زیر را نمایش دهید
-    if (boxId === 'hourlyPassBox') {
-        const hourlyPassBox = document.getElementById('hourlyPassBox');
-        if (hourlyPassBox) {
-            hourlyPassBox.classList.add('is-visible');
-            hourlyPassBox.style.display = 'block';
-        }
-
-        const hourlyPassTotaluser = document.getElementById('hourlyPassTotaluser');
-        if (hourlyPassTotaluser) {
-            hourlyPassTotaluser.classList.add('is-visible');
-            hourlyPassTotaluser.style.display = 'flex';
-        }
-
-        const hourlyPassIndivisualuser = document.getElementById('hourlyPassIndivisualuser');
-        if (hourlyPassIndivisualuser) {
-            hourlyPassIndivisualuser.classList.add('is-visible');
-            hourlyPassIndivisualuser.style.display = 'block';
         }
     }
 
@@ -348,6 +300,50 @@ function switchPayrollTab(tabId, btnEl) {
     if (target) target.classList.add('active');
     if (tabId === 'hourly-payroll-calculation') computeHourlyPayrollTotals();
     if (tabId === 'overtime-calculation') loadOvertimePayrollData(false);
+    if (tabId === 'karaneh-calculation') loadKaranehData(false);
+}
+
+// تابع سوئیچ تب‌های بخش مدیریت مرخصی
+function switchVacationTab(tabId, btnEl) {
+    document.querySelectorAll('.vacation-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.vacation-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+}
+
+function switchOvertimeTab(tabId, btnEl) {
+    document.querySelectorAll('.overtime-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.overtime-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+}
+
+function switchHourlyPassTab(tabId, btnEl) {
+    document.querySelectorAll('.hourlyPass-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.hourlyPass-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
 }
 
 // ===== محاسبه جامع حقوق و دستمزد =====
@@ -1326,6 +1322,234 @@ function computeHourlyPayrollTotals() {
     updatePayrollSummary();
 }
 
+// ===== محاسبه کارانه =====
+var karanehLoading = false;
+
+function karanehParseDuration(durationStr) {
+    if (!durationStr) return 0;
+    var parts = String(durationStr).split(':');
+    var hours = parseInt(parts[0], 10) || 0;
+    var minutes = parseInt(parts[1], 10) || 0;
+    return hours * 60 + minutes;
+}
+
+function karanehFormatMinutes(totalMinutes) {
+    var h = Math.floor(Math.max(0, totalMinutes) / 60);
+    var m = Math.max(0, totalMinutes) % 60;
+    return persianDigitsToEnglish(String(h)) + ' ساعت و ' + persianDigitsToEnglish(String(m)) + ' دقیقه';
+}
+
+function karanehClassifyPass(passTitle, durationMinutes) {
+    var result = { first: 0, between: 0, last: 0, valid: true, overflow: 0 };
+
+    if (passTitle === 'avalpss') {
+        if (durationMinutes <= 30) {
+            result.first = durationMinutes;
+        } else {
+            result.first = 30;
+            result.overflow = durationMinutes - 30;
+            result.between = result.overflow;
+        }
+    } else if (passTitle === 'akhrpss') {
+        if (durationMinutes <= 30) {
+            result.last = durationMinutes;
+        } else {
+            result.last = 30;
+            result.overflow = durationMinutes - 30;
+            result.between = result.overflow;
+        }
+    } else if (passTitle === 'beynpss') {
+        result.between = durationMinutes;
+    }
+
+    return result;
+}
+
+function karanehComputeRow(username, passes) {
+    var totalFirst = 0;
+    var totalBetween = 0;
+    var totalLast = 0;
+    var totalAll = 0;
+    var validCount = 0;
+    var invalidCount = 0;
+
+    for (var i = 0; i < passes.length; i++) {
+        var pass = passes[i];
+        var duration = karanehParseDuration(pass.pass_duration);
+        var classified = karanehClassifyPass(pass.pass_title, duration);
+
+        totalFirst += classified.first;
+        totalBetween += classified.between;
+        totalLast += classified.last;
+    }
+
+    totalAll = totalFirst + totalBetween + totalLast;
+
+    var firstValid = totalFirst <= 30;
+    var lastValid = totalLast <= 30;
+    var combinedValid = (totalFirst + totalLast) <= 120;
+    var betweenValid = totalBetween <= 480;
+
+    if (firstValid && lastValid && combinedValid && betweenValid) {
+        validCount = passes.length;
+    } else {
+        invalidCount = passes.length;
+    }
+
+    return {
+        username: username,
+        firstMinutes: totalFirst,
+        betweenMinutes: totalBetween,
+        lastMinutes: totalLast,
+        totalMinutes: totalAll,
+        valid: validCount > 0,
+        passes: passes
+    };
+}
+
+function karanehSet(row, field, value) {
+    var cell = row.querySelector('[data-karaneh="' + field + '"]');
+    if (cell) cell.textContent = value;
+}
+
+function karanehRenderLoading() {
+    document.querySelectorAll('#karanehPayrollTable tbody .karaneh-payroll-row').forEach(function (row) {
+        karanehSet(row, 'firstHours', '—');
+        karanehSet(row, 'firstMinutes', '—');
+        karanehSet(row, 'firstStatus', '—');
+        karanehSet(row, 'betweenHours', '—');
+        karanehSet(row, 'betweenMinutes', '—');
+        karanehSet(row, 'betweenStatus', '—');
+        karanehSet(row, 'lastHours', '—');
+        karanehSet(row, 'lastMinutes', '—');
+        karanehSet(row, 'lastStatus', '—');
+        karanehSet(row, 'totalMinutes', '—');
+        karanehSet(row, 'overallStatus', 'در حال دریافت…');
+    });
+}
+
+function karanehUpdateTotals(results) {
+    var totalFirst = 0;
+    var totalBetween = 0;
+    var totalLast = 0;
+    var totalAll = 0;
+    var validTotal = 0;
+    var invalidTotal = 0;
+
+    for (var i = 0; i < results.length; i++) {
+        totalFirst += results[i].firstMinutes;
+        totalBetween += results[i].betweenMinutes;
+        totalLast += results[i].lastMinutes;
+        totalAll += results[i].totalMinutes;
+        if (results[i].valid) validTotal++;
+        else invalidTotal++;
+    }
+
+    var setTotal = function (id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+
+    setTotal('karanehTotalFirst', karanehFormatMinutes(totalFirst));
+    setTotal('karanehTotalBetween', karanehFormatMinutes(totalBetween));
+    setTotal('karanehTotalLast', karanehFormatMinutes(totalLast));
+    setTotal('karanehTotalAll', karanehFormatMinutes(totalAll));
+    setTotal('karanehValidCount', persianDigitsToEnglish(String(validTotal)));
+    setTotal('karanehInvalidCount', persianDigitsToEnglish(String(invalidTotal)));
+
+    var tfoot = document.querySelector('#karanehPayrollTable tfoot');
+    if (tfoot) {
+        var setFoot = function (field, value) {
+            var cell = tfoot.querySelector('[data-karaneh-total="' + field + '"]');
+            if (cell) cell.textContent = value;
+        };
+        var totalFirstH = Math.floor(totalFirst / 60);
+        var totalFirstM = totalFirst % 60;
+        var totalBetweenH = Math.floor(totalBetween / 60);
+        var totalBetweenM = totalBetween % 60;
+        var totalLastH = Math.floor(totalLast / 60);
+        var totalLastM = totalLast % 60;
+        setFoot('firstHours', persianDigitsToEnglish(String(totalFirstH)));
+        setFoot('firstMinutes', persianDigitsToEnglish(String(totalFirstM)));
+        setFoot('betweenHours', persianDigitsToEnglish(String(totalBetweenH)));
+        setFoot('betweenMinutes', persianDigitsToEnglish(String(totalBetweenM)));
+        setFoot('lastHours', persianDigitsToEnglish(String(totalLastH)));
+        setFoot('lastMinutes', persianDigitsToEnglish(String(totalLastM)));
+        setFoot('totalMinutes', karanehFormatMinutes(totalAll));
+    }
+}
+
+async function loadKaranehData(force) {
+    if (karanehLoading && !force) return;
+    karanehLoading = true;
+    karanehRenderLoading();
+    var range = overtimePayrollMonthRange();
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#karanehPayrollTable tbody .karaneh-payroll-row'));
+    var results = [];
+    try {
+        await Promise.all(rows.map(async function (row) {
+            var username = row.getAttribute('data-username');
+            try {
+                var response = await fetch('/get_hourly_pass_report', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        start_date: range.start,
+                        end_date: range.end
+                    })
+                });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                var payload = await response.json();
+                var passes = Array.isArray(payload) ? payload : [];
+                var result = karanehComputeRow(username, passes);
+                results.push(result);
+                karanehRenderRow(row, result);
+            } catch (error) {
+                karanehSet(row, 'overallStatus', 'خطا');
+                results.push({ username: username, firstMinutes: 0, betweenMinutes: 0, lastMinutes: 0, totalMinutes: 0, valid: false, passes: [] });
+            }
+        }));
+        karanehUpdateTotals(results);
+    } finally {
+        karanehLoading = false;
+    }
+}
+
+function karanehRenderRow(row, result) {
+    var firstH = Math.floor(result.firstMinutes / 60);
+    var firstM = result.firstMinutes % 60;
+    var betweenH = Math.floor(result.betweenMinutes / 60);
+    var betweenM = result.betweenMinutes % 60;
+    var lastH = Math.floor(result.lastMinutes / 60);
+    var lastM = result.lastMinutes % 60;
+
+    karanehSet(row, 'firstHours', persianDigitsToEnglish(String(firstH)));
+    karanehSet(row, 'firstMinutes', persianDigitsToEnglish(String(firstM)));
+    karanehSet(row, 'firstStatus', result.firstMinutes > 30 ? 'غیرمجاز' : 'مجاز');
+    karanehSet(row, 'betweenHours', persianDigitsToEnglish(String(betweenH)));
+    karanehSet(row, 'betweenMinutes', persianDigitsToEnglish(String(betweenM)));
+    karanehSet(row, 'betweenStatus', result.betweenMinutes > 480 ? 'غیرمجاز' : 'مجاز');
+    karanehSet(row, 'lastHours', persianDigitsToEnglish(String(lastH)));
+    karanehSet(row, 'lastMinutes', persianDigitsToEnglish(String(lastM)));
+    karanehSet(row, 'lastStatus', result.lastMinutes > 30 ? 'غیرمجاز' : 'مجاز');
+    karanehSet(row, 'totalMinutes', karanehFormatMinutes(result.totalMinutes));
+
+    var firstValid = result.firstMinutes <= 30;
+    var lastValid = result.lastMinutes <= 30;
+    var combinedValid = (result.firstMinutes + result.lastMinutes) <= 120;
+    var betweenValid = result.betweenMinutes <= 480;
+    var overallValid = firstValid && lastValid && combinedValid && betweenValid;
+
+    karanehSet(row, 'overallStatus', overallValid ? 'مجاز' : 'غیرمجاز');
+    var statusCell = row.querySelector('[data-karaneh="overallStatus"]');
+    if (statusCell) {
+        statusCell.classList.remove('karaneh-valid', 'karaneh-invalid');
+        statusCell.classList.add(overallValid ? 'karaneh-valid' : 'karaneh-invalid');
+    }
+}
+
 function updatePayrollSummary() {
     var summary = {
         insurance: 0,
@@ -2289,7 +2513,8 @@ document.getElementById('generategozareshmrkReportBtn').addEventListener('click'
                 changeStatus(report.id, report.status);
             });
 
-            document.getElementById('downloadReportBtn').style.display = 'block';
+            document.getElementById('vacationReportResult').style.display = 'block';
+            document.getElementById('downloadReportBtn').style.display = 'inline-flex';
         } else {
             showSystemError(data.message || 'خطا در دریافت گزارش');
         }
@@ -2443,11 +2668,13 @@ function deleteUser(username) {
 }
 
 // بستن مدال هنگام کلیک خارج از آن
-window.onclick = function(event) {
+// addEventListener به‌جای window.onclick — تا اسکریپت‌های تزریق‌شدهٔ شخص‌ثالث
+// نتوانند با بازنویسی window.onclick این هندلر را غیرفعال کنند.
+window.addEventListener('click', function(event) {
     if (event.target == document.getElementById('confirmDeleteModal')) {
         closeConfirmDialog();
     }
-}
+});
 
 // پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران
 // پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران// پاپ برای ویرایش اطلاعات کاربران
@@ -2775,9 +3002,8 @@ document.getElementById("submitReport").addEventListener("click", function() {
             }
         });
 
-        const downloadReportBtn = document.getElementById("downloadOvertimeReport");
-        downloadReportBtn.style.display = 'inline-block';
-        document.getElementById('downloadOvertimeReport').style.display = 'block';
+        document.getElementById('overtimeReportResult').style.display = 'block';
+        document.getElementById('downloadOvertimeReport').style.display = 'inline-flex';
 
     })
     .catch(error => {
@@ -3132,6 +3358,9 @@ document.getElementById("submitHourlyPassReport").addEventListener("click", func
     })
     .then(response => response.json())
     .then(data => {
+    var resultContainer = document.getElementById("hourlyPassReportResult");
+    if (resultContainer) resultContainer.style.display = "block";
+
     const tbody = document.getElementById("hourlyPassIndivisualuserReportTable").getElementsByTagName('tbody')[0];
     tbody.innerHTML = ''; // خالی کردن جدول قبل از پر کردن
 
@@ -4278,6 +4507,14 @@ function findAttendanceButton(username) {
     return null;
 }
 
+function findManualCheckoutButton(username) {
+    var buttons = document.querySelectorAll(".manual-checkout-btn[data-username]");
+    for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].getAttribute("data-username") === username) return buttons[i];
+    }
+    return null;
+}
+
 function applyAttendanceState(username, status, checkIn, checkOut) {
     ATTENDANCE_CACHE[username] = { status: status, check_in: checkIn, check_out: checkOut };
 
@@ -4297,8 +4534,10 @@ function applyAttendanceState(username, status, checkIn, checkOut) {
     if (btn) {
         btn.disabled = false;
         // فقط آیکون SVG را جایگزین کن، span tooltip را حفظ کن
+        // «ثبت ورود دستی» همیشه آیکون ورود را نشان می‌دهد؛ خروج با دکمهٔ جداگانه انجام می‌شود
         var oldSvg = btn.querySelector('svg');
-        var newSvgHtml = ATTENDANCE_BUTTON_LABELS[status] || '';
+        var iconKey = status === "checked_out" ? "checked_out" : "not_checked_in";
+        var newSvgHtml = ATTENDANCE_BUTTON_LABELS[iconKey] || '';
         if (oldSvg && newSvgHtml) {
             var tmp = document.createElement('div');
             tmp.innerHTML = newSvgHtml;
@@ -4308,13 +4547,17 @@ function applyAttendanceState(username, status, checkIn, checkOut) {
         btn.setAttribute("data-action", status);
         btn.classList.remove("attendance-action-btn--checkin", "attendance-action-btn--checkout", "attendance-action-btn--done", "attendance-action-btn--loading");
         btn.classList.add(
-            status === "not_checked_in" ? "attendance-action-btn--checkin" :
-            status === "checked_in" ? "attendance-action-btn--checkout" :
-            "attendance-action-btn--done"
+            status === "checked_out" ? "attendance-action-btn--done" :
+            "attendance-action-btn--checkin"
         );
-        if (status === "checked_out") {
-            btn.disabled = true;
-        }
+        // «ثبت ورود دستی» فقط وقتی فعال است که هنوز ورود ثبت نشده باشد
+        btn.disabled = status !== "not_checked_in";
+    }
+
+    // دکمهٔ «ثبت خروج دستی» — فقط وقتی کاربر داخل است فعال می‌شود
+    var coBtn = findManualCheckoutButton(username);
+    if (coBtn) {
+        coBtn.disabled = status !== "checked_in";
     }
 
     // بازتاب تغییرات در نمای موبایل (کارت/فهرست) در صورت فعال بودن
@@ -4448,9 +4691,16 @@ document.addEventListener("click", function (e) {
         if (!username) return;
         if (action === "not_checked_in") {
             doCheckIn(username);
-        } else if (action === "checked_in") {
-            openCheckoutConfirm(username);
         }
+        return;
+    }
+
+    // دکمهٔ «ثبت خروج دستی» — همان مدال تایید خروج را باز می‌کند
+    var coBtn = target.closest(".manual-checkout-btn");
+    if (coBtn && !coBtn.disabled) {
+        e.preventDefault();
+        var coUsername = coBtn.getAttribute("data-username");
+        if (coUsername) openCheckoutConfirm(coUsername);
         return;
     }
 

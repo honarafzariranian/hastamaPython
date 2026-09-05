@@ -326,8 +326,9 @@
     if (td.className) wrapper.classList.add.apply(wrapper.classList, td.className.split(/\s+/));
     var onclickAttr = td.getAttribute('onclick');
     if (onclickAttr) wrapper.setAttribute('onclick', onclickAttr);
-    while (td.firstChild) wrapper.appendChild(td.firstChild);
+    /* td را پیش از جابه‌جایی فرزندان ثبت کن تا observer آن را «خودی» تشخیص دهد */
     this.internalTargets.add(td);
+    while (td.firstChild) wrapper.appendChild(td.firstChild);
     this.adoptions.push({ td: td, wrapper: wrapper, injectedChildren: [], addedClasses: [] });
     return wrapper;
   };
@@ -534,42 +535,47 @@
   /* ---------- ۴-۸) رندر ---------- */
   ResponsiveTable.prototype.render = function () {
     if (!this.view || !this.active) return;
-    this.restore();
-    this.view.innerHTML = '';
-    var cfg = this.cfg;
+    this._rendering = true;
+    try {
+      this.restore();
+      this.view.innerHTML = '';
+      var cfg = this.cfg;
 
-    /* حالت بارگذاری (Skeleton) — فقط وقتی هنوز داده‌ای رندر نشده */
-    var rows = this.rows();
-    if (this.loading && !rows.length) {
-      this.view.appendChild(this.buildSkeleton());
-      return;
-    }
+      /* حالت بارگذاری (Skeleton) — فقط وقتی هنوز داده‌ای رندر نشده */
+      var rows = this.rows();
+      if (this.loading && !rows.length) {
+        this.view.appendChild(this.buildSkeleton());
+        return;
+      }
 
-    /* حالت خالی */
-    if (!rows.length) {
-      this.view.appendChild(this.buildEmpty());
-      return;
-    }
+      /* حالت خالی */
+      if (!rows.length) {
+        this.view.appendChild(this.buildEmpty());
+        return;
+      }
 
-    var roles = this.roles();
-    var shown = Math.min(rows.length, this.limit);
-    var list = el('div', cfg.pattern === 'list' ? 'rt-list' : 'rt-cards');
+      var roles = this.roles();
+      var shown = Math.min(rows.length, this.limit);
+      var list = el('div', cfg.pattern === 'list' ? 'rt-list' : 'rt-cards');
 
-    for (var i = 0; i < shown; i++) {
-      list.appendChild(cfg.pattern === 'list' ? this.buildListRow(rows[i], roles, i) : this.buildCard(rows[i], roles, i));
-    }
-    this.view.appendChild(list);
+      for (var i = 0; i < shown; i++) {
+        list.appendChild(cfg.pattern === 'list' ? this.buildListRow(rows[i], roles, i) : this.buildCard(rows[i], roles, i));
+      }
+      this.view.appendChild(list);
 
-    /* دکمهٔ «نمایش موارد بیشتر» برای فهرست‌های طولانی (عملکرد/کارایی) */
-    if (rows.length > shown) {
-      var self = this;
-      var more = el('button', 'rt-more', 'نمایش موارد بیشتر (' + String(rows.length - shown) + ' مورد باقی‌مانده)');
-      more.type = 'button';
-      more.addEventListener('click', function () {
-        self.limit += (cfg.pageSize || 40);
-        self.render();
-      });
-      this.view.appendChild(more);
+      /* دکمهٔ «نمایش موارد بیشتر» برای فهرست‌های طولانی (عملکرد/کارایی) */
+      if (rows.length > shown) {
+        var self = this;
+        var more = el('button', 'rt-more', 'نمایش موارد بیشتر (' + String(rows.length - shown) + ' مورد باقی‌مانده)');
+        more.type = 'button';
+        more.addEventListener('click', function () {
+          self.limit += (cfg.pageSize || 40);
+          self.render();
+        });
+        this.view.appendChild(more);
+      }
+    } finally {
+      this._rendering = false;
     }
   };
 
@@ -936,7 +942,7 @@
     var target = this.table;
     if (!('MutationObserver' in window)) return;
     var mo = new MutationObserver(function (records) {
-      if (!self.active) return;
+      if (!self.active || self._rendering) return;
       var dirty = false;
       for (var i = 0; i < records.length; i++) {
         var r = records[i];
@@ -1011,7 +1017,10 @@
     });
   }
 
+  var _initialized = false;
   function init() {
+    if (_initialized) return;
+    _initialized = true;
     CONFIGS.forEach(function (c) {
       try { register(c.sel, c); } catch (e) { log('register failed', c.sel, e); }
     });

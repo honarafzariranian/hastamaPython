@@ -49,6 +49,7 @@
     }
     function startNotificationStream() {
         if (typeof EventSource === 'undefined') return;
+        if (notificationState.stream && notificationState.stream.readyState !== EventSource.CLOSED) return;
         var stream = new EventSource('/api/notifications/stream');
         notificationState.stream = stream;
         stream.onmessage = function (event) {

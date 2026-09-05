@@ -288,9 +288,8 @@
        inline-table باعث می‌شد باکس به پهنای جدول (۶۸۰px) کش بیاید و عنوان
        آن از صفحه خارج شود؛ با block شدن، باکس تمام عرض می‌ماند و جدول اسکرول
        افقی کنترل‌شده می‌گیرد. ------------------------------------------------- */
-    #vacationRequestBox,
-    #individualReportBox {
-        display: block !important;
+    #vacationBox {
+        display: flex !important;
     }
 
     /* --- ۳-۴) پیام موفقیت: محدوده امن در موبایل */

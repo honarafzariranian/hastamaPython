@@ -176,7 +176,7 @@ function convertToPersianNumbers(num) {
 // تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی// تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی// تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی
 // تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی// تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی// تنظیمات جداول اضافه کاری، مرخصی و پاس های ساعتی
 
-window.onload = function() {
+window.addEventListener('load', function() {
     // خواندن داده‌های اضافه‌کاری از localStorage
     let overtimeData = JSON.parse(localStorage.getItem("overtimeReportData"));
     let leaveData = JSON.parse(localStorage.getItem("leaveReportData"));
@@ -381,7 +381,7 @@ let adjustedPresenceTimePersian = convertToPersianNumbers(adjustedPresenceTime);
 // مقدار جدید را در تگ موردنظر نمایش بده
 document.querySelector("#attendanceNumBoxID").textContent = adjustedPresenceTimePersian;
 
-}
+});
 
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
