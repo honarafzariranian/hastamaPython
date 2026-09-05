@@ -994,24 +994,24 @@
                         <table class="request-table" id="leaveRequestsTable">
                             <thead>
                                 <tr>
-                                    <th class="krbr-morkhc-drkhst">ثبت تغییرات</th>
-                                    <th class="aztrkh-morkhc-drkhst">وضعیت درخواست</th>
-                                    <th class="tatrkh-morkhc-drkhst">جانشین</th>
-                                    <th class="rooz-morkhc-drkhst">تعداد روزها</th>
-                                    <th class="jnshn-morkhc-drkhst">تا تاریخ</th>
-                                    <th class="vaziat-morkhc-drkhst">از تاریخ</th>
                                     <th class="sabt-morkhc-drkhst">نام کاربر</th>
+                                    <th class="vaziat-morkhc-drkhst">از تاریخ</th>
+                                    <th class="jnshn-morkhc-drkhst">تا تاریخ</th>
+                                    <th class="rooz-morkhc-drkhst">تعداد روزها</th>
+                                    <th class="tatrkh-morkhc-drkhst">جانشین</th>
+                                    <th class="aztrkh-morkhc-drkhst">وضعیت درخواست</th>
+                                    <th class="krbr-morkhc-drkhst">ثبت تغییرات</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="krbr-morkhc-drkhst"></td>
-                                    <td class="aztrkh-morkhc-drkhst"></td>
-                                    <td class="tatrkh-morkhc-drkhst"></td>
-                                    <td class="rooz-morkhc-drkhst"></td>
-                                    <td class="jnshn-morkhc-drkhst"></td>
-                                    <td class="vaziat-morkhc-drkhst"></td>
                                     <td class="sabt-morkhc-drkhst"></td>
+                                    <td class="vaziat-morkhc-drkhst"></td>
+                                    <td class="jnshn-morkhc-drkhst"></td>
+                                    <td class="rooz-morkhc-drkhst"></td>
+                                    <td class="tatrkh-morkhc-drkhst"></td>
+                                    <td class="aztrkh-morkhc-drkhst"></td>
+                                    <td class="krbr-morkhc-drkhst"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1310,7 +1310,11 @@
 
         <!-- مرکز مدیریت تیکت‌ها: صندوق ورودی، فهرست و فضای مکالمه -->
         <div id="ticketBox" class="management-box ticketing-panel" style="display:none;">
-            <div class="helpdesk-layout" dir="rtl">
+            <div class="ticket-heading">
+                <h2>مدیریت تیکت‌ها</h2>
+                <span class="ticket-heading-bar"></span>
+
+                <div class="helpdesk-layout" dir="rtl">
                 <aside class="helpdesk-views" aria-label="نماهای تیکت">
                     <div class="helpdesk-views-head"><span class="ticket-panel-kicker">فضای کاری پشتیبانی</span><strong>صندوق تیکت</strong></div>
                     <button type="button" class="helpdesk-view is-active" data-ticket-view="all">همه تیکت‌ها <b id="adminViewCountAll">۰</b></button>
@@ -1334,7 +1338,8 @@
                     <div id="adminTicketList" class="helpdesk-ticket-list"><div class="ticket-loading-state">در حال دریافت تیکت‌ها…</div></div>
                     <div id="adminTicketPagination" class="ticket-pagination" aria-label="صفحه‌بندی تیکت‌ها"></div>
                 </section>
-                <aside id="adminTicketContext" class="helpdesk-context" aria-label="جزئیات تیکت"><div class="ticket-context-empty"><span>←</span><strong>یک تیکت را انتخاب کنید</strong><p>مکالمه و مشخصات آن در این بخش نمایش داده می‌شود.</p></div></aside>
+                <aside id="adminTicketContext" class="helpdesk-context" aria-label="جزئیات تیکت"><div class="ticket-context-empty"><span>←</span><strong>یک تیکت را انتخاب کنید</strong><p>مکالمه و مشخصات آن در این بخش نمایش داده می‌شود.</p></div>                </aside>
+            </div>
             </div>
         </div>
 

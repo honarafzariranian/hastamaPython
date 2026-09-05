@@ -2789,6 +2789,28 @@ form button:active {
     text-align: center;
 }
 
+.ticket-heading {
+    margin: 0 0 8px;
+    width: 100%;
+}
+
+.ticket-heading h2 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    font-weight: 800;
+    color: #0B2A3B;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.ticket-heading-bar {
+    display: block;
+    width: 46px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0ea5e9, #6366f1);
+}
+
 /*  --- = جدول تیکت ها ---  */
 /*  --- = جدول تیکت ها ---  */
 /*  --- = جدول تیکت ها ---  */

@@ -2197,13 +2197,15 @@ function loadLeaveRequests() {
                     const row = document.createElement('tr');
                     row.id = `row_${request.id}`; // اضافه کردن ID برای ردیف جهت حذف بعدی
                     row.innerHTML = `
-                        <td>
-                            <button class="update-button" onclick="updateStatus(${request.id})">تایید تغییرات</button>
-                        </td>
+                        <td>${convertToPersianNumbers(request.username)}</td>
+                        <td>${convertToPersianNumbers(formatDate(request.start_date))}</td>
+                        <td>${convertToPersianNumbers(formatDate(request.end_date))}</td>
+                        <td>${convertToPersianNumbers(request.days)}</td>
+                        <td>${convertToPersianNumbers(request.substitute)}</td>
                         <td>
                             <div class="status-container">
                                 <div class="status-navbar" id="statusNavbar_${request.id}" onclick="toggleDropdown(${request.id})">
-                                    ${convertToPersianNumbers(request.status)} <!-- وضعیت فعلی نمایش داده می‌شود -->
+                                    ${convertToPersianNumbers(request.status)}
                                 </div>
                                 <div class="status-dropdown" id="statusDropdown_${request.id}" style="display: none;">
                                     <div class="status-option approved" onclick="changeStatus(${request.id}, 'تایید شده')">تایید شده</div>
@@ -2212,11 +2214,9 @@ function loadLeaveRequests() {
                                 </div>
                             </div>
                         </td>
-                        <td>${convertToPersianNumbers(request.substitute)}</td>
-                        <td>${convertToPersianNumbers(request.days)}</td>
-                        <td>${convertToPersianNumbers(formatDate(request.end_date))}</td>
-                        <td>${convertToPersianNumbers(formatDate(request.start_date))}</td>
-                        <td>${convertToPersianNumbers(request.username)}</td>
+                        <td>
+                            <button class="update-button" onclick="updateStatus(${request.id})">تایید تغییرات</button>
+                        </td>
                     `;
                     tableBody.appendChild(row);
 
