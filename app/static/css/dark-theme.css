@@ -107,10 +107,21 @@ body.dark-mode .logout-btn img {
     filter: invert(1) brightness(1.65) contrast(0.92);
 }
 
+/* آیکون‌های SVG اینلاین در حالت تیره → رنگ روشن */
+body.dark-mode .icon-container svg {
+    color: #c8d6e0;
+}
+
 /* آیکون‌های داخل عناصر فعال/گرادیانی همان سفید اصلی می‌مانند */
 body.dark-mode .icon-container.active img,
+body.dark-mode .icon-container.active svg,
 body.dark-mode .sidebar-nav-item.active img {
     filter: brightness(0) invert(1);
+}
+
+body.dark-mode .icon-container.active svg {
+    filter: none;
+    color: #fff;
 }
 
 /* --------------------------------------------------------------------------
@@ -2205,7 +2216,8 @@ body.dark-mode .trash-icon:hover {
 /* پس‌زمینهٔ روشن تراشهٔ آیکون‌های ساید‌بار (فقط پنل کاربری؛ ساید‌بار ادمین
    در حالت روشن تراشه ندارد و در تیره هم نباید اضافه شود) */
 body.dark-mode .sidebar-right .icon-container img,
-body.dark-mode .icon-container-leftSidebar img {
+body.dark-mode .sidebar-right .icon-container svg,
+body.dark-mode .icon-container-leftSidebar img,
     background-color: var(--dk-surface-2);
 }
 

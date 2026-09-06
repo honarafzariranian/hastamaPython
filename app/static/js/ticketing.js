@@ -389,6 +389,9 @@
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
         modal.style.display = 'flex';
+        void modal.offsetHeight;
+        modal.classList.add('is-open');
+        document.body.classList.add('ticket-dialog-open');
         loadTicketUsers();
         loadCategories();
     }
@@ -396,13 +399,19 @@
     function closeTicketModal() {
         const modal = $('#ticketModal');
         if (!modal) return;
-        // Move focus away before hiding to avoid aria-hidden conflict
         if (modal.contains(document.activeElement)) {
             document.activeElement.blur();
         }
-        modal.hidden = true;
-        modal.setAttribute('aria-hidden', 'true');
-        modal.style.display = 'none';
+        modal.classList.remove('is-open');
+        modal.classList.add('is-closing');
+        modal.addEventListener('transitionend', function handler() {
+            modal.classList.remove('is-closing');
+            modal.hidden = true;
+            modal.setAttribute('aria-hidden', 'true');
+            modal.style.display = 'none';
+            document.body.classList.remove('ticket-dialog-open');
+            modal.removeEventListener('transitionend', handler);
+        });
     }
 
     async function submitTicketForm(event) {

@@ -238,7 +238,7 @@ function toggleBox(boxId, iconContainer) {
     if (boxId === 'ticketBox') {
         const ticketBox = document.getElementById('ticketBox');
         if (ticketBox) {
-            ticketBox.style.display = 'block';
+            ticketBox.style.display = 'flex';
             // مرکز جدید تیکت‌ها فقط از API نرمال‌شده استفاده می‌کند.
             if (window.TicketingWorkspace) window.TicketingWorkspace.loadAdmin(1);
         }
@@ -3962,24 +3962,40 @@ function resetTimer() {
 
 // باز کردن پاپ‌آپ ثبت تیکت
 function openTicketModal() {
-    document.getElementById("ticketModal").style.display = "block";
+    const modal = document.getElementById("ticketModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    // reflow کوچک تا مرورگر حالت اولیه (opacity:0) رو رندر کنه
+    void modal.offsetHeight;
+    modal.classList.add('is-open');
+    document.body.classList.add('ticket-dialog-open');
     fetch('/get_receivers')
         .then(response => response.json())
         .then(data => {
             const receiverSelect = document.getElementById('ticketReceiver');
-            receiverSelect.innerHTML = '<option value="" disabled selected>انتخاب کنید</option>';  // ابتدا گزینه پیش‌فرض را قرار می‌دهیم
+            receiverSelect.innerHTML = '<option value="" disabled selected>انتخاب کنید</option>';
             data.forEach(receiver => {
                 const option = document.createElement('option');
-                option.value = receiver;  // نام کاربری
-                option.textContent = receiver;  // نام کاربری که در لیست نمایش داده می‌شود
+                option.value = receiver;
+                option.textContent = receiver;
                 receiverSelect.appendChild(option);
             });
         })
         .catch(error => console.error('Error fetching receivers:', error));
 }
 
-// بستن پاپ‌آپ ثبت تیکت
-function closeTicketModal() {document.getElementById("ticketModal").style.display = "none";}
+// بستن پاپ‌آپ ثبت تیکت با انیمیشن
+function closeTicketModal() {
+    const modal = document.getElementById("ticketModal");
+    modal.classList.remove('is-open');
+    modal.classList.add('is-closing');
+    modal.addEventListener('transitionend', function handler() {
+        modal.classList.remove('is-closing');
+        modal.style.display = 'none';
+        document.body.classList.remove('ticket-dialog-open');
+        modal.removeEventListener('transitionend', handler);
+    });
+}
 
 // تنظیمات ثبت تیکت
 

@@ -47,8 +47,13 @@
 }
 
 @keyframes tkScaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tkScaleOut {
+    from { opacity: 1; transform: scale(1) translateY(0); }
+    to { opacity: 0; transform: scale(0.92) translateY(12px); }
 }
 
 @keyframes tkPulse {
@@ -622,7 +627,8 @@
     display: grid;
     grid-template-columns: 200px minmax(340px, 1fr) minmax(300px, .9fr);
     gap: 16px;
-    min-height: 620px;
+    flex: 1;
+    min-height: 0;
     padding: 20px 24px 24px;
 }
 
@@ -1292,7 +1298,6 @@
     border-radius: var(--tk-radius-lg);
     background: var(--tk-surface);
     box-shadow: 0 24px 80px rgba(11, 42, 59, 0.25);
-    animation: tkScaleIn 0.3s ease;
 }
 
 .morakhaci-sabt .modal-content-sabtTicket h2,
@@ -1353,6 +1358,10 @@
 
 /* ─── Sabt Ticket Form ─── */
 .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
     width: min(94vw, 620px);
     max-width: min(94vw, 620px);
     padding: 0;
@@ -1361,6 +1370,16 @@
     background-color: var(--tk-surface);
     box-shadow: 0 28px 90px rgba(11, 42, 59, 0.25);
     color: var(--tk-text);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.morakhaci-sabt.is-open .modaleSabteTicket.sabt-ticket-wrap {
+    opacity: 1;
+}
+
+.morakhaci-sabt.is-closing .modaleSabteTicket.sabt-ticket-wrap {
+    opacity: 0;
 }
 
 .morakhaci-sabt .modal-content-sabtTicket.sabt-ticket-dialog {
@@ -1755,34 +1774,59 @@
 /* ─── Desktop: Sticky Panel ─── */
 @media screen and (min-width: 769px) {
     #ticketBox.ticketing-panel {
-        position: sticky !important;
-        margin-top: 108px !important;
-        height: auto !important;
-        max-height: 700px !important;
-        min-height: 0 !important;
+        position: fixed !important;
+        top: 8rem !important;
+        bottom: 12px !important;
+        left: 1% !important;
+        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
+        width: 94% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        flex-direction: column !important;
         overflow: hidden !important;
         box-sizing: border-box;
+        z-index: 58;
+        border-radius: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 0 !important;
+        background-color: #ffffff;
+    }
+
+    #ticketBox.ticketing-panel .userInfo-header {
+        flex-shrink: 0;
+        border-radius: 20px 20px 0 0;
     }
 
     #ticketBox.ticketing-panel .helpdesk-layout {
-        height: 100%;
+        flex: 1;
         min-height: 0 !important;
-        max-height: 100%;
+        max-height: none !important;
+        overflow: hidden !important;
         align-items: stretch;
     }
 
-    #ticketBox.ticketing-panel .helpdesk-views,
     #ticketBox.ticketing-panel .helpdesk-list-pane,
     #ticketBox.ticketing-panel .helpdesk-context {
         min-height: 0 !important;
-        max-height: 100%;
+        max-height: none !important;
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
     }
 
-    #ticketBox.ticketing-panel .helpdesk-views,
+    #ticketBox.ticketing-panel .helpdesk-views {
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
     #ticketBox.ticketing-panel .helpdesk-ticket-list,
     #ticketBox.ticketing-panel .ticket-workspace-timeline {
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
     }
