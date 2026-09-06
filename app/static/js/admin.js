@@ -1336,7 +1336,7 @@ function karanehParseDuration(durationStr) {
 function karanehFormatMinutes(totalMinutes) {
     var h = Math.floor(Math.max(0, totalMinutes) / 60);
     var m = Math.max(0, totalMinutes) % 60;
-    return persianDigitsToEnglish(String(h)) + ' ساعت و ' + persianDigitsToEnglish(String(m)) + ' دقیقه';
+    return convertToPersianDigits(String(h)) + ' ساعت و ' + convertToPersianDigits(String(m)) + ' دقیقه';
 }
 
 function karanehClassifyPass(passTitle, durationMinutes) {
@@ -1454,8 +1454,8 @@ function karanehUpdateTotals(results) {
     setTotal('karanehTotalBetween', karanehFormatMinutes(totalBetween));
     setTotal('karanehTotalLast', karanehFormatMinutes(totalLast));
     setTotal('karanehTotalAll', karanehFormatMinutes(totalAll));
-    setTotal('karanehValidCount', persianDigitsToEnglish(String(validTotal)));
-    setTotal('karanehInvalidCount', persianDigitsToEnglish(String(invalidTotal)));
+    setTotal('karanehValidCount', convertToPersianDigits(String(validTotal)));
+    setTotal('karanehInvalidCount', convertToPersianDigits(String(invalidTotal)));
 
     var tfoot = document.querySelector('#karanehPayrollTable tfoot');
     if (tfoot) {
@@ -1469,12 +1469,12 @@ function karanehUpdateTotals(results) {
         var totalBetweenM = totalBetween % 60;
         var totalLastH = Math.floor(totalLast / 60);
         var totalLastM = totalLast % 60;
-        setFoot('firstHours', persianDigitsToEnglish(String(totalFirstH)));
-        setFoot('firstMinutes', persianDigitsToEnglish(String(totalFirstM)));
-        setFoot('betweenHours', persianDigitsToEnglish(String(totalBetweenH)));
-        setFoot('betweenMinutes', persianDigitsToEnglish(String(totalBetweenM)));
-        setFoot('lastHours', persianDigitsToEnglish(String(totalLastH)));
-        setFoot('lastMinutes', persianDigitsToEnglish(String(totalLastM)));
+        setFoot('firstHours', convertToPersianDigits(String(totalFirstH)));
+        setFoot('firstMinutes', convertToPersianDigits(String(totalFirstM)));
+        setFoot('betweenHours', convertToPersianDigits(String(totalBetweenH)));
+        setFoot('betweenMinutes', convertToPersianDigits(String(totalBetweenM)));
+        setFoot('lastHours', convertToPersianDigits(String(totalLastH)));
+        setFoot('lastMinutes', convertToPersianDigits(String(totalLastM)));
         setFoot('totalMinutes', karanehFormatMinutes(totalAll));
     }
 }
@@ -1525,14 +1525,14 @@ function karanehRenderRow(row, result) {
     var lastH = Math.floor(result.lastMinutes / 60);
     var lastM = result.lastMinutes % 60;
 
-    karanehSet(row, 'firstHours', persianDigitsToEnglish(String(firstH)));
-    karanehSet(row, 'firstMinutes', persianDigitsToEnglish(String(firstM)));
+    karanehSet(row, 'firstHours', convertToPersianDigits(String(firstH)));
+    karanehSet(row, 'firstMinutes', convertToPersianDigits(String(firstM)));
     karanehSet(row, 'firstStatus', result.firstMinutes > 30 ? 'غیرمجاز' : 'مجاز');
-    karanehSet(row, 'betweenHours', persianDigitsToEnglish(String(betweenH)));
-    karanehSet(row, 'betweenMinutes', persianDigitsToEnglish(String(betweenM)));
+    karanehSet(row, 'betweenHours', convertToPersianDigits(String(betweenH)));
+    karanehSet(row, 'betweenMinutes', convertToPersianDigits(String(betweenM)));
     karanehSet(row, 'betweenStatus', result.betweenMinutes > 480 ? 'غیرمجاز' : 'مجاز');
-    karanehSet(row, 'lastHours', persianDigitsToEnglish(String(lastH)));
-    karanehSet(row, 'lastMinutes', persianDigitsToEnglish(String(lastM)));
+    karanehSet(row, 'lastHours', convertToPersianDigits(String(lastH)));
+    karanehSet(row, 'lastMinutes', convertToPersianDigits(String(lastM)));
     karanehSet(row, 'lastStatus', result.lastMinutes > 30 ? 'غیرمجاز' : 'مجاز');
     karanehSet(row, 'totalMinutes', karanehFormatMinutes(result.totalMinutes));
 

@@ -839,7 +839,8 @@ function updatePresenceRing() {
     } else if (entryMinutes !== null) {
         workedMinutes = computeElapsedSinceEntry(entryMinutes, currentNormalizedMinutes);
     } else {
-        workedMinutes = shiftState.workedMinutes;
+        // No entry time recorded → user hasn't clocked in yet
+        workedMinutes = 0;
     }
 
     // If the user has an explicit check-in but no checkout, compute progress live.

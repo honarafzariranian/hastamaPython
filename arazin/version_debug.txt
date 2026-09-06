@@ -1,0 +1,2752 @@
+﻿=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-11-17 15:36:37
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-11-17 15:39:43
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-11-19 10:58:10
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-11-25 13:35:54
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-11-29 14:24:51
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-06 13:10:17
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-08 13:58:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-13 11:20:12
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-13 13:39:22
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-17 12:29:25
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-17 14:19:48
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-17 16:40:50
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-24 11:47:15
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-24 12:38:18
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-27 12:50:11
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2025-12-31 13:13:43
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-01 18:23:37
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-07 13:15:21
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-11 14:34:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-14 12:28:01
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-14 15:22:56
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-24 12:28:30
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-26 11:38:53
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-26 13:32:37
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-28 11:01:54
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-01-31 11:33:00
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-01 14:02:16
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-02 15:06:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-10 12:57:51
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 12:58:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 14:55:20
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 14:59:21
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 14:59:36
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 14:59:59
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-18 15:01:20
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-28 10:45:14
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-02-28 13:36:54
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-02 11:01:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 13:30:27
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 13:35:08
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 13:39:10
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 14:36:01
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 14:36:50
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-04 15:03:50
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-07 12:47:11
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-07 14:34:19
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-10 12:55:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-14 10:55:16
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-14 12:12:45
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-14 14:56:28
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 08:59:39
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 08:59:39
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 08:59:39
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 09:01:28
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 09:01:45
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 09:55:23
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 09:55:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-25 09:58:27
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-28 10:39:17
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-03-28 11:16:30
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-04 16:03:09
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-04 16:22:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-05 11:44:42
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-06 09:56:01
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-06 12:55:13
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-06 13:58:32
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-07 10:57:02
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-08 09:47:41
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-09 09:55:11
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-11 09:27:39
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-11 12:02:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 09:07:43
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 09:09:59
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 09:11:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 09:13:20
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 12:57:29
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 14:06:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-12 14:40:06
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-13 11:13:05
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-13 14:05:11
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 09:19:36
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 09:32:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 11:10:32
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 12:29:32
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 13:43:53
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 13:48:29
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-15 13:58:09
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-19 10:20:06
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-20 10:24:39
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-20 13:58:53
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-20 13:59:02
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 09:31:23
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 10:37:51
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 13:05:36
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 13:30:14
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 13:36:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 14:00:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-21 14:07:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-22 09:40:13
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-26 09:31:38
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-27 11:05:32
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-04-27 13:01:22
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2022-05-03 10:02:02
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-03 14:26:16
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-03 17:01:56
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-04 09:32:44
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-05 09:07:22
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:40:02
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:53:07
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:53:15
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:53:28
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:53:57
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:54:26
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:54:45
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 13:57:06
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 14:05:43
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-06 14:08:58
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-07 09:22:00
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-09 09:39:12
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-09 12:55:00
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-09 12:56:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-09 15:03:34
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-10 09:56:22
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-10 10:57:16
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-14 10:48:51
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-16 10:14:03
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-16 14:17:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-18 11:06:02
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-19 14:21:20
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-19 16:46:11
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-20 10:13:05
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-21 09:51:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-23 11:43:37
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-23 14:18:23
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-23 15:36:14
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-24 17:20:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-25 10:08:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-26 09:43:01
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-28 10:21:53
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-30 08:02:33
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-30 09:41:57
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-30 16:24:25
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-31 09:02:32
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-31 14:37:13
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-31 14:37:19
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-05-31 15:21:12
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-01 09:28:07
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-01 13:09:31
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-03 08:24:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-06 08:21:55
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-06 09:52:12
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-06 11:07:15
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-07 11:53:13
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-07 13:19:37
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-09 09:35:26
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-09 13:24:09
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-10 14:15:15
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-13 08:34:46
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-13 15:19:59
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-13 15:34:30
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-13 15:34:41
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-14 10:25:18
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-14 11:12:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-14 12:28:41
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-15 09:37:05
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-16 09:46:03
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-16 10:10:10
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-16 14:41:29
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-16 15:34:42
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-16 15:55:35
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-23 09:09:16
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
+=== Version Debug Info ===
+File: C:\Program Files (x86)\Aras Electronics\Aras Personnel System\Araz.exe
+Time: 2026-06-29 15:53:24
+ProductVersion: 2.01.0710
+FileVersion: 2.01.0710
+FileMajorPart: 2
+FileMinorPart: 1
+FileBuildPart: 0
+FilePrivatePart: 710
+CompanyName: Araz Electronics
+ProductName: Araz
+InternalName: Araz
+OriginalFilename: Araz.exe
+
+→ Final version string returned: 2.01.0710
+------------------------------------------------------------
