@@ -1553,7 +1553,12 @@ document.getElementById('closePopup').addEventListener('click', function(event) 
 function openTicketModal() {
     const ticketModal = document.getElementById("ticketModal");
     if (!ticketModal) return;
+    ticketModal.hidden = false;
+    ticketModal.removeAttribute('hidden');
     ticketModal.style.display = "flex";
+    void ticketModal.offsetHeight;
+    ticketModal.classList.add('is-open');
+    document.body.classList.add('ticket-dialog-open');
     updateModalOverlayState();
     fetch('/get_receivers')
         .then(response => response.json())
@@ -1575,8 +1580,16 @@ function openTicketModal() {
 function closeTicketModal() {
     const ticketModal = document.getElementById("ticketModal");
     if (!ticketModal) return;
-    ticketModal.style.display = "none";
-    updateModalOverlayState();
+    ticketModal.classList.remove('is-open');
+    ticketModal.classList.add('is-closing');
+    ticketModal.addEventListener('transitionend', function handler() {
+        ticketModal.classList.remove('is-closing');
+        ticketModal.style.display = 'none';
+        ticketModal.hidden = true;
+        document.body.classList.remove('ticket-dialog-open');
+        ticketModal.removeEventListener('transitionend', handler);
+        updateModalOverlayState();
+    });
 }
 
 // باز کردن پاپ‌آپ لیست تیکت‌ها (فقط در موبایل)
