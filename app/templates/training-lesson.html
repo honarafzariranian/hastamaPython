@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ lesson.title if lesson else 'آموزش پیدا نشد' }} — آموزش هستما</title>
+<link rel="stylesheet" href="{{ url_for('static', path='css/training.css') }}">
+</head>
+<body class="tr-page">
+
+<div class="tr-bg-layer" aria-hidden="true"></div>
+
+<div class="tr-shell">
+
+    {% if error %}
+        {# ── Error State ── #}
+        <div class="tr-error" style="margin-top:80px;">
+            <div class="tr-error__icon">📚</div>
+            <div class="tr-error__title">{{ error }}</div>
+            <div class="tr-error__text">آموزش مورد نظر در سیستم وجود ندارد.</div>
+            <a href="/training" style="margin-top:16px;display:inline-flex;padding:10px 24px;background:var(--tr-primary);color:#fff;border-radius:100px;">بازگشت به آموزش‌ها</a>
+        </div>
+
+    {% else %}
+
+    {# ── Breadcrumb ── #}
+    <nav class="tr-breadcrumb" aria-label="مسیر صفحه">
+        <a href="/login">ورود</a>
+        <span class="tr-breadcrumb__sep">/</span>
+        <a href="/training">آموزش سامانه</a>
+        <span class="tr-breadcrumb__sep">/</span>
+        <a href="/training/{{ lesson.category }}">{{ training_data.categories.get(lesson.category, {}).get('title', lesson.category) }}</a>
+        <span class="tr-breadcrumb__sep">/</span>
+        <span>{{ lesson.title }}</span>
+    </nav>
+
+    <article class="tr-lesson">
+        {# ── Back Button ── #}
+        <a href="/training/{{ lesson.category }}" class="tr-lesson__back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+            بازگشت به فهرست آموزش‌ها
+        </a>
+
+        {# ── Header ── #}
+        <div class="tr-lesson__header">
+            <div class="tr-lesson__icon">{{ lesson.icon }}</div>
+            <h1 class="tr-lesson__title">{{ lesson.title }}</h1>
+            <p class="tr-lesson__desc">{{ lesson.description }}</p>
+            <div class="tr-lesson__meta">
+                <span>⏱ {{ lesson.estimated_time }}</span>
+                <span>📖 {{ training_data.categories.get(lesson.category, {}).get('title', lesson.category) }}</span>
+                {% if lesson.role == 'admin' %}
+                <span>🛡️ ویژه مدیران</span>
+                {% elif lesson.role == 'user' %}
+                <span>👤 ویژه کاربران</span>
+                {% else %}
+                <span>📘 عمومی</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── For What ── #}
+        {% if lesson.for_what %}
+        <div class="tr-block tr-block--info">
+            <div class="tr-block__label">🎯 این آموزش برای چیست؟</div>
+            <div class="tr-block__text">{{ lesson.for_what }}</div>
+        </div>
+        {% endif %}
+
+        {# ── Before Start ── #}
+        {% if lesson.before_start %}
+        <div class="tr-block tr-block--warning">
+            <div class="tr-block__label">📋 قبل از شروع</div>
+            <div class="tr-block__text">{{ lesson.before_start }}</div>
+        </div>
+        {% endif %}
+
+        {# ── Steps ── #}
+        {% if lesson.steps %}
+        <div class="tr-steps">
+            {% for step in lesson.steps %}
+            <div class="tr-step">
+                <div class="tr-step__num">{{ loop.index }}</div>
+                <div class="tr-step__content">
+                    <div class="tr-step__title">{{ step.title }}</div>
+                    <div class="tr-step__text">{{ step.content }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# ── Important Note ── #}
+        {% if lesson.important %}
+        <div class="tr-block tr-block--success">
+            <div class="tr-block__label">💡 نکته مهم</div>
+            <div class="tr-block__text">{{ lesson.important }}</div>
+        </div>
+        {% endif %}
+
+        {# ── If Wrong ── #}
+        {% if lesson.if_wrong %}
+        <div class="tr-block tr-block--danger">
+            <div class="tr-block__label">⚠️ اگر اشتباه شد چه کار کنیم؟</div>
+            <div class="tr-block__text">{{ lesson.if_wrong }}</div>
+        </div>
+        {% endif %}
+
+        {# ── Complete Button ── #}
+        <div style="text-align:center;margin:32px 0;">
+            <button type="button" class="tr-lesson__back" data-toggle-complete data-lesson-id="{{ lesson.id }}"
+                style="background:linear-gradient(135deg,var(--tr-success),#059669);color:#fff;border:none;padding:12px 28px;font-size:.9rem;">
+                ☐ علامت‌گذاری به عنوان تکمیل‌شده
+            </button>
+        </div>
+
+        {# ── Prev / Next Navigation ── #}
+        <div class="tr-nav">
+            {% if lesson.previous_lesson %}
+                {% set prev = training_data.lessons.get(lesson.previous_lesson) %}
+                {% if prev %}
+                <a href="/training/lesson/{{ lesson.previous_lesson }}" class="tr-nav__link">
+                    <div class="tr-nav__link-label">← آموزش قبلی</div>
+                    <div class="tr-nav__link-title">{{ prev.icon }} {{ prev.title }}</div>
+                </a>
+                {% endif %}
+            {% endif %}
+            {% if lesson.next_lesson %}
+                {% set next_ = training_data.lessons.get(lesson.next_lesson) %}
+                {% if next_ %}
+                <a href="/training/lesson/{{ lesson.next_lesson }}" class="tr-nav__link tr-nav__link--next">
+                    <div class="tr-nav__link-label">آموزش بعدی →</div>
+                    <div class="tr-nav__link-title">{{ next_.icon }} {{ next_.title }}</div>
+                </a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {# ── Back to Category ── #}
+        <div style="text-align:center;margin-top:24px;">
+            <a href="/training/{{ lesson.category }}" class="tr-lesson__back" style="display:inline-flex;">
+                بازگشت به فهرست آموزش‌های {{ training_data.categories.get(lesson.category, {}).get('title', '') }}
+            </a>
+        </div>
+
+    </article>
+
+    {% endif %}
+
+    {# ── Footer ── #}
+    <footer class="tr-footer">
+        هستما — سامانه مدیریت هوشمند
+    </footer>
+
+</div>
+
+<script src="{{ url_for('static', path='js/training.js') }}"></script>
+</body>
+</html>

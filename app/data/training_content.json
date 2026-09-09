@@ -1,0 +1,1803 @@
+{
+  "categories": {
+    "general": {
+      "id": "general",
+      "title": "آموزش عمومی",
+      "description": "آموزش‌های پایه‌ای مفید برای همه کاربران سامانه",
+      "icon": "📘",
+      "lessons": [
+        "welcome",
+        "login-howto",
+        "dashboard-overview",
+        "sidebar-nav",
+        "buttons-and-icons",
+        "forms-basics",
+        "tables-basics",
+        "search-filter",
+        "notifications",
+        "logout-howto"
+      ]
+    },
+    "user": {
+      "id": "user",
+      "title": "آموزش پنل کاربری",
+      "description": "آموزش کامل استفاده از پنل کاربری، از ورود تا استفاده از امکانات مختلف",
+      "icon": "👤",
+      "lessons": [
+        "user-welcome",
+        "user-dashboard",
+        "user-sidebar",
+        "user-leave-submit",
+        "user-leave-view",
+        "user-overtime-submit",
+        "user-overtime-view",
+        "user-hourlypass-submit",
+        "user-hourlypass-view",
+        "user-reports",
+        "user-profile",
+        "user-profile-edit",
+        "user-password-change",
+        "user-notifications",
+        "user-tickets-open",
+        "user-tickets-view",
+        "user-settings"
+      ]
+    },
+    "admin": {
+      "id": "admin",
+      "title": "آموزش پنل مدیریت",
+      "description": "آموزش کامل امکانات پنل مدیریت و نحوه مدیریت اطلاعات سامانه",
+      "icon": "🛡️",
+      "lessons": [
+        "admin-welcome",
+        "admin-dashboard",
+        "admin-sidebar",
+        "admin-users-list",
+        "admin-users-add",
+        "admin-users-edit",
+        "admin-users-status",
+        "admin-attendance-report",
+        "admin-attendance-sabt",
+        "admin-attendance-summary",
+        "admin-vacation-requests",
+        "admin-vacation-status",
+        "admin-overtime-requests",
+        "admin-overtime-status",
+        "admin-hourlypass-requests",
+        "admin-hourlypass-status",
+        "admin-shifts-manage",
+        "admin-shifts-add",
+        "admin-tickets-manage",
+        "admin-tickets-response",
+        "admin-payroll",
+        "admin-reports",
+        "admin-coworkers",
+        "admin-notifications"
+      ]
+    }
+  },
+  "page_mapping": {
+    "user_panel": {
+      "page_title": "پنل کاربری",
+      "role": "user",
+      "related_lessons": ["user-dashboard", "user-sidebar"]
+    },
+    "admin_dashboard": {
+      "page_title": "داشبورد مدیریت",
+      "role": "admin",
+      "related_lessons": ["admin-dashboard"]
+    },
+    "admin_coworkers": {
+      "page_title": "مدیریت کاربران",
+      "role": "admin",
+      "related_lessons": ["admin-users-list", "admin-users-add", "admin-users-edit"]
+    },
+    "admin_vacation": {
+      "page_title": "مدیریت مرخصی",
+      "role": "admin",
+      "related_lessons": ["admin-vacation-requests", "admin-vacation-status"]
+    },
+    "admin_overtime": {
+      "page_title": "مدیریت اضافه کاری",
+      "role": "admin",
+      "related_lessons": ["admin-overtime-requests", "admin-overtime-status"]
+    },
+    "admin_hourly_pass": {
+      "page_title": "مدیریت پاس ساعتی",
+      "role": "admin",
+      "related_lessons": ["admin-hourlypass-requests", "admin-hourlypass-status"]
+    },
+    "admin_tickets": {
+      "page_title": "مدیریت تیکت‌ها",
+      "role": "admin",
+      "related_lessons": ["admin-tickets-manage", "admin-tickets-response"]
+    },
+    "admin_shifts": {
+      "page_title": "مدیریت شیفت‌ها",
+      "role": "admin",
+      "related_lessons": ["admin-shifts-manage", "admin-shifts-add"]
+    },
+    "admin_attendance": {
+      "page_title": "حضور و غیاب",
+      "role": "admin",
+      "related_lessons": ["admin-attendance-report", "admin-attendance-sabt", "admin-attendance-summary"]
+    },
+    "admin_payroll": {
+      "page_title": "حقوق و دستمزد",
+      "role": "admin",
+      "related_lessons": ["admin-payroll"]
+    },
+    "leave_report": {
+      "page_title": "گزارش مرخصی",
+      "role": "admin",
+      "related_lessons": ["admin-reports", "admin-vacation-requests"]
+    },
+    "overtime_report": {
+      "page_title": "گزارش اضافه کاری",
+      "role": "admin",
+      "related_lessons": ["admin-reports", "admin-overtime-requests"]
+    },
+    "hourlypass_report": {
+      "page_title": "گزارش پاس ساعتی",
+      "role": "admin",
+      "related_lessons": ["admin-reports", "admin-hourlypass-requests"]
+    },
+    "final_report": {
+      "page_title": "گزارش نهایی",
+      "role": "admin",
+      "related_lessons": ["admin-reports"]
+    },
+    "payroll_report": {
+      "page_title": "گزارش حقوق و دستمزد",
+      "role": "admin",
+      "related_lessons": ["admin-payroll"]
+    }
+  },
+  "lessons": {
+    "welcome": {
+      "id": "welcome",
+      "title": "خوش آمدید به هستما",
+      "category": "general",
+      "role": "general",
+      "order": 1,
+      "icon": "👋",
+      "description": "آشنایی اولیه با سامانه هستما و امکانات آن",
+      "related_route": null,
+      "previous_lesson": null,
+      "next_lesson": "login-howto",
+      "for_what": "این آموزش برای آشنایی شما با سامانه هستما و امکانات آن است.",
+      "before_start": "هیچ پیش‌نیازی ندارد. فقط کافی است یک مرورگر اینترنت داشته باشید.",
+      "steps": [
+        {
+          "title": "سامانه هستما چیست؟",
+          "content": "هستما یک سامانه مدیریت هوشمند حضور و غیاب است. این سامانه به شما کمک می‌کند تا اطلاعات حضور، مرخصی، اضافه کاری و سایر موارد مربوط به کار را به صورت دیجیتال ثبت و مدیریت کنید."
+        },
+        {
+          "title": "چه کسانی از هستما استفاده می‌کنند؟",
+          "content": "دو نوع کاربر در سامانه وجود دارد: کاربران عادی که اطلاعات خود را ثبت می‌کنند و مدیران که اطلاعات همه کاربران را مدیریت می‌کنند."
+        },
+        {
+          "title": "چه امکاناتی در سامانه وجود دارد؟",
+          "content": "در سامانه می‌توانید: حضور و غیاب خود را ثبت کنید، مرخصی درخواست دهید، اضافه کاری ثبت کنید، گزارش‌های مختلف مشاهده کنید و با مدیران ارتباط برقرار کنید."
+        }
+      ],
+      "important": "هر کاربر فقط با نام کاربری و رمز عبور اختصاصی خود می‌تواند وارد سامانه شود.",
+      "if_wrong": "اگر مشکلی در ورود داشتید، با مدیر سامانه خود تماس بگیرید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "login-howto": {
+      "id": "login-howto",
+      "title": "ورود به سامانه",
+      "category": "general",
+      "role": "general",
+      "order": 2,
+      "icon": "🔐",
+      "description": "نحوه ورود به سامانه هستما با نام کاربری و رمز عبور",
+      "related_route": "/login",
+      "previous_lesson": "welcome",
+      "next_lesson": "dashboard-overview",
+      "for_what": "این آموزش به شما یاد می‌دهد چطور وارد سامانه شوید.",
+      "before_start": "نام کاربری و رمز عبور خود را از مدیر سامانه دریافت کرده باشید.",
+      "steps": [
+        {
+          "title": "صفحه ورود را باز کنید",
+          "content": "آدرس صفحه ورود سامانه را در مرورگر خود وارد کنید. صفحه‌ای با عنوان «ورود به سامانه» مشاهده خواهید کرد."
+        },
+        {
+          "title": "نام کاربری را وارد کنید",
+          "content": "در کادر «نام کاربری»، نام کاربری اختصاصی خود را تایپ کنید. این نام را مدیر سامانه به شما داده است."
+        },
+        {
+          "title": "رمز عبور را وارد کنید",
+          "content": "در کادر «رمز عبور»، رمز عبور خود را تایپ کنید. با کلیک روی آیکون چشم در کنار کادر، می‌توانید رمز عبور را ببینید یا مخفی کنید."
+        },
+        {
+          "title": "دکمه ورود را بزنید",
+          "content": "روی دکمه «ورود» کلیک کنید. اگر اطلاعات صحیح باشد، وارد سامانه می‌شوید."
+        }
+      ],
+      "important": "رمز عبور خود را با کسی به اشتراک نگذارید.",
+      "if_wrong": "اگر پیام «نام کاربری یا رمز عبور اشتباه است» دریافت کردید، نام کاربری و رمز عبور خود را دوباره بررسی کنید. در صورت تکرار، با مدیر تماس بگیرید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "dashboard-overview": {
+      "id": "dashboard-overview",
+      "title": "آشنایی با داشبورد",
+      "category": "general",
+      "role": "general",
+      "order": 3,
+      "icon": "📊",
+      "description": "آشنایی با صفحه اصلی سامانه پس از ورود",
+      "related_route": null,
+      "previous_lesson": "login-howto",
+      "next_lesson": "sidebar-nav",
+      "for_what": "پس از ورود به سامانه، صفحه داشبورد نمایش داده می‌شود. این صفحه خلاصه‌ای از اطلاعات شما را نشان می‌دهد.",
+      "before_start": "با موفقیت وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "اطلاعات کلی",
+          "content": "در صفحه اصلی، خلاصه‌ای از اطلاعات شما مثل وضعیت حضور، ساعات کاری و سایر موارد نمایش داده می‌شود."
+        },
+        {
+          "title": "آیتم‌های مهم",
+          "content": "معمولاً اطلاعاتی مثل ساعت ورود، ساعت خروج، وضعیت حضور امروز و خلاصه‌ای از فعالیت‌های اخیر در این صفحه قابل مشاهده است."
+        },
+        {
+          "title": "نوار کناری",
+          "content": "در سمت راست صفحه (یا بالای صفحه در موبایل)، فهرستی از گزینه‌های مختلف وجود دارد. از این فهرست می‌توانید به بخش‌های مختلف سامانه بروید."
+        }
+      ],
+      "important": "هر بار که وارد سامانه می‌شوید، اول داشبورد را ببینید تا از وضعیت خود مطلع شوید.",
+      "if_wrong": "اگر اطلاعاتی نمایش داده نمی‌شود، صفحه را رفرش کنید (دکمه F5 یا آیکون رفرش مرورگر).",
+      "estimated_time": "۲ دقیقه"
+    },
+    "sidebar-nav": {
+      "id": "sidebar-nav",
+      "title": "آشنایی با منوی کناری",
+      "category": "general",
+      "role": "general",
+      "order": 4,
+      "icon": "📋",
+      "description": "نحوه استفاده از فهرست کناری برای رفتن به بخش‌های مختلف",
+      "related_route": null,
+      "previous_lesson": "dashboard-overview",
+      "next_lesson": "buttons-and-icons",
+      "for_what": "فهرست کناری ابزار اصلی شما برای رفتن به بخش‌های مختلف سامانه است.",
+      "before_start": "وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "فهرست کناری را پیدا کنید",
+          "content": "در سمت راست صفحه، فهرستی از گزینه‌های مختلف وجود دارد. هر گزینه یک آیکون و یک عنوان دارد."
+        },
+        {
+          "title": "روی گزینه مورد نظر کلیک کنید",
+          "content": "روی گزینه‌ای که می‌خواهید بخش آن را ببینید کلیک کنید. صفحه مربوط به آن بخش باز می‌شود."
+        },
+        {
+          "title": "بازگشت به داشبورد",
+          "content": "برای بازگشت به صفحه اصلی، روی گزینه «داشبورد» در فهرست کناری کلیک کنید."
+        },
+        {
+          "title": "خروج از سامانه",
+          "content": "برای خروج از سامانه، روی گزینه «خروج» در انتهای فهرست کناری کلیک کنید."
+        }
+      ],
+      "important": "هر بخش سامانه یک گزینه مجزا در فهرست کناری دارد.",
+      "if_wrong": "اگر گزینه‌ای را پیدا نمی‌کنید، شاید به آن دسترسی ندارید. با مدیر تماس بگیرید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "buttons-and-icons": {
+      "id": "buttons-and-icons",
+      "title": "آشنایی با دکمه‌ها و آیکون‌ها",
+      "category": "general",
+      "role": "general",
+      "order": 5,
+      "icon": "🔘",
+      "description": "توضیح دکمه‌ها و آیکون‌های رایج در سامانه",
+      "related_route": null,
+      "previous_lesson": "sidebar-nav",
+      "next_lesson": "forms-basics",
+      "for_what": "سیستم از دکمه‌ها و آیکون‌های مختلفی استفاده می‌کند. دانستن معنی آن‌ها به شما کمک می‌کند.",
+      "before_start": "هیچ پیش‌نیازی ندارد.",
+      "steps": [
+        {
+          "title": "دکمه ورود / ثبت",
+          "content": "دکمه‌های آبی یا سبز معمولاً برای ثبت یا ارسال اطلاعات هستند. وقتی اطلاعات را پر کردید، این دکمه را بزنید."
+        },
+        {
+          "title": "دکمه ویرایش",
+          "content": "آیکون مداد یا قلم برای ویرایش اطلاعات استفاده می‌شود. روی آن کلیک کنید تا بتوانید اطلاعات را تغییر دهید."
+        },
+        {
+          "title": "دکمه حذف",
+          "content": "آیکون سطل زباله برای حذف است. با احتیاط استفاده کنید چون حذف معمولاً قابل بازگشت نیست."
+        },
+        {
+          "title": "دکمه جستجو",
+          "content": "آیکون ذره‌بین برای جستجو استفاده می‌شود. با کلیک روی آن می‌توانید اطلاعات را جستجو کنید."
+        },
+        {
+          "title": "دکمه فیلتر",
+          "content": "آیکون فیلتر برای محدود کردن نتایج استفاده می‌شود. مثلاً می‌توانید اطلاعات را بر اساس تاریخ فیلتر کنید."
+        }
+      ],
+      "important": "دکمه قرمز معمولاً برای عملیات خطرناک مثل حذف استفاده می‌شود.",
+      "if_wrong": "اگر دکمه‌ای کار نکرد، صفحه را رفرش کنید و دوباره تلاش کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "forms-basics": {
+      "id": "forms-basics",
+      "title": "آشنایی با فرم‌ها",
+      "category": "general",
+      "role": "general",
+      "order": 6,
+      "icon": "📝",
+      "description": "نحوه پر کردن فرم‌ها و ارسال اطلاعات",
+      "related_route": null,
+      "previous_lesson": "buttons-and-icons",
+      "next_lesson": "tables-basics",
+      "for_what": "فرم‌ها ابزار اصلی برای ثبت اطلاعات در سامانه هستند.",
+      "before_start": "هیچ پیش‌نیازی ندارد.",
+      "steps": [
+        {
+          "title": "کادر ورود متن",
+          "content": "کادری که می‌توانید در آن متن تایپ کنید. روی کادر کلیک کنید و مورد نظر خود را تایپ کنید."
+        },
+        {
+          "title": "کادر انتخاب",
+          "content": "کادری که گزینه‌هایی برای انتخاب دارد. روی آن کلیک کنید و یکی از گزینه‌ها را انتخاب کنید."
+        },
+        {
+          "title": "تاریخ‌گیرنده",
+          "content": "کادری که برای انتخاب تاریخ استفاده می‌شود. روی آن کلیک کنید و تاریخ مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "کادر علامت‌گذاری",
+          "content": "جعبه‌ای که با کلیک علامت ✅ می‌خورد. برای تأیید یا انتخاب یک گزینه استفاده می‌شود."
+        },
+        {
+          "title": "دکمه ثبت",
+          "content": "پس از پر کردن فرم، روی دکمه «ثبت» یا «ذخیره» کلیک کنید تا اطلاعات ذخیره شود."
+        }
+      ],
+      "important": "فیلدهایی که با * مشخص شده‌اند اجباری هستند و حتماً باید پر شوند.",
+      "if_wrong": "اگر پیام خطا دریافت کردید، فیلدهای قرمز را بررسی کنید و اطلاعات صحیح را وارد کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "tables-basics": {
+      "id": "tables-basics",
+      "title": "آشنایی با جدول‌ها",
+      "category": "general",
+      "role": "general",
+      "order": 7,
+      "icon": "📊",
+      "description": "نحوه مشاهده و استفاده از جدول‌های اطلاعاتی",
+      "related_route": null,
+      "previous_lesson": "forms-basics",
+      "next_lesson": "search-filter",
+      "for_what": "جدول‌ها برای نمایش لیست اطلاعات مثل لیست کاربران یا لیست مرخصی‌ها استفاده می‌شوند.",
+      "before_start": "هیچ پیش‌نیازی ندارد.",
+      "steps": [
+        {
+          "title": "ستون‌های جدول",
+          "content": "هر جدول ستون‌هایی دارد که اطلاعات مختلفی را نمایش می‌دهند. مثلاً نام، تاریخ، وضعیت و غیره."
+        },
+        {
+          "title": "مرور جدول",
+          "content": "اگر جدول طولانی باشد، می‌توانید با اسکرول کردن بقیه ردیف‌ها را ببینید."
+        },
+        {
+          "title": "عملیات روی ردیف‌ها",
+          "content": "در هر ردیف معمولاً دکمه‌هایی مثل ویرایش یا حذف وجود دارد. روی دکمه مورد نظر کلیک کنید."
+        },
+        {
+          "title": "مرتب‌سازی",
+          "content": "روی عنوان ستون کلیک کنید تا جدول بر اساس آن ستون مرتب شود."
+        }
+      ],
+      "important": "در موبایل، جدول‌ها ممکن است به صورت کارت‌های جداگانه نمایش داده شوند.",
+      "if_wrong": "اگر جدول خالی است، شاید هنوز اطلاعاتی ثبت نشده یا فیلتر فعال است.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "search-filter": {
+      "id": "search-filter",
+      "title": "جستجو و فیلتر",
+      "category": "general",
+      "role": "general",
+      "order": 8,
+      "icon": "🔍",
+      "description": "نحوه جستجو و فیلتر کردن اطلاعات در سامانه",
+      "related_route": null,
+      "previous_lesson": "tables-basics",
+      "next_lesson": "notifications",
+      "for_what": "جستجو و فیلتر به شما کمک می‌کند اطلاعات مورد نظر خود را سریع‌تر پیدا کنید.",
+      "before_start": "هیچ پیش‌نیازی ندارد.",
+      "steps": [
+        {
+          "title": "جستجو با نام",
+          "content": "در کادر جستجو، نام یا بخشی از اطلاعات مورد نظر را تایپ کنید. نتایج مطابق فیلتر نمایش داده می‌شوند."
+        },
+        {
+          "title": "فیلتر بر اساس تاریخ",
+          "content": "با استفاده از فیلتر تاریخ، می‌توانید اطلاعات یک بازه زمانی خاص را ببینید."
+        },
+        {
+          "title": "فیلتر بر اساس وضعیت",
+          "content": "بعضی بخش‌ها امکان فیلتر بر اساس وضعیت (تأیید شده، در انتظار و غیره) را دارند."
+        },
+        {
+          "title": "پاک کردن فیلترها",
+          "content": "برای بازگشت به حالت اولیه، دکمه «پاک کردن فیلترها» یا «بازنشانی» را بزنید."
+        }
+      ],
+      "important": "فیلترها فقط نتایج را محدود می‌کنند و اطلاعات را حذف نمی‌کنند.",
+      "if_wrong": "اگر نتیجه‌ای پیدا نشد، فیلترهای فعال را پاک کنید و دوباره جستجو کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "notifications": {
+      "id": "notifications",
+      "title": "آشنایی با اعلان‌ها",
+      "category": "general",
+      "role": "general",
+      "order": 9,
+      "icon": "🔔",
+      "description": "نحوه مشاهده و مدیریت اعلان‌های سامانه",
+      "related_route": null,
+      "previous_lesson": "search-filter",
+      "next_lesson": "logout-howto",
+      "for_what": "اعلان‌ها پیام‌هایی هستند که سامانه برای شما ارسال می‌کند.",
+      "before_start": "وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "آیکون اعلان",
+          "content": "در بالای صفحه، آیکون زنگ وجود دارد. اگر اعلان جدیدی داشته باشید، عددی روی آن نمایش داده می‌شود."
+        },
+        {
+          "title": "مشاهده اعلان‌ها",
+          "content": "روی آیکون زنگ کلیک کنید تا لیست اعلان‌های اخیر نمایش داده شود."
+        },
+        {
+          "title": "خواندن اعلان",
+          "content": "روی هر اعلان کلیک کنید تا محتوای آن را ببینید. اعلان خوانده شده علامت‌دار می‌شود."
+        },
+        {
+          "title": "اهمیت اعلان‌ها",
+          "content": "اعلان‌ها ممکن است شامل اطلاعات مهمی مثل وضعیت مرخصی، پاسخ تیکت یا تغییرات سامانه باشند."
+        }
+      ],
+      "important": "اعلان‌های خوانده نشده را حتماً بررسی کنید.",
+      "if_wrong": "اگر اعلانی دریافت نمی‌کنید، ممکن است تنظیمات مرورگر شما اعلان‌ها را مسدود کرده باشد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "logout-howto": {
+      "id": "logout-howto",
+      "title": "خروج از سامانه",
+      "category": "general",
+      "role": "general",
+      "order": 10,
+      "icon": "🚪",
+      "description": "نحوه خروج امن از سامانه",
+      "related_route": "/logout",
+      "previous_lesson": "notifications",
+      "next_lesson": null,
+      "for_what": "خروج صحیح از سامانه برای حفظ امنیت حساب شما ضروری است.",
+      "before_start": "وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه خروج را پیدا کنید",
+          "content": "در انتهای فهرست کناری (یا در منوی بالا در موبایل)، گزینه «خروج» را پیدا کنید."
+        },
+        {
+          "title": "روی خروج کلیک کنید",
+          "content": "روی گزینه «خروج» کلیک کنید. از سامانه خارج می‌شوید و به صفحه ورود باز می‌گردید."
+        }
+      ],
+      "important": "همیشه پس از پایان کار از سامانه خارج شوید، مخصوصاً در سیستم‌های مشترک.",
+      "if_wrong": "اگر گزینه خروج را پیدا نمی‌کنید، می‌توانید مرورگر را ببندید. اما خروج رسمی امن‌تر است.",
+      "estimated_time": "۳۰ ثانیه"
+    },
+    "user-welcome": {
+      "id": "user-welcome",
+      "title": "خوش آمدید به پنل کاربری",
+      "category": "user",
+      "role": "user",
+      "order": 1,
+      "icon": "👋",
+      "description": "آشنایی اولیه با پنل کاربری هستما",
+      "related_route": "/user_panel",
+      "previous_lesson": null,
+      "next_lesson": "user-dashboard",
+      "for_what": "این آموزش شما را با محیط پنل کاربری آشنا می‌کند.",
+      "before_start": "با موفقیت وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "محیط پنل کاربری",
+          "content": "پنل کاربری شامل داشبورد اصلی، فهرست کناری برای رفتن به بخش‌های مختلف، و نوار بالایی برای پروفایل و اعلان‌ها است."
+        },
+        {
+          "title": "امکانات اصلی",
+          "content": "در پنل کاربری می‌توانید: حضور و غیاب خود را ثبت و مشاهده کنید، مرخصی درخواست دهید، اضافه کاری ثبت کنید، تیکت ارسال کنید و گزارش‌ها را ببینید."
+        }
+      ],
+      "important": "هر بخش پنل کاربری یک آموزش جداگانه دارد.",
+      "if_wrong": "اگر به بخشی دسترسی ندارید، با مدیر سامانه تماس بگیرید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "user-dashboard": {
+      "id": "user-dashboard",
+      "title": "داشبورد کاربری",
+      "category": "user",
+      "role": "user",
+      "order": 2,
+      "icon": "📊",
+      "description": "آشنایی با صفحه اصلی پنل کاربری",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-welcome",
+      "next_lesson": "user-sidebar",
+      "for_what": "داشبورد خلاصه‌ای از اطلاعات شما را نشان می‌دهد.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "اطلاعات حضور",
+          "content": "در داشبورد، وضعیت حضور امروز شما نمایش داده می‌شود. می‌توانید ساعت ورود و خروج خود را ببینید."
+        },
+        {
+          "title": "خلاصه فعالیت‌ها",
+          "content": "خلاصه‌ای از مرخصی‌ها، اضافه کاری‌ها و تیکت‌های اخیر شما در داشبورد قابل مشاهده است."
+        },
+        {
+          "title": "دسترسی سریع",
+          "content": "از داشبورد می‌توانید مستقیماً به بخش‌های پرکاربرد مثل ثبت مرخصی یا مشاهده گزارش بروید."
+        }
+      ],
+      "important": "هر بار که وارد سامانه می‌شوید، اول داشبورد را بررسی کنید.",
+      "if_wrong": "اگر اطلاعاتی نمایش داده نمی‌شود، صفحه را رفرش کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "user-sidebar": {
+      "id": "user-sidebar",
+      "title": "فهرست کناری کاربر",
+      "category": "user",
+      "role": "user",
+      "order": 3,
+      "icon": "📋",
+      "description": "نحوه استفاده از فهرست کناری پنل کاربری",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-dashboard",
+      "next_lesson": "user-leave-submit",
+      "for_what": "فهرست کناری ابزار اصلی برای رفتن به بخش‌های مختلف پنل کاربری است.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه‌های فهرست",
+          "content": "فهرست کناری شامل گزینه‌هایی مثل داشبورد، ثبت مرخصی، ثبت اضافه کاری، ثبت پاس ساعتی، تیکت‌ها، اعلان‌ها و تنظیمات است."
+        },
+        {
+          "title": "رفتن به یک بخش",
+          "content": "روی گزینه مورد نظر کلیک کنید تا صفحه آن بخش باز شود."
+        },
+        {
+          "title": "در موبایل",
+          "content": "در نسخه موبایل، فهرست کناری به صورت یک منوی کشویی است. با کلیک روی آیکون همبرگری در بالای صفحه باز می‌شود."
+        }
+      ],
+      "important": "گزینه‌هایی که در فهرست نمی‌بینید، به آن‌ها دسترسی ندارید.",
+      "if_wrong": "اگر گزینه‌ای از فهرست ناپدید شد، صفحه را رفرش کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-leave-submit": {
+      "id": "user-leave-submit",
+      "title": "ثبت درخواست مرخصی",
+      "category": "user",
+      "role": "user",
+      "order": 4,
+      "icon": "🏖️",
+      "description": "نحوه ثبت درخواست مرخصی در سامانه",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-sidebar",
+      "next_lesson": "user-leave-view",
+      "for_what": "اگر می‌خواهید مرخصی بگیرید، باید درخواست خود را در سامانه ثبت کنید.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه ثبت مرخصی",
+          "content": "در فهرست کناری، گزینه «ثبت مرخصی» را پیدا کنید و روی آن کلیک کنید."
+        },
+        {
+          "title": "نوع مرخصی را انتخاب کنید",
+          "content": "نوع مرخصی خود را انتخاب کنید (ساعتی، روزانه و غیره)."
+        },
+        {
+          "title": "تاریخ را وارد کنید",
+          "content": "تاریخ شروع و پایان مرخصی را انتخاب کنید."
+        },
+        {
+          "title": "توضیحات بنویسید",
+          "content": "در صورت نیاز، توضیحاتی درباره دلیل مرخصی بنویسید."
+        },
+        {
+          "title": "ارسال درخواست",
+          "content": "دکمه «ارسال» یا «ثبت» را بزنید. درخواست شما برای مدیر ارسال می‌شود."
+        }
+      ],
+      "important": "درخواست مرخصی شما پس از تأیید مدیر اعمال می‌شود.",
+      "if_wrong": "اگر پیام خطا دریافت کردید، تاریخ‌ها و فیلدهای اجباری را بررسی کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "user-leave-view": {
+      "id": "user-leave-view",
+      "title": "مشاهده سوابق مرخصی",
+      "category": "user",
+      "role": "user",
+      "order": 5,
+      "icon": "📋",
+      "description": "نحوه مشاهده درخواست‌های مرخصی قبلی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-leave-submit",
+      "next_lesson": "user-overtime-submit",
+      "for_what": "مشاهده وضعیت درخواست‌های مرخصی قبلی.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش مرخصی",
+          "content": "از فهرست کناری وارد بخش مرخصی شوید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "لیست درخواست‌های مرخصی شما با وضعیت هر کدام (تأیید شده، در انتظار، رد شده) نمایش داده می‌شود."
+        },
+        {
+          "title": "جزئیات",
+          "content": "روی هر درخواست کلیک کنید تا جزئیات آن را ببینید."
+        }
+      ],
+      "important": "وضعیت درخواست شما توسط مدیر تعیین می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید هنوز درخواستی ثبت نکرده‌اید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-overtime-submit": {
+      "id": "user-overtime-submit",
+      "title": "ثبت اضافه کاری",
+      "category": "user",
+      "role": "user",
+      "order": 6,
+      "icon": "⏰",
+      "description": "نحوه ثبت ساعات اضافه کاری",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-leave-view",
+      "next_lesson": "user-overtime-view",
+      "for_what": "اگر ساعات اضافه کاری داشته‌اید، آن‌ها را ثبت کنید.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه ثبت اضافه کاری",
+          "content": "در فهرست کناری، گزینه «ثبت اضافه کاری» را پیدا کنید و روی آن کلیک کنید."
+        },
+        {
+          "title": "تاریخ و ساعت",
+          "content": "تاریخ و ساعت شروع و پایان اضافه کاری را وارد کنید."
+        },
+        {
+          "title": "توضیحات",
+          "content": "دلیل اضافه کاری را توضیح دهید."
+        },
+        {
+          "title": "ارسال درخواست",
+          "content": "دکمه «ارسال» را بزنید."
+        }
+      ],
+      "important": "اضافه کاری شما پس از تأیید مدیر ثبت می‌شود.",
+      "if_wrong": "اگر ساعت ورود و خروج ثبت نشده باشد، ممکن است نتوانید اضافه کاری ثبت کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-overtime-view": {
+      "id": "user-overtime-view",
+      "title": "مشاهده سوابق اضافه کاری",
+      "category": "user",
+      "role": "user",
+      "order": 7,
+      "icon": "📋",
+      "description": "نحوه مشاهده درخواست‌های اضافه کاری قبلی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-overtime-submit",
+      "next_lesson": "user-hourlypass-submit",
+      "for_what": "مشاهده وضعیت درخواست‌های اضافه کاری قبلی.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش اضافه کاری",
+          "content": "از فهرست کناری وارد بخش اضافه کاری شوید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "لیست درخواست‌های اضافه کاری با وضعیت هر کدام نمایش داده می‌شود."
+        }
+      ],
+      "important": "وضعیت درخواست شما توسط مدیر تعیین می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید هنوز درخواستی ثبت نکرده‌اید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-hourlypass-submit": {
+      "id": "user-hourlypass-submit",
+      "title": "ثبت پاس ساعتی",
+      "category": "user",
+      "role": "user",
+      "order": 8,
+      "icon": "🕐",
+      "description": "نحوه ثبت پاس ساعتی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-overtime-view",
+      "next_lesson": "user-hourlypass-view",
+      "for_what": "پاس ساعتی برای ثبت ساعات خروج موقت از محل کار استفاده می‌شود.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه ثبت پاس ساعتی",
+          "content": "در فهرست کناری، گزینه «ثبت پاس ساعتی» را پیدا کنید."
+        },
+        {
+          "title": "ساعات را وارد کنید",
+          "content": "ساعت خروج و ورود مجدد را وارد کنید."
+        },
+        {
+          "title": "توضیحات",
+          "content": "دلیل خروج موقت را بنویسید."
+        },
+        {
+          "title": "ارسال درخواست",
+          "content": "دکمه «ارسال» را بزنید."
+        }
+      ],
+      "important": "پاس ساعتی پس از تأیید مدیر اعمال می‌شود.",
+      "if_wrong": "اگر ساعت ورود ثبت نشده باشد، ممکن است نتوانید پاس ساعتی ثبت کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-hourlypass-view": {
+      "id": "user-hourlypass-view",
+      "title": "مشاهده سوابق پاس ساعتی",
+      "category": "user",
+      "role": "user",
+      "order": 9,
+      "icon": "📋",
+      "description": "نحوه مشاهده درخواست‌های پاس ساعتی قبلی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-hourlypass-submit",
+      "next_lesson": "user-reports",
+      "for_what": "مشاهده وضعیت درخواست‌های پاس ساعتی قبلی.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش پاس ساعتی",
+          "content": "از فهرست کناری وارد بخش پاس ساعتی شوید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "لیست درخواست‌های پاس ساعتی با وضعیت هر کدام نمایش داده می‌شود."
+        }
+      ],
+      "important": "وضعیت درخواست شما توسط مدیر تعیین می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید هنوز درخواستی ثبت نکرده‌اید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-reports": {
+      "id": "user-reports",
+      "title": "مشاهده گزارش‌ها",
+      "category": "user",
+      "role": "user",
+      "order": 10,
+      "icon": "📈",
+      "description": "نحوه مشاهده گزارش‌های حضور و غیاب و سایر گزارش‌ها",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-hourlypass-view",
+      "next_lesson": "user-profile",
+      "for_what": "گزارش‌ها اطلاعات جامعی از فعالیت‌های شما ارائه می‌دهند.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش گزارش‌ها",
+          "content": "از فهرست کناری وارد بخش گزارش‌ها شوید."
+        },
+        {
+          "title": "نوع گزارش",
+          "content": "نوع گزارش مورد نظر خود را انتخاب کنید (حضور و غیاب، مرخصی، اضافه کاری و غیره)."
+        },
+        {
+          "title": "بازه زمانی",
+          "content": "بازه زمانی مورد نظر را مشخص کنید."
+        },
+        {
+          "title": "مشاهده نتیجه",
+          "content": "گزارش با جزئیات کامل نمایش داده می‌شود."
+        }
+      ],
+      "important": "گزارش‌ها فقط اطلاعات مربوط به خود شما را نشان می‌دهند.",
+      "if_wrong": "اگر گزارش خالی است، شاید در آن بازه زمانی فعالیتی ثبت نشده باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "user-profile": {
+      "id": "user-profile",
+      "title": "مشاهده پروفایل",
+      "category": "user",
+      "role": "user",
+      "order": 11,
+      "icon": "👤",
+      "description": "نحوه مشاهده و ویرایش اطلاعات پروفایل",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-reports",
+      "next_lesson": "user-profile-edit",
+      "for_what": "پروفایل شامل اطلاعات شخصی شما در سامانه است.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "دسترسی به پروفایل",
+          "content": "روی تصویر پروفایل یا آیکون کاربر در بالای صفحه کلیک کنید."
+        },
+        {
+          "title": "مشاهده اطلاعات",
+          "content": "اطلاعات شخصی شما مثل نام، نام کاربری، شماره تماس و غیره نمایش داده می‌شود."
+        },
+        {
+          "title": "ویرایش تصویر پروفایل",
+          "content": "می‌توانید تصویر پروفایل خود را تغییر دهید."
+        }
+      ],
+      "important": "اطلاعات پروفایل شما توسط مدیر سامانه تنظیم شده و ممکن است قابل ویرایش نباشد.",
+      "if_wrong": "اگر نمی‌توانید اطلاعاتی را تغییر دهید، با مدیر تماس بگیرید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-profile-edit": {
+      "id": "user-profile-edit",
+      "title": "ویرایش پروفایل",
+      "category": "user",
+      "role": "user",
+      "order": 12,
+      "icon": "✏️",
+      "description": "نحوه ویرایش اطلاعات پروفایل",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-profile",
+      "next_lesson": "user-password-change",
+      "for_what": "برخی اطلاعات پروفایل توسط خود شما قابل ویرایش هستند.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "ورود به پروفایل",
+          "content": "از بخش پروفایل، گزینه ویرایش را انتخاب کنید."
+        },
+        {
+          "title": "تغییر اطلاعات",
+          "content": "فیلدهای قابل ویرایش را تغییر دهید."
+        },
+        {
+          "title": "ذخیره تغییرات",
+          "content": "دکمه «ذخیره» را بزنید."
+        }
+      ],
+      "important": "تغییرات پس از ذخیره اعمال می‌شوند.",
+      "if_wrong": "اگر فیلدی غیرفعال است، فقط مدیر سامانه می‌تواند آن را تغییر دهد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-password-change": {
+      "id": "user-password-change",
+      "title": "تغییر رمز عبور",
+      "category": "user",
+      "role": "user",
+      "order": 13,
+      "icon": "🔑",
+      "description": "نحوه تغییر رمز عبور",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-profile-edit",
+      "next_lesson": "user-notifications",
+      "for_what": "تغییر منظم رمز عبور برای حفظ امنیت حساب شما ضروری است.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "ورود به تنظیمات",
+          "content": "از بخش تنظیمات یا پروفایل، گزینه تغییر رمز عبور را انتخاب کنید."
+        },
+        {
+          "title": "رمز فعلی",
+          "content": "رمز عبور فعلی خود را وارد کنید."
+        },
+        {
+          "title": "رمز جدید",
+          "content": "رمز عبور جدید را وارد کنید."
+        },
+        {
+          "title": "تأیید رمز",
+          "content": "رمز عبور جدید را دوباره وارد کنید تا مطمئن شوید."
+        },
+        {
+          "title": "ذخیره",
+          "content": "دکمه «ذخیره» یا «تغییر رمز» را بزنید."
+        }
+      ],
+      "important": "رمز عبور جدید باید حداقل ۶ کاراکتر باشد.",
+      "if_wrong": "اگر پیام «رمز فعلی اشتباه است» دریافت کردید، رمز فعلی را دوباره بررسی کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-notifications": {
+      "id": "user-notifications",
+      "title": "مدیریت اعلان‌ها",
+      "category": "user",
+      "role": "user",
+      "order": 14,
+      "icon": "🔔",
+      "description": "نحوه مشاهده و مدیریت اعلان‌ها",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-password-change",
+      "next_lesson": "user-tickets-open",
+      "for_what": "اعلان‌ها اطلاع‌رسانی‌های مهم سامانه هستند.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "آیکون اعلان",
+          "content": "روی آیکون زنگ در بالای صفحه کلیک کنید."
+        },
+        {
+          "title": "لیست اعلان‌ها",
+          "content": "لیست اعلان‌های جدید و خوانده شده نمایش داده می‌شود."
+        },
+        {
+          "title": "خواندن اعلان",
+          "content": "روی هر اعلان کلیک کنید تا محتوای آن را ببینید."
+        }
+      ],
+      "important": "اعلان‌های خوانده نشده با عدد قرمز مشخص می‌شوند.",
+      "if_wrong": "اگر اعلانی نمی‌بینید، ممکن است پیام جدیدی وجود نداشته باشد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-tickets-open": {
+      "id": "user-tickets-open",
+      "title": "ارسال تیکت جدید",
+      "category": "user",
+      "role": "user",
+      "order": 15,
+      "icon": "🎫",
+      "description": "نحوه ارسال تیکت پشتیبانی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-notifications",
+      "next_lesson": "user-tickets-view",
+      "for_what": "تیکت برای ارتباط با مدیران و پشتیبانی استفاده می‌شود.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش تیکت‌ها",
+          "content": "از فهرست کناری وارد بخش تیکت‌ها شوید."
+        },
+        {
+          "title": "تیکت جدید",
+          "content": "دکمه «تیکت جدید» یا «ارسال تیکت» را بزنید."
+        },
+        {
+          "title": "موضوع را انتخاب کنید",
+          "content": "موضوع تیکت خود را انتخاب کنید."
+        },
+        {
+          "title": "متن تیکت",
+          "content": "متن توضیحی تیکت خود را بنویسید."
+        },
+        {
+          "title": "ارسال",
+          "content": "دکمه «ارسال» را بزنید."
+        }
+      ],
+      "important": "تیکت شما مستقیماً برای مدیر ارسال می‌شود.",
+      "if_wrong": "اگر نمی‌توانید تیکت ارسال کنید، شاید به این بخش دسترسی ندارید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "user-tickets-view": {
+      "id": "user-tickets-view",
+      "title": "مشاهده تیکت‌ها",
+      "category": "user",
+      "role": "user",
+      "order": 16,
+      "icon": "📋",
+      "description": "نحوه مشاهده تیکت‌های ارسال شده",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-tickets-open",
+      "next_lesson": "user-settings",
+      "for_what": "مشاهده وضعیت و پاسخ تیکت‌های قبلی.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "لیست تیکت‌ها",
+          "content": "لیست تیکت‌های شما با وضعیت هر کدام (باز، در حال بررسی، پاسخ داده شده) نمایش داده می‌شود."
+        },
+        {
+          "title": "مشاهده جزئیات",
+          "content": "روی هر تیکت کلیک کنید تا متن کامل و پاسخ‌ها را ببینید."
+        },
+        {
+          "title": "پاسخ به تیکت",
+          "content": "اگر مدیر پاسخ داده باشد، می‌توانید پاسخ جدید ارسال کنید."
+        }
+      ],
+      "important": "تیکت‌های باز زودتر بررسی می‌شوند.",
+      "if_wrong": "اگر تیکتی نمی‌بینید، شاید هنوز تیکتی ارسال نکرده‌اید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "user-settings": {
+      "id": "user-settings",
+      "title": "تنظیمات کاربر",
+      "category": "user",
+      "role": "user",
+      "order": 17,
+      "icon": "⚙️",
+      "description": "نحوه تغییر تنظیمات شخصی",
+      "related_route": "/user_panel",
+      "previous_lesson": "user-tickets-view",
+      "next_lesson": null,
+      "for_what": "تنظیمات شخصی برای شخصی‌سازی تجربه استفاده از سامانه.",
+      "before_start": "وارد پنل کاربری شده باشید.",
+      "steps": [
+        {
+          "title": "بخش تنظیمات",
+          "content": "از فهرست کناری وارد بخش تنظیمات شوید."
+        },
+        {
+          "title": "تنظیمات موجود",
+          "content": "تنظیماتی مثل تغییر تم (روشن/تاریک) و سایر گزینه‌ها در دسترس هستند."
+        },
+        {
+          "title": "ذخیره تغییرات",
+          "content": "تغییرات به صورت خودکار ذخیره می‌شوند."
+        }
+      ],
+      "important": "تنظیمات شخصی فقط روی حساب شما تأثیر دارد.",
+      "if_wrong": "اگر تنظیمی کار نمی‌کند، صفحه را رفرش کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-welcome": {
+      "id": "admin-welcome",
+      "title": "خوش آمدید به پنل مدیریت",
+      "category": "admin",
+      "role": "admin",
+      "order": 1,
+      "icon": "🛡️",
+      "description": "آشنایی اولیه با پنل مدیریت سامانه",
+      "related_route": "/admin",
+      "previous_lesson": null,
+      "next_lesson": "admin-dashboard",
+      "for_what": "این آموزش شما را با محیط پنل مدیریت آشنا می‌کند.",
+      "before_start": "با دسترسی مدیر وارد سامانه شده باشید.",
+      "steps": [
+        {
+          "title": "تفاوت با پنل کاربری",
+          "content": "پنل مدیریت امکانات بیشتری نسبت به پنل کاربری دارد. مدیر می‌تواند اطلاعات همه کاربران را ببیند و مدیریت کند."
+        },
+        {
+          "title": "بخش‌های اصلی",
+          "content": "پنل مدیریت شامل: داشبورد، مدیریت کاربران، حضور و غیاب، مرخصی، اضافه کاری، پاس ساعتی، تیکت‌ها، شیفت‌ها، حقوق و دستمزد و گزارش‌ها است."
+        }
+      ],
+      "important": "به عنوان مدیر، مسئول حفظ امنیت اطلاعات کاربران هستید.",
+      "if_wrong": "اگر به بخشی دسترسی ندارید، با مدیر ارشد تماس بگیرید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-dashboard": {
+      "id": "admin-dashboard",
+      "title": "داشبورد مدیریت",
+      "category": "admin",
+      "role": "admin",
+      "order": 2,
+      "icon": "📊",
+      "description": "آشنایی با صفحه اصلی پنل مدیریت",
+      "related_route": "/admin/dashboard",
+      "previous_lesson": "admin-welcome",
+      "next_lesson": "admin-sidebar",
+      "for_what": "داشبورد مدیریت خلاصه‌ای از کل سامانه را نشان می‌دهد.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "اطلاعات کلی",
+          "content": "تعداد کاربران فعال، درخواست‌های در انتظار، آمار حضور و غیاب و سایر اطلاعات کلی در داشبورد نمایش داده می‌شود."
+        },
+        {
+          "title": "دسترسی سریع",
+          "content": "از داشبورد می‌توانید مستقیماً به بخش‌های پرکاربرد بروید."
+        }
+      ],
+      "important": "داشبورد را هر روز بررسی کنید تا از وضعیت سامانه مطلع باشید.",
+      "if_wrong": "اگر آمار نمایش داده نمی‌شود، صفحه را رفرش کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-sidebar": {
+      "id": "admin-sidebar",
+      "title": "فهرست کناری مدیر",
+      "category": "admin",
+      "role": "admin",
+      "order": 3,
+      "icon": "📋",
+      "description": "نحوه استفاده از فهرست کناری پنل مدیریت",
+      "related_route": "/admin",
+      "previous_lesson": "admin-dashboard",
+      "next_lesson": "admin-users-list",
+      "for_what": "فهرست کناری مدیر شامل همه بخش‌های مدیریتی است.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "گزینه‌های فهرست",
+          "content": "فهرست کناری شامل: داشبورد، مدیریت کاربران، مرخصی، اضافه کاری، پاس ساعتی، تیکت‌ها، شیفت‌ها، حضور و غیاب، حقوق و دستمزد و خروج است."
+        },
+        {
+          "title": "رفتن به یک بخش",
+          "content": "روی گزینه مورد نظر کلیک کنید تا آن بخش باز شود."
+        }
+      ],
+      "important": "هر گزینه یک بخش مدیریتی مجزا دارد.",
+      "if_wrong": "اگر گزینه‌ای ناپدید شد، صفحه را رفرش کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-users-list": {
+      "id": "admin-users-list",
+      "title": "مشاهده لیست کاربران",
+      "category": "admin",
+      "role": "admin",
+      "order": 4,
+      "icon": "👥",
+      "description": "نحوه مشاهده لیست همه کاربران سامانه",
+      "related_route": "/admin/coworkers",
+      "previous_lesson": "admin-sidebar",
+      "next_lesson": "admin-users-add",
+      "for_what": "مشاهده و مدیریت لیست کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش مدیریت کاربران",
+          "content": "از فهرست کناری گزینه «مدیریت کاربران» را انتخاب کنید."
+        },
+        {
+          "title": "لیست کاربران",
+          "content": "لیست همه کاربران با اطلاعاتی مثل نام، نام کاربری و وضعیت نمایش داده می‌شود."
+        },
+        {
+          "title": "جستجو",
+          "content": "از کادر جستجو می‌توانید کاربر مورد نظر را پیدا کنید."
+        }
+      ],
+      "important": "فقط مدیران می‌توانند لیست کاربران را ببینند.",
+      "if_wrong": "اگر لیست خالی است، شاید کاربری ثبت نشده باشد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-users-add": {
+      "id": "admin-users-add",
+      "title": "ایجاد کاربر جدید",
+      "category": "admin",
+      "role": "admin",
+      "order": 5,
+      "icon": "➕",
+      "description": "نحوه اضافه کردن کاربر جدید به سامانه",
+      "related_route": "/admin/coworkers",
+      "previous_lesson": "admin-users-list",
+      "next_lesson": "admin-users-edit",
+      "for_what": "برای اضافه کردن کاربر جدید از این بخش استفاده کنید.",
+      "before_start": "وارد بخش مدیریت کاربران شده باشید.",
+      "steps": [
+        {
+          "title": "دکمه اضافه کردن",
+          "content": "روی دکمه «افزودن کاربر» یا آیکون + کلیک کنید."
+        },
+        {
+          "title": "اطلاعات کاربر",
+          "content": "نام و نام خانوادگی، نام کاربری، رمز عبور و سایر اطلاعات را وارد کنید."
+        },
+        {
+          "title": "نقش کاربر",
+          "content": "نقش کاربر (کاربر عادی یا مدیر) را مشخص کنید."
+        },
+        {
+          "title": "ذخیره",
+          "content": "دکمه «ذخیره» یا «ثبت» را بزنید."
+        }
+      ],
+      "important": "نام کاربری باید یکتا باشد.",
+      "if_wrong": "اگر پیام «نام کاربری تکراری است» دریافت کردید، نام کاربری دیگری انتخاب کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-users-edit": {
+      "id": "admin-users-edit",
+      "title": "ویرایش کاربر",
+      "category": "admin",
+      "role": "admin",
+      "order": 6,
+      "icon": "✏️",
+      "description": "نحوه ویرایش اطلاعات یک کاربر",
+      "related_route": "/admin/coworkers",
+      "previous_lesson": "admin-users-add",
+      "next_lesson": "admin-users-status",
+      "for_what": "ویرایش اطلاعات کاربران موجود.",
+      "before_start": "وارد بخش مدیریت کاربران شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب کاربر",
+          "content": "از لیست کاربران، کاربر مورد نظر را پیدا کنید."
+        },
+        {
+          "title": "دکمه ویرایش",
+          "content": "روی آیکون ویرایش (مداد) کلیک کنید."
+        },
+        {
+          "title": "تغییر اطلاعات",
+          "content": "فیلدهای مورد نظر را تغییر دهید."
+        },
+        {
+          "title": "ذخیره تغییرات",
+          "content": "دکمه «ذخیره» را بزنید."
+        }
+      ],
+      "important": "تغییرات پس از ذخیره فوراً اعمال می‌شوند.",
+      "if_wrong": "اگر فیلدی غیرفعال است، شاید قابل ویرایش نباشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-users-status": {
+      "id": "admin-users-status",
+      "title": "تغییر وضعیت کاربر",
+      "category": "admin",
+      "role": "admin",
+      "order": 7,
+      "icon": "🔄",
+      "description": "نحوه فعال یا غیرفعال کردن کاربر",
+      "related_route": "/admin/coworkers",
+      "previous_lesson": "admin-users-edit",
+      "next_lesson": "admin-attendance-report",
+      "for_what": "غیرفعال کردن کاربرانی که دیگر در مجموعه حضور ندارند.",
+      "before_start": "وارد بخش مدیریت کاربران شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب کاربر",
+          "content": "کاربر مورد نظر را از لیست پیدا کنید."
+        },
+        {
+          "title": "تغییر وضعیت",
+          "content": "وضعیت کاربر را از «فعال» به «غیرفعال» یا بالعکس تغییر دهید."
+        },
+        {
+          "title": "تأیید",
+          "content": "تغییر را تأیید کنید."
+        }
+      ],
+      "important": "کاربر غیرفعال دیگر نمی‌تواند وارد سامانه شود.",
+      "if_wrong": "اگر نمی‌توانید وضعیت را تغییر دهید، شاید دسترسی کافی ندارید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-attendance-report": {
+      "id": "admin-attendance-report",
+      "title": "گزارش حضور و غیاب",
+      "category": "admin",
+      "role": "admin",
+      "order": 8,
+      "icon": "📅",
+      "description": "نحوه مشاهده گزارش حضور و غیاب کاربران",
+      "related_route": "/admin/attendance",
+      "previous_lesson": "admin-users-status",
+      "next_lesson": "admin-attendance-sabt",
+      "for_what": "مشاهده اطلاعات حضور و غیاب همه کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش حضور و غیاب",
+          "content": "از فهرست کناری گزینه «حضور و غیاب» را انتخاب کنید."
+        },
+        {
+          "title": "انتخاب کاربر",
+          "content": "نام کاربر مورد نظر را از لیست انتخاب کنید."
+        },
+        {
+          "title": "بازه زمانی",
+          "content": "ماه و سال مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "دریافت گزارش",
+          "content": "دکمه «تهیه گزارش» را بزنید. اطلاعات حضور و غیاب نمایش داده می‌شود."
+        }
+      ],
+      "important": "گزارش شامل ساعت ورود، خروج و مجموع ساعات کاری است.",
+      "if_wrong": "اگر اطلاعاتی نمایش داده نمی‌شود، کاربر یا بازه زمانی را بررسی کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-attendance-sabt": {
+      "id": "admin-attendance-sabt",
+      "title": "ثبت دستی حضور و غیاب",
+      "category": "admin",
+      "role": "admin",
+      "order": 9,
+      "icon": "✏️",
+      "description": "نحوه ثبت دستی حضور و غیاب برای کاربران",
+      "related_route": "/admin/attendance",
+      "previous_lesson": "admin-attendance-report",
+      "next_lesson": "admin-attendance-summary",
+      "for_what": "در موارد خاص، مدیر می‌تواند حضور و غیاب را به صورت دستی ثبت کند.",
+      "before_start": "وارد بخش حضور و غیاب شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب کاربر",
+          "content": "کاربر مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "تاریخ و ساعات",
+          "content": "تاریخ، ساعت ورود و ساعت خروج را وارد کنید."
+        },
+        {
+          "title": "ذخیره",
+          "content": "دکمه «ذخیره» را بزنید."
+        }
+      ],
+      "important": "ثبت دستی فقط در موارد خاص و با مجوز مدیر ارشد انجام شود.",
+      "if_wrong": "اگر خطا دریافت کردید، اطلاعات وارد شده را بررسی کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-attendance-summary": {
+      "id": "admin-attendance-summary",
+      "title": "خلاصه حضور و غیاب",
+      "category": "admin",
+      "role": "admin",
+      "order": 10,
+      "icon": "📋",
+      "description": "نحوه مشاهده خلاصه حضور و غیاب",
+      "related_route": "/admin/attendance",
+      "previous_lesson": "admin-attendance-sabt",
+      "next_lesson": "admin-vacation-requests",
+      "for_what": "مشاهده خلاصه‌ای از وضعیت حضور و غیاب کاربران.",
+      "before_start": "وارد بخش حضور و غیاب شده باشید.",
+      "steps": [
+        {
+          "title": "بخش خلاصه",
+          "content": "از تب مربوطه وارد بخش خلاصه شوید."
+        },
+        {
+          "title": "مشاهده آمار",
+          "content": "آمار کلی حضور، غیاب، تأخیر و مرخصی کاربران نمایش داده می‌شود."
+        }
+      ],
+      "important": "خلاصه‌ها برای تصمیم‌گیری مدیریتی مفید هستند.",
+      "if_wrong": "اگر آمار دقیق نیست، اطلاعات خام را بررسی کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-vacation-requests": {
+      "id": "admin-vacation-requests",
+      "title": "بررسی درخواست‌های مرخصی",
+      "category": "admin",
+      "role": "admin",
+      "order": 11,
+      "icon": "🏖️",
+      "description": "نحوه بررسی و تأیید یا رد درخواست‌های مرخصی",
+      "related_route": "/admin/vacation",
+      "previous_lesson": "admin-attendance-summary",
+      "next_lesson": "admin-vacation-status",
+      "for_what": "بررسی درخواست‌های مرخصی کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش مرخصی",
+          "content": "از فهرست کناری گزینه «مرخصی» را انتخاب کنید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "درخواست‌های مرخصی با وضعیت «در انتظار» نمایش داده می‌شوند."
+        },
+        {
+          "title": "مشاهده جزئیات",
+          "content": "روی درخواست کلیک کنید تا جزئیات را ببینید."
+        },
+        {
+          "title": "تأیید یا رد",
+          "content": "دکمه «تأیید» یا «رد» را بزنید."
+        }
+      ],
+      "important": "پس از تأیید، مرخصی در حساب کاربر اعمال می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید درخواست جدیدی وجود نداشته باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-vacation-status": {
+      "id": "admin-vacation-status",
+      "title": "تغییر وضعیت مرخصی",
+      "category": "admin",
+      "role": "admin",
+      "order": 12,
+      "icon": "🔄",
+      "description": "نحوه تغییر وضعیت درخواست‌های مرخصی",
+      "related_route": "/admin/vacation",
+      "previous_lesson": "admin-vacation-requests",
+      "next_lesson": "admin-overtime-requests",
+      "for_what": "تغییر وضعیت درخواست‌های مرخصی (تأیید، رد، لغو).",
+      "before_start": "وارد بخش مرخصی شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب درخواست",
+          "content": "درخواست مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "تغییر وضعیت",
+          "content": "وضعیت را به حالت مورد نظر تغییر دهید."
+        },
+        {
+          "title": "ذخیره",
+          "content": "تغییرات را ذخیره کنید."
+        }
+      ],
+      "important": "تغییر وضعیت قابل بازگشت است.",
+      "if_wrong": "اگر نمی‌توانید وضعیت را تغییر دهید، دسترسی خود را بررسی کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-overtime-requests": {
+      "id": "admin-overtime-requests",
+      "title": "بررسی درخواست‌های اضافه کاری",
+      "category": "admin",
+      "role": "admin",
+      "order": 13,
+      "icon": "⏰",
+      "description": "نحوه بررسی و تأیید درخواست‌های اضافه کاری",
+      "related_route": "/admin/overtime",
+      "previous_lesson": "admin-vacation-status",
+      "next_lesson": "admin-overtime-status",
+      "for_what": "بررسی درخواست‌های اضافه کاری کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش اضافه کاری",
+          "content": "از فهرست کناری گزینه «اضافه کاری» را انتخاب کنید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "درخواست‌های اضافه کاری با وضعیت «در انتظار» نمایش داده می‌شوند."
+        },
+        {
+          "title": "تأیید یا رد",
+          "content": "درخواست را بررسی و تأیید یا رد کنید."
+        }
+      ],
+      "important": "اضافه کاری تأیید شده در حساب کاربر اعمال می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید درخواست جدیدی وجود نداشته باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-overtime-status": {
+      "id": "admin-overtime-status",
+      "title": "تغییر وضعیت اضافه کاری",
+      "category": "admin",
+      "role": "admin",
+      "order": 14,
+      "icon": "🔄",
+      "description": "نحوه تغییر وضعیت درخواست‌های اضافه کاری",
+      "related_route": "/admin/overtime",
+      "previous_lesson": "admin-overtime-requests",
+      "next_lesson": "admin-hourlypass-requests",
+      "for_what": "تغییر وضعیت درخواست‌های اضافه کاری.",
+      "before_start": "وارد بخش اضافه کاری شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب درخواست",
+          "content": "درخواست مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "تغییر وضعیت",
+          "content": "وضعیت را به حالت مورد نظر تغییر دهید."
+        }
+      ],
+      "important": "تغییر وضعیت قابل بازگشت است.",
+      "if_wrong": "اگر نمی‌توانید وضعیت را تغییر دهید، دسترسی خود را بررسی کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-hourlypass-requests": {
+      "id": "admin-hourlypass-requests",
+      "title": "بررسی درخواست‌های پاس ساعتی",
+      "category": "admin",
+      "role": "admin",
+      "order": 15,
+      "icon": "🕐",
+      "description": "نحوه بررسی و تأیید درخواست‌های پاس ساعتی",
+      "related_route": "/admin/hourly-pass",
+      "previous_lesson": "admin-overtime-status",
+      "next_lesson": "admin-hourlypass-status",
+      "for_what": "بررسی درخواست‌های پاس ساعتی کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش پاس ساعتی",
+          "content": "از فهرست کناری گزینه «پاس ساعتی» را انتخاب کنید."
+        },
+        {
+          "title": "لیست درخواست‌ها",
+          "content": "درخواست‌های پاس ساعتی با وضعیت «در انتظار» نمایش داده می‌شوند."
+        },
+        {
+          "title": "تأیید یا رد",
+          "content": "درخواست را بررسی و تأیید یا رد کنید."
+        }
+      ],
+      "important": "پاس ساعتی تأیید شده در حساب کاربر اعمال می‌شود.",
+      "if_wrong": "اگر درخواستی نمی‌بینید، شاید درخواست جدیدی وجود نداشته باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-hourlypass-status": {
+      "id": "admin-hourlypass-status",
+      "title": "تغییر وضعیت پاس ساعتی",
+      "category": "admin",
+      "role": "admin",
+      "order": 16,
+      "icon": "🔄",
+      "description": "نحوه تغییر وضعیت درخواست‌های پاس ساعتی",
+      "related_route": "/admin/hourly-pass",
+      "previous_lesson": "admin-hourlypass-requests",
+      "next_lesson": "admin-shifts-manage",
+      "for_what": "تغییر وضعیت درخواست‌های پاس ساعتی.",
+      "before_start": "وارد بخش پاس ساعتی شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب درخواست",
+          "content": "درخواست مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "تغییر وضعیت",
+          "content": "وضعیت را به حالت مورد نظر تغییر دهید."
+        }
+      ],
+      "important": "تغییر وضعیت قابل بازگشت است.",
+      "if_wrong": "اگر نمی‌توانید وضعیت را تغییر دهید، دسترسی خود را بررسی کنید.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-shifts-manage": {
+      "id": "admin-shifts-manage",
+      "title": "مدیریت شیفت‌ها",
+      "category": "admin",
+      "role": "admin",
+      "order": 17,
+      "icon": "📅",
+      "description": "نحوه مشاهده و مدیریت شیفت‌های کاربران",
+      "related_route": "/admin/shifts",
+      "previous_lesson": "admin-hourlypass-status",
+      "next_lesson": "admin-shifts-add",
+      "for_what": "مدیریت شیفت‌های کاری کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش شیفت‌ها",
+          "content": "از فهرست کناری گزینه «شیفت‌ها» را انتخاب کنید."
+        },
+        {
+          "title": "انتخاب کاربر",
+          "content": "کاربر مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "بازه زمانی",
+          "content": "ماه و سال مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "مشاهده شیفت‌ها",
+          "content": "شیفت‌های تعریف شده برای آن کاربر نمایش داده می‌شوند."
+        }
+      ],
+      "important": "شیفت‌ها بر اساس روزهای هفته تعریف می‌شوند.",
+      "if_wrong": "اگر شیفتی نمی‌بینید، شاید برای آن کاربر شیфтی تعریف نشده باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-shifts-add": {
+      "id": "admin-shifts-add",
+      "title": "افزودن شیفت جدید",
+      "category": "admin",
+      "role": "admin",
+      "order": 18,
+      "icon": "➕",
+      "description": "نحوه اضافه کردن شیفت جدید برای کاربر",
+      "related_route": "/admin/shifts",
+      "previous_lesson": "admin-shifts-manage",
+      "next_lesson": "admin-tickets-manage",
+      "for_what": "تعریف شیفت کاری جدید برای کاربران.",
+      "before_start": "وارد بخش شیفت‌ها شده باشید.",
+      "steps": [
+        {
+          "title": "دکمه افزودن",
+          "content": "دکمه «افزودن شیفت جدید» را بزنید."
+        },
+        {
+          "title": "عنوان شیفت",
+          "content": "عنوانی برای شیفت وارد کنید (مثلاً شیفت صبح)."
+        },
+        {
+          "title": "بازه روزها",
+          "content": "از روز تا روز مورد نظر را مشخص کنید."
+        },
+        {
+          "title": "ساعات هر روز",
+          "content": "ساعات شیفت هر روز هفته را وارد کنید."
+        },
+        {
+          "title": "ذخیره",
+          "content": "دکمه «ذخیره» را بزنید."
+        }
+      ],
+      "important": "ساعات به فرمت ۱۲:۰۰ - ۲۴:۰۰ وارد شوند.",
+      "if_wrong": "اگر خطا دریافت کردید، فرمت ساعات را بررسی کنید.",
+      "estimated_time": "۳ دقیقه"
+    },
+    "admin-tickets-manage": {
+      "id": "admin-tickets-manage",
+      "title": "مدیریت تیکت‌ها",
+      "category": "admin",
+      "role": "admin",
+      "order": 19,
+      "icon": "🎫",
+      "description": "نحوه مشاهده و مدیریت تیکت‌های کاربران",
+      "related_route": "/admin/tickets",
+      "previous_lesson": "admin-shifts-add",
+      "next_lesson": "admin-tickets-response",
+      "for_what": "مشاهده و پاسخگویی به تیکت‌های پشتیبانی کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش تیکت‌ها",
+          "content": "از فهرست کناری گزینه «تیکت‌ها» را انتخاب کنید."
+        },
+        {
+          "title": "لیست تیکت‌ها",
+          "content": "تیکت‌های جدید و در حال بررسی نمایش داده می‌شوند."
+        },
+        {
+          "title": "مشاهده جزئیات",
+          "content": "روی هر تیکت کلیک کنید تا متن و جزئیات را ببینید."
+        }
+      ],
+      "important": "تیکت‌های جدید با علامت مشخص هستند.",
+      "if_wrong": "اگر تیکتی نمی‌بینید، شاید تیکت جدیدی وجود نداشته باشد.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-tickets-response": {
+      "id": "admin-tickets-response",
+      "title": "پاسخ به تیکت",
+      "category": "admin",
+      "role": "admin",
+      "order": 20,
+      "icon": "💬",
+      "description": "نحوه ارسال پاسخ به تیکت‌های کاربران",
+      "related_route": "/admin/tickets",
+      "previous_lesson": "admin-tickets-manage",
+      "next_lesson": "admin-payroll",
+      "for_what": "ارسال پاسخ به تیکت‌های پشتیبانی.",
+      "before_start": "وارد بخش تیکت‌ها شده باشید.",
+      "steps": [
+        {
+          "title": "انتخاب تیکت",
+          "content": "تیکت مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "نوشتن پاسخ",
+          "content": "پاسخ خود را در کادر متن بنویسید."
+        },
+        {
+          "title": "ارسال پاسخ",
+          "content": "دکمه «ارسال» را بزنید."
+        }
+      ],
+      "important": "پاسخ شما مستقیماً برای کاربر ارسال می‌شود.",
+      "if_wrong": "اگر نمی‌توانید پاسخ دهید، شاید تیکت بسته شده باشد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-payroll": {
+      "id": "admin-payroll",
+      "title": "مدیریت حقوق و دستمزد",
+      "category": "admin",
+      "role": "admin",
+      "order": 21,
+      "icon": "💰",
+      "description": "نحوه مشاهده و مدیریت اطلاعات حقوق و دستمزد",
+      "related_route": "/admin/payroll",
+      "previous_lesson": "admin-tickets-response",
+      "next_lesson": "admin-reports",
+      "for_what": "مشاهده و مدیریت اطلاعات حقوقی کاربران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش حقوق و دستمزد",
+          "content": "از فهرست کناری گزینه «حقوق و دستمزد» را انتخاب کنید."
+        },
+        {
+          "title": "انتخاب کاربر",
+          "content": "کاربر مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "مشاهده اطلاعات",
+          "content": "اطلاعات حقوقی کاربر نمایش داده می‌شود."
+        }
+      ],
+      "important": "اطلاعات حقوقی محرمانه است و فقط مدیران مجاز می‌توانند آن را ببینند.",
+      "if_wrong": "اگر اطلاعاتی نمایش داده نمی‌شود، کاربر یا بازه زمانی را بررسی کنید.",
+      "estimated_time": "۲ دقیقه"
+    },
+    "admin-reports": {
+      "id": "admin-reports",
+      "title": "گزارش‌های مدیریتی",
+      "category": "admin",
+      "role": "admin",
+      "order": 22,
+      "icon": "📈",
+      "description": "نحوه مشاهده گزارش‌های مختلف سامانه",
+      "related_route": "/admin",
+      "previous_lesson": "admin-payroll",
+      "next_lesson": "admin-coworkers",
+      "for_what": "گزارش‌های مدیریتی برای تصمیم‌گیری استفاده می‌شوند.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "انواع گزارش",
+          "content": "گزارش‌های مختلفی مثل گزارش مرخصی، اضافه کاری، پاس ساعتی و گزارش نهایی در دسترس هستند."
+        },
+        {
+          "title": "انتخاب نوع گزارش",
+          "content": "نوع گزارش مورد نظر را انتخاب کنید."
+        },
+        {
+          "title": "بازه زمانی",
+          "content": "بازه زمانی مورد نظر را مشخص کنید."
+        },
+        {
+          "title": "دریافت گزارش",
+          "content": "گزارش با جزئیات کامل نمایش داده می‌شود."
+        }
+      ],
+      "important": "گزارش‌ها قابل دانلود و چاپ هستند.",
+      "if_wrong": "اگر گزارش خالی است، بازه زمانی را بررسی کنید.",
+      "estimated_time": "۳ دقیقه"
+    },
+    "admin-coworkers": {
+      "id": "admin-coworkers",
+      "title": "مشاهده همکاران",
+      "category": "admin",
+      "role": "admin",
+      "order": 23,
+      "icon": "👥",
+      "description": "نحوه مشاهده لیست همکاران",
+      "related_route": "/admin/coworkers",
+      "previous_lesson": "admin-reports",
+      "next_lesson": "admin-notifications",
+      "for_what": "مشاهده اطلاعات تماس و سازمانی همکاران.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "بخش همکاران",
+          "content": "از فهرست کناری گزینه «همکاران» را انتخاب کنید."
+        },
+        {
+          "title": "لیست همکاران",
+          "content": "لیست همکاران با اطلاعات تماس نمایش داده می‌شود."
+        },
+        {
+          "title": "جستجو",
+          "content": "از کادر جستجو می‌توانید همکار مورد نظر را پیدا کنید."
+        }
+      ],
+      "important": "اطلاعات تماس همکاران فقط برای استفاده سازمانی است.",
+      "if_wrong": "اگر لیست خالی است، شاید کاربری ثبت نشده باشد.",
+      "estimated_time": "۱ دقیقه"
+    },
+    "admin-notifications": {
+      "id": "admin-notifications",
+      "title": "مدیریت اعلان‌ها",
+      "category": "admin",
+      "role": "admin",
+      "order": 24,
+      "icon": "🔔",
+      "description": "نحوه مشاهده و مدیریت اعلان‌های مدیریتی",
+      "related_route": "/admin",
+      "previous_lesson": "admin-coworkers",
+      "next_lesson": null,
+      "for_what": "اعلان‌های مدیریتی شامل درخواست‌های جدید و تغییرات سامانه هستند.",
+      "before_start": "وارد پنل مدیریت شده باشید.",
+      "steps": [
+        {
+          "title": "آیکون اعلان",
+          "content": "روی آیکون زنگ در بالای صفحه کلیک کنید."
+        },
+        {
+          "title": "لیست اعلان‌ها",
+          "content": "اعلان‌های مدیریتی مثل درخواست‌های جدید نمایش داده می‌شوند."
+        },
+        {
+          "title": "خواندن اعلان",
+          "content": "روی هر اعلان کلیک کنید تا محتوای آن را ببینید."
+        }
+      ],
+      "important": "اعلان‌های خوانده نشده را زود بررسی کنید.",
+      "if_wrong": "اگر اعلانی نمی‌بینید، ممکن است پیام جدیدی وجود نداشته باشد.",
+      "estimated_time": "۱ دقیقه"
+    }
+  }
+}

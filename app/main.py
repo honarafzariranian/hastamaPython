@@ -26,6 +26,7 @@ from app.api.routes.ticketing import router as ticketing_router
 from app.api.routes.health import router as health_router
 from app.api.routes.call_system import router as call_system_router
 from app.api.routes.araz_api import router as araz_router
+from app.api.routes.master_admin import router as master_admin_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
@@ -103,6 +104,7 @@ app.include_router(ticketing_router)
 app.include_router(health_router)
 app.include_router(call_system_router)
 app.include_router(araz_router)
+app.include_router(master_admin_router)
 
 @app.on_event("startup")
 def start_notification_background_tasks():
@@ -148,6 +150,101 @@ async def home(request: Request):
 @app.get("/rules", response_class=HTMLResponse)
 async def rules(request: Request):
     return templates.TemplateResponse(request, "rules.html", {"request": request})
+
+# Training system routes
+import json as _json
+from pathlib import Path as _Path
+
+_TRAINING_DATA_PATH = _Path(__file__).parent / "data" / "training_content.json"
+
+def _load_training_data():
+    with open(_TRAINING_DATA_PATH, "r", encoding="utf-8") as f:
+        return _json.load(f)
+
+@app.get("/training", response_class=HTMLResponse)
+async def training_hub(request: Request):
+    data = _load_training_data()
+    return templates.TemplateResponse(request, "training.html", {
+        "request": request,
+        "training_data": data,
+        "active_category": None,
+    })
+
+@app.get("/training/{category}", response_class=HTMLResponse)
+async def training_category(request: Request, category: str):
+    data = _load_training_data()
+    if category not in data.get("categories", {}):
+        return templates.TemplateResponse(request, "training.html", {
+            "request": request,
+            "training_data": data,
+            "active_category": None,
+            "error": "دسته‌بندی مورد نظر پیدا نشد.",
+        })
+    return templates.TemplateResponse(request, "training.html", {
+        "request": request,
+        "training_data": data,
+        "active_category": category,
+    })
+
+@app.get("/training/lesson/{lesson_id}", response_class=HTMLResponse)
+async def training_lesson(request: Request, lesson_id: str):
+    data = _load_training_data()
+    lesson = data.get("lessons", {}).get(lesson_id)
+    if not lesson:
+        return templates.TemplateResponse(request, "training-lesson.html", {
+            "request": request,
+            "lesson": None,
+            "training_data": data,
+            "error": "آموزش مورد نظر پیدا نشد.",
+        })
+    return templates.TemplateResponse(request, "training-lesson.html", {
+        "request": request,
+        "lesson": lesson,
+        "training_data": data,
+        "error": None,
+    })
+
+@app.get("/api/training/search")
+async def training_search(q: str = Query("")):
+    data = _load_training_data()
+    results = []
+    query = q.strip().lower()
+    if not query:
+        return JSONResponse(content={"success": True, "results": []})
+    for lid, lesson in data.get("lessons", {}).items():
+        searchable = " ".join([
+            lesson.get("title", ""),
+            lesson.get("description", ""),
+            lesson.get("category", ""),
+        ]).lower()
+        if query in searchable:
+            cat_info = data.get("categories", {}).get(lesson.get("category", ""), {})
+            results.append({
+                "id": lid,
+                "title": lesson.get("title", ""),
+                "description": lesson.get("description", ""),
+                "category": cat_info.get("title", lesson.get("category", "")),
+                "role": lesson.get("role", "general"),
+                "icon": lesson.get("icon", "📖"),
+            })
+    return JSONResponse(content={"success": True, "results": results})
+
+# Master Admin Panel — page routes
+@app.get("/master-admin", response_class=HTMLResponse)
+@app.get("/master-admin/{section}", response_class=HTMLResponse)
+async def master_admin_page(request: Request, section: str = "dashboard"):
+    username = request.session.get('username')
+    is_ma = request.session.get('is_master_admin') is True
+    is_admin = request.session.get('is_admin') is True
+    if not username:
+        return RedirectResponse(url="/login", status_code=303)
+    if not (is_ma or is_admin):
+        return RedirectResponse(url="/admin", status_code=303)
+    return templates.TemplateResponse(request, "master-admin.html", {
+        "request": request,
+        "username": username,
+        "active_section": section,
+    })
 
 @app.get("/call-display", response_class=HTMLResponse)
 async def call_display(request: Request):

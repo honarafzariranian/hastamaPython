@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>آموزش سامانه هستما</title>
+<link rel="stylesheet" href="{{ url_for('static', path='css/training.css') }}">
+</head>
+<body class="tr-page">
+
+<div class="tr-bg-layer" aria-hidden="true"></div>
+
+<div class="tr-shell">
+
+    {# ── Breadcrumb ── #}
+    <nav class="tr-breadcrumb" aria-label="مسیر صفحه">
+        <a href="/login">ورود</a>
+        <span class="tr-breadcrumb__sep">/</span>
+        {% if active_category %}
+            <a href="/training">آموزش سامانه</a>
+            <span class="tr-breadcrumb__sep">/</span>
+            <span>{{ training_data.categories[active_category].title if active_category in training_data.categories else active_category }}</span>
+        {% else %}
+            <span>آموزش سامانه</span>
+        {% endif %}
+    </nav>
+
+    {# ── Error State ── #}
+    {% if error is defined and error %}
+    <div class="tr-error">
+        <div class="tr-error__icon">⚠️</div>
+        <div class="tr-error__title">{{ error }}</div>
+        <div class="tr-error__text">لطفاً از صفحه اصلی آموزش‌ها دوباره تلاش کنید.</div>
+        <a href="/training" style="margin-top:16px;display:inline-flex;padding:10px 24px;background:var(--tr-primary);color:#fff;border-radius:100px;">بازگشت به آموزش‌ها</a>
+    </div>
+    {% else %}
+
+    {# ── Hero ── #}
+    <section class="tr-hero">
+        <div class="tr-hero__badge">🎓 راهنمای استفاده از هستما</div>
+        <h1 class="tr-hero__title">
+            {% if active_category %}
+                {{ training_data.categories[active_category].title }}
+            {% else %}
+                آموزش سامانه <span>هستما</span>
+            {% endif %}
+        </h1>
+        <p class="tr-hero__desc">
+            {% if active_category %}
+                {{ training_data.categories[active_category].description }}
+            {% else %}
+                راهنمای ساده و مرحله‌به‌مرحله برای استفاده از تمام امکانات سامانه
+            {% endif %}
+        </p>
+    </section>
+
+    {# ── Search ── #}
+    <div class="tr-search">
+        <svg class="tr-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="text" id="trSearchInput" class="tr-search__input" placeholder="جستجو در آموزش‌ها..." autocomplete="off">
+        <div id="trSearchResults" class="tr-search__results"></div>
+    </div>
+
+    {% if not active_category %}
+        {# ── Overview Cards ── #}
+        <section class="tr-overview">
+            <div class="tr-overview__card">
+                <div class="tr-overview__icon tr-overview__icon--blue">🔒</div>
+                <div class="tr-overview__text">
+                    <h3>امنیت</h3>
+                    <p>حفاظت از اطلاعات حساب کاربری و رعایت اصول امنیتی.</p>
+                </div>
+            </div>
+            <div class="tr-overview__card">
+                <div class="tr-overview__icon tr-overview__icon--green">👤</div>
+                <div class="tr-overview__text">
+                    <h3>مسئولیت کاربر</h3>
+                    <p>هر کاربر مسئول حفظ اطلاعات ورود و فعالیت‌های حساب خود است.</p>
+                </div>
+            </div>
+            <div class="tr-overview__card">
+                <div class="tr-overview__icon tr-overview__icon--amber">⏰</div>
+                <div class="tr-overview__text">
+                    <h3>حضور و ثبت اطلاعات</h3>
+                    <p>اطلاعات ثبت‌شده باید مطابق واقعیت و قوانین مجموعه باشد.</p>
+                </div>
+            </div>
+            <div class="tr-overview__card">
+                <div class="tr-overview__icon tr-overview__icon--purple">📋</div>
+                <div class="tr-overview__text">
+                    <h3>رعایت مقررات</h3>
+                    <p>استفاده از امکانات هستما باید مطابق قوانین مجموعه باشد.</p>
+                </div>
+            </div>
+        </section>
+
+        {# ── Category Cards ── #}
+        <section class="tr-categories">
+            {% for cat_id, cat in training_data.categories.items() %}
+            <a href="/training/{{ cat_id }}" class="tr-cat-card" style="animation-delay:{{ loop.index0 * 0.1 }}s">
+                <div class="tr-cat-card__head">
+                    <div class="tr-cat-card__icon tr-cat-card__icon--{{ cat_id }}">{{ cat.icon }}</div>
+                    <div>
+                        <div class="tr-cat-card__title">{{ cat.title }}</div>
+                    </div>
+                </div>
+                <div class="tr-cat-card__desc">{{ cat.description }}</div>
+                <div class="tr-cat-card__meta">
+                    <span>📖 {{ cat.lessons | length }} آموزش</span>
+                    <span>⏱ حدود {{ cat.lessons | length * 2 }} دقیقه</span>
+                </div>
+            </a>
+            {% endfor %}
+        </section>
+
+    {% else %}
+        {# ── Category Detail: Lesson List ── #}
+        <div class="tr-lessons">
+            {% set cat = training_data.categories[active_category] %}
+            {% for lesson_id in cat.lessons %}
+                {% set lesson = training_data.lessons.get(lesson_id) %}
+                {% if lesson %}
+                <a href="/training/lesson/{{ lesson_id }}" class="tr-lesson-item" data-lesson-id="{{ lesson_id }}" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+                    <div class="tr-lesson-item__num">{{ loop.index }}</div>
+                    <div class="tr-lesson-item__info">
+                        <div class="tr-lesson-item__title">{{ lesson.icon }} {{ lesson.title }}</div>
+                        <div class="tr-lesson-item__desc">{{ lesson.description }}</div>
+                    </div>
+                    <div class="tr-lesson-item__time">⏱ {{ lesson.estimated_time }}</div>
+                    <svg class="tr-lesson-item__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {# ── Progress Bar ── #}
+        <div style="max-width:400px;margin:0 auto 40px;text-align:center;">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--tr-text-muted);margin-bottom:4px;">
+                <span>پیشرفت شما</span>
+                <span data-progress-text>0%</span>
+            </div>
+            <div class="tr-progress-bar">
+                <div class="tr-progress-bar__fill" style="width:0%"></div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% endif %}
+
+    {# ── Footer ── #}
+    <footer class="tr-footer">
+        هستما — سامانه مدیریت هوشمند
+    </footer>
+
+</div>
+
+<script src="{{ url_for('static', path='js/training.js') }}"></script>
+</body>
+</html>
