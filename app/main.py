@@ -145,6 +145,10 @@ cursor = conn.cursor()
 async def home(request: Request):
     return templates.TemplateResponse(request, "login.html", {"request": request})
 
+@app.get("/rules", response_class=HTMLResponse)
+async def rules(request: Request):
+    return templates.TemplateResponse(request, "rules.html", {"request": request})
+
 @app.get("/call-display", response_class=HTMLResponse)
 async def call_display(request: Request):
     """TV display page for the sample collection call system."""
