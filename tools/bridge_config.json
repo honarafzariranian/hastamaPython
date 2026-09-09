@@ -1,0 +1,11 @@
+{
+    "hastama_url": "http://192.168.3.69:8000",
+    "hastama_secret": "",
+    "device_ip": "192.168.3.200",
+    "device_port": 1001,
+    "mdb_path": "E:\\Hastama\\database\\Arazdb.mdb",
+    "txt_path": "",
+    "mapping_file": "card_mapping.json",
+    "poll_interval_seconds": 60,
+    "only_today": true
+}

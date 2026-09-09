@@ -303,6 +303,21 @@ function switchPayrollTab(tabId, btnEl) {
     if (tabId === 'karaneh-calculation') loadKaranehData(false);
 }
 
+// تابع سوئیچ تب‌های بخش حضور و غیاب (گزارش / خلاصه و ثبت دستی)
+function switchAttendanceTab(tabId, btnEl) {
+    document.querySelectorAll('.attendance-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.attendance-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+}
+
 // تابع سوئیچ تب‌های بخش مدیریت مرخصی
 function switchVacationTab(tabId, btnEl) {
     document.querySelectorAll('.vacation-tab-btn').forEach(function (b) {
@@ -736,7 +751,7 @@ function computeOvertimePayrollRow(row) {
 }
 
 function overtimePayrollGetMandatoryHours() {
-    var input = document.getElementById('payrollMandatoryHours');
+    var input = document.getElementById('overtimePayrollMandatoryHours') || document.getElementById('payrollMandatoryHours');
     var value = numVal(input);
     return value > 0 ? value : 176;
 }
@@ -758,8 +773,8 @@ function overtimePayrollSetTotals(results) {
 }
 
 function overtimePayrollMonthRange() {
-    var monthSelect = document.getElementById('payrollMonth');
-    var yearInput = document.getElementById('payrollYear');
+    var monthSelect = document.getElementById('overtimePayrollMonth') || document.getElementById('payrollMonth');
+    var yearInput = document.getElementById('overtimePayrollYear') || document.getElementById('payrollYear');
     var month = monthSelect ? monthSelect.selectedIndex + 1 : 1;
     var year = parseInt(persianDigitsToEnglish((yearInput && yearInput.value) || '1405'), 10) || 1405;
     var days = typeof daysInJMonth === 'function' ? daysInJMonth(year, month) : (month <= 6 ? 31 : month <= 11 ? 30 : 29);
@@ -777,6 +792,8 @@ async function loadOvertimePayrollData(force) {
     if (overtimePayrollLoading && !force) return;
     overtimePayrollLoading = true;
     overtimePayrollRenderLoading();
+    /* Reset rate inputs to zero for new period */
+    document.querySelectorAll('#overtimePayrollTable tbody .overtime-payroll-input').forEach(function (inp) { inp.value = '۰'; });
     var range = overtimePayrollMonthRange();
     var rows = Array.prototype.slice.call(document.querySelectorAll('#overtimePayrollTable tbody .overtime-payroll-row'));
     try {
@@ -796,14 +813,16 @@ async function loadOvertimePayrollData(force) {
         }));
         var results = rows.map(computeOvertimePayrollRow);
         overtimePayrollSetTotals(results);
+        /* Restore saved rates AFTER fresh attendance data is loaded */
+        await loadSavedPayrollChanges('overtime');
     } finally {
         overtimePayrollLoading = false;
     }
 }
 
-function payrollCurrentPeriod() {
-    var yearInput = document.getElementById('payrollYear');
-    var monthSelect = document.getElementById('payrollMonth');
+function payrollCurrentPeriod(type) {
+    var yearInput = (type === 'overtime' ? document.getElementById('overtimePayrollYear') : null) || document.getElementById('payrollYear');
+    var monthSelect = (type === 'overtime' ? document.getElementById('overtimePayrollMonth') : null) || document.getElementById('payrollMonth');
     var yearText = persianDigitsToEnglish((yearInput && yearInput.value) || '').replace(/[^0-9]/g, '');
     var year = parseInt(yearText, 10);
     var month = monthSelect ? (monthSelect.value || String(monthSelect.selectedIndex + 1)) : 'فروردین';
@@ -887,9 +906,9 @@ async function copyComprehensiveColumnFromPrevious(field, button) {
     }
 }
 
-function payrollPeriodConfig() {
-    var workDays = document.getElementById('payrollWorkDays');
-    var mandatoryHours = document.getElementById('payrollMandatoryHours');
+function payrollPeriodConfig(type) {
+    var workDays = (type === 'overtime' ? document.getElementById('overtimePayrollWorkDays') : null) || document.getElementById('payrollWorkDays');
+    var mandatoryHours = (type === 'overtime' ? document.getElementById('overtimePayrollMandatoryHours') : null) || document.getElementById('payrollMandatoryHours');
     return {
         workDays: workDays ? workDays.value : '۲۲',
         mandatoryHours: mandatoryHours ? mandatoryHours.value : '۱۷۶'
@@ -1027,14 +1046,14 @@ function payrollRowsPayload(type) {
             });
             payload.cache = overtimePayrollCache[row.getAttribute('data-username')] || {};
         }
-        payload.periodConfig = payrollPeriodConfig();
+        payload.periodConfig = payrollPeriodConfig(type);
         result.push({ username: row.getAttribute('data-username'), payload: payload });
     });
     return result;
 }
 
 async function savePayrollChanges(type, button) {
-    var period = payrollCurrentPeriod();
+    var period = payrollCurrentPeriod(type);
     payrollSaveStatus(type, 'در حال ذخیره‌سازی…', false);
     if (button) button.disabled = true;
     try {
@@ -1046,7 +1065,7 @@ async function savePayrollChanges(type, button) {
                 calculation_type: type,
                 period_year: period.year,
                 period_month: period.month,
-                period_config: payrollPeriodConfig(),
+                period_config: payrollPeriodConfig(type),
                 rows: payrollRowsPayload(type)
             })
         });
@@ -1060,12 +1079,19 @@ async function savePayrollChanges(type, button) {
     }
 }
 
-function applyPayrollPeriodConfig(config) {
+function applyPayrollPeriodConfig(config, type) {
     if (!config || typeof config !== 'object') return;
-    var workDays = document.getElementById('payrollWorkDays');
-    var mandatoryHours = document.getElementById('payrollMandatoryHours');
-    if (workDays && config.workDays !== undefined) workDays.value = config.workDays;
-    if (mandatoryHours && config.mandatoryHours !== undefined) mandatoryHours.value = config.mandatoryHours;
+    if (type === 'overtime') {
+        var otWorkDays = document.getElementById('overtimePayrollWorkDays');
+        var otMandatory = document.getElementById('overtimePayrollMandatoryHours');
+        if (otWorkDays && config.workDays !== undefined) otWorkDays.value = config.workDays;
+        if (otMandatory && config.mandatoryHours !== undefined) otMandatory.value = config.mandatoryHours;
+    } else {
+        var workDays = document.getElementById('payrollWorkDays');
+        var mandatoryHours = document.getElementById('payrollMandatoryHours');
+        if (workDays && config.workDays !== undefined) workDays.value = config.workDays;
+        if (mandatoryHours && config.mandatoryHours !== undefined) mandatoryHours.value = config.mandatoryHours;
+    }
 }
 
 function applySavedPayrollPayload(type, items) {
@@ -1088,6 +1114,7 @@ function applySavedPayrollPayload(type, items) {
         applyPayrollPeriodConfig(summaryPayload.periodConfig);
         return;
     }
+    if (type === 'overtime') overtimePayrollCache = {};
     (items || []).forEach(function (item) {
         var selector = type === 'comprehensive' ? '#payrollComprehensiveTable tbody .payroll-row' : type === 'hourly' ? '#hourlyPayrollTable tbody .hourly-payroll-row' : '#overtimePayrollTable tbody .overtime-payroll-row';
         var rows = document.querySelectorAll(selector);
@@ -1095,7 +1122,7 @@ function applySavedPayrollPayload(type, items) {
             return String(candidate.getAttribute('data-username') || '').trim() === String(item.username || '').trim();
         });
         if (!row || !item.payload) return;
-        applyPayrollPeriodConfig(item.payload.periodConfig);
+        applyPayrollPeriodConfig(item.payload.periodConfig, type);
         if (type === 'comprehensive') {
             Object.keys(item.payload).forEach(function (field) {
                 var input = row.querySelector('.payroll-input[data-field="' + field + '"]');
@@ -1111,13 +1138,13 @@ function applySavedPayrollPayload(type, items) {
                 var input = row.querySelector('.overtime-payroll-input[data-overtime-field="' + field + '"]');
                 if (input) input.value = item.payload[field];
             });
-            if (item.payload.cache) overtimePayrollCache[item.username] = item.payload.cache;
+            /* Do NOT restore cache from saved payload — use freshly computed attendance data instead */
         }
     });
 }
 
 async function loadSavedPayrollChanges(type) {
-    var period = payrollCurrentPeriod();
+    var period = payrollCurrentPeriod(type);
     try {
         var response = await fetch('/api/admin/payroll/load?calculation_type=' + encodeURIComponent(type) + '&period_year=' + encodeURIComponent(period.year) + '&period_month=' + encodeURIComponent(period.month), { credentials: 'same-origin' });
         if (!response.ok) return 0;
@@ -4284,12 +4311,6 @@ document.getElementById("extractButton").addEventListener("click", function () {
                     tableBody.appendChild(row);
                 });
 
-                if (window.matchMedia("(max-width: 768px)").matches) {
-                    document.getElementById("sabtdst").style.marginTop = "44.5rem";
-                } else {
-                    document.getElementById("sabtdst").style.marginTop = "2rem";
-                }
-
                 document.querySelector(".box1-hozoor .attendance-stat__value").innerText =
                     convertNumbersToPersianNumber(formatTimeFromMinutes(totalPresenceDuration));
 
@@ -5213,8 +5234,23 @@ function renderShiftsTable(shifts) {
     const tbody = document.getElementById('shiftsTableBody');
     tbody.innerHTML = '';
 
+    /* شمارندهٔ بازه‌ها در سربرگ جدول */
+    const badge = document.getElementById('shiftCountBadge');
+    if (badge) {
+        if (shifts && shifts.length > 0) {
+            badge.textContent = convertToPersianNumbers(String(shifts.length));
+            badge.hidden = false;
+            badge.style.animation = 'none';
+            void badge.offsetWidth; /* restart pop animation */
+            badge.style.animation = '';
+        } else {
+            badge.hidden = true;
+        }
+    }
+
     if (!shifts || shifts.length === 0) {
         const row = document.createElement('tr');
+        row.className = 'shifts-empty-row';
         row.innerHTML = `<td colspan="11">هیچ بازه‌ی شیفتی برای این پرسنل/ماه تعریف نشده است</td>`;
         tbody.appendChild(row);
         return;

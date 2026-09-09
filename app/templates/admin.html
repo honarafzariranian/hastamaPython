@@ -858,8 +858,18 @@
             </article>
         </div>
 
-        <div id="shiftBox" class="management-box" style="display:none;">
-            <h2>مدیریت شیفت‌های ماهانه پرسنل</h2>
+        <div id="shiftBox" class="management-box">
+            <!-- ── سربرگ قهرمان: آیکون گرادیانی + عنوان ── -->
+            <header class="shift-hero">
+                <div class="shift-hero__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/><path d="M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01"/></svg>
+                </div>
+                <div class="shift-hero__text">
+                    <h2>مدیریت شیفت‌های ماهانه پرسنل</h2>
+                    <p>بازه‌های شیفتی هر پرسنل را ماه‌به‌ماه تعریف، ویرایش و مرور کنید</p>
+                </div>
+                <div class="shift-hero__glow" aria-hidden="true"></div>
+            </header>
 
             <div class="form-container-shift">
                 <form id="shiftSelectForm" class="form-shift-krbr">
@@ -884,83 +894,118 @@
                     </div>
                 </form>
 
-                <button type="button" class="show-shift-krbrinmah" id="loadShiftsBtn" onclick="loadShifts()">نمایش شیفت‌های این ماه</button>
+                <button type="button" class="show-shift-krbrinmah" id="loadShiftsBtn" onclick="loadShifts()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+                    <span>نمایش شیفت‌های این ماه</span>
+                </button>
             </div>
 
-            <!-- جدول بازه‌های تعریف‌شده برای پرسنل/ماه انتخابی -->
-            <table class="request-table" id="shiftsTable">
-                <thead>
-                    <tr>
-                        <th>تغییرات</th>
-                        <th>عنوان</th>
-                        <th>جمعه</th>
-                        <th>پنج‌شنبه</th>
-                        <th>چهارشنبه</th>
-                        <th>سه‌شنبه</th>
-                        <th>دوشنبه</th>
-                        <th>یکشنبه</th>
-                        <th>شنبه</th>
-                        <th>تا روز</th>
-                        <th>از روز</th>
-                    </tr>
-                </thead>
-                <tbody id="shiftsTableBody">
-                    <!-- سطرها با جاوااسکریپت پر می‌شوند -->
-                </tbody>
-            </table>
+            <!-- کارت جدول بازه‌های تعریف‌شده برای پرسنل/ماه انتخابی -->
+            <div class="shift-table-card">
+                <div class="shift-table-card__head">
+                    <div class="shift-table-card__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                        <span>بازه‌های شیفت ثبت‌شده</span>
+                    </div>
+                    <span class="shift-count-badge" id="shiftCountBadge" hidden></span>
+                </div>
+                <div class="shift-table-scroll">
+                    <table class="request-table" id="shiftsTable">
+                        <thead>
+                            <tr>
+                                <th>تغییرات</th>
+                                <th>عنوان</th>
+                                <th>جمعه</th>
+                                <th>پنج‌شنبه</th>
+                                <th>چهارشنبه</th>
+                                <th>سه‌شنبه</th>
+                                <th>دوشنبه</th>
+                                <th>یکشنبه</th>
+                                <th>شنبه</th>
+                                <th>تا روز</th>
+                                <th>از روز</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shiftsTableBody">
+                            <tr class="shifts-empty-row" data-shift-hint><td colspan="11">برای مشاهده، ابتدا پرسنل و ماه را انتخاب و «نمایش شیفت‌های این ماه» را بزنید</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-            <button type="button" class="add-shift-krbrinmah" id="openShiftPopupBtn" onclick="openShiftPopup()">افزودن بازه‌ی شیفت جدید</button>
+            <div class="shift-footer-row">
+                <button type="button" class="add-shift-krbrinmah" id="openShiftPopupBtn" onclick="openShiftPopup()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    <span>افزودن بازه‌ی شیفت جدید</span>
+                </button>
+            </div>
 
             <!-- فرم افزودن / ویرایش یک بازه‌ی شیفت -->
             <div id="shiftPopupOverlay" class="shift-popup-overlay" onclick="closeShiftPopup(event)">
                 <div id="shiftPopup" class="shift-popup" role="dialog" aria-modal="true" aria-labelledby="shiftFormTitle" onclick="event.stopPropagation()">
-                    <button type="button" class="close-shift-popup" aria-label="بستن" onclick="closeShiftPopup()">×</button>
-                    <div class="form-container shift-popup-content">
-                <h2 id="shiftFormTitle">افزودن بازه‌ی شیفت جدید</h2>
-                <form id="shiftForm" class="form-krbrjadid shift-details-form">
-                    <input type="hidden" id="shiftId" name="shiftId" value="">
+                    <div class="shift-popup-content">
+                        <header class="shift-popup-head">
+                            <div class="shift-popup-head__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17M12 13v6M9 16h6"/></svg>
+                            </div>
+                            <div class="shift-popup-head__text">
+                                <h2 id="shiftFormTitle">افزودن بازه‌ی شیفت جدید</h2>
+                                <p>بازه‌ی روزها را مشخص و ساعت شیفت هر روز هفته را وارد کنید</p>
+                            </div>
+                            <button type="button" class="close-shift-popup" aria-label="بستن" onclick="closeShiftPopup()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                            </button>
+                        </header>
 
-                    <div class="form-row-krbrjadid">
-                        <label for="shiftTitle">عنوان شیفت (اختیاری)</label>
-                        <input type="text" id="shiftTitle" name="shiftTitle" placeholder="مثلا شیفت صبح" autocomplete="off">
-                    </div>
+                        <form id="shiftForm" class="form-krbrjadid shift-details-form">
+                            <input type="hidden" id="shiftId" name="shiftId" value="">
 
-                    <div class="form-row-krbrjadid">
-                        <label for="shiftStartDay">از روز (۱ تا ۳۱ این ماه)</label>
-                        <input type="number" id="shiftStartDay" name="shiftStartDay" min="1" max="31" required>
-                    </div>
+                            <div class="form-row-krbrjadid shift-details-form__title-row">
+                                <label for="shiftTitle">عنوان شیفت (اختیاری)</label>
+                                <input type="text" id="shiftTitle" name="shiftTitle" placeholder="مثلا شیفت صبح" autocomplete="off">
+                            </div>
 
-                    <div class="form-row-krbrjadid">
-                        <label for="shiftEndDay">تا روز (۱ تا ۳۱ این ماه)</label>
-                        <input type="number" id="shiftEndDay" name="shiftEndDay" min="1" max="31" required>
-                    </div>
-                </form>
+                            <div class="shift-days-range">
+                                <div class="form-row-krbrjadid">
+                                    <label for="shiftStartDay">از روز (۱ تا ۳۱ این ماه)</label>
+                                    <input type="number" id="shiftStartDay" name="shiftStartDay" min="1" max="31" required>
+                                </div>
+                                <div class="shift-days-range__dash" aria-hidden="true"></div>
+                                <div class="form-row-krbrjadid">
+                                    <label for="shiftEndDay">تا روز (۱ تا ۳۱ این ماه)</label>
+                                    <input type="number" id="shiftEndDay" name="shiftEndDay" min="1" max="31" required>
+                                </div>
+                            </div>
+                        </form>
 
-                <div class="schedule-container shift-schedule-grid">
-                    <div class="days-column">
-                        <div class="day-label">شنبه</div>
-                        <div class="day-label">یکشنبه</div>
-                        <div class="day-label">دوشنبه</div>
-                        <div class="day-label">سه‌شنبه</div>
-                        <div class="day-label">چهارشنبه</div>
-                        <div class="day-label">پنج‌شنبه</div>
-                        <div class="day-label">جمعه</div>
-                    </div>
-                    <div class="fields-column">
-                        <input type="text" id="shift_shanbeh" placeholder="12:00 - 24:00 (خالی = تعطیل/شیفت پیش‌فرض)">
-                        <input type="text" id="shift_yekshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="shift_doshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="shift_seshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="shift_chaharshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="shift_panjshanbeh" placeholder="12:00 - 24:00">
-                        <input type="text" id="shift_jomeh" placeholder="12:00 - 24:00">
-                    </div>
-                </div>
+                        <div class="schedule-container shift-schedule-grid">
+                            <div class="days-column">
+                                <div class="day-label"><span class="day-dot day-dot--shanbeh" aria-hidden="true"></span>شنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--yekshanbeh" aria-hidden="true"></span>یکشنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--doshanbeh" aria-hidden="true"></span>دوشنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--seshanbeh" aria-hidden="true"></span>سه‌شنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--chaharshanbeh" aria-hidden="true"></span>چهارشنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--panjshanbeh" aria-hidden="true"></span>پنج‌شنبه</div>
+                                <div class="day-label"><span class="day-dot day-dot--jomeh" aria-hidden="true"></span>جمعه</div>
+                            </div>
+                            <div class="fields-column">
+                                <input type="text" id="shift_shanbeh" placeholder="12:00 - 24:00 (خالی = تعطیل/شیفت پیش‌فرض)">
+                                <input type="text" id="shift_yekshanbeh" placeholder="12:00 - 24:00">
+                                <input type="text" id="shift_doshanbeh" placeholder="12:00 - 24:00">
+                                <input type="text" id="shift_seshanbeh" placeholder="12:00 - 24:00">
+                                <input type="text" id="shift_chaharshanbeh" placeholder="12:00 - 24:00">
+                                <input type="text" id="shift_panjshanbeh" placeholder="12:00 - 24:00">
+                                <input type="text" id="shift_jomeh" placeholder="12:00 - 24:00">
+                            </div>
+                        </div>
 
-                <div class="shift-popup-actions">
-                    <button type="button" class="save-btn-krbrjad" id="saveShiftBtn" onclick="saveShift()">ذخیره بازه‌ی شیفت</button>
-                    <button type="button" class="save-btn-krbrjad" id="cancelShiftEditBtn" style="display:none;" onclick="resetShiftForm()">انصراف از ویرایش</button>
-                </div>
+                        <div class="shift-popup-actions">
+                            <button type="button" class="save-btn-krbrjad" id="saveShiftBtn" onclick="saveShift()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5 10 18 19.5 7"/></svg>
+                                <span>ذخیره بازه‌ی شیفت</span>
+                            </button>
+                            <button type="button" class="save-btn-krbrjad shift-cancel-btn" id="cancelShiftEditBtn" style="display:none;" onclick="resetShiftForm()">انصراف از ویرایش</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1347,7 +1392,6 @@
                 <aside id="adminTicketContext" class="helpdesk-context" aria-label="جزئیات تیکت"><div class="ticket-context-empty"><span>←</span><strong>یک تیکت را انتخاب کنید</strong><p>مکالمه و مشخصات آن در این بخش نمایش داده می‌شود.</p></div>                </aside>
             </div>
             </div>
-        </div>
 
         <!-- پنجره مدال تایید حذف تیکت -->
         <div id="confirmDeleteModalHazf" class="modal-hazf">
@@ -1381,6 +1425,13 @@
         <!-- باکس مدیریت حضورو و غیاب کاربران -->
         <div id="hozoorbox" class="management-box" style="display: none;">
             <h2>مدیریت ورود و خروج همکاران</h2>
+
+            <div class="attendance-tabs" role="tablist">
+                <button type="button" class="attendance-tab-btn active" role="tab" aria-selected="true" data-tab="hozoor-report-tab" onclick="switchAttendanceTab('hozoor-report-tab', this)">گزارش ورود و خروج</button>
+                <button type="button" class="attendance-tab-btn" role="tab" aria-selected="false" data-tab="hozoor-panels-tab" onclick="switchAttendanceTab('hozoor-panels-tab', this)">خلاصه و ثبت دستی</button>
+            </div>
+
+            <div id="hozoor-report-tab" class="attendance-tab-content active" role="tabpanel">
             <div class="vorodi">
                 <form id="gozareshHozoor" class="formgozareshhozoor">
                     <label for="usernameGozareshHozoor">: انتخاب کاربر</label>
@@ -1433,65 +1484,67 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
+            <!-- باکس نمایش زمان های کاربر -->
+            <div id="natigehHozoor" class="management-box attendance-panel" style="display: none;">
+                <div class="attendance-panel__head">
+                    <div class="attendance-panel__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="attendance-panel__title">مجموع ساعت کاری</h2>
+                        <p class="attendance-panel__subtitle">خلاصه حضور و غیاب دوره انتخاب‌شده</p>
+                    </div>
+                </div>
+                <div class="boxha attendance-stats">
+                    <div class="attendance-stat attendance-stat--presence box1-hozoor">
+                        <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
+                        <div class="attendance-stat__info">
+                            <span class="attendance-stat__label">مجموع حضور</span>
+                            <span class="attendance-stat__value">00:00</span>
+                        </div>
+                    </div>
+                    <div class="attendance-stat attendance-stat--overtime box2-hozoor">
+                        <span class="attendance-stat__icon" aria-hidden="true">⚡</span>
+                        <div class="attendance-stat__info">
+                            <span class="attendance-stat__label">اضافه کاری</span>
+                            <span class="attendance-stat__value">00:00</span>
+                        </div>
+                    </div>
+                    <div class="attendance-stat attendance-stat--delay box3-hozoor">
+                        <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
+                        <div class="attendance-stat__info">
+                            <span class="attendance-stat__label">تاخیر</span>
+                            <span class="attendance-stat__value">00:00</span>
+                        </div>
+                    </div>
+                    <div class="attendance-stat attendance-stat--early-start box4-hozoor">
+                        <span class="attendance-stat__icon" aria-hidden="true">↗</span>
+                        <div class="attendance-stat__info">
+                            <span class="attendance-stat__label">شروع زودهنگام</span>
+                            <span class="attendance-stat__value">00:00</span>
+                        </div>
+                    </div>
+                    <div class="attendance-stat attendance-stat--early-exit box5-hozoor">
+                        <span class="attendance-stat__icon" aria-hidden="true">↙</span>
+                        <div class="attendance-stat__info">
+                            <span class="attendance-stat__label">خروج زودهنگام</span>
+                            <span class="attendance-stat__value">00:00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="attendance-panel__footer">
+                    <button class="gozareshNahaei attendance-panel__btn" onclick="goToFinalReport()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        گزارش نهایی
+                    </button>
+                </div>
+            </div>
+            </div>
+
+            <div id="hozoor-panels-tab" class="attendance-tab-content" role="tabpanel">
 
         <!-- باکس‌های حضور و غیاب کنار هم -->
         <div id="attendancePanelsRow" class="management-box attendance-panels-row" style="display: none;">
-        <!-- باکس نمایش زمان های کاربر -->
-        <div id="natigehHozoor" class="management-box attendance-panel" style="display: none;">
-            <div class="attendance-panel__head">
-                <div class="attendance-panel__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                </div>
-                <div>
-                    <h2 class="attendance-panel__title">مجموع ساعت کاری</h2>
-                    <p class="attendance-panel__subtitle">خلاصه حضور و غیاب دوره انتخاب‌شده</p>
-                </div>
-            </div>
-            <div class="boxha attendance-stats">
-                <div class="attendance-stat attendance-stat--presence box1-hozoor">                    <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
-                    <div class="attendance-stat__info">
-                        <span class="attendance-stat__label">مجموع حضور</span>
-                        <span class="attendance-stat__value">00:00</span>
-                    </div>
-                </div>
-                <div class="attendance-stat attendance-stat--overtime box2-hozoor">
-                    <span class="attendance-stat__icon" aria-hidden="true">⚡</span>
-                    <div class="attendance-stat__info">
-                        <span class="attendance-stat__label">اضافه کاری</span>
-                        <span class="attendance-stat__value">00:00</span>
-                    </div>
-                </div>
-                <div class="attendance-stat attendance-stat--delay box3-hozoor">
-                    <span class="attendance-stat__icon" aria-hidden="true">⏱</span>
-                    <div class="attendance-stat__info">
-                        <span class="attendance-stat__label">تاخیر</span>
-                        <span class="attendance-stat__value">00:00</span>
-                    </div>
-                </div>
-                <div class="attendance-stat attendance-stat--early-start box4-hozoor">
-                    <span class="attendance-stat__icon" aria-hidden="true">↗</span>
-                    <div class="attendance-stat__info">
-                        <span class="attendance-stat__label">شروع زودهنگام</span>
-                        <span class="attendance-stat__value">00:00</span>
-                    </div>
-                </div>
-                <div class="attendance-stat attendance-stat--early-exit box5-hozoor">
-                    <span class="attendance-stat__icon" aria-hidden="true">↙</span>
-                    <div class="attendance-stat__info">
-                        <span class="attendance-stat__label">خروج زودهنگام</span>
-                        <span class="attendance-stat__value">00:00</span>
-                    </div>
-                </div>
-            </div>
-            <div class="attendance-panel__footer">
-                <button class="gozareshNahaei attendance-panel__btn" onclick="goToFinalReport()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    گزارش نهایی
-                </button>
-            </div>
-        </div>
-
         <!-- باکس ثبت دستی حضور و غیاب -->
         <div id="sabtdst" class="management-box attendance-panel" style="display: none;">
             <div class="attendance-panel__head">
@@ -1579,6 +1632,8 @@
             </div>
         </div>
         </div>
+            </div>
+        </div>
 
         <!-- باکس حقوق و دستمزد -->
         <div id="payrollBox" class="management-box payroll-panel" style="display:none;">
@@ -1596,6 +1651,45 @@
                     </div>
 
                     <div id="overtime-calculation" class="payroll-tab-content active" role="tabpanel">
+                        <!-- تنظیمات دوره گزارش -->
+                        <div class="payroll-config">
+                            <div class="payroll-config-title">تنظیمات دوره گزارش</div>
+                            <div class="payroll-config-grid">
+                                <label class="payroll-config-item">
+                                    <span>ماه</span>
+                                    <select id="overtimePayrollMonth">
+                                        <option value="فروردین">فروردین</option>
+                                        <option value="اردیبهشت">اردیبهشت</option>
+                                        <option value="خرداد">خرداد</option>
+                                        <option value="تیر">تیر</option>
+                                        <option value="مرداد">مرداد</option>
+                                        <option value="شهریور">شهریور</option>
+                                        <option value="مهر">مهر</option>
+                                        <option value="آبان">آبان</option>
+                                        <option value="آذر">آذر</option>
+                                        <option value="دی">دی</option>
+                                        <option value="بهمن">بهمن</option>
+                                        <option value="اسفند">اسفند</option>
+                                    </select>
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>سال</span>
+                                    <input type="text" id="overtimePayrollYear" value="۱۴۰۵" inputmode="numeric" autocomplete="off">
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>روزهای کاری</span>
+                                    <input type="text" id="overtimePayrollWorkDays" value="۲۲" inputmode="numeric" autocomplete="off" oninput="var v=parseInt(persianDigitsToEnglish(this.value));document.getElementById('overtimePayrollMandatoryHours').value=v?toPersianNumber(v*7):''">
+                                </label>
+                                <label class="payroll-config-item">
+                                    <span>ساعت موظفی</span>
+                                    <input type="text" id="overtimePayrollMandatoryHours" value="۱۷۶" inputmode="numeric" autocomplete="off">
+                                </label>
+                                <div class="payroll-config-item payroll-config-item--btn">
+                                    <button type="button" class="payroll-period-display-btn" onclick="loadOvertimePayrollData(true)">نمایش</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="overtime-payroll-table-scroll">
                             <table class="payroll-table overtime-payroll-table" id="overtimePayrollTable">
                                 <thead>
@@ -1624,7 +1718,7 @@
                                     <tr class="overtime-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
-                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-name">{{ user.last_name or user.name or user.username }}</span>
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
@@ -1666,7 +1760,6 @@
                             <button type="button" class="overtime-payroll-refresh" onclick="loadOvertimePayrollData(true)">محاسبه مجدد</button>
                             <button type="button" class="overtime-payroll-save" onclick="savePayrollChanges('overtime', this)">ذخیره تغییرات</button>
                         </div>
-                        <p class="overtime-payroll-save-status" id="overtimePayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
 
                     <div id="comprehensive-calculation" class="payroll-tab-content" role="tabpanel">
@@ -1697,7 +1790,7 @@
                                 </label>
                                 <label class="payroll-config-item">
                                     <span>روزهای کاری</span>
-                                    <input type="text" id="payrollWorkDays" value="۲۲" inputmode="numeric" autocomplete="off">
+                                    <input type="text" id="payrollWorkDays" value="۲۲" inputmode="numeric" autocomplete="off" oninput="var v=parseInt(persianDigitsToEnglish(this.value));document.getElementById('payrollMandatoryHours').value=v?toPersianNumber(v*7):''">
                                 </label>
                                 <label class="payroll-config-item">
                                     <span>ساعت موظفی</span>
@@ -1740,7 +1833,7 @@
                                         <td class="payroll-col-index">{{ loop.index }}</td>
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
-                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-name">{{ user.last_name or user.name or user.username }}</span>
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
@@ -1782,7 +1875,6 @@
                             <button type="button" class="payroll-save-recalculate" onclick="computePayrollTotals()">محاسبه مجدد</button>
                             <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('comprehensive', this)">ذخیره تغییرات</button>
                         </div>
-                        <p class="payroll-save-status" id="comprehensivePayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>                                    <!-- محاسبه حقوق ساعتی پرسنل غیررسمی -->
                     <div id="hourly-payroll-calculation" class="payroll-tab-content" role="tabpanel">
                         <div class="hourly-payroll-table-scroll">
@@ -1811,7 +1903,7 @@
                                     <tr class="payroll-row hourly-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
-                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-name">{{ user.last_name or user.name or user.username }}</span>
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
@@ -1849,7 +1941,6 @@
                             <button type="button" class="payroll-save-recalculate" onclick="computeHourlyPayrollTotals()">محاسبه مجدد</button>
                             <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('hourly', this)">ذخیره تغییرات</button>
                         </div>
-                        <p class="payroll-save-status" id="hourlyPayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
 
                     <!-- خلاصه جمع کل حقوق و دستمزد -->
@@ -1891,7 +1982,6 @@
                             <button type="button" class="payroll-save-btn" onclick="savePayrollChanges('summary', this)">ذخیره تغییرات</button>
                             <button type="button" class="payroll-print-btn" onclick="openPayrollReportPreview()">نمایش گزارش چاپی</button>
                         </div>
-                        <p class="payroll-save-status" id="summaryPayrollSaveStatus" role="status" aria-live="polite"></p>
                     </div>
 
                     <div id="karaneh-calculation" class="payroll-tab-content" role="tabpanel">
@@ -1949,7 +2039,7 @@
                                     <tr class="karaneh-payroll-row" data-username="{{ user.username }}">
                                         <td class="payroll-col-name">
                                             <div class="payroll-person">
-                                                <span class="payroll-person-name">{{ user.name or user.username }}</span>
+                                                <span class="payroll-person-name">{{ user.last_name or user.name or user.username }}</span>
                                                 <span class="payroll-person-meta">{{ user.department or '' }}</span>
                                             </div>
                                         </td>
@@ -1992,6 +2082,7 @@
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- پاپ‌آپ ثبت تیکت -->
         <div id="ticketModal" class="morakhaci-sabt" style="display: none;">

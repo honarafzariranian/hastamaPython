@@ -14,6 +14,25 @@
 </head>
 
 <body>
+    <!-- لایه‌های پس‌زمینه: گرادیان، هاله‌ها، شبکه، ذرات -->
+    <div class="bg-scene" aria-hidden="true">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--a"></div>
+        <div class="bg-orb bg-orb--b"></div>
+        <div class="bg-orb bg-orb--c"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-noise"></div>
+        <div class="bg-beam"></div>
+        <div class="bg-particles">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="bg-rings">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- دکمه‌های شناور بالا -->
     <div class="top-actions">
         <div class="tooltip-wrap">
             <button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="تغییر تم">
@@ -30,76 +49,119 @@
         </div>
     </div>
 
-    <div class="login-page">
-        <div class="login-card">
-            <div class="brand-row">
-                <div class="brand">
-                    <img class="login-logo" src="{{ url_for('static', path='images/login-mobile-logo.png') }}" alt="لوگوی هستما">
-                </div>
+    <main class="login-shell">
+        <!-- سمت برند: معرفی محصول -->
+        <section class="brand-side" aria-hidden="true">
+            <div class="brand-side__glow"></div>
+
+            <div class="brand-side__logo">
+                <img src="{{ url_for('static', path='images/login-mobile-logo.png') }}" alt="" class="brand-logo-img">
             </div>
 
-            <div class="login-header">
-                <h2>خوش آمدید</h2>
-                <p>برای دسترسی به داشبورد اطلاعات خود را وارد کنید.</p>
-            </div>
+            <h1 class="brand-side__title">مدیریت هوشمند<br>ساده، سریع، مطمئن</h1>
+            <p class="brand-side__desc">سامانه یکپارچه حضور و غیاب، حقوق و مدیریت تیم؛ همه‌چیز در یک تجربهٔ مدرن.</p>
 
-            <form class="login-form">
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <input type="text" id="username" name="username" required autocomplete="username">
-                        <label for="username">نام کاربری</label>
-                        <span class="focus-border"></span>
+            <ul class="brand-side__features">
+                <li>
+                    <span class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </span>
+                    <span class="feature-text"><strong>ثبت لحظه‌ای تردد</strong><small>گزارش دقیق ورود و خروج تیم</small></span>
+                </li>
+                <li>
+                    <span class="feature-icon feature-icon--teal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    </span>
+                    <span class="feature-text"><strong>داشبورد زندهٔ مدیریت</strong><small>تصمیم‌گیری با داده‌های لحظه‌ای</small></span>
+                </li>
+                <li>
+                    <span class="feature-icon feature-icon--violet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <span class="feature-text"><strong>امنیت سازمانی</strong><small>اطلاعات شما، همیشه محفوظ</small></span>
+                </li>
+            </ul>
+
+            <div class="brand-side__chips" aria-hidden="true">
+                <span class="chip chip--sky">✦ سریع</span>
+                <span class="chip chip--teal">⚡ هوشمند</span>
+                <span class="chip chip--violet">🔒 امن</span>
+            </div>
+        </section>
+
+        <!-- سمت فرم: کارت ورود شیشه‌ای -->
+        <section class="form-side">
+            <div class="login-card" id="loginCard">
+                <div class="card-sheen" aria-hidden="true"></div>
+
+                <div class="brand-row">
+                    <div class="brand">
+                        <img class="login-logo" src="{{ url_for('static', path='images/login-mobile-logo.png') }}" alt="لوگوی هستما">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <input type="password" id="password" name="password" required autocomplete="current-password">
-                        <label for="password">رمز عبور</label>
-                        <span class="focus-border"></span>
+                <div class="login-header">
+                    <h2>خوش آمدید</h2>
+                    <p>برای دسترسی به داشبورد اطلاعات خود را وارد کنید.</p>
+                </div>
+
+                <form class="login-form" novalidate>
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                            <input type="text" id="username" name="username" required autocomplete="username">
+                            <label for="username">نام کاربری</label>
+                            <span class="focus-border"></span>
+                        </div>
+                        <p class="field-error" id="usernameError" role="alert"></p>
                     </div>
-                </div>
 
-                <div class="form-footer">
-                    <label class="remember-wrapper">
-                        <input type="checkbox" id="remember" name="remember">
-                        <span class="checkbox-label">
-                            <span class="checkmark"></span>
-                            مرا به خاطر بسپار
-                        </span>
-                    </label>
-                    <a href="#" class="forgot-password">فراموشی رمز عبور؟</a>
-                </div>
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            </span>
+                            <input type="password" id="password" name="password" required autocomplete="current-password">
+                            <label for="password">رمز عبور</label>
+                            <button type="button" class="pw-toggle" id="pwToggle" aria-label="نمایش رمز عبور" aria-pressed="false">
+                                <svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="pw-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                            <span class="focus-border"></span>
+                        </div>
+                        <p class="field-error" id="passwordError" role="alert"></p>
+                    </div>
 
-                                <button type="button" class="btn h-ux-btn" id="loginBtn">
-                    <span class="h-ux-btn-text">ورود</span>
-                    <span class="h-ux-btn-spinner"></span>
-                    <span class="h-ux-btn-loading-text">در حال ورود...</span>
-                </button>
-            </form>
-        </div>
-    </div>
+                    <div class="form-footer">
+                        <label class="remember-wrapper">
+                            <input type="checkbox" id="remember" name="remember">
+                            <span class="checkbox-label">
+                                <span class="checkmark"></span>
+                                مرا به خاطر بسپار
+                            </span>
+                        </label>
+                        <a href="#" class="forgot-password">فراموشی رمز عبور؟</a>
+                    </div>
+
+                    <button type="button" class="btn h-ux-btn" id="loginBtn">
+                        <span class="h-ux-btn-text">ورود</span>
+                        <span class="h-ux-btn-spinner"></span>
+                        <span class="h-ux-btn-loading-text">در حال ورود...</span>
+                    </button>
+
+                    <p class="login-hint" id="loginHint" role="status" aria-live="polite"></p>
+                </form>
+            </div>
+
+            <p class="form-side__note">با ورود، <a href="#">قوانین استفاده</a> از سامانه را می‌پذیرید.</p>
+        </section>
+    </main>
 
     <footer class="login-footer">
         محصولی از شرکت هنر افزار ایرانیان - نسخه آزمایشی
     </footer>
-
-    <div class="waves" aria-hidden="true">
-        <svg class="wave wave1" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="rgba(68,180,255,0.08)"
-                d="M0,192L60,176C120,160,240,128,360,128C480,128,600,160,720,176C840,192,960,192,1080,165C1200,139,1320,85,1380,58L1440,32L1440,320L0,320Z"/>
-        </svg>
-
-        <svg class="wave wave2" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="rgba(47,124,246,0.06)"
-                d="M0,96L80,122C160,149,320,203,480,208C640,213,800,171,960,144C1120,117,1280,107,1360,101L1440,96L1440,320L0,320Z"/>
-        </svg>
-
-        <svg class="wave wave3" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="rgba(72,193,181,0.05)"
-                d="M0,256L90,229C180,203,360,149,540,128C720,107,900,117,1080,149C1260,181,1350,235,1440,256L1440,320L0,320Z"/>
-        </svg>
-    </div>
 
     <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
     <script src="{{ url_for('static', path='js/script.js') }}"></script>
@@ -125,6 +187,88 @@
         }
         usernameInput.addEventListener('keydown', handleEnter);
         passwordInput.addEventListener('keydown', handleEnter);
+
+        /* UI-only enhancements (no functional impact) */
+
+        /* Button ripple effect (visual only) */
+        loginBtn.addEventListener('pointerdown', function(e) {
+            var rect = loginBtn.getBoundingClientRect();
+            var ink = document.createElement('span');
+            var size = Math.max(rect.width, rect.height);
+            ink.className = 'ripple-ink';
+            ink.style.width = ink.style.height = size + 'px';
+            ink.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ink.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            loginBtn.appendChild(ink);
+            setTimeout(function() { if (ink.parentNode) ink.parentNode.removeChild(ink); }, 650);
+        });
+
+        /* Show/hide password */
+        var pwToggle = document.getElementById('pwToggle');
+        if (pwToggle) {
+            pwToggle.addEventListener('click', function() {
+                var showing = passwordInput.type === 'text';
+                passwordInput.type = showing ? 'password' : 'text';
+                pwToggle.setAttribute('aria-pressed', String(!showing));
+                pwToggle.setAttribute('aria-label', showing ? 'نمایش رمز عبور' : 'پنهان کردن رمز عبور');
+                pwToggle.classList.toggle('is-active', !showing);
+            });
+        }
+
+        /* Field-level validation feedback (visual only; login() still guards) */
+        function setFieldState(input, errorEl, msg) {
+            var wrap = input.closest('.input-wrapper');
+            if (!wrap) return;
+            if (msg) {
+                wrap.classList.add('has-error');
+                errorEl.textContent = msg;
+            } else {
+                wrap.classList.remove('has-error');
+                errorEl.textContent = '';
+            }
+        }
+        var usernameError = document.getElementById('usernameError');
+        var passwordError = document.getElementById('passwordError');
+        usernameInput.addEventListener('input', function() { setFieldState(usernameInput, usernameError, ''); });
+        passwordInput.addEventListener('input', function() { setFieldState(passwordInput, passwordError, ''); });
+
+        /* Intercept login() errors visually: empty fields → shake + message */
+        var originalLogin = window.login;
+        window.login = function() {
+            var u = usernameInput.value.trim();
+            var p = passwordInput.value;
+            var hint = document.getElementById('loginHint');
+            if (!u || !p) {
+                if (!u) setFieldState(usernameInput, usernameError, 'لطفاً نام کاربری را وارد کنید');
+                if (!p) setFieldState(passwordInput, passwordError, 'لطفاً رمز عبور را وارد کنید');
+                var card = document.getElementById('loginCard');
+                card.classList.remove('shake');
+                void card.offsetWidth; /* restart animation */
+                card.classList.add('shake');
+                if (hint) {
+                    hint.textContent = '';
+                    void hint.offsetWidth;
+                    hint.textContent = 'لطفاً نام کاربری و رمز عبور را وارد کنید.';
+                }
+                return;
+            }
+            setFieldState(usernameInput, usernameError, '');
+            setFieldState(passwordInput, passwordError, '');
+            if (hint) hint.textContent = '';
+            originalLogin();
+        };
+
+        /* Server-side error → shake + inline hint (notification-system.js not loaded here) */
+        var origShowSystemError = window.showSystemError;
+        window.showSystemError = function(msg) {
+            var card = document.getElementById('loginCard');
+            card.classList.remove('shake');
+            void card.offsetWidth;
+            card.classList.add('shake');
+            var hint = document.getElementById('loginHint');
+            if (hint) hint.textContent = msg || '';
+            if (typeof origShowSystemError === 'function') origShowSystemError(msg);
+        };
     })();
     </script>
 </body>

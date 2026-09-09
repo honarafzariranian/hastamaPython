@@ -25,6 +25,7 @@ from app.api.routes.notifications import (
 from app.api.routes.ticketing import router as ticketing_router
 from app.api.routes.health import router as health_router
 from app.api.routes.call_system import router as call_system_router
+from app.api.routes.araz_api import router as araz_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
@@ -101,6 +102,7 @@ app.include_router(notifications_router)
 app.include_router(ticketing_router)
 app.include_router(health_router)
 app.include_router(call_system_router)
+app.include_router(araz_router)
 
 @app.on_event("startup")
 def start_notification_background_tasks():
@@ -1268,12 +1270,13 @@ class ReportData:
         self.total_remaining = total_remaining
 
 class UserData:
-    def __init__(self, username, department, work_hours, substitute, name, employment_status="official", is_active="active", password=""):
+    def __init__(self, username, department, work_hours, substitute, name, employment_status="official", is_active="active", password="", last_name=""):
         self.username = username
         self.department = department
         self.work_hours = work_hours
         self.substitute = substitute
         self.name = name
+        self.last_name = last_name or ""
         self.employment_status = employment_status or "official"
         self.is_active = (is_active or "active").strip().lower()
         self.password = password or ""
@@ -1461,7 +1464,7 @@ async def _render_admin_page(request: Request):
 
         # دریافت اطلاعات از جدول user_table
         cursor.execute("""
-            SELECT username, department, work_hours, substitute, name, employment_status, is_active, password
+            SELECT username, department, work_hours, substitute, name, last_name, employment_status, is_active, password
             FROM user_table
         """)
         users_data = cursor.fetchall()
@@ -1470,13 +1473,11 @@ async def _render_admin_page(request: Request):
         report_data = [ReportData(username=report[0], total_used=report[1], total_remaining=report[2]) for report in reports]
 
         # پردازش اطلاعات کاربران
-        users = [
-            UserData(
+        users = [            UserData(
                 username=user[0], department=user[1], work_hours=user[2], substitute=user[3],
-                name=user[4], employment_status=str(user[5] or "official").strip().lower()
-                if str(user[5] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official",
-                is_active=user[6],
-                password=str(user[7] or "")
+                name=user[4], last_name=user[5], employment_status=str(user[6] or "official").strip().lower()
+                if str(user[6] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official",
+                is_active=user[7], password=str(user[8] or "")
             )
             for user in users_data
         ]
