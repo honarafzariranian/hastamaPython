@@ -102,6 +102,7 @@ a:hover { color: var(--tr-primary-dark); }
 .tr-search {
   max-width: 500px; margin: 0 auto 32px;
   position: relative;
+  z-index: 9999;
   animation: trFadeUp .6s ease-out .3s both;
 }
 .tr-search__input {
@@ -125,7 +126,7 @@ a:hover { color: var(--tr-primary-dark); }
   position: absolute; top: calc(100% + 8px); right: 0; left: 0;
   background: var(--tr-card); border: 1px solid var(--tr-border);
   border-radius: var(--tr-radius); box-shadow: var(--tr-shadow-lg);
-  max-height: 360px; overflow-y: auto; z-index: 100;
+  max-height: 360px; overflow-y: auto; z-index: 9999;
   display: none;
 }
 .tr-search__results.is-open { display: block; }
@@ -254,6 +255,22 @@ a:hover { color: var(--tr-primary-dark); }
   transition: all var(--tr-transition); cursor: pointer;
 }
 .tr-lesson__back:hover { border-color: var(--tr-primary); color: var(--tr-primary); }
+
+/* ── Complete Button ── */
+.tr-complete-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .9rem; color: #fff; cursor: pointer;
+  padding: 12px 28px; border: none; border-radius: 100px;
+  background: linear-gradient(135deg, var(--tr-success), #059669);
+  box-shadow: 0 4px 16px rgba(16,185,129,.3);
+  transition: all .3s ease;
+}
+.tr-complete-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(16,185,129,.4); }
+.tr-complete-btn:active { transform: scale(.97); }
+.tr-complete-btn.is-done {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 16px rgba(5,150,105,.4);
+}
 .tr-lesson__header {
   text-align: center; margin-bottom: 32px;
   padding: 32px; background: var(--tr-card);

@@ -172,32 +172,211 @@ html, body {
     height: 19px;
 }
 
+/* ===== Profile Dropdown — Premium 2026 ===== */
 .profile-dropdown {
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 12px);
     left: 0;
-    width: 220px;
-    background-color: #ffffff;
+    width: 280px;
+    background: #fff;
     border: 1px solid #e4e7ec;
-    border-radius: 18px;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
-    padding: 10px 8px;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.03);
+    padding: 0;
     max-height: 0;
     opacity: 0;
     visibility: hidden;
     overflow: hidden;
-    flex-direction: column;
-    gap: 4px;
-    transform: translateY(-10px);
-    transition: max-height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top left;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
     z-index: 100;
 }
 
 .profile-dropdown.open {
-    max-height: 320px;
+    max-height: 520px;
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+
+/* Header */
+.pd-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px 14px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e4e7ec;
+}
+.pd-header__avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+.pd-header__avatar img {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.pd-header__status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border: 2.5px solid #fff;
+    border-radius: 50%;
+}
+.pd-header__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.pd-header__name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+}
+.pd-header__role {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+/* Sections */
+.pd-section {
+    padding: 6px 8px;
+}
+.pd-section__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px 6px;
+}
+
+/* Items */
+.pd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #334155;
+    text-align: right;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+.pd-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(99, 102, 241, 0.08));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.pd-item:hover::before { opacity: 1; }
+.pd-item:hover { transform: translateX(-2px); }
+.pd-item:active { transform: scale(0.98); }
+.pd-item--link { text-decoration: none; color: #334155; }
+
+.pd-item__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+.pd-item__icon svg { width: 16px; height: 16px; color: #475569; }
+.pd-item:hover .pd-item__icon { background: #e0f2fe; }
+.pd-item:hover .pd-item__icon svg { color: #0ea5e9; }
+
+.pd-item__icon--green { background: #ecfdf5; }
+.pd-item__icon--green svg { color: #10b981; }
+.pd-item:hover .pd-item__icon--green { background: #d1fae5; }
+
+.pd-item__icon--purple { background: #f5f3ff; }
+.pd-item__icon--purple svg { color: #8b5cf6; }
+.pd-item:hover .pd-item__icon--purple { background: #ede9fe; }
+
+.pd-item__icon--amber { background: #fffbeb; }
+.pd-item__icon--amber svg { color: #f59e0b; }
+.pd-item:hover .pd-item__icon--amber { background: #fef3c7; }
+
+.pd-item__icon--cyan { background: #ecfeff; }
+.pd-item__icon--cyan svg { color: #06b6d4; }
+.pd-item:hover .pd-item__icon--cyan { background: #cffafe; }
+
+.pd-item__icon--slate { background: #f1f5f9; }
+.pd-item__icon--slate svg { color: #64748b; }
+.pd-item:hover .pd-item__icon--slate { background: #e2e8f0; }
+
+.pd-item__icon--blue { background: #eff6ff; }
+.pd-item__icon--blue svg { color: #3b82f6; }
+.pd-item:hover .pd-item__icon--blue { background: #dbeafe; }
+
+.pd-item__text { flex: 1; min-width: 0; }
+
+.pd-item__arrow {
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transform: translateX(4px);
+    transition: all 0.2s ease;
+}
+.pd-item__arrow svg { width: 14px; height: 14px; color: #94a3b8; }
+.pd-item:hover .pd-item__arrow { opacity: 1; transform: translateX(0); }
+
+/* Footer */
+.pd-footer {
+    padding: 6px 8px 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.pd-logout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #ef4444;
+    text-align: right;
+    transition: all 0.2s ease;
+}
+.pd-logout svg { width: 16px; height: 16px; }
+.pd-logout:hover { background: #fef2f2; }
+
+/* Divider between sections */
+.pd-section + .pd-section {
+    border-top: 1px solid #f1f5f9;
 }
 
 .profile-panel-overlay {
@@ -460,44 +639,7 @@ html, body {
     font-size: 0.78rem;
 }
 
-.dropdown-section-title {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #64748b;
-    padding: 4px 10px 6px;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: #e2e8f0;
-    margin: 4px 8px;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    width: 100%;
-    padding: 10px 12px;
-    border: none;
-    border-radius: 12px;
-    background-color: #ffffff;
-    cursor: pointer;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.94rem;
-    color: #0f172a;
-    text-align: right;
-}
-
-.dropdown-item:hover {
-    background-color: #f8fafc;
-}
-
-.dropdown-item img {
-    width: 16px;
-    height: 16px;
-}
+/* old dropdown classes removed — now using .pd-* prefix */
 
 .dark-theme body {
     background-color: #0f172a;
@@ -506,17 +648,20 @@ html, body {
 
 .dark-theme .admin-topbar,
 .dark-theme .profile-button,
-.dark-theme .profile-dropdown,
-.dark-theme .icon-button {
-    background-color: #1f2937;
-    border-color: #374151;
+.dark-theme .profile-dropdown {
+    background: #1e293b;
+    border-color: #334155;
 }
-
-.dark-theme .profile-name,
-.dark-theme .profile-role,
-.dark-theme .dropdown-item {
-    color: #f8fafc;
-}
+.dark-theme .pd-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-color: #334155; }
+.dark-theme .pd-header__name { color: #f1f5f9; }
+.dark-theme .pd-header__role { color: #94a3b8; }
+.dark-theme .pd-item { color: #e2e8f0; }
+.dark-theme .pd-item:hover { background: rgba(14, 165, 233, 0.08); }
+.dark-theme .pd-item__icon { background: #334155; }
+.dark-theme .pd-item__icon svg { color: #94a3b8; }
+.dark-theme .pd-section__label { color: #64748b; }
+.dark-theme .pd-footer { border-color: #334155; }
+.dark-theme .pd-logout:hover { background: rgba(239, 68, 68, 0.1); }
 
 .icon-container svg {
     width: 24px;
@@ -530,9 +675,7 @@ html, body {
     width: 24px;
 }
 
-.dark-theme .dropdown-item:hover {
-    background-color: #111827;
-}
+/* old dark-theme dropdown-item removed */
 
 .dark-theme .profile-avatar {
     background-color: #374151;
@@ -5345,6 +5488,10 @@ form button:active {
     transform: scaleX(0.92) !important;
 }
 
+.page-shell.sidebar-expanded #coworkerBox {
+    transform: none !important;
+}
+
 .page-shell.sidebar-expanded .management-box .dashboard-grid,
 .page-shell.sidebar-expanded .management-box .dashboard-chart-row {
     transform: none;
@@ -5361,62 +5508,7 @@ form button:active {
     max-width: 100%;
 }
 
-/* ===== حالت نمایش همزمان دو باکس (همکاران) — هر کدام نصف ارتفاع سایدبار ===== */
-/* وقتی هر دو userInfoBox و newUserBox همزمان دیده می‌شوند */
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox {
-    position: fixed !important;
-    top: 8rem !important;
-    right: calc(78px + 1rem) !important;
-    left: 2rem !important;
-    width: auto !important;
-    max-width: none !important;
-    height: calc((100vh - 8rem - 12px - 1rem) / 2) !important;
-    margin: 0 !important;
-    border-radius: 18px !important;
-    overflow: hidden;
-    display: flex !important;
-    flex-direction: column;
-    z-index: 50;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox .user-table-scroll {
-    max-height: none !important;
-    flex: 1 1 auto;
-    overflow-y: auto;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #userInfoBox .userInfo-header {
-    flex-shrink: 0;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox {
-    position: fixed !important;
-    top: calc(8rem + (100vh - 8rem - 12px - 1rem) / 2 + 1rem) !important;
-    right: calc(78px + 1rem) !important;
-    left: 2rem !important;
-    width: auto !important;
-    max-width: none !important;
-    height: calc((100vh - 8rem - 12px - 1rem) / 2) !important;
-    margin: 0 !important;
-    border-radius: 18px !important;
-    overflow: hidden;
-    display: flex !important;
-    flex-direction: column;
-    z-index: 50;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox .new-user-header {
-    flex-shrink: 0;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox #newUserForm {
-    flex: 1 1 auto;
-    overflow-y: auto;
-}
-
-.page-shell:has(#userInfoBox.is-visible):has(#newUserBox.is-visible) #newUserBox .new-user-footer {
-    flex-shrink: 0;
-}
+/* ===== کارکنان — دسکتاپ: باکس تب‌دار، هم‌راستا با سایدبار ===== */
 
 /* ===== حضور و غیاب — دسکتاپ: باکس تب‌دار، هم‌راستا با سایدبار ===== */
 /* باکس از top سایدبار (8rem) تا bottom سایدبار (12px) کشیده می‌شود؛
@@ -5446,6 +5538,39 @@ form button:active {
     .page-shell.sidebar-expanded:has(#hozoorbox.is-visible) #hozoorbox {
         right: calc(clamp(180px, 18vw, 230px) + 1rem) !important;
         transform: none !important;
+    }
+
+    /* ===== کارکنان — باکس تب‌دار، هم‌راستا با سایدبار ===== */
+    .page-shell:has(#coworkerBox.is-visible) #coworkerBox {
+        position: fixed !important;
+        top: 8rem !important;
+        bottom: 12px !important;
+        right: calc(clamp(64px, 6vw, 78px) + 1rem) !important;
+        left: 2rem !important;
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        margin: 0 !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 50;
+        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .page-shell.sidebar-expanded:has(#coworkerBox.is-visible) #coworkerBox {
+        right: calc(clamp(180px, 18vw, 230px) + 1rem) !important;
+        transform: none !important;
+    }
+
+    /* محتوای تب‌ها باید اسکرول داشته باشند */
+    #coworkerBox .coworker-tab-content {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    #coworkerBox .coworker-tabs {
+        flex-shrink: 0;
     }
 }
 
@@ -7444,6 +7569,7 @@ form button:active {
     #hourlyPassBox,
     #ticketBox,
     #hozoorbox,
+    #coworkerBox,
     #natigehHozoor,
     #sabtdst,
     #payrollBox {
@@ -7691,6 +7817,7 @@ form button:active {
     #hourlyPassBox,
     #ticketBox,
     #hozoorbox,
+    #coworkerBox,
     #natigehHozoor,
     #sabtdst,
     #payrollBox {
@@ -9289,5 +9416,124 @@ form button:active {
 
     .karaneh-summary-value {
         font-size: 14px;
+    }
+}
+
+/* ===== Coworker Panel — الگوی vacationPanel ===== */
+#coworkerBox.coworker-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+    border-radius: 18px;
+    padding: 16px 24px 20px;
+    direction: rtl;
+    text-align: right;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.coworker-heading {
+    margin: 0;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.coworker-heading h2 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    font-weight: 800;
+    color: #0B2A3B;
+    line-height: 1.4;
+}
+
+.coworker-heading-bar {
+    display: block;
+    width: 46px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0ea5e9, #6366f1);
+}
+
+.coworker-frame {
+    margin-top: 16px;
+    width: 100%;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.coworker-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    padding: 10px 12px 0 12px;
+    background: #EFF4F8;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    flex-shrink: 0;
+}
+
+.coworker-tab-btn {
+    position: relative;
+    padding: 13px 22px;
+    background: transparent;
+    color: #6B8091;
+    border: 0;
+    border-radius: 12px 12px 0 0;
+    font: 700 14px 'Vazir', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.coworker-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.55);
+    color: #0ea5e9;
+}
+
+.coworker-tab-btn.active {
+    background: #fff;
+    color: #0B2A3B;
+    box-shadow: 0 -4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.coworker-tab-content {
+    display: none;
+    padding: 22px 20px 16px;
+    min-height: 140px;
+    animation: payrollFadeIn 0.28s ease;
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.coworker-tab-content.active {
+    display: block;
+    contain: layout style;
+}
+
+.coworker-tab-content .management-box {
+    display: block !important;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+@media (max-width: 768px) {
+    .coworker-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 8px 0;
+    }
+    .coworker-tab-btn {
+        padding: 10px 16px;
+        font-size: 12px;
     }
 }

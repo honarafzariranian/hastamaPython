@@ -42,6 +42,12 @@
             <span class="tooltip">تغییر تم</span>
         </div>
         <div class="tooltip-wrap">
+            <a href="/training" class="support-toggle" aria-label="آموزش سامانه">
+                <span>🎓</span>
+            </a>
+            <span class="tooltip">آموزش سامانه</span>
+        </div>
+        <div class="tooltip-wrap">
             <a href="#" class="support-toggle" aria-label="پشتیبانی">
                 <span>🎧</span>
             </a>
@@ -111,7 +117,7 @@
                             <span class="input-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </span>
-                            <input type="text" id="username" name="username" required autocomplete="username">
+                            <input type="text" id="username" name="username" required autocomplete="username" placeholder="نام کاربری">
                             <label for="username">نام کاربری</label>
                             <span class="focus-border"></span>
                         </div>
@@ -123,7 +129,7 @@
                             <span class="input-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             </span>
-                            <input type="password" id="password" name="password" required autocomplete="current-password">
+                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="رمز عبور">
                             <label for="password">رمز عبور</label>
                             <button type="button" class="pw-toggle" id="pwToggle" aria-label="نمایش رمز عبور" aria-pressed="false">
                                 <svg class="pw-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -156,7 +162,7 @@
             </div>
 
             <p class="form-side__note">با ورود، <a href="/rules">قوانین و مقررات</a> سامانه را می‌پذیرید.</p>
-            <p class="form-side__note" style="margin-top:8px;"><a href="/training" style="display:inline-flex;align-items:center;gap:4px;">🎓 آموزش سامانه</a></p>
+            <p class="form-side__note form-side__note--register">حساب کاربری ندارید؟ <a href="/register">ثبت نام کنید</a></p>
         </section>
     </main>
 
@@ -285,6 +291,32 @@
                 <button type="submit" class="fp-submit" id="fpSubmit">ارسال درخواست</button>
             </form>
             <p class="fp-hint" id="fpHint"></p>
+            <div class="fp-divider"><span>یا</span></div>
+            <button type="button" class="fp-link-btn" id="fpShowReset">کد بازیابی دارم؟ وارد کنم</button>
+        </div>
+    </div>
+
+    <!-- ورود کد بازیابی و رمز جدید - مودال -->
+    <div class="fp-overlay" id="rpOverlay">
+        <div class="fp-modal">
+            <button type="button" class="fp-close" id="rpClose" aria-label="بستن">&times;</button>
+            <div class="fp-icon">✅</div>
+            <h3 class="fp-title">تغییر رمز عبور</h3>
+            <p class="fp-desc">کد بازیابی که از مدیر سامانه دریافت کرده‌اید و رمز عبور جدید خود را وارد کنید.</p>
+            <form id="rpForm" class="fp-form" onsubmit="return false;">
+                <input type="text" id="rpRequestId" class="fp-input" placeholder="شناسه درخواست (request_id)" required maxlength="32">
+                <input type="text" id="rpCode" class="fp-input" placeholder="کد بازیابی ۸ کاراکتری" maxlength="8" dir="ltr" style="text-align:center;font-family:monospace;font-size:1.1rem;letter-spacing:2px" required>
+                <input type="password" id="rpNewPassword" class="fp-input" placeholder="رمز عبور جدید (حداقل ۸ کاراکتر)" autocomplete="new-password" required maxlength="128">
+                <div class="pw-strength" id="rpPwStrength" style="display:none">
+                    <div class="pw-strength__bar"><div class="pw-strength__fill" id="rpPwFill"></div></div>
+                    <div class="pw-strength__label" id="rpPwLabel"></div>
+                </div>
+                <div class="pw-requirements" id="rpPwReqs"></div>
+                <input type="password" id="rpNewPassword2" class="fp-input" placeholder="تکرار رمز عبور جدید" autocomplete="new-password" required maxlength="128">
+                <div class="fp-hint" id="rpPwMatch" style="font-size:0.75rem;margin-top:4px"></div>
+                <button type="submit" class="fp-submit" id="rpSubmit">تغییر رمز عبور</button>
+            </form>
+            <p class="fp-hint" id="rpHint"></p>
         </div>
     </div>
 
@@ -342,10 +374,15 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'ارسال درخواست';
                 if (res.success) {
-                    hint.textContent = res.message || 'درخواست شما ثبت شد.';
+                    var msg = res.message || 'درخواست شما ثبت شد.';
+                    if (res.request_id) {
+                        msg += '\n\nشناسه درخواست شما:\n' + res.request_id + '\n\nاین شناسه را برای مرحله بعدی ذخیره کنید.';
+                    }
+                    hint.textContent = msg;
                     hint.className = 'fp-hint fp-hint--success';
+                    hint.style.whiteSpace = 'pre-line';
                     input.value = '';
-                    setTimeout(closeModal, 3000);
+                    setTimeout(closeModal, 8000);
                 } else {
                     hint.textContent = res.message || 'خطا در ثبت درخواست.';
                     hint.className = 'fp-hint fp-hint--error';
@@ -356,6 +393,142 @@
                 submitBtn.textContent = 'ارسال درخواست';
                 hint.textContent = 'خطا در اتصال به سرور.';
                 hint.className = 'fp-hint fp-hint--error';
+            });
+        });
+    })();
+
+    /* ── Reset Password Modal ────────────────────────────── */
+    (function() {
+        var showResetBtn = document.getElementById('fpShowReset');
+        var rpOverlay = document.getElementById('rpOverlay');
+        var rpClose = document.getElementById('rpClose');
+        var rpForm = document.getElementById('rpForm');
+        var rpHint = document.getElementById('rpHint');
+        var rpSubmit = document.getElementById('rpSubmit');
+        var fpOverlay = document.getElementById('fpOverlay');
+
+        function openRp() {
+            fpOverlay.classList.remove('is-visible');
+            rpOverlay.classList.add('is-visible');
+            rpHint.textContent = '';
+            rpHint.className = 'fp-hint';
+        }
+        function closeRp() { rpOverlay.classList.remove('is-visible'); }
+
+        showResetBtn.addEventListener('click', openRp);
+        rpClose.addEventListener('click', closeRp);
+        rpOverlay.addEventListener('click', function(e) {
+            if (e.target === rpOverlay) closeRp();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && rpOverlay.classList.contains('is-visible')) closeRp();
+        });
+
+        // Password strength for reset modal
+        var rpPwInput = document.getElementById('rpNewPassword');
+        var rpPw2Input = document.getElementById('rpNewPassword2');
+        var rpStrengthEl = document.getElementById('rpPwStrength');
+        var rpFillEl = document.getElementById('rpPwFill');
+        var rpLabelEl = document.getElementById('rpPwLabel');
+        var rpReqsEl = document.getElementById('rpPwReqs');
+        var rpMatchEl = document.getElementById('rpPwMatch');
+
+        var rpReqs = [
+            { test: function(p){return p.length >= 8;}, label: 'حداقل ۸ کاراکتر' },
+            { test: function(p){return /[A-Z]/.test(p);}, label: 'حروف بزرگ' },
+            { test: function(p){return /[a-z]/.test(p);}, label: 'حروف کوچک' },
+            { test: function(p){return /[0-9]/.test(p);}, label: 'عدد' },
+            { test: function(p){return /[^A-Za-z0-9]/.test(p);}, label: 'کاراکتر خاص' },
+        ];
+
+        function rpUpdateStrength() {
+            var pw = rpPwInput.value;
+            if (!pw) { rpStrengthEl.style.display = 'none'; rpReqsEl.innerHTML = ''; return; }
+            rpStrengthEl.style.display = 'block';
+            var met = rpReqs.map(function(r){ return r.test(pw); });
+            var score = met.filter(Boolean).length;
+            rpReqsEl.innerHTML = rpReqs.map(function(r, i) {
+                return '<span class="pw-req ' + (met[i] ? 'met' : '') + '">' + (met[i] ? '✓' : '✕') + ' ' + r.label + '</span>';
+            }).join('');
+            var levels = [
+                { max: 1, label: 'خیلی ضعیف', color: '#dc2626', width: '15%' },
+                { max: 2, label: 'ضعیف', color: '#f97316', width: '35%' },
+                { max: 3, label: 'متوسط', color: '#eab308', width: '55%' },
+                { max: 4, label: 'خوب', color: '#22c55e', width: '75%' },
+                { max: 5, label: 'قوی ✓', color: '#10b981', width: '100%' },
+            ];
+            var level = levels[Math.min(score, 5) - 1] || levels[0];
+            rpFillEl.style.width = level.width;
+            rpFillEl.style.background = level.color;
+            rpLabelEl.textContent = level.label;
+            rpLabelEl.style.color = level.color;
+        }
+        rpPwInput.addEventListener('input', rpUpdateStrength);
+
+        rpPw2Input.addEventListener('input', function() {
+            var pw = rpPwInput.value;
+            var pw2 = rpPw2Input.value;
+            if (!pw2) { rpMatchEl.textContent = ''; return; }
+            rpMatchEl.textContent = pw === pw2 ? '✓ مطابقت دارد' : '✕ مطابقت ندارد';
+            rpMatchEl.style.color = pw === pw2 ? '#059669' : '#dc2626';
+        });
+
+        rpForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var requestId = document.getElementById('rpRequestId').value.trim();
+            var code = document.getElementById('rpCode').value.trim();
+            var pw = rpPwInput.value;
+            var pw2 = rpPw2Input.value;
+
+            if (!requestId || !code || !pw || !pw2) {
+                rpHint.textContent = 'لطفاً تمام فیلدها را پر کنید.';
+                rpHint.className = 'fp-hint fp-hint--error';
+                return;
+            }
+            if (pw !== pw2) {
+                rpHint.textContent = 'رمز عبور و تکرار آن یکسان نیستند.';
+                rpHint.className = 'fp-hint fp-hint--error';
+                return;
+            }
+            if (pw.length < 8) {
+                rpHint.textContent = 'رمز عبور باید حداقل ۸ کاراکتر باشد.';
+                rpHint.className = 'fp-hint fp-hint--error';
+                return;
+            }
+            if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
+                rpHint.textContent = 'رمز عبور باید شامل حروف بزرگ، کوچک، عدد و کاراکتر خاص باشد.';
+                rpHint.className = 'fp-hint fp-hint--error';
+                return;
+            }
+
+            rpSubmit.disabled = true;
+            rpSubmit.textContent = 'در حال تغییر...';
+            rpHint.textContent = '';
+
+            fetch('/reset_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request_id: requestId, code: code, new_password: pw })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                rpSubmit.disabled = false;
+                rpSubmit.textContent = 'تغییر رمز عبور';
+                if (res.success) {
+                    rpHint.textContent = res.message || 'رمز عبور تغییر کرد.';
+                    rpHint.className = 'fp-hint fp-hint--success';
+                    rpForm.reset();
+                    setTimeout(closeRp, 2500);
+                } else {
+                    rpHint.textContent = res.message || 'خطا در تغییر رمز.';
+                    rpHint.className = 'fp-hint fp-hint--error';
+                }
+            })
+            .catch(function() {
+                rpSubmit.disabled = false;
+                rpSubmit.textContent = 'تغییر رمز عبور';
+                rpHint.textContent = 'خطا در اتصال به سرور.';
+                rpHint.className = 'fp-hint fp-hint--error';
             });
         });
     })();

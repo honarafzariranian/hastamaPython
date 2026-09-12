@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت نام — هستما</title>
+    <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/login-style.css') }}">
+    <script src="{{ url_for('static', path='js/theme.js') }}"></script>
+    <style>
+    /* ═══════════════════════════════════════════════════════════
+       REGISTER PAGE — Premium Redesign
+       ═══════════════════════════════════════════════════════════ */
+
+    .register-shell {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 3vw, 2rem);
+        position: relative;
+        z-index: 1;
+    }
+
+    .register-card {
+        position: relative;
+        width: 100%;
+        max-width: 520px;
+        background: var(--panel);
+        border: 1px solid var(--border-strong);
+        border-radius: 28px;
+        box-shadow: var(--shadow-card);
+        padding: clamp(1.6rem, 3.5vw, 2.4rem) clamp(1.4rem, 3vw, 2.2rem);
+        overflow: hidden;
+        backdrop-filter: blur(22px) saturate(1.35);
+        -webkit-backdrop-filter: blur(22px) saturate(1.35);
+        max-height: 92vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+        animation: regCardIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes regCardIn {
+        from { opacity: 0; transform: translateY(30px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .register-card::-webkit-scrollbar { width: 4px; }
+    .register-card::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* ── Card Glow ──────────────────────────────────────── */
+    .register-card::before {
+        content: '';
+        position: absolute;
+        top: -40%; left: -20%;
+        width: 140%; height: 80%;
+        background: radial-gradient(ellipse at center, rgba(14,165,233,0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .reg-header {
+        text-align: center;
+        margin-bottom: 28px;
+        position: relative;
+        z-index: 1;
+    }
+    .reg-header__icon {
+        width: 64px; height: 64px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 12px 32px rgba(14,165,233,0.3);
+        margin-bottom: 14px;
+        animation: iconFloat 3s ease-in-out infinite;
+    }
+    @keyframes iconFloat {
+        0%,100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .reg-header h2 {
+        margin: 0 0 6px;
+        font-size: 1.3rem;
+        font-weight: 900;
+        background: linear-gradient(120deg, var(--text) 20%, var(--brand-1) 55%, var(--brand-3) 90%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .reg-header p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.7;
+    }
+
+    /* ── Sections ───────────────────────────────────────── */
+    .reg-section {
+        margin-bottom: 22px;
+        padding: 16px;
+        border-radius: 18px;
+        background: var(--chip-bg);
+        border: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+        animation: sectionIn 0.5s ease both;
+    }
+    .reg-section:nth-child(2) { animation-delay: 0.1s; }
+    .reg-section:nth-child(3) { animation-delay: 0.2s; }
+    .reg-section:nth-child(4) { animation-delay: 0.3s; }
+    @keyframes sectionIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reg-section__title {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: var(--brand-1);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .reg-section__title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to left, transparent, var(--border));
+    }
+
+    /* ── Fields ─────────────────────────────────────────── */
+    .reg-field { margin-bottom: 14px; }
+    .reg-field:last-child { margin-bottom: 0; }
+    .reg-field label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+    .reg-field input,
+    .reg-field select {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        font-size: 0.88rem;
+        font-family: 'Vazir', sans-serif;
+        background: var(--panel);
+        color: var(--text);
+        outline: none;
+        transition: all 0.25s ease;
+        direction: rtl;
+    }
+    .reg-field input:focus,
+    .reg-field select:focus {
+        border-color: var(--brand-1);
+        box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+    }
+    .reg-field input.is-valid {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+    }
+    .reg-field input.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+
+    .reg-field__hint {
+        font-size: 0.72rem;
+        margin-top: 5px;
+        min-height: 1.1em;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .reg-field__hint--ok { color: #10b981; }
+    .reg-field__hint--err { color: #ef4444; }
+    .reg-field__hint--info { color: var(--muted); }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    @media (max-width: 480px) {
+        .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* ── Password Strength ──────────────────────────────── */
+    .pw-strength { margin-top: 8px; }
+    .pw-strength__bar {
+        height: 5px;
+        border-radius: 3px;
+        background: var(--border);
+        overflow: hidden;
+        margin-bottom: 6px;
+    }
+    .pw-strength__fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s;
+        width: 0;
+    }
+    .pw-strength__label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        transition: color 0.3s;
+    }
+    .pw-requirements {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .pw-req {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: var(--chip-bg);
+        color: var(--muted);
+        border: 1px solid var(--border);
+        transition: all 0.25s;
+    }
+    .pw-req.met {
+        background: rgba(16,185,129,0.1);
+        color: #059669;
+        border-color: rgba(16,185,129,0.3);
+    }
+
+    /* ── Submit Button ──────────────────────────────────── */
+    .reg-submit {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 800;
+        font-family: 'Vazir', sans-serif;
+        cursor: pointer;
+        transition: all 0.25s;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    .reg-submit::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        opacity: 0;
+        transition: opacity 0.25s;
+        z-index: -1;
+    }
+    .reg-submit:hover::before { opacity: 1; }
+    .reg-submit:hover { box-shadow: 0 8px 24px rgba(14,165,233,0.35); transform: translateY(-1px); }
+    .reg-submit:active { transform: translateY(0) scale(0.98); }
+    .reg-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    .reg-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.82rem;
+        color: var(--muted);
+        position: relative;
+        z-index: 1;
+    }
+    .reg-footer a {
+        color: var(--brand-1);
+        font-weight: 700;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+    .reg-footer a:hover { opacity: 0.7; }
+
+    /* ── Success State ──────────────────────────────────── */
+    .reg-success {
+        text-align: center;
+        padding: 40px 20px;
+        display: none;
+        position: relative;
+        z-index: 1;
+    }
+    .reg-success__icon {
+        font-size: 3.5rem;
+        margin-bottom: 16px;
+        animation: successPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes successPop {
+        0% { transform: scale(0) rotate(-20deg); }
+        100% { transform: scale(1) rotate(0); }
+    }
+    .reg-success h3 {
+        margin: 0 0 10px;
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: #059669;
+    }
+    .reg-success p {
+        margin: 0 0 8px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.7;
+    }
+    .reg-success .request-id {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: rgba(16,185,129,0.08);
+        border: 1px solid rgba(16,185,129,0.2);
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #065f46;
+        margin: 10px 0;
+        direction: ltr;
+        letter-spacing: 1px;
+    }
+    .reg-success__actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    .reg-success__btn {
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        font-family: 'Vazir', sans-serif;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+    .reg-success__btn--primary {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: #fff;
+    }
+    .reg-success__btn--primary:hover { box-shadow: 0 6px 20px rgba(14,165,233,0.3); }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 600px) {
+        .register-card {
+            border-radius: 22px;
+            padding: 20px 16px;
+        }
+        .reg-section { padding: 14px; }
+    }
+    </style>
+</head>
+
+<body>
+    <!-- لایه‌های پس‌زمینه -->
+    <div class="bg-scene" aria-hidden="true">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--a"></div>
+        <div class="bg-orb bg-orb--b"></div>
+        <div class="bg-orb bg-orb--c"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-noise"></div>
+        <div class="bg-beam"></div>
+        <div class="bg-particles">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="bg-rings">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- دکمه‌های شناور بالا -->
+    <div class="top-actions">
+        <div class="tooltip-wrap">
+            <button type="button" class="theme-toggle" data-action="toggle-theme" aria-label="تغییر تم">
+                <span class="theme-toggle-moon">🌙</span>
+                <span class="theme-toggle-sun">☀️</span>
+            </button>
+            <span class="tooltip">تغییر تم</span>
+        </div>
+        <div class="tooltip-wrap">
+            <a href="/training" class="support-toggle" aria-label="آموزش سامانه">
+                <span>🎓</span>
+            </a>
+            <span class="tooltip">آموزش سامانه</span>
+        </div>
+        <div class="tooltip-wrap">
+            <a href="#" class="support-toggle" aria-label="پشتیبانی">
+                <span>🎧</span>
+            </a>
+            <span class="tooltip">پشتیبانی</span>
+        </div>
+    </div>
+
+    <main class="register-shell">
+        <div class="register-card" id="regCard">
+
+            <!-- ── Registration Form ── -->
+            <div id="regForm">
+                <div class="reg-header">
+                    <div class="reg-header__icon">👤</div>
+                    <h2>ثبت نام در سامانه هستما</h2>
+                    <p>اطلاعات خود را تکمیل کنید تا درخواست شما برای مدیر مجموعه ارسال شود</p>
+                </div>
+
+                <form id="registrationForm" onsubmit="return false;">
+
+                    <!-- اطلاعات شخصی -->
+                    <div class="reg-section">
+                        <div class="reg-section__title">📋 اطلاعات شخصی</div>
+                        <div class="two-col">
+                            <div class="reg-field">
+                                <label for="regFirstName">نام *</label>
+                                <input type="text" id="regFirstName" required placeholder="نام">
+                            </div>
+                            <div class="reg-field">
+                                <label for="regLastName">نام خانوادگی *</label>
+                                <input type="text" id="regLastName" required placeholder="نام خانوادگی">
+                            </div>
+                        </div>
+                        <div class="reg-field">
+                            <label for="regFatherName">نام پدر</label>
+                            <input type="text" id="regFatherName" placeholder="اختیاری">
+                        </div>
+                        <div class="two-col">
+                            <div class="reg-field">
+                                <label for="regNationalId">شماره ملی</label>
+                                <input type="text" id="regNationalId" placeholder="۱۰ رقم" maxlength="10" inputmode="numeric" dir="ltr" style="text-align:center">
+                                <div class="reg-field__hint" id="regNationalIdHint"></div>
+                            </div>
+                            <div class="reg-field">
+                                <label for="regMobile">شماره همراه</label>
+                                <input type="text" id="regMobile" placeholder="09xxxxxxxxx" maxlength="11" inputmode="numeric" dir="ltr" style="text-align:center">
+                                <div class="reg-field__hint" id="regMobileHint"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات حساب -->
+                    <div class="reg-section">
+                        <div class="reg-section__title">🔐 اطلاعات حساب کاربری</div>
+                        <div class="reg-field">
+                            <label for="regUsername">نام کاربری *</label>
+                            <input type="text" id="regUsername" required placeholder="فقط حروف انگلیسی، اعداد و زیرخط" autocomplete="off" dir="ltr" style="text-align:center">
+                            <div class="reg-field__hint" id="regUsernameHint"></div>
+                        </div>
+                        <div class="reg-field">
+                            <label for="regPassword">رمز عبور *</label>
+                            <input type="password" id="regPassword" required placeholder="حداقل ۸ کاراکتر" autocomplete="new-password">
+                            <div class="pw-strength" id="pwStrength" style="display:none">
+                                <div class="pw-strength__bar"><div class="pw-strength__fill" id="pwFill"></div></div>
+                                <div class="pw-strength__label" id="pwLabel"></div>
+                            </div>
+                            <div class="pw-requirements" id="pwReqs"></div>
+                        </div>
+                        <div class="reg-field">
+                            <label for="regPassword2">تکرار رمز عبور *</label>
+                            <input type="password" id="regPassword2" required placeholder="تکرار رمز عبور" autocomplete="new-password">
+                            <div class="reg-field__hint" id="regPassword2Hint"></div>
+                        </div>
+                    </div>
+
+                    <!-- اطلاعات سازمانی -->
+                    <div class="reg-section">
+                        <div class="reg-section__title">🏢 اطلاعات سازمانی</div>
+                        <div class="reg-field">
+                            <label for="regDepartment">بخش فعالیت *</label>
+                            <select id="regDepartment" required>
+                                <option value="" disabled selected>انتخاب بخش</option>
+                            </select>
+                        </div>
+                        <div class="reg-field">
+                            <label for="regWorkHours">ساعت کاری</label>
+                            <select id="regWorkHours">
+                                <option value="" disabled selected>انتخاب ساعت کاری</option>
+                            </select>
+                        </div>
+                        <div class="reg-field">
+                            <label for="regSubstitute">جانشین</label>
+                            <select id="regSubstitute">
+                                <option value="" selected>بدون جانشین</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="reg-submit" id="regSubmit">ثبت درخواست</button>
+                </form>
+
+                <div class="reg-footer">
+                    <p>حساب کاربری دارید؟ <a href="/login">ورود کنید</a></p>
+                </div>
+            </div>
+
+            <!-- ── Success State ── -->
+            <div class="reg-success" id="regSuccess">
+                <div class="reg-success__icon">✅</div>
+                <h3>درخواست شما ثبت شد!</h3>
+                <p>پس از بررسی مدیر مجموعه، حساب شما فعال خواهد شد.</p>
+                <p>شناسه درخواست شما:</p>
+                <div class="request-id" id="regRequestId"></div>
+                <p style="font-size:0.75rem;color:#94a3b8;margin-top:8px">این شناسه را ذخیره کنید تا وضعیت درخواست خود را پیگیری کنید.</p>
+                <div class="reg-success__actions">
+                    <a href="/login" class="reg-success__btn reg-success__btn--primary">بازگشت به ورود</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+    (function() {
+        'use strict';
+
+        var API = '/registration';
+        var usernameTimer = null;
+
+        // ── Load departments, schedules, users ──────────────
+        Promise.all([
+            fetch(API + '/departments').then(function(r){return r.json();}),
+            fetch(API + '/work-schedules').then(function(r){return r.json();}),
+            fetch(API + '/active-users').then(function(r){return r.json();}),
+        ]).then(function(results) {
+            var deptSel = document.getElementById('regDepartment');
+            results[0].data.forEach(function(d) {
+                var opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                deptSel.appendChild(opt);
+            });
+            var schedSel = document.getElementById('regWorkHours');
+            results[1].data.forEach(function(s) {
+                var opt = document.createElement('option');
+                opt.value = s.value; opt.textContent = s.label;
+                schedSel.appendChild(opt);
+            });
+            var subSel = document.getElementById('regSubstitute');
+            results[2].data.forEach(function(u) {
+                var opt = document.createElement('option');
+                opt.value = u.username; opt.textContent = u.name + ' — ' + u.department;
+                subSel.appendChild(opt);
+            });
+        }).catch(function(){});
+
+        // ── Username availability check ────────────────────
+        var usernameInput = document.getElementById('regUsername');
+        var usernameHint = document.getElementById('regUsernameHint');
+        usernameInput.addEventListener('input', function() {
+            clearTimeout(usernameTimer);
+            var val = this.value.trim();
+            if (val.length < 3) {
+                usernameHint.textContent = '';
+                usernameHint.className = 'reg-field__hint';
+                usernameInput.classList.remove('is-valid', 'is-invalid');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]{3,30}$/.test(val)) {
+                usernameHint.textContent = 'فقط حروف انگلیسی، اعداد و زیرخط';
+                usernameHint.className = 'reg-field__hint reg-field__hint--err';
+                usernameInput.classList.add('is-invalid');
+                usernameInput.classList.remove('is-valid');
+                return;
+            }
+            usernameInput.classList.remove('is-valid', 'is-invalid');
+            usernameHint.textContent = 'در حال بررسی...';
+            usernameHint.className = 'reg-field__hint reg-field__hint--info';
+            usernameTimer = setTimeout(function() {
+                fetch(API + '/check-username?q=' + encodeURIComponent(val))
+                    .then(function(r){return r.json();})
+                    .then(function(res) {
+                        usernameHint.textContent = res.message;
+                        usernameHint.className = 'reg-field__hint ' + (res.available ? 'reg-field__hint--ok' : 'reg-field__hint--err');
+                        usernameInput.classList.toggle('is-valid', res.available);
+                        usernameInput.classList.toggle('is-invalid', !res.available);
+                    });
+            }, 400);
+        });
+
+        // ── National ID check ──────────────────────────────
+        var nidInput = document.getElementById('regNationalId');
+        var nidHint = document.getElementById('regNationalIdHint');
+        nidInput.addEventListener('input', function() {
+            var val = this.value.replace(/\s/g, '');
+            if (val.length === 0) { nidHint.textContent = ''; nidHint.className = 'reg-field__hint'; nidInput.classList.remove('is-valid','is-invalid'); return; }
+            if (val.length < 10) { nidHint.textContent = val.length + ' / ۱۰ رقم'; nidHint.className = 'reg-field__hint reg-field__hint--info'; return; }
+            fetch(API + '/check-national-id?q=' + encodeURIComponent(val))
+                .then(function(r){return r.json();})
+                .then(function(res) {
+                    nidHint.textContent = res.message || (res.available ? 'شماره ملی معتبر است.' : '');
+                    nidHint.className = 'reg-field__hint ' + (res.available ? 'reg-field__hint--ok' : 'reg-field__hint--err');
+                    nidInput.classList.toggle('is-valid', res.available);
+                    nidInput.classList.toggle('is-invalid', !res.available);
+                });
+        });
+
+        // ── Mobile validation ──────────────────────────────
+        var mobileInput = document.getElementById('regMobile');
+        var mobileHint = document.getElementById('regMobileHint');
+        mobileInput.addEventListener('input', function() {
+            var val = this.value.replace(/\s/g, '').replace(/-/g, '');
+            if (val.length === 0) { mobileHint.textContent = ''; mobileHint.className = 'reg-field__hint'; mobileInput.classList.remove('is-valid','is-invalid'); return; }
+            var valid = /^09\d{9}$/.test(val) || /^\+?989\d{9}$/.test(val);
+            mobileHint.textContent = valid ? 'شماره همراه معتبر است.' : (val.length >= 11 ? 'شماره همراه معتبر نیست.' : '');
+            mobileHint.className = 'reg-field__hint ' + (valid ? 'reg-field__hint--ok' : (val.length >= 11 ? 'reg-field__hint--err' : 'reg-field__hint--info'));
+            mobileInput.classList.toggle('is-valid', valid);
+            mobileInput.classList.toggle('is-invalid', val.length >= 11 && !valid);
+        });
+
+        // ── Password strength ──────────────────────────────
+        var pwInput = document.getElementById('regPassword');
+        var pw2Input = document.getElementById('regPassword2');
+        var pw2Hint = document.getElementById('regPassword2Hint');
+        var strengthEl = document.getElementById('pwStrength');
+        var fillEl = document.getElementById('pwFill');
+        var labelEl = document.getElementById('pwLabel');
+        var reqsEl = document.getElementById('pwReqs');
+
+        var requirements = [
+            { test: function(p){return p.length >= 8;}, label: 'حداقل ۸ کاراکتر' },
+            { test: function(p){return /[A-Z]/.test(p);}, label: 'حروف بزرگ' },
+            { test: function(p){return /[a-z]/.test(p);}, label: 'حروف کوچک' },
+            { test: function(p){return /[0-9]/.test(p);}, label: 'عدد' },
+            { test: function(p){return /[^A-Za-z0-9]/.test(p);}, label: 'کاراکتر خاص' },
+        ];
+
+        function updateStrength() {
+            var pw = pwInput.value;
+            if (!pw) { strengthEl.style.display = 'none'; reqsEl.innerHTML = ''; return; }
+            strengthEl.style.display = 'block';
+
+            var met = requirements.map(function(r){ return r.test(pw); });
+            var score = met.filter(Boolean).length;
+
+            reqsEl.innerHTML = requirements.map(function(r, i) {
+                return '<span class="pw-req ' + (met[i] ? 'met' : '') + '">' + (met[i] ? '✓' : '✕') + ' ' + r.label + '</span>';
+            }).join('');
+
+            var levels = [
+                { max: 1, label: 'خیلی ضعیف', color: '#dc2626', width: '15%' },
+                { max: 2, label: 'ضعیف', color: '#f97316', width: '35%' },
+                { max: 3, label: 'متوسط', color: '#eab308', width: '55%' },
+                { max: 4, label: 'خوب', color: '#22c55e', width: '75%' },
+                { max: 5, label: 'قوی ✓', color: '#10b981', width: '100%' },
+            ];
+            var level = levels[Math.min(score, 5) - 1] || levels[0];
+            fillEl.style.width = level.width;
+            fillEl.style.background = level.color;
+            labelEl.textContent = level.label;
+            labelEl.style.color = level.color;
+        }
+        pwInput.addEventListener('input', updateStrength);
+
+        pw2Input.addEventListener('input', function() {
+            var pw = pwInput.value;
+            var pw2 = pw2Input.value;
+            if (!pw2) { pw2Hint.textContent = ''; pw2Hint.className = 'reg-field__hint'; pw2Input.classList.remove('is-valid','is-invalid'); return; }
+            var match = pw === pw2;
+            pw2Hint.textContent = match ? 'رمز عبور مطابقت دارد.' : 'رمز عبور مطابقت ندارد.';
+            pw2Hint.className = 'reg-field__hint ' + (match ? 'reg-field__hint--ok' : 'reg-field__hint--err');
+            pw2Input.classList.toggle('is-valid', match);
+            pw2Input.classList.toggle('is-invalid', !match);
+        });
+
+        // ── Persian digit conversion ───────────────────────
+        function toEnDigits(s) {
+            return s.replace(/[۰-۹]/g, function(d) { return String.fromCharCode(d.charCodeAt(0) - 1776); });
+        }
+
+        // ── Form submission ────────────────────────────────
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var data = {
+                first_name: document.getElementById('regFirstName').value.trim(),
+                last_name: document.getElementById('regLastName').value.trim(),
+                father_name: document.getElementById('regFatherName').value.trim(),
+                national_id: toEnDigits(document.getElementById('regNationalId').value.trim()),
+                mobile: toEnDigits(document.getElementById('regMobile').value.trim()),
+                username: document.getElementById('regUsername').value.trim(),
+                password: pwInput.value,
+                department: document.getElementById('regDepartment').value,
+                work_hours: document.getElementById('regWorkHours').value,
+                substitute: document.getElementById('regSubstitute').value,
+            };
+
+            var errors = [];
+            if (!data.first_name) errors.push('نام الزامی است.');
+            if (!data.last_name) errors.push('نام خانوادگی الزامی است.');
+            if (!data.username) errors.push('نام کاربری الزامی است.');
+            if (!data.password || data.password.length < 8) errors.push('رمز عبور باید حداقل ۸ کاراکتر باشد.');
+            if (data.password !== pw2Input.value) errors.push('رمز عبور و تکرار آن مطابقت ندارند.');
+            if (!data.department) errors.push('بخش فعالیت الزامی است.');
+
+            if (errors.length) { alert(errors.join('\n')); return; }
+
+            var submitBtn = document.getElementById('regSubmit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'در حال ارسال...';
+
+            fetch(API + '/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    document.getElementById('regForm').style.display = 'none';
+                    document.getElementById('regSuccess').style.display = 'block';
+                    document.getElementById('regRequestId').textContent = res.request_id;
+                } else {
+                    alert((res.errors || []).join('\n') || res.message || 'خطا در ثبت درخواست.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'ثبت درخواست';
+                }
+            })
+            .catch(function() {
+                alert('خطا در اتصال به سرور.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ثبت درخواست';
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

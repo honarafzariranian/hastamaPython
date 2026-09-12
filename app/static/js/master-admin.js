@@ -126,6 +126,11 @@
         api('/dashboard/activity?limit=30'),
       ]);
       const s = statsRes.data;
+      // تبدیل اعداد انگلیسی به فارسی
+      function toFa(n) {
+        const fa = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+        return String(n).replace(/[0-9]/g, d => fa[d]);
+      }
       const statsEl = document.getElementById('maStats');
       if (statsEl) {
         const cards = [
@@ -148,7 +153,7 @@
                 <div class="ma-glow-card__icon">${c.icon}</div>
                 ${c.alert ? '<div class="ma-glow-card__alert"></div>' : ''}
               </div>
-              <div class="ma-glow-card__value" data-count="${c.value}">${c.value}</div>
+              <div class="ma-glow-card__value" data-count="${c.value}">${toFa(c.value)}</div>
               <div class="ma-glow-card__label">${c.label}</div>
             </div>
           </div>
@@ -162,7 +167,7 @@
           const timer = setInterval(() => {
             current += step;
             if (current >= target) { current = target; clearInterval(timer); }
-            el.textContent = current;
+            el.textContent = toFa(current);
           }, 30);
         });
       }
@@ -536,3 +541,16 @@
   if (loaders[SECTION]) loaders[SECTION]();
 
 })();
+
+// ── Profile Dropdown ───────────────────────────────────────
+function toggleMaProfileDropdown(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('maProfileDropdown');
+  if (dd) dd.classList.toggle('is-open');
+}
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('maProfileDropdown');
+  if (dd && !dd.contains(e.target) && !e.target.closest('#maProfileButton')) {
+    dd.classList.remove('is-open');
+  }
+});

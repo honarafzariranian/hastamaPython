@@ -531,6 +531,79 @@ body {
     animation: riseIn 0.9s var(--ease-out) 0.35s backwards;
 }
 
+/* ── Form Side Bottom Links — Redesigned ───────────────── */
+.form-side__note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+}
+
+.form-side__note a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-side__note a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--brand-3));
+    border-radius: 1px;
+    transition: width 0.3s ease;
+}
+
+.form-side__note a:hover::after {
+    width: 100%;
+}
+
+.form-side__note a:hover {
+    color: var(--brand-3);
+}
+
+/* Registration link — enhanced */
+.form-side__note--register {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    text-align: center;
+}
+
+.form-side__note--register a {
+    background: linear-gradient(135deg, var(--accent), var(--brand-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: all 0.3s ease;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.form-side__note--register a:hover {
+    background: linear-gradient(135deg, var(--brand-3), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    transform: scale(1.05);
+}
+
+.form-side__note--register a::after {
+    display: none;
+}
+
+/* ── Login Card Enhanced Animations ────────────────────── */
 .login-card {
     position: relative;
     width: 100%;
@@ -543,28 +616,30 @@ body {
     overflow: hidden;
     backdrop-filter: blur(22px) saturate(1.35);
     -webkit-backdrop-filter: blur(22px) saturate(1.35);
-    transition: box-shadow 0.4s ease, border-color 0.3s ease;
+    transition: box-shadow 0.4s ease, border-color 0.3s ease, transform 0.3s ease;
+    animation: cardFloat 6s ease-in-out infinite;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .login-card {
-        background: var(--panel-solid);
-    }
+@keyframes cardFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }
 
 .login-card:hover {
     box-shadow: var(--shadow-card-hover);
     border-color: rgba(47, 124, 246, 0.3);
+    animation-play-state: paused;
+    transform: translateY(-2px);
 }
 
-/* moving light sheen on the card */
+/* Enhanced card sheen */
 .card-sheen {
     position: absolute;
     inset: 0;
     pointer-events: none;
     background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.16) 50%, transparent 58%);
     transform: translateX(-120%);
-    animation: sheenSweep 7s ease-in-out infinite;
+    animation: sheenSweep 5s ease-in-out infinite;
 }
 
 @keyframes sheenSweep {
@@ -572,18 +647,7 @@ body {
     82%, 100% { transform: translateX(120%); }
 }
 
-.login-card.shake {
-    animation: cardShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
-}
-
-@keyframes cardShake {
-    10%, 90%      { transform: translateX(-1px); }
-    20%, 80%      { transform: translateX(2px); }
-    30%, 50%, 70% { transform: translateX(-4px); }
-    40%, 60%      { transform: translateX(4px); }
-}
-
-/* brand inside card */
+/* Brand logo glow */
 .brand-row {
     display: flex;
     align-items: center;
@@ -602,25 +666,20 @@ body {
     height: clamp(4.2rem, 8vw, 5.4rem);
     width: auto;
     object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(47, 124, 246, 0.2));
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.login-logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 6px 20px rgba(47, 124, 246, 0.35));
 }
 
 body.dark-mode .login-logo {
     content: url('/static/images/login-mobile-logo-dark.png');
 }
 
-.brand h1 {
-    font-size: 1.35rem;
-    line-height: 1.2;
-    margin: 0;
-}
-
-.brand p {
-    margin: 0.2rem 0 0;
-    color: var(--muted);
-    font-size: 0.92rem;
-}
-
-/* header */
+/* Header enhanced */
 .login-header {
     margin-bottom: clamp(0.9rem, 2vw, 1.3rem);
     text-align: center;
@@ -632,6 +691,17 @@ body.dark-mode .login-logo {
     font-size: clamp(1.45rem, 2.4vw, 1.8rem);
     font-weight: 900;
     letter-spacing: -0.01em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--brand-3) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .login-header p {
@@ -641,16 +711,293 @@ body.dark-mode .login-logo {
     line-height: 1.7;
 }
 
-/* form */
-.login-form {
-    display: flex;
-    flex-direction: column;
+/* Input focus animation */
+.input-wrapper {
+    position: relative;
+    border-radius: 14px;
 }
 
-.form-group {
-    margin-bottom: clamp(0.85rem, 1.9vw, 1.1rem);
-    animation: riseIn 0.7s var(--ease-out) backwards;
+.input-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(47, 124, 246, 0.05), rgba(20, 184, 166, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
 }
+
+.input-wrapper:focus-within::before {
+    opacity: 1;
+}
+
+/* Button enhanced */
+.h-ux-btn {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent), var(--brand-3));
+    border: none;
+    border-radius: 14px;
+    padding: 14px 24px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Vazir', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.h-ux-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.h-ux-btn:hover::before {
+    left: 100%;
+}
+
+.h-ux-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(47, 124, 246, 0.35);
+}
+
+.h-ux-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Ripple effect */
+.ripple-ink {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to { transform: scale(4); opacity: 0; }
+}
+
+/* Checkbox enhanced */
+.remember-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text);
+    transition: color 0.2s;
+}
+
+.remember-wrapper:hover {
+    color: var(--accent);
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.remember-wrapper input:checked + .checkbox-label .checkmark {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.remember-wrapper input:checked + .checkbox-label .checkmark::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 5px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    animation: checkPop 0.2s ease;
+}
+
+@keyframes checkPop {
+    0% { transform: rotate(45deg) scale(0); }
+    50% { transform: rotate(45deg) scale(1.2); }
+    100% { transform: rotate(45deg) scale(1); }
+}
+
+/* Password toggle */
+.pw-toggle {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--muted);
+    transition: color 0.2s, transform 0.2s;
+    z-index: 2;
+}
+
+.pw-toggle:hover {
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.pw-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Login hint */
+.login-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    text-align: center;
+    min-height: 1.2em;
+    transition: all 0.3s ease;
+}
+
+/* Form footer */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: clamp(0.85rem, 1.9vw, 1.1rem);
+}
+
+/* Forgot password */
+.forgot-password {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: var(--accent);
+}
+
+/* Field error */
+.field-error {
+    margin: 4px 0 0;
+    font-size: 0.72rem;
+    color: #dc2626;
+    min-height: 1em;
+}
+
+/* Input icon */
+.input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    transition: color 0.2s;
+    z-index: 2;
+}
+
+.input-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--accent);
+}
+
+/* Input field */
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 44px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-family: 'Vazir', sans-serif;
+    background: var(--panel);
+    color: var(--text);
+    outline: none;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.input-wrapper input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.1);
+}
+
+.input-wrapper label {
+    position: absolute;
+    right: 44px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.88rem;
+    color: var(--muted);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    background: var(--panel);
+    padding: 0 4px;
+}
+
+/* label focus — consolidated below at line 1080 */
+
+/* Has error state */
+.has-error input {
+    border-color: #dc2626 !important;
+}
+
+.has-error .input-icon {
+    color: #dc2626 !important;
+}
+
+/* Shake animation for card */
+.login-card.shake {
+    animation: cardShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes cardShake {
+    10%, 90%      { transform: translateX(-1px); }
+    20%, 80%      { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60%      { transform: translateX(4px); }
+}
+
+/* card-sheen is defined in the enhanced section above */
+
+@keyframes sheenSweep {
+    0%, 62%  { transform: translateX(-120%); }
+    82%, 100% { transform: translateX(120%); }
+}
+
+.login-card.shake {
+    animation: cardShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes cardShake {
+    10%, 90%      { transform: translateX(-1px); }
+    20%, 80%      { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60%      { transform: translateX(4px); }
+}
+
+/* brand inside card */
+/* Old brand-row, brand, login-logo, login-header, form rules removed */
+/* These are now defined in the enhanced section above */
 
 .form-group:nth-of-type(1) { animation-delay: 0.65s; }
 .form-group:nth-of-type(2) { animation-delay: 0.75s; }
@@ -692,7 +1039,13 @@ body.dark-mode .login-logo {
 }
 
 .input-wrapper input::placeholder {
-    color: transparent;
+    color: var(--muted);
+    opacity: 0.6;
+    transition: opacity 0.25s ease;
+}
+.input-wrapper input:focus::placeholder,
+.input-wrapper input:not(:placeholder-shown)::placeholder {
+    opacity: 0;
 }
 
 .input-wrapper label {
@@ -702,7 +1055,7 @@ body.dark-mode .login-logo {
     color: var(--muted);
     font-size: 0.94rem;
     pointer-events: none;
-    transition: all 0.25s var(--ease-out);
+    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
     padding: 0 4px;
 }
@@ -718,15 +1071,16 @@ body.dark-mode .login-logo {
 }
 
 .input-wrapper input:focus + label,
-.input-wrapper input:valid + label {
-    top: -10px;
+.input-wrapper input:not(:placeholder-shown) + label {
+    top: -9px;
     right: 14px;
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     font-weight: 700;
     color: var(--accent);
     background: var(--panel-solid);
     border-radius: 6px;
-    padding: 0 6px;
+    padding: 0 8px;
+    letter-spacing: 0.01em;
 }
 
 .input-wrapper input:focus ~ .input-icon,
@@ -1291,3 +1645,48 @@ body.dark-mode .btn {
 }
 .fp-hint--success { color: #059669; }
 .fp-hint--error { color: #dc2626; }
+.fp-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 12px;
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+.fp-divider::before,
+.fp-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+.fp-link-btn {
+    background: none;
+    border: none;
+    color: #0ea5e9;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+.fp-link-btn:hover { opacity: 0.7; }
+
+/* Password Strength in Reset Modal */
+.pw-strength { margin-top: 6px; }
+.pw-strength__bar {
+    height: 4px; border-radius: 2px; background: #e2e8f0;
+    overflow: hidden; margin-bottom: 4px;
+}
+.pw-strength__fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.3s, background 0.3s; width: 0;
+}
+.pw-strength__label { font-size: 0.72rem; font-weight: 600; }
+.pw-requirements { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pw-req {
+    font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;
+    background: #f1f5f9; color: #64748b; transition: all 0.2s;
+}
+.pw-req.met { background: #d1fae5; color: #065f46; }

@@ -80,6 +80,19 @@
   }
 
   /* ── Lesson Completion Toggle ──────────────────────────────── */
+  function updateToggleBtn(btn, done) {
+    btn.classList.toggle('is-done', done);
+    btn.innerHTML = done
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-inline-end:6px;"><path d="M4.5 12.5 10 18 19.5 7"/></svg> تکمیل شده ✓'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-inline-end:6px;"><rect x="3" y="3" width="18" height="18" rx="4"/></svg> علامت‌گذاری به عنوان تکمیل‌شده';
+  }
+
+  /* restore state on page load */
+  document.querySelectorAll('[data-toggle-complete]').forEach(btn => {
+    const id = btn.dataset.lessonId || btn.closest('[data-lesson-id]')?.dataset?.lessonId;
+    if (id && isCompleted(id)) updateToggleBtn(btn, true);
+  });
+
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-toggle-complete]');
     if (!btn) return;
@@ -87,8 +100,7 @@
     if (!id) return;
     const done = !isCompleted(id);
     setProgress(id, done);
-    btn.classList.toggle('is-done', done);
-    btn.textContent = done ? '✓ تکمیل شده' : 'علامت‌گذاری به عنوان تکمیل‌شده';
+    updateToggleBtn(btn, done);
   });
 
   /* ── Update progress bars on category pages ────────────────── */

@@ -150,7 +150,8 @@ var SECTION_URLS = {
     'ticketBox':     '/admin/tickets',
     'shiftBox':      '/admin/shifts',
     'hozoorbox':     '/admin/attendance',
-    'payrollBox':    '/admin/payroll'
+    'payrollBox':    '/admin/payroll',
+    // regRequestsBox is now a tab inside coworkerBox
 };
 var URL_TO_SECTION = {};
 for (var k in SECTION_URLS) { URL_TO_SECTION[SECTION_URLS[k]] = k; }
@@ -263,22 +264,7 @@ function toggleBox(boxId, iconContainer) {
 
     }
 
-    // اگر همکاران انتخاب شده باشد، نمایش باکس‌های مربوطه
-    if (boxId === 'coworkerBox') {
-        const newUserBox = document.getElementById('newUserBox');
-        const userInfoBox = document.getElementById('userInfoBox');
-
-        // اطمینان از نمایش هر دو باکس
-        if (newUserBox) {
-            newUserBox.classList.add('is-visible');
-            newUserBox.style.display = 'block';
-        }
-
-        if (userInfoBox) {
-            userInfoBox.classList.add('is-visible');
-            userInfoBox.style.display = 'block';
-        }
-    }
+    // coworkerBox اکنون شامل تب‌هاست — نیازی به نمایش جداگانه نیست
 }
 
 // تابع سوئیچ تب‌های بخش حقوق و دستمزد
@@ -316,6 +302,25 @@ function switchAttendanceTab(tabId, btnEl) {
     }
     var target = document.getElementById(tabId);
     if (target) target.classList.add('active');
+}
+
+// تابع سوئیچ تب‌های بخش مدیریت کارکنان
+function switchCoworkerTab(tabId, btnEl) {
+    document.querySelectorAll('.coworker-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.coworker-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+    // بارگذاری درخواست‌های ثبت نام در صورت انتخاب تب مربوطه
+    if (tabId === 'cw-reg-requests-tab' && typeof loadRegRequests === 'function') {
+        loadRegRequests();
+    }
 }
 
 // تابع سوئیچ تب‌های بخش مدیریت مرخصی

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import random
+import secrets
 import string
 import time
 from datetime import datetime, timezone, timedelta
@@ -26,7 +26,7 @@ _seq_lock_ts = 0
 
 
 def _hex_id(length: int = 8) -> str:
-    return "".join(random.choices("0123456789abcdef", k=length))
+    return secrets.token_hex(length // 2)
 
 
 def generate_event_id() -> str:
@@ -253,8 +253,15 @@ def terminate_session(
 
 # ── Password Reset ────────────────────────────────────────────
 
+import hmac as _hmac
+import hashlib as _hashlib
+
+# Server-side secret for HMAC. In production, load from environment variable.
+_HMAC_SECRET = b"hastama-recovery-code-secret-2026"
+
 def _hash_code(code: str) -> str:
-    return hashlib.sha256(code.encode()).hexdigest()
+    """Hash recovery code using HMAC-SHA256 with server secret."""
+    return _hmac.new(_HMAC_SECRET, code.encode(), _hashlib.sha256).hexdigest()
 
 
 def create_password_reset_request(
@@ -295,7 +302,7 @@ def approve_password_reset(
     conn=None,
 ) -> dict:
     """Approve a reset request and generate a one-time recovery code."""
-    code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    code = secrets.token_uppercase(8)
     code_hash = _hash_code(code)
     _close = False
     if conn is None:

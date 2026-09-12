@@ -62,34 +62,74 @@
                     </div>
                     <svg class="chevron-icon" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 
-                    <div class="profile-dropdown avatar-menu" id="profileDropdown">
-                        <div class="dropdown-section-title">حساب کاربری</div>
-                        <button type="button" class="dropdown-item" data-panel="profile">
-                            <img src="/static/images/writing.png" alt="پروفایل من">
-                            <span>پروفایل من</span>
-                        </button>
-                        <button type="button" class="dropdown-item" data-panel="security">
-                            <img src="/static/images/check-mark.png" alt="امنیت و رمز عبور">
-                            <span>امنیت و رمز عبور</span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button type="button" class="dropdown-item" data-panel="subscription">
-                            <img src="/static/images/check-mark.png" alt="اشتراک من">
-                            <span>اشتراک من</span>
-                        </button>
-                        <button type="button" class="dropdown-item" data-panel="billing">
-                            <img src="/static/images/answer-icon.png" alt="فاکتورها و پرداخت">
-                            <span>فاکتورها و پرداخت</span>
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <button type="button" class="dropdown-item" data-panel="support">
-                            <img src="/static/images/chat.png" alt="پشتیبانی فنی">
-                            <span>پشتیبانی فنی</span>
-                        </button>
-                        <button type="button" class="dropdown-item" data-panel="settings">
-                            <img src="/static/images/answer-icon.png" alt="تنظیمات سامانه">
-                            <span>تنظیمات سامانه</span>
-                        </button>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="pd-header">
+                            <div class="pd-header__avatar">
+                                <img src="/static/images/user.png" alt="پروفایل">
+                                <span class="pd-header__status"></span>
+                            </div>
+                            <div class="pd-header__info">
+                                <div class="pd-header__name">مدیر سیستم</div>
+                                <div class="pd-header__role">admin</div>
+                            </div>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">حساب کاربری</div>
+                            <button type="button" class="pd-item" data-panel="profile">
+                                <span class="pd-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                                <span class="pd-item__text">پروفایل من</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="security">
+                                <span class="pd-item__icon pd-item__icon--green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                                <span class="pd-item__text">امنیت و رمز عبور</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">مالی و اشتراک</div>
+                            <button type="button" class="pd-item" data-panel="subscription">
+                                <span class="pd-item__icon pd-item__icon--purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+                                <span class="pd-item__text">اشتراک من</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="billing">
+                                <span class="pd-item__icon pd-item__icon--amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+                                <span class="pd-item__text">فاکتورها و پرداخت</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">پشتیبانی و تنظیمات</div>
+                            <button type="button" class="pd-item" data-panel="support">
+                                <span class="pd-item__icon pd-item__icon--cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                                <span class="pd-item__text">پشتیبانی فنی</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="settings">
+                                <span class="pd-item__icon pd-item__icon--slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                                <span class="pd-item__text">تنظیمات سامانه</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <a href="/training/lesson/admin-dashboard" class="pd-item pd-item--link">
+                                <span class="pd-item__icon pd-item__icon--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                                <span class="pd-item__text">آموزش این صفحه</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </a>
+                        </div>
+
+                        <div class="pd-footer">
+                            <button type="button" class="pd-logout" onclick="window.location.href='/login'">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                <span>خروج از سامانه</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="profile-panel-overlay" id="profilePanelOverlay" hidden></div>
@@ -137,6 +177,8 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/></svg>
                     <span class="icon-label">مدیریت کارکنان</span>
                 </div>
+
+
 
                 <!-- مدیریت مرخصی — Calendar Range (Lucide) -->
                 <div class="icon-container" onclick="navTo('vacationBox', this, '/admin/vacation')">
@@ -361,8 +403,22 @@
             </div>
         </div>
 
-        <!-- باکس اطلاعات کاربران -->
-        <div class="management-box" id="userInfoBox" style="display:none;">
+        <!-- باکس مدیریت کارکنان با تب‌ها -->
+        <div id="coworkerBox" class="management-box coworker-panel" style="display:none;">
+            <div class="coworker-heading">
+                <h2>مدیریت کارکنان</h2>
+                <span class="coworker-heading-bar"></span>
+            </div>
+
+            <div class="coworker-frame">
+                <div class="coworker-tabs" role="tablist">
+                    <button type="button" class="coworker-tab-btn active" role="tab" aria-selected="true" onclick="switchCoworkerTab('cw-users-tab', this)">اطلاعات کاربران</button>
+                    <button type="button" class="coworker-tab-btn" role="tab" aria-selected="false" onclick="switchCoworkerTab('cw-new-user-tab', this)">تعریف کاربر جدید</button>
+                    <button type="button" class="coworker-tab-btn" role="tab" aria-selected="false" onclick="switchCoworkerTab('cw-reg-requests-tab', this)">درخواست ثبت نام</button>
+                </div>
+
+                <!-- تب اطلاعات کاربران -->
+                <div id="cw-users-tab" class="coworker-tab-content active" role="tabpanel">
             <div class="userInfo-header">
                 <span class="userInfo-header-icon">👥</span>
                 <h2>اطلاعات کاربران</h2>
@@ -437,10 +493,12 @@
                 </tbody>
                 </table>
             </div>
-        </div>
 
-        <!-- باکس تعریف کاربر جدید -->
-        <div id="newUserBox" class="management-box" style="display:none;">
+            </div><!-- /cw-users-tab -->
+
+            <!-- تب تعریف کاربر جدید -->
+            <div id="cw-new-user-tab" class="coworker-tab-content" role="tabpanel">
+        <div id="newUserBox" class="management-box">
             <!-- هدر -->
             <div class="new-user-header">
                 <h2>
@@ -769,6 +827,38 @@
                 </div>
             </div>
         </div>
+
+            </div><!-- /cw-new-user-tab -->
+
+            <!-- تب درخواست ثبت نام -->
+            <div id="cw-reg-requests-tab" class="coworker-tab-content" role="tabpanel">
+        <div id="regRequestsBox" class="management-box">
+            <div class="new-user-header">
+                <h2>
+                    <span class="header-icon">📝</span>
+                    درخواست‌های ثبت نام کاربران جدید
+                </h2>
+            </div>
+            <div style="padding:16px">
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                    <input type="text" id="regSearchInput" placeholder="جستجو..." style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem;flex:1;min-width:150px">
+                    <select id="regStatusFilter" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="pending">انتظار بررسی</option>
+                        <option value="approved">تأیید شده</option>
+                        <option value="rejected">رد شده</option>
+                    </select>
+                    <button onclick="loadRegRequests()" style="padding:8px 16px;border:none;border-radius:8px;background:#0ea5e9;color:#fff;font-family:Vazir;font-size:0.82rem;font-weight:700;cursor:pointer">بارگذاری</button>
+                </div>
+                <div id="regRequestsTable">
+                    <p style="text-align:center;color:#94a3b8;padding:20px">روی «بارگذاری» کلیک کنید.</p>
+                </div>
+                <div id="regRequestsPagination" style="display:flex;justify-content:center;gap:4px;margin-top:12px"></div>
+            </div>
+        </div>
+            </div><!-- /cw-reg-requests-tab -->
+            </div><!-- /coworker-frame -->
+        </div><!-- /coworkerBox -->
 
         <!-- باکس مدیریت شیفت‌های ماهانه پرسنل -->
         <div id="notificationAdminBox" class="management-box notification-admin" style="display:none;" data-notification-role="admin">
@@ -2140,8 +2230,158 @@
 <script src="{{ url_for('static', path='js/notification-system.js') }}?v=16"></script>
     <script src="{{ url_for('static', path='vendor/persian-date/persian-date.min.js') }}"></script>
 
-    <!-- Training Page Help Button -->
-    <a href="/training/lesson/admin-dashboard" class="tr-page-help" title="آموزش این صفحه">🎓 آموزش این صفحه</a>
+    <!-- Registration Requests JS -->
+    <script>
+    (function() {
+        var regPage = 1;
+        var regPerPage = 15;
+
+        window.loadRegRequests = function(page) {
+            regPage = page || 1;
+            var search = (document.getElementById('regSearchInput') || {}).value || '';
+            var status = (document.getElementById('regStatusFilter') || {}).value || '';
+            var params = new URLSearchParams({ page: regPage, per_page: regPerPage });
+            if (search) params.set('search', search);
+            if (status) params.set('status', status);
+
+            var container = document.getElementById('regRequestsTable');
+            container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px">در حال بارگذاری...</p>';
+
+            fetch('/registration/admin/requests?' + params)
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.success || !res.data.length) {
+                        container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px">درخواستی یافت نشد.</p>';
+                        return;
+                    }
+                    var statusMap = {
+                        pending: { label: 'انتظار', cls: 'badge-pending' },
+                        approved: { label: 'تأیید شده', cls: 'badge-approved' },
+                        rejected: { label: 'رد شده', cls: 'badge-rejected' },
+                    };
+                    var html = '<table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+                        <thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                            <th style="padding:10px 8px;text-align:right;font-weight:700;color:#475569">نام</th>
+                            <th style="padding:10px 8px;text-align:right;font-weight:700;color:#475569">نام کاربری</th>
+                            <th style="padding:10px 8px;text-align:right;font-weight:700;color:#475569">بخش</th>
+                            <th style="padding:10px 8px;text-align:right;font-weight:700;color:#475569">زمان درخواست</th>
+                            <th style="padding:10px 8px;text-align:right;font-weight:700;color:#475569">وضعیت</th>
+                            <th style="padding:10px 8px;text-align:center;font-weight:700;color:#475569">عملیات</th>
+                        </tr></thead><tbody>';
+
+                    res.data.forEach(function(r) {
+                        var s = statusMap[r.status] || { label: r.status, cls: 'badge-neutral' };
+                        var dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('fa-IR') + ' ' + new Date(r.created_at).toLocaleTimeString('fa-IR', {hour:'2-digit',minute:'2-digit'}) : '—';
+                        html += '<tr style="border-bottom:1px solid #f1f5f9">
+                            <td style="padding:10px 8px;font-weight:600">' + (r.first_name || '') + ' ' + (r.last_name || '') + '</td>
+                            <td style="padding:10px 8px;font-family:monospace;direction:ltr;text-align:right">' + (r.username || '') + '</td>
+                            <td style="padding:10px 8px">' + (r.department || '—') + '</td>
+                            <td style="padding:10px 8px;font-size:0.75rem;color:#64748b">' + dateStr + '</td>
+                            <td style="padding:10px 8px"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700" class="' + s.cls + '">' + s.label + '</span></td>
+                            <td style="padding:10px 8px;text-align:center">';
+
+                        if (r.status === 'pending') {
+                            html += '<button onclick="viewRegRequest(\'' + r.request_id + '\')" style="padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.72rem;cursor:pointer;margin:0 2px;font-family:Vazir">مشاهده</button>';
+                            html += '<button onclick="approveRegRequest(\'' + r.request_id + '\')" style="padding:4px 10px;border:none;border-radius:6px;background:#10b981;color:#fff;font-size:0.72rem;cursor:pointer;margin:0 2px;font-family:Vazir">تأیید</button>';
+                            html += '<button onclick="rejectRegRequest(\'' + r.request_id + '\')" style="padding:4px 10px;border:none;border-radius:6px;background:#ef4444;color:#fff;font-size:0.72rem;cursor:pointer;margin:0 2px;font-family:Vazir">رد</button>';
+                        } else {
+                            html += '<button onclick="viewRegRequest(\'' + r.request_id + '\')" style="padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:0.72rem;cursor:pointer;font-family:Vazir">مشاهده</button>';
+                        }
+                        html += '</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+
+                    // Pagination
+                    var pagEl = document.getElementById('regRequestsPagination');
+                    pagEl.innerHTML = '';
+                    if (res.pages > 1) {
+                        for (var i = 1; i <= res.pages; i++) {
+                            var btn = document.createElement('button');
+                            btn.textContent = i;
+                            btn.style.cssText = 'padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;background:' + (i === regPage ? '#0ea5e9' : '#fff') + ';color:' + (i === regPage ? '#fff' : '#333') + ';font-size:0.78rem;cursor:pointer;font-family:Vazir';
+                            btn.onclick = (function(pg){ return function(){ loadRegRequests(pg); }; })(i);
+                            pagEl.appendChild(btn);
+                        }
+                    }
+                })
+                .catch(function() {
+                    container.innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px">خطا در بارگذاری.</p>';
+                });
+        };
+
+        window.viewRegRequest = function(requestId) {
+            fetch('/registration/admin/requests/' + requestId)
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (!res.success) { alert(res.message || 'خطا'); return; }
+                    var d = res.data;
+                    var dateStr = d.created_at ? new Date(d.created_at).toLocaleString('fa-IR') : '—';
+                    var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+                        <div style="background:#fff;border-radius:16px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;font-family:Vazir;direction:rtl">
+                            <h3 style="margin:0 0 16px;font-size:1rem;color:#0f172a">📋 جزئیات درخواست ثبت نام</h3>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.82rem;margin-bottom:16px">
+                                <div><span style="color:#64748b">نام:</span> <b>' + (d.first_name || '') + '</b></div>
+                                <div><span style="color:#64748b">نام خانوادگی:</span> <b>' + (d.last_name || '') + '</b></div>
+                                <div><span style="color:#64748b">نام پدر:</span> ' + (d.father_name || '—') + '</div>
+                                <div><span style="color:#64748b">شماره ملی:</span> ' + (d.national_id || '—') + '</div>
+                                <div><span style="color:#64748b">شماره همراه:</span> ' + (d.mobile || '—') + '</div>
+                                <div><span style="color:#64748b">نام کاربری:</span> <b style="font-family:monospace;direction:ltr">' + (d.username || '') + '</b></div>
+                                <div><span style="color:#64748b">بخش:</span> ' + (d.department || '—') + '</div>
+                                <div><span style="color:#64748b">ساعت کاری:</span> ' + (d.work_hours || '—') + '</div>
+                                <div><span style="color:#64748b">جانشین:</span> ' + (d.substitute || '—') + '</div>
+                                <div><span style="color:#64748b">وضعیت:</span> <b>' + (d.status || '') + '</b></div>
+                                <div style="grid-column:span 2"><span style="color:#64748b">زمان درخواست:</span> ' + dateStr + '</div>
+                                <div><span style="color:#64748b">IP:</span> ' + (d.created_ip || '—') + '</div>
+                                ' + (d.rejection_reason ? '<div style="grid-column:span 2;color:#ef4444"><b>دلیل رد:</b> ' + d.rejection_reason + '</div>' : '') + '
+                            </div>';
+                    if (d.status === 'pending') {
+                        html += '<div style="display:flex;gap:8px;justify-content:flex-end">
+                            <button onclick="rejectRegRequest(\'' + d.request_id + '\');this.closest(\'[onclick=event.target.closest()]\').remove()" style="padding:8px 20px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-family:Vazir;font-weight:700;cursor:pointer">رد درخواست</button>
+                            <button onclick="approveRegRequest(\'' + d.request_id + '\');this.closest(\'[onclick=event.target.closest()]\').remove()" style="padding:8px 20px;border:none;border-radius:8px;background:#10b981;color:#fff;font-family:Vazir;font-weight:700;cursor:pointer">تأیید و ایجاد حساب</button>
+                        </div>';
+                    }
+                    html += '<button onclick="this.closest(\'[onclick=event.target.closest()]\').remove()" style="position:absolute;top:12px;left:12px;width:28px;height:28px;border:none;border-radius:6px;background:#f1f5f9;cursor:pointer;font-size:1rem">✕</button>';
+                    html += '</div></div>';
+                    document.body.insertAdjacentHTML('beforeend', html);
+                })
+                .catch(function() { alert('خطا در بارگذاری جزئیات.'); });
+        };
+
+        window.approveRegRequest = function(requestId) {
+            if (!confirm('آیا از تأیید این درخواست و ایجاد حساب کاربری اطمینان دارید؟')) return;
+            fetch('/registration/admin/requests/' + requestId + '/approve', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    alert(res.message || (res.success ? 'تأیید شد.' : 'خطا'));
+                    if (res.success) loadRegRequests(regPage);
+                })
+                .catch(function() { alert('خطا در تأیید درخواست.'); });
+        };
+
+        window.rejectRegRequest = function(requestId) {
+            var reason = prompt('دلیل رد درخواست را وارد کنید:');
+            if (!reason) return;
+            fetch('/registration/admin/requests/' + requestId + '/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason }),
+            })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    alert(res.message || (res.success ? 'رد شد.' : 'خطا'));
+                    if (res.success) loadRegRequests(regPage);
+                })
+                .catch(function() { alert('خطا در رد درخواست.'); });
+        };
+    })();
+    </script>
+    <style>
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+    </style>
 
     </body>
 

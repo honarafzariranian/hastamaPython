@@ -27,6 +27,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.call_system import router as call_system_router
 from app.api.routes.araz_api import router as araz_router
 from app.api.routes.master_admin import router as master_admin_router
+from app.api.routes.registration import router as registration_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
@@ -105,6 +106,7 @@ app.include_router(health_router)
 app.include_router(call_system_router)
 app.include_router(araz_router)
 app.include_router(master_admin_router)
+app.include_router(registration_router)
 
 @app.on_event("startup")
 def start_notification_background_tasks():
@@ -146,6 +148,10 @@ cursor = conn.cursor()
 @app.get("/login")
 async def home(request: Request):
     return templates.TemplateResponse(request, "login.html", {"request": request})
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse(request, "register.html", {"request": request})
 
 @app.get("/rules", response_class=HTMLResponse)
 async def rules(request: Request):
