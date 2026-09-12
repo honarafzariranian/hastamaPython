@@ -142,7 +142,7 @@
                                 مرا به خاطر بسپار
                             </span>
                         </label>
-                        <a href="#" class="forgot-password">فراموشی رمز عبور؟</a>
+                        <a href="#" class="forgot-password" id="forgotPasswordBtn">فراموشی رمز عبور؟</a>
                     </div>
 
                     <button type="button" class="btn h-ux-btn" id="loginBtn">
@@ -270,6 +270,94 @@
             if (hint) hint.textContent = msg || '';
             if (typeof origShowSystemError === 'function') origShowSystemError(msg);
         };
+    })();
+    </script>
+
+    <!-- فراموشی رمز عبور - مودال -->
+    <div class="fp-overlay" id="fpOverlay">
+        <div class="fp-modal">
+            <button type="button" class="fp-close" id="fpClose" aria-label="بستن">&times;</button>
+            <div class="fp-icon">🔑</div>
+            <h3 class="fp-title">بازیابی رمز عبور</h3>
+            <p class="fp-desc">نام کاربری خود را وارد کنید. درخواست شما برای مدیر سامانه ارسال می‌شود و پس از تأیید، رمز جدید دریافت خواهید کرد.</p>
+            <form id="fpForm" class="fp-form" onsubmit="return false;">
+                <input type="text" id="fpUsername" class="fp-input" placeholder="نام کاربری" autocomplete="username" required>
+                <button type="submit" class="fp-submit" id="fpSubmit">ارسال درخواست</button>
+            </form>
+            <p class="fp-hint" id="fpHint"></p>
+        </div>
+    </div>
+
+    <script>
+    /* ── Forgot Password Modal ──────────────────────────── */
+    (function() {
+        var btn = document.getElementById('forgotPasswordBtn');
+        var overlay = document.getElementById('fpOverlay');
+        var closeBtn = document.getElementById('fpClose');
+        var form = document.getElementById('fpForm');
+        var input = document.getElementById('fpUsername');
+        var submitBtn = document.getElementById('fpSubmit');
+        var hint = document.getElementById('fpHint');
+
+        function openModal() {
+            overlay.classList.add('is-visible');
+            input.value = '';
+            hint.textContent = '';
+            hint.className = 'fp-hint';
+            setTimeout(function() { input.focus(); }, 200);
+        }
+        function closeModal() { overlay.classList.remove('is-visible'); }
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+        });
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.classList.contains('is-visible')) closeModal();
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var username = input.value.trim();
+            if (!username) {
+                hint.textContent = 'لطفاً نام کاربری را وارد کنید.';
+                hint.className = 'fp-hint fp-hint--error';
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'در حال ارسال...';
+            hint.textContent = '';
+
+            fetch('/forgot_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ارسال درخواست';
+                if (res.success) {
+                    hint.textContent = res.message || 'درخواست شما ثبت شد.';
+                    hint.className = 'fp-hint fp-hint--success';
+                    input.value = '';
+                    setTimeout(closeModal, 3000);
+                } else {
+                    hint.textContent = res.message || 'خطا در ثبت درخواست.';
+                    hint.className = 'fp-hint fp-hint--error';
+                }
+            })
+            .catch(function() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ارسال درخواست';
+                hint.textContent = 'خطا در اتصال به سرور.';
+                hint.className = 'fp-hint fp-hint--error';
+            });
+        });
     })();
     </script>
 </body>

@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const BASE = '/master-admin';
+  const BASE = '/master-admin/api';
   const SECTION = document.body.dataset.section || 'dashboard';
 
   // ── Toast ────────────────────────────────────────────────
@@ -128,18 +128,43 @@
       const s = statsRes.data;
       const statsEl = document.getElementById('maStats');
       if (statsEl) {
-        statsEl.innerHTML = `
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--blue">👥</div></div><div class="ma-stat__value">${s.total_users}</div><div class="ma-stat__label">کل کاربران</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--green">🟢</div></div><div class="ma-stat__value">${s.active_users}</div><div class="ma-stat__label">کاربران فعال</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--cyan">🔗</div></div><div class="ma-stat__value">${s.online_sessions}</div><div class="ma-stat__label">نشست‌های فعال</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--blue">🔑</div></div><div class="ma-stat__value">${s.logins_today}</div><div class="ma-stat__label">ورودهای امروز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--red">⚠️</div><span class="ma-stat__badge ma-stat__badge--${s.failed_logins_today > 0 ? 'red' : 'green'}">${s.failed_logins_today > 0 ? '! ' + s.failed_logins_today : '—'}</span></div><div class="ma-stat__value">${s.failed_logins_today}</div><div class="ma-stat__label">ورود ناموفق امروز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--amber">🔑</div><span class="ma-stat__badge ma-stat__badge--${s.pending_password_resets > 0 ? 'amber' : 'green'}">${s.pending_password_resets > 0 ? s.pending_password_resets + ' جدید' : '—'}</span></div><div class="ma-stat__value">${s.pending_password_resets}</div><div class="ma-stat__label">درخواست بازیابی رمز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--red">🛡️</div></div><div class="ma-stat__value">${s.open_security_events}</div><div class="ma-stat__label">رویدادهای امنیتی باز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--red">🐛</div></div><div class="ma-stat__value">${s.open_errors}</div><div class="ma-stat__label">خطاهای باز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--purple">🎫</div></div><div class="ma-stat__value">${s.open_tickets}</div><div class="ma-stat__label">تیکت‌های باز</div></div>
-          <div class="ma-stat"><div class="ma-stat__header"><div class="ma-stat__icon ma-stat__icon--blue">📋</div></div><div class="ma-stat__value">${s.events_today}</div><div class="ma-stat__label">رویدادهای امروز</div></div>
-        `;
+        const cards = [
+          { icon: '👥', value: s.total_users, label: 'کل کاربران', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', delay: 0 },
+          { icon: '🟢', value: s.active_users, label: 'کاربران فعال', gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', delay: 50 },
+          { icon: '🔗', value: s.online_sessions, label: 'نشست‌های فعال', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', delay: 100 },
+          { icon: '🔑', value: s.logins_today, label: 'ورودهای امروز', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', delay: 150 },
+          { icon: '⚠️', value: s.failed_logins_today, label: 'ورود ناموفق', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', alert: s.failed_logins_today > 0, delay: 200 },
+          { icon: '🔐', value: s.pending_password_resets, label: 'بازیابی رمز', gradient: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', alert: s.pending_password_resets > 0, delay: 250 },
+          { icon: '🛡️', value: s.open_security_events, label: 'رویداد امنیتی', gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', alert: s.open_security_events > 0, delay: 300 },
+          { icon: '🐛', value: s.open_errors, label: 'خطاهای باز', gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)', alert: s.open_errors > 0, delay: 350 },
+          { icon: '🎫', value: s.open_tickets, label: 'تیکت‌های باز', gradient: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', delay: 400 },
+          { icon: '📋', value: s.events_today, label: 'رویدادهای امروز', gradient: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', delay: 450 },
+        ];
+        statsEl.innerHTML = cards.map((c, i) => `
+          <div class="ma-glow-card" style="animation-delay:${c.delay}ms;--card-gradient:${c.gradient}">
+            <div class="ma-glow-card__shine"></div>
+            <div class="ma-glow-card__content">
+              <div class="ma-glow-card__top">
+                <div class="ma-glow-card__icon">${c.icon}</div>
+                ${c.alert ? '<div class="ma-glow-card__alert"></div>' : ''}
+              </div>
+              <div class="ma-glow-card__value" data-count="${c.value}">${c.value}</div>
+              <div class="ma-glow-card__label">${c.label}</div>
+            </div>
+          </div>
+        `).join('');
+        // Animate numbers
+        statsEl.querySelectorAll('.ma-glow-card__value').forEach(el => {
+          const target = parseInt(el.dataset.count) || 0;
+          if (target === 0) return;
+          let current = 0;
+          const step = Math.max(1, Math.floor(target / 20));
+          const timer = setInterval(() => {
+            current += step;
+            if (current >= target) { current = target; clearInterval(timer); }
+            el.textContent = current;
+          }, 30);
+        });
       }
 
       // Activity feed
@@ -203,7 +228,7 @@
         { key: 'role', label: 'نقش', render: v => badge(v) },
         { key: 'is_active', label: 'وضعیت', render: v => badge(v || 'active') },
         { key: 'last_login', label: 'آخرین ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
-        { key: 'username', label: 'عملیات', render: v => `<a href="/master-admin/users/${v.trim()}" class="ma-btn ma-btn--ghost ma-btn--sm">مشاهده</a>` },
+        { key: 'username', label: 'عملیات', render: v => `<a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" onclick="event.preventDefault();window.__maViewUser('${encodeURIComponent(v.trim())}')">مشاهده</a>` },
       ];
       renderTable(container, cols, res.data, 'کاربری یافت نشد');
       renderPagination(pagEl, res.total, res.pages, loadUsers);
@@ -304,6 +329,113 @@
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری خطاها</div></div>'; }
   }
 
+  // ── User Detail (360 View) ──────────────────────────────
+  var _viewingUser = null;
+  window.__maViewUser = function(u) {
+    _viewingUser = u;
+    window.location.hash = 'user-detail';
+  };
+
+  async function loadUserDetail() {
+    const container = document.getElementById('maUserDetail');
+    if (!container) return;
+    const targetUsername = _viewingUser || new URLSearchParams(window.location.search).get('u');
+    if (!targetUsername) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">👤</div><div class="ma-empty__text">نام کاربری مشخص نشده است</div></div>';
+      return;
+    }
+    try {
+      const res = await api(`/users/${encodeURIComponent(targetUsername)}`);
+      const u = res.data;
+      const auditRows = (u.recent_audit || []).slice(0, 20);
+      const sessions = (u.sessions || []).slice(0, 10);
+      const resets = (u.password_resets || []).slice(0, 5);
+      container.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <a href="/master-admin/users" class="ma-btn ma-btn--ghost" style="font-size:0.82rem">← بازگشت به کاربران</a>
+          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${u.username} — ${u.name || ''} ${u.last_name || ''}</h2>
+          ${badge(u.role)} ${badge(u.is_active || 'active')}
+        </div>
+        <div class="ma-grid-2" style="margin-bottom:20px">
+          <div class="ma-panel-card">
+            <div class="ma-panel-card__header"><div class="ma-panel-card__title">📋 اطلاعات حساب</div></div>
+            <div class="ma-panel-card__body">
+              <table style="width:100%;font-size:0.82rem;border-collapse:collapse">
+                <tr><td style="padding:6px 0;color:#64748b;width:140px">نام کاربری</td><td style="padding:6px 0;font-weight:600">${u.username}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">نام</td><td style="padding:6px 0">${u.name || '—'} ${u.last_name || ''}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">بخش</td><td style="padding:6px 0">${u.department || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">ساعت کاری</td><td style="padding:6px 0">${u.work_hours || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">آخرین ورود</td><td style="padding:6px 0">${u.last_login ? new Date(u.last_login).toLocaleString('fa-IR') : '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">تلاش ناموفق ورود</td><td style="padding:6px 0">${u.failed_login_count || 0}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">آخرین تغییر رمز</td><td style="padding:6px 0">${u.password_changed_at ? new Date(u.password_changed_at).toLocaleString('fa-IR') : '—'}</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="ma-panel-card">
+            <div class="ma-panel-card__header"><div class="ma-panel-card__title">🔐 نشست‌ها</div></div>
+            <div class="ma-panel-card__body">
+              ${sessions.length ? sessions.map(s => `
+                <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:0.82rem">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span>${s.ip_address || '—'}</span>
+                    ${s.is_active ? badge('active') : badge('disabled')}
+                  </div>
+                  <div style="color:#64748b;font-size:0.75rem;margin-top:2px">${s.login_at ? new Date(s.login_at).toLocaleString('fa-IR') : '—'}</div>
+                </div>
+              `).join('') : '<div class="ma-empty" style="padding:20px"><div class="ma-empty__text">نشستی ثبت نشده</div></div>'}
+            </div>
+          </div>
+        </div>
+        <div class="ma-panel-card" style="margin-bottom:20px">
+          <div class="ma-panel-card__header"><div class="ma-panel-card__title">📋 آخرین رویدادها</div></div>
+          <div class="ma-panel-card__body--flush">
+            <div class="ma-table__scroll">
+              <table class="ma-table">
+                <thead><tr><th>زمان</th><th>عملیات</th><th>ماژول</th><th>وضعیت</th><th>اولویت</th><th>IP</th></tr></thead>
+                <tbody>
+                  ${auditRows.length ? auditRows.map(e => `
+                    <tr>
+                      <td>${e.created_at ? new Date(e.created_at).toLocaleString('fa-IR') : '—'}</td>
+                      <td>${e.action}</td>
+                      <td>${e.module || '—'}</td>
+                      <td>${badge(e.status)}</td>
+                      <td>${badge(e.severity)}</td>
+                      <td>${e.ip_address || '—'}</td>
+                    </tr>
+                  `).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8">رویدادی ثبت نشده</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        ${resets.length ? `
+        <div class="ma-panel-card">
+          <div class="ma-panel-card__header"><div class="ma-panel-card__title">🔑 تاریخچه بازیابی رمز</div></div>
+          <div class="ma-panel-card__body--flush">
+            <div class="ma-table__scroll">
+              <table class="ma-table">
+                <thead><tr><th>شناسه</th><th>زمان</th><th>وضعیت</th><th>IP</th></tr></thead>
+                <tbody>
+                  ${resets.map(r => `
+                    <tr>
+                      <td><code style="font-size:.75rem">${r.request_id}</code></td>
+                      <td>${r.created_at ? new Date(r.created_at).toLocaleString('fa-IR') : '—'}</td>
+                      <td>${badge(r.status)}</td>
+                      <td>${r.ip_address || '—'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      `;
+    } catch (e) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری اطلاعات کاربر</div></div>';
+    }
+  }
+
   // ── Admin Actions ────────────────────────────────────────
   async function loadAdminActions() {
     const container = document.getElementById('maTableContainer');
@@ -359,6 +491,7 @@
     dashboard: loadDashboard,
     'audit-logs': loadAuditLogs,
     users: loadUsers,
+    'user-detail': loadUserDetail,
     sessions: loadSessions,
     'password-resets': loadPasswordResets,
     security: loadSecurity,

@@ -22,7 +22,7 @@ from app.services.audit import (
     generate_request_id, generate_event_id,
 )
 
-router = APIRouter(prefix="/master-admin", tags=["master-admin"])
+router = APIRouter(prefix="/master-admin/api", tags=["master-admin"])
 
 
 # ── Authorization Helper ──────────────────────────────────────

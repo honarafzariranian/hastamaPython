@@ -87,3 +87,31 @@ async def login(request: Request):
 
     return JSONResponse({"success": False, "message": "نام کاربری یا رمز عبور اشتباه است"})
 
+
+@router.post("/forgot_password")
+async def forgot_password(request: Request):
+    """Public endpoint — submit a password reset request (no auth required)."""
+    data = await request.json()
+    username = str(data.get("username") or "").strip()
+    if not username:
+        return JSONResponse({"success": False, "message": "نام کاربری را وارد کنید"})
+
+    # Check user exists
+    user = fetch_user_for_login(cursor, username)
+    if not user:
+        # Always return success to prevent user enumeration
+        return JSONResponse({"success": True, "message": "درخواست شما ثبت شد. منتظر تأیید مدیر باشید."})
+
+    try:
+        from app.services.audit import create_password_reset_request
+        result = create_password_reset_request(
+            username=username,
+            ip_address=_client_ip(request),
+            user_agent=_user_agent(request),
+        )
+        if result.get("request_id"):
+            return JSONResponse({"success": True, "message": "درخواست بازیابی رمز عبور ثبت شد. منتظر تأیید مدیر سامانه باشید."})
+        else:
+            return JSONResponse({"success": False, "message": "خطا در ثبت درخواست. لطفاً دوباره تلاش کنید."})
+    except Exception as e:
+        return JSONResponse({"success": False, "message": "خطا در ثبت درخواست."})
