@@ -194,7 +194,7 @@ html, body {
 }
 
 .profile-dropdown.open {
-    max-height: 520px;
+    max-height: 680px;
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
@@ -350,30 +350,6 @@ html, body {
 .pd-item:hover .pd-item__arrow { opacity: 1; transform: translateX(0); }
 
 /* Footer */
-.pd-footer {
-    padding: 6px 8px 8px;
-    border-top: 1px solid #f1f5f9;
-}
-.pd-logout {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 10px 12px;
-    border: none;
-    border-radius: 12px;
-    background: transparent;
-    cursor: pointer;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: #ef4444;
-    text-align: right;
-    transition: all 0.2s ease;
-}
-.pd-logout svg { width: 16px; height: 16px; }
-.pd-logout:hover { background: #fef2f2; }
-
 /* Divider between sections */
 .pd-section + .pd-section {
     border-top: 1px solid #f1f5f9;
@@ -660,8 +636,7 @@ html, body {
 .dark-theme .pd-item__icon { background: #334155; }
 .dark-theme .pd-item__icon svg { color: #94a3b8; }
 .dark-theme .pd-section__label { color: #64748b; }
-.dark-theme .pd-footer { border-color: #334155; }
-.dark-theme .pd-logout:hover { background: rgba(239, 68, 68, 0.1); }
+
 
 .icon-container svg {
     width: 24px;

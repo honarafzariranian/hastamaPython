@@ -237,6 +237,9 @@ async def training_search(q: str = Query("")):
 
 # Master Admin Panel — page routes
 @app.get("/master-admin", response_class=HTMLResponse)
+async def master_admin_root(request: Request):
+    return RedirectResponse(url="/master-admin/dashboard", status_code=303)
+
 @app.get("/master-admin/{section}", response_class=HTMLResponse)
 async def master_admin_page(request: Request, section: str = "dashboard"):
     username = request.session.get('username')

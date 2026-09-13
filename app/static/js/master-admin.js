@@ -21,6 +21,35 @@
     setTimeout(() => t.classList.remove('is-visible'), 4000);
   }
 
+  function maConfirm({ title, msg, confirmText = 'تأیید', cancelText = 'انصراف', type = 'danger' } = {}) {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.className = 'ma-confirm-overlay';
+      overlay.innerHTML = `
+        <div class="ma-confirm-box">
+          <div class="ma-confirm-box__icon ma-confirm-box__icon--${type}">
+            ${type === 'danger' ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' : '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'}
+          </div>
+          <div class="ma-confirm-box__title">${title || 'تأیید عملیات'}</div>
+          <div class="ma-confirm-box__msg">${msg || 'آیا مطمئن هستید؟'}</div>
+          <div class="ma-confirm-box__actions">
+            <button class="ma-btn ma-btn--${type === 'danger' ? 'danger' : 'primary'} ma-btn--sm" id="maConfirmYes">${confirmText}</button>
+            <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maConfirmNo">${cancelText}</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      requestAnimationFrame(() => overlay.classList.add('is-visible'));
+      const cleanup = (result) => {
+        overlay.classList.remove('is-visible');
+        setTimeout(() => overlay.remove(), 250);
+        resolve(result);
+      };
+      overlay.querySelector('#maConfirmYes').onclick = () => cleanup(true);
+      overlay.querySelector('#maConfirmNo').onclick = () => cleanup(false);
+      overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(false); });
+    });
+  }
+
   // ── API Helper ───────────────────────────────────────────
   async function api(path, opts = {}) {
     const url = BASE + path;
@@ -78,6 +107,19 @@
     });
     html += '</tbody></table></div>';
     container.innerHTML = html;
+    container.querySelectorAll('[data-ma-action]').forEach(btn => {
+      btn.addEventListener('click', handleMaAction);
+    });
+  }
+
+  function handleMaAction(e) {
+    const btn = e.currentTarget;
+    const action = btn.dataset.maAction;
+    const id = btn.dataset.maId;
+    if (action && id) {
+      const fn = window['ma_' + action];
+      if (fn) fn(id);
+    }
   }
 
   // ── Status Badge ─────────────────────────────────────────
@@ -93,7 +135,7 @@
     pending: { label: 'انتظار', cls: 'warning' },
     approved: { label: 'تأیید شده', cls: 'success' },
     rejected: { label: 'رد شده', cls: 'danger' },
-    completed: { label: 'تکمیل شده', cls: 'success' },
+        completed: { label: 'تکمیل شده', cls: 'info' },
     expired: { label: 'منقضی شده', cls: 'neutral' },
     cancelled: { label: 'لغو شده', cls: 'neutral' },
     open: { label: 'باز', cls: 'warning' },
@@ -134,28 +176,30 @@
       const statsEl = document.getElementById('maStats');
       if (statsEl) {
         const cards = [
-          { icon: '👥', value: s.total_users, label: 'کل کاربران', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', delay: 0 },
+          { icon: '👥', value: s.total_users, label: 'کل کاربران', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', delay: 0, link: '/master-admin/users' },
           { icon: '🟢', value: s.active_users, label: 'کاربران فعال', gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', delay: 50 },
-          { icon: '🔗', value: s.online_sessions, label: 'نشست‌های فعال', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', delay: 100 },
-          { icon: '🔑', value: s.logins_today, label: 'ورودهای امروز', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', delay: 150 },
-          { icon: '⚠️', value: s.failed_logins_today, label: 'ورود ناموفق', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', alert: s.failed_logins_today > 0, delay: 200 },
-          { icon: '🔐', value: s.pending_password_resets, label: 'بازیابی رمز', gradient: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', alert: s.pending_password_resets > 0, delay: 250 },
-          { icon: '🛡️', value: s.open_security_events, label: 'رویداد امنیتی', gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', alert: s.open_security_events > 0, delay: 300 },
-          { icon: '🐛', value: s.open_errors, label: 'خطاهای باز', gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)', alert: s.open_errors > 0, delay: 350 },
-          { icon: '🎫', value: s.open_tickets, label: 'تیکت‌های باز', gradient: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', delay: 400 },
-          { icon: '📋', value: s.events_today, label: 'رویدادهای امروز', gradient: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', delay: 450 },
+          { icon: '🔗', value: s.online_sessions, label: 'نشست‌های فعال', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', delay: 100, link: '/master-admin/sessions' },
+          { icon: '🔑', value: s.logins_today, label: 'ورودهای امروز', gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', delay: 150, link: '/master-admin/audit-logs' },
+          { icon: '⚠️', value: s.failed_logins_today, label: 'ورود ناموفق', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', alert: s.failed_logins_today > 0, delay: 200, link: '/master-admin/security' },
+          { icon: '🔐', value: s.pending_password_resets, label: 'بازیابی رمز', gradient: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', alert: s.pending_password_resets > 0, delay: 250, link: '/master-admin/password-resets' },
+          { icon: '🛡️', value: s.open_security_events, label: 'رویداد امنیتی', gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', alert: s.open_security_events > 0, delay: 300, link: '/master-admin/security' },
+          { icon: '🐛', value: s.open_errors, label: 'خطاهای باز', gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)', alert: s.open_errors > 0, delay: 350, link: '/master-admin/errors' },
+          { icon: '🎫', value: s.open_tickets, label: 'تیکت‌های باز', gradient: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', delay: 400, link: '/master-admin/tickets' },
+          { icon: '📋', value: s.events_today, label: 'رویدادهای امروز', gradient: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', delay: 450, link: '/master-admin/audit-logs' },
         ];
         statsEl.innerHTML = cards.map((c, i) => `
           <div class="ma-glow-card" style="animation-delay:${c.delay}ms;--card-gradient:${c.gradient}">
             <div class="ma-glow-card__shine"></div>
-            <div class="ma-glow-card__content">
+            ${c.link
+              ? `<a href="${c.link}" class="ma-glow-card__content" style="text-decoration:none;color:inherit;cursor:pointer">`
+              : `<div class="ma-glow-card__content" style="text-decoration:none;color:inherit;cursor:default">`}
               <div class="ma-glow-card__top">
                 <div class="ma-glow-card__icon">${c.icon}</div>
                 ${c.alert ? '<div class="ma-glow-card__alert"></div>' : ''}
               </div>
               <div class="ma-glow-card__value" data-count="${c.value}">${toFa(c.value)}</div>
               <div class="ma-glow-card__label">${c.label}</div>
-            </div>
+            ${c.link ? '</a>' : '</div>'}
           </div>
         `).join('');
         // Animate numbers
@@ -233,7 +277,7 @@
         { key: 'role', label: 'نقش', render: v => badge(v) },
         { key: 'is_active', label: 'وضعیت', render: v => badge(v || 'active') },
         { key: 'last_login', label: 'آخرین ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
-        { key: 'username', label: 'عملیات', render: v => `<a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" onclick="event.preventDefault();window.__maViewUser('${encodeURIComponent(v.trim())}')">مشاهده</a>` },
+        { key: 'username', label: 'عملیات', render: v => `<a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" data-ma-action="viewUser" data-ma-id="${encodeURIComponent(v.trim())}">مشاهده</a>` },
       ];
       renderTable(container, cols, res.data, 'کاربری یافت نشد');
       renderPagination(pagEl, res.total, res.pages, loadUsers);
@@ -254,7 +298,7 @@
         { key: 'login_at', label: 'زمان ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'last_activity', label: 'آخرین فعالیت', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'is_active', label: 'وضعیت', render: v => v ? badge('active') : badge('disabled') },
-        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" onclick="maTerminateSession('${v}')">خاتمه</button>` },
+        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="terminateSession" data-ma-id="${v}">خاتمه</button>` },
       ];
       renderTable(container, cols, res.data, 'نشست فعالی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSessions);
@@ -277,7 +321,7 @@
         { key: 'ip_address', label: 'IP' },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
         { key: 'code_attempts', label: 'تلاش‌ها' },
-        { key: 'request_id', label: 'عملیات', render: (v, r) => r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" onclick="maApproveReset('${v}')">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" onclick="maRejectReset('${v}')">رد</button>` : '—' },
+        { key: 'request_id', label: 'عملیات', render: (v, r) => r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="approveReset" data-ma-id="${v}">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="rejectReset" data-ma-id="${v}">رد</button>` : '—' },
       ];
       renderTable(container, cols, res.data, 'درخواست بازیابی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadPasswordResets);
@@ -302,7 +346,7 @@
         { key: 'username', label: 'کاربر' },
         { key: 'description', label: 'توضیحات', render: v => (v || '').substring(0, 80) },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
-        { key: 'event_id', label: 'عملیات', render: (v, r) => r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" onclick="maResolveSecurity('${v}')">بررسی شد</button>` : '—' },
+        { key: 'event_id', label: 'عملیات', render: (v, r) => r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="resolveSecurity" data-ma-id="${v}">بررسی شد</button>` : '—' },
       ];
       renderTable(container, cols, res.data, 'رویداد امنیتی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSecurity);
@@ -462,9 +506,300 @@
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری عملیات</div></div>'; }
   }
 
+  // ── Tickets ─────────────────────────────────────────────
+  const TICKET_STATUS_MAP = {
+    new: { label: 'جدید', cls: 'info' },
+    open: { label: 'باز', cls: 'warning' },
+    in_progress: { label: 'در حال بررسی', cls: 'info' },
+    waiting_for_user: { label: 'در انتظار کاربر', cls: 'purple' },
+    waiting_for_support: { label: 'در انتظار پشتیبانی', cls: 'warning' },
+    resolved: { label: 'حل‌شده', cls: 'success' },
+    closed: { label: 'بسته‌شده', cls: 'neutral' },
+  };
+  const TICKET_PRIORITY_MAP = {
+    low: { label: 'کم', cls: 'neutral' },
+    normal: { label: 'عادی', cls: 'info' },
+    high: { label: 'زیاد', cls: 'warning' },
+    urgent: { label: 'فوری', cls: 'critical' },
+  };
+
+  function ticketBadge(val, map) {
+    const s = map[String(val).toLowerCase()] || { label: val, cls: 'neutral' };
+    return `<span class="ma-badge ma-badge--${s.cls}">${s.label}</span>`;
+  }
+
+  async function loadTicketStats() {
+    const el = document.getElementById('maTicketStats');
+    if (!el) return;
+    try {
+      const res = await api('/tickets/stats');
+      const s = res.data;
+      const openTotal = s.open || 0;
+      el.innerHTML = `
+        <div class="ma-top-cards-row" style="margin-bottom:16px">
+          <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#a1c4fd,#c2e9fb)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🎫</div></div><div class="ma-glow-card__label">کل تیکت‌ها</div><div class="ma-glow-card__value">${s.total || 0}</div></div></div>
+          <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#f093fb,#f5576c)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">📬</div></div><div class="ma-glow-card__label">تیکت‌های باز</div><div class="ma-glow-card__value">${openTotal}</div></div></div>
+          <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#11998e,#38ef7d)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">✅</div></div><div class="ma-glow-card__label">حل‌شده</div><div class="ma-glow-card__value">${(s.by_status && s.by_status.resolved) || 0}</div></div></div>
+          <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#ff9a9e,#fad0c4)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🔴</div></div><div class="ma-glow-card__label">فوری</div><div class="ma-glow-card__value">${(s.by_priority && s.by_priority.urgent) || 0}</div></div></div>
+        </div>`;
+    } catch (e) { /* toast shown */ }
+  }
+
+  async function loadTickets() {
+    const container = document.getElementById('maTicketTable');
+    const pagEl = document.getElementById('maTicketPagination');
+    if (!container) return;
+    await loadTicketStats();
+    const searchEl = document.getElementById('ticketFilterSearch');
+    const statusEl = document.getElementById('ticketFilterStatus');
+    const priorityEl = document.getElementById('ticketFilterPriority');
+    const sortEl = document.getElementById('ticketFilterSort');
+    const params = new URLSearchParams({ page: state.page, per_page: 20 });
+    if (state.filters.ticket_search) params.set('search', state.filters.ticket_search);
+    if (state.filters.ticket_status) params.set('status', state.filters.ticket_status);
+    if (state.filters.ticket_priority) params.set('priority', state.filters.ticket_priority);
+    if (state.filters.ticket_sort) params.set('sort', state.filters.ticket_sort);
+    try {
+      const res = await api(`/tickets?${params}`);
+      const items = res.data.items || [];
+      if (!items.length) {
+        container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">📭</div><div class="ma-empty__text">تیکتی موجود نیست</div></div>';
+        if (pagEl) pagEl.innerHTML = '';
+        return;
+      }
+      let html = '<div class="ma-table__scroll"><table class="ma-table"><thead><tr>';
+      html += '<th>شماره</th><th>موضوع</th><th>درخواست‌کننده</th><th>گیرنده</th><th>وضعیت</th><th>اولویت</th><th>تاریخ</th><th>عملیات</th>';
+      html += '</tr></thead><tbody>';
+      items.forEach(t => {
+        const time = t.created_at ? new Date(t.created_at).toLocaleDateString('fa-IR') : '—';
+        html += `<tr>
+          <td><code style="font-size:.75rem">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')}</code></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(t.subject||'').replace(/"/g,'&quot;')}">${t.subject || '—'}</td>
+          <td>${t.requester_username || '—'}</td>
+          <td>${t.recipient_username || '—'}</td>
+          <td>${ticketBadge(t.status, TICKET_STATUS_MAP)}</td>
+          <td>${ticketBadge(t.priority, TICKET_PRIORITY_MAP)}</td>
+          <td style="font-size:.75rem">${time}</td>
+          <td>
+            <a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" data-ma-action="viewTicket" data-ma-id="${t.id}">مشاهده</a>
+            <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteTicket" data-ma-id="${t.id}">حذف</button>
+          </td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+      container.querySelectorAll('[data-ma-action]').forEach(btn => {
+        btn.addEventListener('click', handleMaAction);
+      });
+      renderPagination(pagEl, res.data.total, res.data.pages, loadTickets);
+    } catch (e) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری تیکت‌ها</div></div>';
+    }
+  }
+
+  window.maApplyTicketFilters = function() {
+    const searchEl = document.getElementById('ticketFilterSearch');
+    const statusEl = document.getElementById('ticketFilterStatus');
+    const priorityEl = document.getElementById('ticketFilterPriority');
+    const sortEl = document.getElementById('ticketFilterSort');
+    state.filters.ticket_search = searchEl ? searchEl.value : '';
+    state.filters.ticket_status = statusEl ? statusEl.value : '';
+    state.filters.ticket_priority = priorityEl ? priorityEl.value : '';
+    state.filters.ticket_sort = sortEl ? sortEl.value : '';
+    state.page = 1;
+    loadTickets();
+  };
+
+  window.ma_viewTicket = function(id) {
+    window.location.href = '/master-admin/ticket-detail?t=' + id;
+  };
+
+  window.ma_deleteTicket = async function(id) {
+    const yes = await maConfirm({ title: 'حذف تیکت', msg: 'آیا از حذف این تیکت اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    await api(`/tickets/${id}`, { method: 'DELETE' });
+    showToast('تیکت حذف شد');
+    loadTickets();
+  };
+
+  // ── Ticket Detail ───────────────────────────────────────
+  async function loadTicketDetail() {
+    const container = document.getElementById('maTicketDetail');
+    if (!container) return;
+    const ticketId = new URLSearchParams(window.location.search).get('t') || window.__maViewTicket;
+    if (!ticketId) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">🎫</div><div class="ma-empty__text">شناسه تیکت مشخص نشده</div></div>';
+      return;
+    }
+    try {
+      const res = await api(`/tickets/${ticketId}`);
+      const t = res.data;
+      const usersRes = await api('/tickets/users/all');
+      const users = usersRes.data || [];
+      const categoriesRes = await api('/tickets/categories/all');
+      const categories = categoriesRes.data || [];
+
+      const statusOpts = Object.entries(TICKET_STATUS_MAP).map(([k,v]) => `<option value="${k}" ${t.status===k?'selected':''}>${v.label}</option>`).join('');
+      const priorityOpts = Object.entries(TICKET_PRIORITY_MAP).map(([k,v]) => `<option value="${k}" ${t.priority===k?'selected':''}>${v.label}</option>`).join('');
+      const assigneeOpts = `<option value="">بدون واگذاری</option>` + users.map(u => `<option value="${u.username}" ${t.assigned_to===u.username?'selected':''}>${u.name || u.username} — ${u.department || ''}</option>`).join('');
+      const catOpts = `<option value="">بدون دسته</option>` + categories.map(c => `<option value="${c.id}" ${t.category_id==c.id?'selected':''}>${c.name}</option>`).join('');
+
+      let html = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <a href="/master-admin/tickets" class="ma-btn ma-btn--ghost" style="font-size:0.82rem">← بازگشت به تیکت‌ها</a>
+          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')} — ${t.subject}</h2>
+          ${ticketBadge(t.status, TICKET_STATUS_MAP)} ${ticketBadge(t.priority, TICKET_PRIORITY_MAP)}
+        </div>
+        <div class="ma-grid-2" style="margin-bottom:20px">
+          <div class="ma-panel-card">
+            <div class="ma-panel-card__header"><div class="ma-panel-card__title">📋 اطلاعات تیکت</div></div>
+            <div class="ma-panel-card__body">
+              <table style="width:100%;font-size:0.82rem;border-collapse:collapse">
+                <tr><td style="padding:6px 0;color:#64748b;width:140px">شماره</td><td style="padding:6px 0;font-weight:600">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">موضوع</td><td style="padding:6px 0">${t.subject}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">درخواست‌کننده</td><td style="padding:6px 0">${t.requester_username}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">گیرنده</td><td style="padding:6px 0">${t.recipient_username}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">واگذار شده به</td><td style="padding:6px 0">${t.assigned_to || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">دسته‌بندی</td><td style="padding:6px 0">${t.category_name || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">تاریخ ایجاد</td><td style="padding:6px 0">${t.created_at ? new Date(t.created_at).toLocaleString('fa-IR') : '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">آخرین به‌روزرسانی</td><td style="padding:6px 0">${t.updated_at ? new Date(t.updated_at).toLocaleString('fa-IR') : '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">آخرین پیام</td><td style="padding:6px 0">${t.last_message_at ? new Date(t.last_message_at).toLocaleString('fa-IR') : '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">SLA</td><td style="padding:6px 0">${t.sla_due_at ? new Date(t.sla_due_at).toLocaleString('fa-IR') : '—'} ${t.sla_state === 'overdue' ? '<span style="color:#dc2626;font-weight:700"> — سررسید گذشته</span>' : ''}</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="ma-panel-card">
+            <div class="ma-panel-card__header"><div class="ma-panel-card__title">⚙️ مدیریت تیکت</div></div>
+            <div class="ma-panel-card__body">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <label style="font-size:.82rem;font-weight:600;color:#415466">وضعیت</label>
+                <select id="maTicketStatus" class="ma-filter" style="width:100%">${statusOpts}</select>
+                <label style="font-size:.82rem;font-weight:600;color:#415466">اولویت</label>
+                <select id="maTicketPriority" class="ma-filter" style="width:100%">${priorityOpts}</select>
+                <label style="font-size:.82rem;font-weight:600;color:#415466">واگذاری به</label>
+                <select id="maTicketAssignee" class="ma-filter" style="width:100%">${assigneeOpts}</select>
+                <label style="font-size:.82rem;font-weight:600;color:#415466">دسته‌بندی</label>
+                <select id="maTicketCategory" class="ma-filter" style="width:100%">${catOpts}</select>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="ma-btn ma-btn--primary" onclick="maSaveTicketChanges(${t.id})">ذخیره تغییرات</button>
+                  <button class="ma-btn ma-btn--danger" onclick="maDeleteTicketFromDetail(${t.id})">حذف تیکت</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      // Messages
+      html += `<div class="ma-panel-card" style="margin-bottom:20px">
+        <div class="ma-panel-card__header"><div class="ma-panel-card__title">💬 پیام‌ها (${(t.messages||[]).length})</div></div>
+        <div class="ma-panel-card__body" style="max-height:400px;overflow-y:auto">`;
+      if (t.messages && t.messages.length) {
+        t.messages.forEach(m => {
+          const isInternal = m.visibility === 'internal';
+          const time = m.created_at ? new Date(m.created_at).toLocaleString('fa-IR') : '';
+          const borderStyle = isInternal ? 'border-right:3px solid #f59e0b;background:#fffbeb' : '';
+          html += `<div style="padding:12px;margin-bottom:10px;border-radius:10px;border:1px solid #e4e7ec;${borderStyle}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <div>
+                <strong style="font-size:.85rem">${m.author_username}</strong>
+                ${isInternal ? '<span class="ma-badge ma-badge--warning" style="margin-right:6px;font-size:.65rem">یادداشت داخلی</span>' : ''}
+              </div>
+              <span style="font-size:.72rem;color:#94a3b8">${time}</span>
+            </div>
+            <div style="font-size:.85rem;color:#334155;line-height:1.7;white-space:pre-wrap">${m.body}</div>
+          </div>`;
+        });
+      } else {
+        html += '<div class="ma-empty" style="padding:20px"><div class="ma-empty__text">هنوز پیامی ارسال نشده</div></div>';
+      }
+      html += `</div></div>`;
+
+      // Reply form
+      html += `
+        <div class="ma-panel-card" style="margin-bottom:20px">
+          <div class="ma-panel-card__header"><div class="ma-panel-card__title">✏️ ارسال پاسخ</div></div>
+          <div class="ma-panel-card__body">
+            <textarea id="maTicketReplyBody" class="ma-filter" style="width:100%;min-height:100px;resize:vertical" placeholder="متن پاسخ..."></textarea>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+              <label style="font-size:.82rem;display:flex;align-items:center;gap:4px;cursor:pointer">
+                <input type="checkbox" id="maTicketReplyInternal"> یادداشت داخلی (فقط مدیران)
+              </label>
+              <button class="ma-btn ma-btn--primary" onclick="maSendTicketReply(${t.id})">ارسال پاسخ</button>
+            </div>
+          </div>
+        </div>`;
+
+      // Audit events
+      if (t.events && t.events.length) {
+        html += `<div class="ma-panel-card">
+          <div class="ma-panel-card__header"><div class="ma-panel-card__title">📋 تاریخچه رویدادها</div></div>
+          <div class="ma-panel-card__body" style="max-height:250px;overflow-y:auto">
+            <div class="ma-timeline">`;
+        t.events.forEach(e => {
+          const time = e.created_at ? new Date(e.created_at).toLocaleString('fa-IR') : '';
+          let meta = '';
+          if (e.metadata && typeof e.metadata === 'object') {
+            meta = Object.entries(e.metadata).map(([k,v]) => `${k}: ${v}`).join(', ');
+          }
+          html += `<div class="ma-timeline__item">
+            <div class="ma-timeline__dot ma-timeline__dot--success"></div>
+            <div class="ma-timeline__time">${time}</div>
+            <div class="ma-timeline__text"><strong>${e.actor_username}</strong> ${e.event_type}</div>
+            <div class="ma-timeline__meta">${meta}</div>
+          </div>`;
+        });
+        html += `</div></div></div>`;
+      }
+
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری تیکت</div></div>';
+    }
+  }
+
+  window.maSaveTicketChanges = async function(ticketId) {
+    const status = document.getElementById('maTicketStatus').value;
+    const priority = document.getElementById('maTicketPriority').value;
+    const assigned_to = document.getElementById('maTicketAssignee').value || null;
+    const category_id = document.getElementById('maTicketCategory').value ? parseInt(document.getElementById('maTicketCategory').value) : null;
+    try {
+      await api(`/tickets/${ticketId}`, {
+        method: 'PATCH',
+        body: { status, priority, assigned_to, category_id }
+      });
+      showToast('تیکت به‌روزرسانی شد');
+      loadTicketDetail();
+    } catch (e) { /* toast shown */ }
+  };
+
+  window.maDeleteTicketFromDetail = async function(ticketId) {
+    const yes = await maConfirm({ title: 'حذف تیکت', msg: 'آیا از حذف این تیکت اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    await api(`/tickets/${ticketId}`, { method: 'DELETE' });
+    showToast('تیکت حذف شد');
+    window.location.href = '/master-admin/tickets';
+  };
+
+  window.maSendTicketReply = async function(ticketId) {
+    const bodyEl = document.getElementById('maTicketReplyBody');
+    const internalEl = document.getElementById('maTicketReplyInternal');
+    const body = bodyEl ? bodyEl.value.trim() : '';
+    if (!body) { showToast('لطفاً متن پاسخ را وارد کنید', 'error'); return; }
+    const visibility = internalEl && internalEl.checked ? 'internal' : 'public';
+    try {
+      await api(`/tickets/${ticketId}/reply`, {
+        method: 'POST',
+        body: { body, visibility }
+      });
+      showToast('پاسخ ارسال شد');
+      loadTicketDetail();
+    } catch (e) { /* toast shown */ }
+  };
+
   // ── Global Actions ───────────────────────────────────────
   window.maTerminateSession = async function (key) {
-    if (!confirm('آیا از خاتمه این نشست اطمینان دارید؟')) return;
+    const yes = await maConfirm({ title: 'خاتمه نشست', msg: 'آیا از خاتمه این نشست اطمینان دارید؟', confirmText: 'خاتمه یابد', type: 'danger' });
+    if (!yes) return;
     await api(`/sessions/${key}/terminate`, { method: 'POST' });
     showToast('نشست خاتمه یافت');
     loadSessions();
@@ -479,7 +814,8 @@
   };
 
   window.maRejectReset = async function (id) {
-    if (!confirm('آیا از رد این درخواست اطمینان دارید؟')) return;
+    const yes = await maConfirm({ title: 'رد درخواست بازیابی', msg: 'آیا از رد این درخواست اطمینان دارید؟', confirmText: 'رد شود', type: 'danger' });
+    if (!yes) return;
     await api(`/password-resets/${id}/reject`, { method: 'POST' });
     showToast('درخواست رد شد');
     loadPasswordResets();
@@ -502,6 +838,8 @@
     security: loadSecurity,
     errors: loadErrors,
     'admin-actions': loadAdminActions,
+    tickets: loadTickets,
+    'ticket-detail': loadTicketDetail,
   };
 
   // ── Expose filter setter for inline onclick handlers ─────
@@ -554,3 +892,74 @@ document.addEventListener('click', function(e) {
     dd.classList.remove('is-open');
   }
 });
+
+// ── Profile Panel ────────────────────────────────────────
+function openMaProfilePanel(panelType) {
+  var dd = document.getElementById('maProfileDropdown');
+  if (dd) dd.classList.remove('is-open');
+  var overlay = document.getElementById('profilePanelOverlay');
+  var panel = document.getElementById('profilePanel');
+  var title = document.getElementById('profilePanelTitle');
+  var subtitle = document.getElementById('profilePanelSubtitle');
+  var body = document.getElementById('profilePanelBody');
+  if (!overlay || !panel) return;
+  var configs = {
+    profile: { title: 'پروفایل من', subtitle: 'اطلاعات حساب کاربری', content: '<div style="padding:20px;text-align:center;color:#64748b">پروفایل در حال بارگذاری...</div>' },
+    security: { title: 'امنیت و رمز عبور', subtitle: 'تنظیمات حفاظت از حساب', content: '<div style="padding:20px;text-align:center;color:#64748b">امنیت در حال بارگذاری...</div>' },
+    subscription: { title: 'اشتراک من', subtitle: 'وضعیت اشتراک', content: '<div style="padding:20px;text-align:center;color:#64748b">اشتراک در حال بارگذاری...</div>' },
+    billing: { title: 'فاکتورها', subtitle: 'تاریخچه پرداخت', content: '<div style="padding:20px;text-align:center;color:#64748b">فاکتورها در حال بارگذاری...</div>' },
+    support: { title: 'پشتیبانی فنی', subtitle: 'ارسال درخواست', content: '<div style="padding:20px;text-align:center;color:#64748b">پشتیبانی در حال بارگذاری...</div>' },
+    settings: { title: 'تنظیمات', subtitle: 'تنظیمات سامانه', content: '<div style="padding:20px;text-align:center;color:#64748b">تنظیمات در حال بارگذاری...</div>' }
+  };
+  var cfg = configs[panelType];
+  if (!cfg) return;
+  if (title) title.textContent = cfg.title;
+  if (subtitle) subtitle.textContent = cfg.subtitle;
+  if (body) body.innerHTML = cfg.content;
+  overlay.hidden = false;
+  panel.hidden = false;
+  requestAnimationFrame(function() {
+    overlay.classList.add('open');
+    panel.classList.add('open');
+  });
+}
+function closeMaProfilePanel() {
+  var overlay = document.getElementById('profilePanelOverlay');
+  var panel = document.getElementById('profilePanel');
+  if (overlay) overlay.classList.remove('open');
+  if (panel) panel.classList.remove('open');
+  setTimeout(function() {
+    if (overlay) overlay.hidden = true;
+    if (panel) panel.hidden = true;
+  }, 250);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-panel]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openMaProfilePanel(this.getAttribute('data-panel'));
+    });
+  });
+  var overlay = document.getElementById('profilePanelOverlay');
+  if (overlay) overlay.addEventListener('click', closeMaProfilePanel);
+});
+
+// ── Event Delegation Handlers (جایگزین onclick inline) ──
+window.ma_viewUser = function(id) {
+  window.__maViewUser(id);
+};
+window.ma_terminateSession = async function(key) {
+  if (typeof window.maTerminateSession === 'function') window.maTerminateSession(key);
+};
+window.ma_approveReset = async function(id) {
+  if (typeof window.maApproveReset === 'function') window.maApproveReset(id);
+};
+window.ma_rejectReset = async function(id) {
+  if (typeof window.maRejectReset === 'function') window.maRejectReset(id);
+};
+window.ma_resolveSecurity = async function(id) {
+  if (typeof window.maResolveSecurity === 'function') window.maResolveSecurity(id);
+};
+window.ma_viewTicket = function(id) {
+  window.location.href = '/master-admin/ticket-detail?t=' + id;
+};

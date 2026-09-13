@@ -321,3 +321,97 @@ async def reset_password(request: Request):
                 conn.close()
             except Exception:
                 pass
+
+
+# ── Public Support Ticket (Anonymous) ────────────────────────
+
+@router.post("/public/support-ticket")
+async def public_support_ticket(request: Request):
+    """
+    Allow anonymous users (not logged in) to send a support ticket
+    to the master admin requesting account recovery (forgot username+password).
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"success": False, "message": "داده نامعتبر."}, status_code=400)
+
+    full_name = (body.get("full_name") or "").strip()
+    phone = (body.get("phone") or "").strip()
+    description = (body.get("description") or "").strip()
+
+    if not full_name:
+        return JSONResponse({"success": False, "message": "لطفاً نام و نام خانوادگی را وارد کنید."}, status_code=400)
+    if not phone:
+        return JSONResponse({"success": False, "message": "لطفاً شماره تماس را وارد کنید."}, status_code=400)
+    if len(full_name) > 200:
+        return JSONResponse({"success": False, "message": "نام بیش از حد طولانی است."}, status_code=400)
+    if len(phone) > 20:
+        return JSONResponse({"success": False, "message": "شماره تماس نامعتبر است."}, status_code=400)
+    if len(description) > 2000:
+        return JSONResponse({"success": False, "message": "توضیحات بیش از حد طولانی است."}, status_code=400)
+
+    # Rate limit: max 3 tickets per IP per hour
+    ip = request.client.host if request.client else "unknown"
+    try:
+        from app.services.ticketing import get_connection
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT COUNT(*) FROM ticket_messages m
+            JOIN tickets t ON t.id = m.ticket_id
+            WHERE m.body LIKE ? AND t.requester_username = '__anonymous__'
+              AND t.created_at > DATEADD(HOUR, -1, GETDATE())
+        """, (f"%[{ip}]%",))
+        count = cur.fetchone()[0]
+        conn.close()
+        if count >= 3:
+            return JSONResponse({"success": False, "message": "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً تلاش کنید."}, status_code=429)
+    except Exception:
+        pass  # If rate limit check fails, allow the request
+
+    subject = f"درخواست بازیابی اطلاعات ورود - {full_name}"
+    ticket_body = (
+        f"کاربر به صورت ناشناس درخواست ایجاد نام کاربری و رمز عبور جدید ارسال کرده است.\n\n"
+        f"**نام و نام خانوادگی:** {full_name}\n"
+        f"**شماره تماس:** {phone}\n"
+    )
+    if description:
+        ticket_body += f"**توضیحات کاربر:**\n{description}\n"
+    ticket_body += (
+        f"\n---\n"
+        f"📍 **آی‌پی درخواست‌دهنده:** {ip}\n"
+        f"🕐 **زمان درخواست:** {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        f"⚠️ این کاربر نام کاربری و رمز عبور خود را فراموش کرده و امکان استفاده از بازیابی رمز عبور را ندارد. "
+        f"لطفاً پس از بر هویت، نام کاربری و رمز عبور جدیدی برای ایشان ایجاد کنید."
+    )
+
+    try:
+        from app.services.ticketing import TicketService
+        with TicketService() as svc:
+            result = svc.create_ticket(
+                actor="__anonymous__",
+                is_admin=False,
+                recipient_username="ali",
+                subject=subject,
+                body=ticket_body,
+                priority="high",
+            )
+            ticket_id = result.get("id")
+
+        from app.services.audit import log_event
+        log_event(
+            event_type="SUPPORT", action="anonymous_ticket_created",
+            username="__anonymous__", module="support",
+            status="success", severity="low",
+            ip_address=ip, user_agent=_user_agent(request),
+        )
+
+        return JSONResponse({
+            "success": True,
+            "message": "درخواست شما با موفقیت ثبت شد. مدیر سامانه در اسرع وقت با شما تماس خواهد گرفت.",
+            "ticket_id": ticket_id,
+        })
+    except Exception as e:
+        logger.error(f"Public support ticket error: {e}")
+        return JSONResponse({"success": False, "message": "خطا در ثبت درخواست. لطفاً دوباره تلاش کنید."}, status_code=500)

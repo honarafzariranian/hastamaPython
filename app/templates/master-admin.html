@@ -6,6 +6,7 @@
     <title>مرکز کنترل اصلی — هستما</title>
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/master-admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
@@ -14,17 +15,42 @@
 <body data-section="{{ active_section }}" data-notification-role="admin" data-notification-actor="{{ username }}">
     <div class="ma-page-shell">
 
-        <!-- هدر شناور سبک ادمین -->
-        <header class="admin-topbar-modern ma-topbar">
-            <div class="topbar-actions">
-                <div class="topbar-clock-pill" id="maClockBadge">
+        <!-- هدر چسبان — باکس هدر مستر ادمین -->
+        <header class="topbar admin-topbar-modern ma-header-box">
+            <div class="ma-header-left">
+                <button type="button" class="ma-hamburger" id="maHamburger" aria-label="باز کردن منو">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+
+                <div class="sidebar-top-card ma-header-brand">
+                    <div class="sidebar-top-card-content">
+                        <div class="sidebar-top-card-mark">
+                            <img src="/static/images/newlogo.png" alt="لوگوی هستما" class="sidebar-top-card-image">
+                        </div>
+                        <div class="sidebar-top-card-text">
+                            <span class="sidebar-top-card-title">مرکز کنترل اصلی</span>
+                            <span class="sidebar-top-card-sub">Master Admin Panel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="topbar-actions ma-header-actions">
+                <div class="topbar-clock-pill" id="maClockBadge" aria-live="polite">
                     <span class="topbar-clock-date" id="maClockDate">--</span>
                     <span class="topbar-clock-time" id="maClockTime">--:--</span>
                 </div>
-                <div class="topbar-icon-btn theme-toggle" data-action="toggle-theme" role="button" tabindex="0">
-                    <svg class="theme-toggle-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <svg class="theme-toggle-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+
+                <div class="topbar-icon-btn theme-toggle" id="themeToggleButton" data-action="toggle-theme" role="button" tabindex="0" aria-label="تاریک کردن تم" title="تاریک کردن تم" aria-pressed="false">
+                    <svg class="theme-toggle-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M21 12.79C20.55 12.93 20.08 13 19.59 13C15.59 13 12.29 9.7 12.29 5.7C12.29 5.21 12.36 4.74 12.5 4.29C9.21 4.84 6.82 7.83 6.82 11.32C6.82 15.14 10.17 18.49 14 18.49C17.49 18.49 20.48 16.1 21.03 12.81C21.02 12.81 21.01 12.79 21 12.79Z" fill="currentColor"></path>
+                    </svg>
+                    <svg class="theme-toggle-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"></circle>
+                        <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                    </svg>
                 </div>
+
                 <div class="topbar-user" id="maProfileButton" onclick="toggleMaProfileDropdown(event)">
                     <div class="topbar-avatar-wrap">
                         <img class="topbar-avatar" src="/static/images/user.png" alt="پروفایل مدیر اصلی">
@@ -36,36 +62,82 @@
                     <svg class="chevron-icon" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 
                     <div class="profile-dropdown" id="maProfileDropdown">
-                        <a href="/admin/dashboard" class="dropdown-item" style="text-decoration:none;">
-                            <span style="font-size:1.2rem;">🏠</span>
-                            <span>بازگشت به پنل مدیریت</span>
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="/login" class="dropdown-item" style="text-decoration:none;">
-                            <span style="font-size:1.2rem;">🚪</span>
-                            <span>خروج از سامانه</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
+                        <div class="pd-header">
+                            <div class="pd-header__avatar">
+                                <img src="/static/images/user.png" alt="پروفایل">
+                                <span class="pd-header__status"></span>
+                            </div>
+                            <div class="pd-header__info">
+                                <div class="pd-header__name">{{ username }}</div>
+                                <div class="pd-header__role">مدیر اصلی</div>
+                            </div>
+                        </div>
 
-            <div class="topbar-actions">
-                <div class="topbar-user" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;box-shadow:0 4px 16px rgba(102,126,234,.35);">
-                    <div class="topbar-avatar-wrap">
-                        <img class="topbar-avatar" src="/static/images/newlogo.png" alt="لوگوی هستما" style="border:none;background:rgba(255,255,255,.15);">
+                        <div class="pd-section">
+                            <div class="pd-section__label">حساب کاربری</div>
+                            <button type="button" class="pd-item" data-panel="profile">
+                                <span class="pd-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                                <span class="pd-item__text">پروفایل من</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="security">
+                                <span class="pd-item__icon pd-item__icon--green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                                <span class="pd-item__text">امنیت و رمز عبور</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">مالی و اشتراک</div>
+                            <button type="button" class="pd-item" data-panel="subscription">
+                                <span class="pd-item__icon pd-item__icon--purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+                                <span class="pd-item__text">اشتراک من</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="billing">
+                                <span class="pd-item__icon pd-item__icon--amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+                                <span class="pd-item__text">فاکتورها و پرداخت</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">پشتیبانی و تنظیمات</div>
+                            <button type="button" class="pd-item" data-panel="support">
+                                <span class="pd-item__icon pd-item__icon--cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                                <span class="pd-item__text">پشتیبانی فنی</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                            <button type="button" class="pd-item" data-panel="settings">
+                                <span class="pd-item__icon pd-item__icon--slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                                <span class="pd-item__text">تنظیمات سامانه</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <a href="/training/lesson/admin-dashboard" class="pd-item pd-item--link">
+                                <span class="pd-item__icon pd-item__icon--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                                <span class="pd-item__text">آموزش این صفحه</span>
+                                <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                            </a>
+                        </div>
                     </div>
-                    <div class="topbar-user-info">
-                        <span class="topbar-user-name" style="color:#fff;">مرکز کنترل اصلی</span>
-                        <span class="topbar-user-role" style="color:rgba(255,255,255,.8);">Master Admin Panel</span>
+
+                    <div class="profile-panel-overlay" id="profilePanelOverlay" hidden></div>
+                    <div class="profile-panel" id="profilePanel" hidden>
+                        <div class="profile-panel-header">
+                            <button type="button" class="profile-panel-close" onclick="closeMaProfilePanel()" aria-label="بستن پنل">×</button>
+                            <div>
+                                <h3 class="profile-panel-title" id="profilePanelTitle">پنل کاربری</h3>
+                                <p class="profile-panel-subtitle" id="profilePanelSubtitle">جزئیات مورد نیاز</p>
+                            </div>
+                        </div>
+                        <div class="profile-panel-body" id="profilePanelBody"></div>
                     </div>
                 </div>
             </div>
         </header>
-
-        <!-- دکمه همبرگری موبایل -->
-        <button type="button" class="ma-hamburger" id="maHamburger" aria-label="باز کردن منو">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-        </button>
 
         <!-- اورلی موبایل -->
         <div class="ma-sidebar-overlay" id="maSidebarOverlay"></div>
@@ -75,45 +147,55 @@
             <aside class="sidebar-right rightSidebar ma-sidebar-right" id="mainSidebar">
                 <button type="button" class="mobile-sidebar-close" id="maSidebarClose" aria-label="بستن منو">×</button>
 
-                <div class="icon-container {{ 'active' if active_section == 'dashboard' }}" onclick="window.location.href='/master-admin/dashboard'">
+                <a href="/master-admin/dashboard" class="icon-container {{ 'active' if active_section == 'dashboard' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     <span class="icon-label">داشبورد</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'users' }}" onclick="window.location.href='/master-admin/users'">
+                <a href="/master-admin/users" class="icon-container {{ 'active' if active_section == 'users' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/></svg>
                     <span class="icon-label">کاربران</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'sessions' }}" onclick="window.location.href='/master-admin/sessions'">
+                <a href="/master-admin/sessions" class="icon-container {{ 'active' if active_section == 'sessions' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                     <span class="icon-label">نشست‌ها</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'password-resets' }}" onclick="window.location.href='/master-admin/password-resets'">
+                <a href="/master-admin/password-resets" class="icon-container {{ 'active' if active_section == 'password-resets' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <span class="icon-label">بازیابی رمز</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'audit-logs' }}" onclick="window.location.href='/master-admin/audit-logs'">
+                <a href="/master-admin/audit-logs" class="icon-container {{ 'active' if active_section == 'audit-logs' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
                     <span class="icon-label">لاگ حسابرسی</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'security' }}" onclick="window.location.href='/master-admin/security'">
+                <a href="/master-admin/security" class="icon-container {{ 'active' if active_section == 'security' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span class="icon-label">امنیت</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'errors' }}" onclick="window.location.href='/master-admin/errors'">
+                <a href="/master-admin/errors" class="icon-container {{ 'active' if active_section == 'errors' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
                     <span class="icon-label">خطاها</span>
-                </div>
+                </a>
 
-                <div class="icon-container {{ 'active' if active_section == 'admin-actions' }}" onclick="window.location.href='/master-admin/admin-actions'">
+                <a href="/master-admin/tickets" class="icon-container {{ 'active' if active_section == 'tickets' or active_section == 'ticket-detail' }}" style="text-decoration:none;color:inherit;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                    <span class="icon-label">تیکت‌ها</span>
+                </a>
+
+                <a href="/master-admin/admin-actions" class="icon-container {{ 'active' if active_section == 'admin-actions' }}" style="text-decoration:none;color:inherit;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     <span class="icon-label">عملیات مدیریتی</span>
-                </div>
+                </a>
+
+                <a href="/logout" class="icon-container ma-logout-item" style="text-decoration:none;color:inherit;" title="خروج از سامانه">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+                    <span class="icon-label">خروج</span>
+                </a>
 
             </aside>
         </div>
@@ -125,11 +207,11 @@
             {% if active_section == 'dashboard' %}
                 {# ── Dashboard ── #}
                 <div class="ma-top-cards-row" id="maStats">
-                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#667eea,#764ba2)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">👥</div></div><div class="ma-skeleton" style="height:28px;width:60px;margin:4px 0"></div><div class="ma-skeleton" style="height:12px;width:80px"></div></div></div>
-                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#11998e,#38ef7d)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🟢</div></div><div class="ma-skeleton" style="height:28px;width:60px;margin:4px 0"></div><div class="ma-skeleton" style="height:12px;width:80px"></div></div></div>
-                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#4facfe,#00f2fe)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🔗</div></div><div class="ma-skeleton" style="height:28px;width:60px;margin:4px 0"></div><div class="ma-skeleton" style="height:12px;width:80px"></div></div></div>
-                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#43e97b,#38f9d7)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🔑</div></div><div class="ma-skeleton" style="height:28px;width:60px;margin:4px 0"></div><div class="ma-skeleton" style="height:12px;width:80px"></div></div></div>
-                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#f093fb,#f5576c)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">⚠️</div></div><div class="ma-skeleton" style="height:28px;width:60px;margin:4px 0"></div><div class="ma-skeleton" style="height:12px;width:80px"></div></div></div>
+                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#667eea,#764ba2)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">👥</div></div><div class="ma-glow-card__label">کل کاربران</div><div class="ma-glow-card__value ma-skeleton" style="width:64px;height:28px"></div></div></div>
+                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#11998e,#38ef7d)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🟢</div></div><div class="ma-glow-card__label">آنلاین</div><div class="ma-glow-card__value ma-skeleton" style="width:48px;height:28px"></div></div></div>
+                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#4facfe,#00f2fe)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🔗</div></div><div class="ma-glow-card__label">نشست فعال</div><div class="ma-glow-card__value ma-skeleton" style="width:48px;height:28px"></div></div></div>
+                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#43e97b,#38f9d7)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">🔑</div></div><div class="ma-glow-card__label">درخواست بازیابی</div><div class="ma-glow-card__value ma-skeleton" style="width:48px;height:28px"></div></div></div>
+                    <div class="ma-glow-card" style="--card-gradient:linear-gradient(135deg,#f093fb,#f5576c)"><div class="ma-glow-card__content"><div class="ma-glow-card__top"><div class="ma-glow-card__icon">⚠️</div></div><div class="ma-glow-card__label">رویداد امنیتی</div><div class="ma-glow-card__value ma-skeleton" style="width:48px;height:28px"></div></div></div>
                 </div>
 
                 <div class="ma-grid-2">
@@ -146,13 +228,49 @@
                             <div class="ma-panel-card__title">⚡ دسترسی سریع</div>
                         </div>
                         <div class="ma-panel-card__body">
-                            <div style="display:flex;flex-direction:column;gap:8px;">
-                                <a href="/master-admin/password-resets" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">🔑 درخواست‌های بازیابی رمز</a>
-                                <a href="/master-admin/security" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">🛡️ رویدادهای امنیتی</a>
-                                <a href="/master-admin/errors" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">🐛 خطاهای سیستم</a>
-                                <a href="/master-admin/sessions" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">🔗 نشست‌های فعال</a>
-                                <a href="/master-admin/audit-logs" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">📋 لاگ حسابرسی</a>
-                                <a href="/master-admin/users" class="ma-btn ma-btn--ghost" style="justify-content:flex-start">👥 مدیریت کاربران</a>
+                            <div class="ma-quick-grid">
+                                <a href="/master-admin/tickets" class="ma-qcard" style="--accent:#0ea5e9;--accent-bg:rgba(14,165,233,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">مدیریت تیکت‌ها</span>
+                                </a>
+                                <a href="/master-admin/password-resets" class="ma-qcard" style="--accent:#f59e0b;--accent-bg:rgba(245,158,11,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">بازیابی رمز</span>
+                                </a>
+                                <a href="/master-admin/security" class="ma-qcard" style="--accent:#10b981;--accent-bg:rgba(16,185,129,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">رویدادهای امنیتی</span>
+                                </a>
+                                <a href="/master-admin/errors" class="ma-qcard" style="--accent:#ef4444;--accent-bg:rgba(239,68,68,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">خطاهای سیستم</span>
+                                </a>
+                                <a href="/master-admin/sessions" class="ma-qcard" style="--accent:#8b5cf6;--accent-bg:rgba(139,92,246,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">نشست‌های فعال</span>
+                                </a>
+                                <a href="/master-admin/audit-logs" class="ma-qcard" style="--accent:#06b6d4;--accent-bg:rgba(6,182,212,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">لاگ حسابرسی</span>
+                                </a>
+                                <a href="/master-admin/users" class="ma-qcard" style="--accent:#ec4899;--accent-bg:rgba(236,72,153,.1)">
+                                    <div class="ma-qcard__icon">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </div>
+                                    <span class="ma-qcard__label">مدیریت کاربران</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -264,6 +382,42 @@
                 <div class="ma-panel-card"><div class="ma-panel-card__body--flush" id="maTableContainer"><div class="ma-skeleton" style="height:240px;margin:20px"></div></div></div>
                 <div id="maPagination" class="ma-pagination"></div>
 
+            {% elif active_section == 'tickets' %}
+                <div class="ma-ticket-stats" id="maTicketStats"></div>
+                <div class="ma-filters" id="maTicketFilters">
+                    <input type="text" class="ma-filter" id="ticketFilterSearch" placeholder="جستجو در موضوع، درخواست‌کننده...">
+                    <select class="ma-filter" id="ticketFilterStatus">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="new">جدید</option>
+                        <option value="open">باز</option>
+                        <option value="in_progress">در حال بررسی</option>
+                        <option value="waiting_for_user">در انتظار کاربر</option>
+                        <option value="waiting_for_support">در انتظار پشتیبانی</option>
+                        <option value="resolved">حل‌شده</option>
+                        <option value="closed">بسته‌شده</option>
+                    </select>
+                    <select class="ma-filter" id="ticketFilterPriority">
+                        <option value="">همه اولویت‌ها</option>
+                        <option value="urgent">فوری</option>
+                        <option value="high">زیاد</option>
+                        <option value="normal">عادی</option>
+                        <option value="low">کم</option>
+                    </select>
+                    <select class="ma-filter" id="ticketFilterSort">
+                        <option value="newest">جدیدترین</option>
+                        <option value="oldest">قدیمی‌ترین</option>
+                        <option value="priority">اولویت</option>
+                    </select>
+                    <button class="ma-btn ma-btn--primary" onclick="maApplyTicketFilters()">اعمال فیلتر</button>
+                </div>
+                <div class="ma-panel-card"><div class="ma-panel-card__body--flush" id="maTicketTable"><div class="ma-skeleton" style="height:240px;margin:20px"></div></div></div>
+                <div id="maTicketPagination" class="ma-pagination"></div>
+
+            {% elif active_section == 'ticket-detail' %}
+                <div id="maTicketDetail">
+                    <div class="ma-skeleton" style="height:400px;margin:20px"></div>
+                </div>
+
             {% elif active_section == 'admin-actions' %}
                 <div class="ma-panel-card"><div class="ma-panel-card__body--flush" id="maTableContainer"><div class="ma-skeleton" style="height:240px;margin:20px"></div></div></div>
                 <div id="maPagination" class="ma-pagination"></div>
@@ -299,8 +453,8 @@
         var sidebar = document.getElementById('mainSidebar');
         var overlay = document.getElementById('maSidebarOverlay');
         var closeBtn = document.getElementById('maSidebarClose');
-        function openSidebar(){ sidebar.classList.add('is-open'); overlay.classList.add('is-visible'); }
-        function closeSidebar(){ sidebar.classList.remove('is-open'); overlay.classList.remove('is-visible'); }
+        function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('is-visible'); }
+        function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('is-visible'); }
         if(hamburger) hamburger.addEventListener('click', openSidebar);
         if(overlay) overlay.addEventListener('click', closeSidebar);
         if(closeBtn) closeBtn.addEventListener('click', closeSidebar);

@@ -822,6 +822,203 @@ async def global_search(request: Request, q: str = Query("")):
 
 
 # ══════════════════════════════════════════════════════════════
+# TICKET MANAGEMENT
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/tickets")
+async def list_all_tickets(
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=5, le=100),
+    search: str = Query("", max_length=100),
+    status: str = Query("", max_length=32),
+    priority: str = Query("", max_length=16),
+    assignee: str = Query("", max_length=255),
+    sort: str = Query("newest", max_length=16),
+):
+    _master_admin(request)
+    from app.services.ticketing import TicketService, TICKET_STATUSES, TICKET_PRIORITIES, STATUS_LABELS, PRIORITY_LABELS
+    service = TicketService()
+    try:
+        result = service.list_tickets(
+            actor="", is_admin=True, page=page, page_size=per_page,
+            search=search, status=status, priority=priority,
+            assignee=assignee, sort=sort,
+        )
+        return JSONResponse(content={"success": True, "data": result})
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        service.close()
+
+
+@router.get("/tickets/stats")
+async def ticket_stats(request: Request):
+    _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        stats = {}
+        cur.execute("SELECT COUNT(*) FROM tickets")
+        stats["total"] = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM tickets WHERE status NOT IN ('resolved','closed')")
+        stats["open"] = cur.fetchone()[0]
+        cur.execute("SELECT status, COUNT(*) count FROM tickets GROUP BY status")
+        stats["by_status"] = {row[0]: row[1] for row in cur.fetchall()}
+        cur.execute("SELECT priority, COUNT(*) count FROM tickets GROUP BY priority")
+        stats["by_priority"] = {row[0]: row[1] for row in cur.fetchall()}
+        return JSONResponse(content={"success": True, "data": stats})
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.get("/tickets/{ticket_id}")
+async def get_ticket_detail(ticket_id: int, request: Request):
+    _master_admin(request)
+    from app.services.ticketing import TicketService
+    service = TicketService()
+    try:
+        ticket = service.get_ticket(ticket_id, actor="", is_admin=True)
+        if ticket is None:
+            raise HTTPException(status_code=404, detail="تیکت پیدا نشد.")
+        return JSONResponse(content={"success": True, "data": ticket})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        service.close()
+
+
+@router.patch("/tickets/{ticket_id}")
+async def update_ticket_admin(ticket_id: int, request: Request):
+    _master_admin(request)
+    from app.services.ticketing import TicketService
+    data = await request.json()
+    service = TicketService()
+    try:
+        result = service.update_ticket(
+            ticket_id,
+            actor=str(request.session.get("username") or "").strip(),
+            is_admin=True,
+            status=data.get("status"),
+            priority=data.get("priority"),
+            category_id=data.get("category_id"),
+            assigned_to=data.get("assigned_to"),
+        )
+        if result is None:
+            raise HTTPException(status_code=404, detail="تیکت پیدا نشد.")
+        return JSONResponse(content={"success": True, "data": result})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        service.close()
+
+
+@router.post("/tickets/{ticket_id}/reply")
+async def reply_ticket_admin(ticket_id: int, request: Request):
+    _master_admin(request)
+    from app.services.ticketing import TicketService
+    data = await request.json()
+    body = str(data.get("body") or "").strip()
+    visibility = str(data.get("visibility") or "public").strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="متن پیام الزامی است.")
+    if visibility not in ("public", "internal"):
+        raise HTTPException(status_code=400, detail="نوع پیام معتبر نیست.")
+    service = TicketService()
+    try:
+        result = service.add_message(
+            ticket_id,
+            actor=str(request.session.get("username") or "").strip(),
+            is_admin=True,
+            body=body,
+            visibility=visibility,
+        )
+        return JSONResponse(content={"success": True, "data": result})
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        service.close()
+
+
+@router.delete("/tickets/{ticket_id}")
+async def delete_ticket_admin(ticket_id: int, request: Request):
+    _master_admin(request)
+    admin = str(request.session.get("username") or "").strip()
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, subject FROM tickets WHERE id=?", (ticket_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="تیکت پیدا نشد.")
+        cur.execute("DELETE FROM ticket_messages WHERE ticket_id=?", (ticket_id,))
+        cur.execute("DELETE FROM ticket_events WHERE ticket_id=?", (ticket_id,))
+        cur.execute("DELETE FROM ticket_attachments WHERE ticket_id=?", (ticket_id,))
+        cur.execute("DELETE FROM ticket_tag_relations WHERE ticket_id=?", (ticket_id,))
+        cur.execute("DELETE FROM tickets WHERE id=?", (ticket_id,))
+        conn.commit()
+        log_admin_action(
+            admin_username=admin, action="delete_ticket",
+            target_type="ticket", target_id=str(ticket_id),
+            description=f"حذف تیکت: {row[1]}", ip_address=_client_ip(request),
+        )
+        return JSONResponse(content={"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.get("/tickets/categories/all")
+async def ticket_categories_admin(request: Request):
+    _master_admin(request)
+    from app.services.ticketing import TicketService
+    service = TicketService()
+    try:
+        return JSONResponse(content={"success": True, "data": service.categories()})
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        service.close()
+
+
+@router.get("/tickets/users/all")
+async def ticket_users_admin(request: Request):
+    _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT LTRIM(RTRIM(username)) username,
+                      LTRIM(RTRIM(COALESCE(name,''))) name,
+                      LTRIM(RTRIM(COALESCE(last_name,''))) last_name,
+                      LTRIM(RTRIM(COALESCE(department,''))) department
+               FROM user_table ORDER BY name, username"""
+        )
+        users = []
+        for row in cur.fetchall():
+            username = str(row[0] or "").strip()
+            users.append({
+                "username": username,
+                "name": " ".join(str(v or "").strip() for v in row[1:3]).strip(),
+                "department": str(row[3] or "").strip(),
+            })
+        return JSONResponse(content={"success": True, "data": users})
+    except Exception as e:
+        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+    finally:
+        conn.close()
+
+
+# ══════════════════════════════════════════════════════════════
 # SYSTEM CONFIG
 # ══════════════════════════════════════════════════════════════
 

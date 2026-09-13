@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTopbarClock();
     renderDashboardBarHeights();
 
-    document.querySelectorAll('.dropdown-item[data-panel]').forEach(function(button) {
+    document.querySelectorAll('[data-panel]').forEach(function(button) {
         button.addEventListener('click', function(event) {
             event.stopPropagation();
             openProfilePanel(this.getAttribute('data-panel'));

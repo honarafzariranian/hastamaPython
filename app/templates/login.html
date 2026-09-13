@@ -48,7 +48,7 @@
             <span class="tooltip">آموزش سامانه</span>
         </div>
         <div class="tooltip-wrap">
-            <a href="#" class="support-toggle" aria-label="پشتیبانی">
+            <a href="#" class="support-toggle" aria-label="پشتیبانی" id="supportToggle">
                 <span>🎧</span>
             </a>
             <span class="tooltip">پشتیبانی</span>
@@ -320,6 +320,23 @@
         </div>
     </div>
 
+    <!-- درخواست پشتیبانی (فراموشی نام کاربری و رمز) - مودال -->
+    <div class="fp-overlay" id="stOverlay">
+        <div class="fp-modal">
+            <button type="button" class="fp-close" id="stClose" aria-label="بستن">&times;</button>
+            <div class="fp-icon">🎧</div>
+            <h3 class="fp-title">درخواست پشتیبانی</h3>
+            <p class="fp-desc">نام کاربری و رمز عبور خود را فراموش کرده‌اید؟ فرم زیر را پر کنید تا مدیر سامانه اطلاعات ورود جدیدی برای شما ایجاد کند.</p>
+            <form id="stForm" class="fp-form" onsubmit="return false;">
+                <input type="text" id="stFullName" class="fp-input" placeholder="نام و نام خانوادگی" required maxlength="200">
+                <input type="tel" id="stPhone" class="fp-input" placeholder="شماره تماس (مثال: 09121234567)" required maxlength="20" dir="ltr" style="text-align:center">
+                <textarea id="stDesc" class="fp-input" placeholder="توضیحات (اختیاری) — مثلاً نام دپارتمان یا سمت شما" rows="3" maxlength="2000" style="resize:vertical;min-height:70px"></textarea>
+                <button type="submit" class="fp-submit" id="stSubmit">ارسال درخواست به مدیر سامانه</button>
+            </form>
+            <p class="fp-hint" id="stHint"></p>
+        </div>
+    </div>
+
     <script>
     /* ── Forgot Password Modal ──────────────────────────── */
     (function() {
@@ -529,6 +546,96 @@
                 rpSubmit.textContent = 'تغییر رمز عبور';
                 rpHint.textContent = 'خطا در اتصال به سرور.';
                 rpHint.className = 'fp-hint fp-hint--error';
+            });
+        });
+    })();
+
+    /* ── Support Ticket Modal ────────────────────────────── */
+    (function() {
+        var supportBtn = document.getElementById('supportToggle');
+        var overlay = document.getElementById('stOverlay');
+        var closeBtn = document.getElementById('stClose');
+        var form = document.getElementById('stForm');
+        var fullNameInput = document.getElementById('stFullName');
+        var phoneInput = document.getElementById('stPhone');
+        var descInput = document.getElementById('stDesc');
+        var submitBtn = document.getElementById('stSubmit');
+        var hint = document.getElementById('stHint');
+
+        function openModal() {
+            overlay.classList.add('is-visible');
+            form.reset();
+            hint.textContent = '';
+            hint.className = 'fp-hint';
+            setTimeout(function() { fullNameInput.focus(); }, 200);
+        }
+        function closeModal() { overlay.classList.remove('is-visible'); }
+
+        supportBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal();
+        });
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.classList.contains('is-visible')) closeModal();
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var fullName = fullNameInput.value.trim();
+            var phone = phoneInput.value.trim();
+            var desc = descInput.value.trim();
+
+            if (!fullName) {
+                hint.textContent = 'لطفاً نام و نام خانوادگی را وارد کنید.';
+                hint.className = 'fp-hint fp-hint--error';
+                fullNameInput.focus();
+                return;
+            }
+            if (!phone) {
+                hint.textContent = 'لطفاً شماره تماس را وارد کنید.';
+                hint.className = 'fp-hint fp-hint--error';
+                phoneInput.focus();
+                return;
+            }
+            if (!/^0[0-9]{9,10}$/.test(phone.replace(/[\s\-]/g, ''))) {
+                hint.textContent = 'شماره تماس نامعتبر است. مثال: 09121234567';
+                hint.className = 'fp-hint fp-hint--error';
+                phoneInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'در حال ارسال...';
+            hint.textContent = '';
+
+            fetch('/public/support-ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name: fullName, phone: phone, description: desc })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ارسال درخواست به مدیر سامانه';
+                if (res.success) {
+                    hint.textContent = res.message || 'درخواست شما ثبت شد.';
+                    hint.className = 'fp-hint fp-hint--success';
+                    form.reset();
+                    setTimeout(closeModal, 5000);
+                } else {
+                    hint.textContent = res.message || 'خطا در ثبت درخواست.';
+                    hint.className = 'fp-hint fp-hint--error';
+                }
+            })
+            .catch(function() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ارسال درخواست به مدیر سامانه';
+                hint.textContent = 'خطا در اتصال به سرور.';
+                hint.className = 'fp-hint fp-hint--error';
             });
         });
     })();
