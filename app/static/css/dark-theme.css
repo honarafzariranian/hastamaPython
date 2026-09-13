@@ -2879,3 +2879,52 @@ body.dark-mode .captcha-input {
 body.dark-mode .captcha-input::placeholder {
     color: var(--dk-muted);
 }
+
+/* ==========================================================================
+   Sidebar Premium 2026 — حالت تیره
+   تایل‌های گرادیانی روی سطح تیره حفظ می‌شوند؛ فقط ردیف‌ها و لیبل‌ها تیره می‌شوند.
+   ========================================================================== */
+body.dark-mode .rightSidebar {
+    background: linear-gradient(180deg, rgba(30,41,59,.96) 0%, rgba(15,23,42,.94) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+body.dark-mode .rightSidebar .icon-container {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .rightSidebar .icon-container:hover {
+    background: var(--tint);
+    background-color: var(--tint);
+}
+
+body.dark-mode .rightSidebar .icon-container:hover .icon-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .rightSidebar .icon-container.active {
+    background: var(--tint);
+    background-color: var(--tint);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 18px -12px var(--glow);
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .icon-container.active .icon-label {
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .icon-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .rightSidebar .sidebar-icon-tile svg {
+    background: transparent !important;
+    background-color: transparent !important;
+    filter: none !important;
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .sidebar-divider span {
+    background: linear-gradient(90deg, transparent, rgba(148,163,184,.28), transparent);
+}

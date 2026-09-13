@@ -9512,3 +9512,290 @@ form button:active {
         font-size: 12px;
     }
 }
+
+/* ==========================================================================
+   SIDEBAR PREMIUM 2026 — تایل‌های گرادیانی + آیکون‌های دوتونه سفید
+   جایگزین آیکون‌های خطی قبلی سایدبار ادمین. این بخش در انتهای فایل آمده
+   تا قوانین قدیمی سایدبار را override کند. (ساختار/عرض سایدبار و رفتار
+   بازشدن با هاور حفظ شده تا چیدمان پنل‌ها به‌هم نریزد.)
+   ========================================================================== */
+
+/* --- پالت هر آیتم: گرادیان تایل + رنگ تاکیدی + هاله --- */
+.rightSidebar .icon-container[data-accent="dashboard"]  { --tile-from:#4F8DFF; --tile-to:#7C5CFF; --acc:#5B7CFF; --tint:rgba(91,124,255,.12);  --glow:rgba(91,124,255,.45); }
+.rightSidebar .icon-container[data-accent="staff"]      { --tile-from:#10B981; --tile-to:#14B8A6; --acc:#10B981; --tint:rgba(16,185,129,.12);  --glow:rgba(16,185,129,.45); }
+.rightSidebar .icon-container[data-accent="leave"]      { --tile-from:#FBBF24; --tile-to:#F97316; --acc:#F59E0B; --tint:rgba(245,158,11,.14);  --glow:rgba(245,158,11,.45); }
+.rightSidebar .icon-container[data-accent="overtime"]   { --tile-from:#A855F7; --tile-to:#EC4899; --acc:#A855F7; --tint:rgba(168,85,247,.12);  --glow:rgba(168,85,247,.45); }
+.rightSidebar .icon-container[data-accent="pass"]       { --tile-from:#06B6D4; --tile-to:#3B82F6; --acc:#0EA5E9; --tint:rgba(14,165,233,.12);  --glow:rgba(14,165,233,.45); }
+.rightSidebar .icon-container[data-accent="ticket"]     { --tile-from:#F43F5E; --tile-to:#EC4899; --acc:#F43F5E; --tint:rgba(244,63,94,.10);   --glow:rgba(244,63,94,.42); }
+.rightSidebar .icon-container[data-accent="shift"]      { --tile-from:#6366F1; --tile-to:#0EA5E9; --acc:#6366F1; --tint:rgba(99,102,241,.12);  --glow:rgba(99,102,241,.45); }
+.rightSidebar .icon-container[data-accent="attendance"] { --tile-from:#22C55E; --tile-to:#84CC16; --acc:#22C55E; --tint:rgba(34,197,94,.12);  --glow:rgba(34,197,94,.42); }
+.rightSidebar .icon-container[data-accent="payroll"]    { --tile-from:#D97706; --tile-to:#F59E0B; --acc:#D97706; --tint:rgba(217,119,6,.14);   --glow:rgba(217,119,6,.45); }
+.rightSidebar .icon-container[data-accent="exit"]       { --tile-from:#FB7185; --tile-to:#E11D48; --acc:#F43F5E; --tint:rgba(244,63,94,.10);   --glow:rgba(244,63,94,.42); }
+
+/* --- بدنه شیشه‌ای سایدبار --- */
+.rightSidebar {
+    background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.94) 100%);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid rgba(13,59,78,.10);
+    box-shadow: 0 20px 45px -18px rgba(15,23,42,.22), inset 0 1px 0 rgba(255,255,255,.9);
+    gap: 6px;
+    justify-content: flex-start;
+    padding: 26px 12px 16px;
+}
+
+/* خط گرادیانی بالای سایدبار */
+.rightSidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 22px;
+    right: 22px;
+    height: 3px;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(90deg,#22c55e,#14b8a6,#0ea5e9,#6366f1,#a855f7);
+    opacity: .85;
+    pointer-events: none;
+}
+
+/* --- ردیف آیتم --- */
+.rightSidebar .icon-container {
+    border-radius: 16px;
+    min-height: 54px;
+    isolation: isolate;
+    overflow: visible;
+    animation: sidebarItemIn .5s cubic-bezier(.22,1,.36,1) backwards;
+}
+
+.rightSidebar .icon-container:nth-child(2)  { animation-delay: .02s; }
+.rightSidebar .icon-container:nth-child(3)  { animation-delay: .05s; }
+.rightSidebar .icon-container:nth-child(4)  { animation-delay: .08s; }
+.rightSidebar .icon-container:nth-child(5)  { animation-delay: .11s; }
+.rightSidebar .icon-container:nth-child(6)  { animation-delay: .14s; }
+.rightSidebar .icon-container:nth-child(7)  { animation-delay: .17s; }
+.rightSidebar .icon-container:nth-child(8)  { animation-delay: .20s; }
+.rightSidebar .icon-container:nth-child(9)  { animation-delay: .23s; }
+.rightSidebar .icon-container:nth-child(10) { animation-delay: .26s; }
+.rightSidebar .icon-container:nth-child(12) { animation-delay: .30s; }
+
+@keyframes sidebarItemIn {
+    from { opacity: 0; transform: translateX(14px) scale(.96); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* --- تایل گرادیانی آیکون --- */
+.rightSidebar .sidebar-icon-tile {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--tile-from), var(--tile-to));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 8px 16px -8px var(--glow);
+    overflow: hidden;
+    transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+
+/* برق شیشه‌ای بالای تایل */
+.rightSidebar .sidebar-icon-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 8%;
+    right: 8%;
+    height: 46%;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,.35), transparent);
+    pointer-events: none;
+}
+
+/* موج درخشش هنگام هاور */
+.rightSidebar .sidebar-icon-tile::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.5) 50%, transparent 58%);
+    transform: translateX(-130%);
+    transition: transform .65s ease;
+    pointer-events: none;
+}
+
+.rightSidebar .icon-container:hover .sidebar-icon-tile::after {
+    transform: translateX(130%);
+}
+
+/* گلیف سفید داخل تایل — خنثی‌سازی قوانین قدیمی آیکون */
+.rightSidebar .sidebar-icon-tile svg {
+    position: relative;
+    z-index: 1;
+    width: 21px;
+    height: 21px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    color: #fff;
+    filter: none !important;
+    transform: none;
+    transition: none;
+}
+
+.rightSidebar .icon-container:hover .sidebar-icon-tile svg,
+.rightSidebar .icon-container.active .sidebar-icon-tile svg {
+    transform: none;
+    filter: none;
+}
+
+/* --- حالت هاور ردیف --- */
+.rightSidebar .icon-container:hover {
+    background: var(--tint);
+}
+
+.rightSidebar .icon-container:hover .sidebar-icon-tile {
+    transform: translateY(-2px) scale(1.06);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 12px 22px -8px var(--glow);
+}
+
+/* --- حالت فعال ردیف --- */
+.rightSidebar .icon-container.active {
+    background: var(--tint);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 8px 18px -12px var(--glow);
+    color: #0B2A3B;
+}
+
+.rightSidebar .icon-container.active .icon-label {
+    color: #0B2A3B;
+    font-weight: 800;
+}
+
+.rightSidebar .icon-container.active .sidebar-icon-tile {
+    transform: scale(1.05);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 12px 24px -8px var(--glow);
+}
+
+/* نشان فعال — قرص گرادیانی لبه بیرونی */
+.rightSidebar .icon-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    width: 4px;
+    height: 0;
+    border-radius: 99px;
+    background: linear-gradient(180deg, var(--tile-from), var(--tile-to));
+    box-shadow: 0 0 10px var(--glow);
+    transform: translateY(-50%);
+    transition: height .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+}
+
+.rightSidebar .icon-container:hover::after {
+    height: 18px;
+    opacity: .7;
+}
+
+.rightSidebar .icon-container.active::after {
+    height: 30px;
+    opacity: 1;
+}
+
+/* --- جداکننده بالای «خروج» (می‌چسبد به پایین سایدبار) --- */
+.rightSidebar .sidebar-divider {
+    margin-top: auto;
+    padding: 8px 10px 2px;
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.rightSidebar .sidebar-divider span {
+    display: block;
+    width: 100%;
+    height: 1.5px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, rgba(13,59,78,.16), transparent);
+}
+
+.rightSidebar .icon-container:last-child {
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+/* --- چیدمان دسکتاپ: جمع‌شده وسط‌چین، بازشده چپ‌چین --- */
+@media (min-width: 769px) {
+    .rightSidebar .icon-container {
+        justify-content: center;
+        padding: 7px 4px;
+        margin-bottom: 0;
+    }
+
+    .rightSidebar:hover .icon-container,
+    .rightSidebar.open .icon-container {
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 7px 12px;
+    }
+}
+
+/* --- دراور موبایل --- */
+@media (max-width: 768px) {
+    .rightSidebar .icon-container,
+    .rightSidebar.open .icon-container {
+        min-height: 56px;
+        padding: 8px 12px;
+        gap: 12px;
+        margin-bottom: 2px;
+    }
+
+    .rightSidebar .sidebar-icon-tile {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+    }
+
+    .rightSidebar .sidebar-icon-tile svg {
+        width: 21px;
+        height: 21px;
+    }
+
+    .rightSidebar .sidebar-divider {
+        margin-top: 10px;
+    }
+
+    .rightSidebar .icon-container:last-child {
+        margin-top: 6px;
+    }
+}
+
+/* صفحه‌های کوتاه: اجازه اسکرول نامرئی داخل سایدبار */
+@media (max-height: 780px) and (min-width: 769px) {
+    .rightSidebar {
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .rightSidebar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rightSidebar .icon-container {
+        animation: none;
+    }
+
+    .rightSidebar .sidebar-icon-tile::after {
+        display: none;
+    }
+
+    .rightSidebar .icon-container,
+    .rightSidebar .sidebar-icon-tile {
+        transition: none;
+    }
+}
