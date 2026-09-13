@@ -19,7 +19,7 @@
             <div class="tr-error__icon">📚</div>
             <div class="tr-error__title">{{ error }}</div>
             <div class="tr-error__text">آموزش مورد نظر در سیستم وجود ندارد.</div>
-            <a href="/training" style="margin-top:16px;display:inline-flex;padding:10px 24px;background:var(--tr-primary);color:#fff;border-radius:100px;">بازگشت به آموزش‌ها</a>
+            <a href="/login" style="margin-top:16px;display:inline-flex;padding:10px 24px;background:var(--tr-primary);color:#fff;border-radius:100px;">بازگشت به صفحه ورود</a>
         </div>
 
     {% else %}
@@ -34,6 +34,13 @@
         <span class="tr-breadcrumb__sep">/</span>
         <span>{{ lesson.title }}</span>
     </nav>
+
+    {% if user_role %}
+    <a href="{{ back_url }}" class="tr-back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        بازگشت به پنل
+    </a>
+    {% endif %}
 
     <article class="tr-lesson">
         {# ── Back Button ── #}

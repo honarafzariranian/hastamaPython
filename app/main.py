@@ -167,69 +167,134 @@ def _load_training_data():
     with open(_TRAINING_DATA_PATH, "r", encoding="utf-8") as f:
         return _json.load(f)
 
+def _get_user_role(request: Request):
+    """Return the user's role for training access control.
+    Returns: None (not logged in), 'user' (regular user), or 'admin' (admin/master admin).
+    """
+    username = request.session.get("username")
+    if not username:
+        return None
+    if request.session.get("is_admin") is True or request.session.get("is_master_admin") is True:
+        return "admin"
+    return "user"
+
+def _get_back_url(user_role):
+    """Return the URL to go back to based on user role."""
+    if user_role == "admin":
+        return "/admin"
+    if user_role == "user":
+        return "/user_panel"
+    return "/login"
+
+def _category_accessible(cat_slug: str, user_role) -> bool:
+    """Check if a user can access a training category based on their role."""
+    if user_role is None:
+        return cat_slug == "general"
+    if user_role == "user":
+        return cat_slug in ("general", "user")
+    if user_role == "admin":
+        return True
+    return False
+
 @app.get("/training", response_class=HTMLResponse)
 async def training_hub(request: Request):
     data = _load_training_data()
+    user_role = _get_user_role(request)
     return templates.TemplateResponse(request, "training.html", {
         "request": request,
         "training_data": data,
         "active_category": None,
+        "user_role": user_role,
+        "back_url": _get_back_url(user_role),
     })
 
 @app.get("/training/{category}", response_class=HTMLResponse)
 async def training_category(request: Request, category: str):
     data = _load_training_data()
+    user_role = _get_user_role(request)
     if category not in data.get("categories", {}):
         return templates.TemplateResponse(request, "training.html", {
             "request": request,
             "training_data": data,
             "active_category": None,
+            "user_role": user_role,
+            "back_url": _get_back_url(user_role),
             "error": "دسته‌بندی مورد نظر پیدا نشد.",
+        })
+    if not _category_accessible(category, user_role):
+        return templates.TemplateResponse(request, "training.html", {
+            "request": request,
+            "training_data": data,
+            "active_category": None,
+            "user_role": user_role,
+            "back_url": _get_back_url(user_role),
+            "error": "شما به این بخش آموزش دسترسی ندارید. لطفاً ابتدا وارد پنل مربوطه شوید.",
         })
     return templates.TemplateResponse(request, "training.html", {
         "request": request,
         "training_data": data,
         "active_category": category,
+        "user_role": user_role,
+        "back_url": _get_back_url(user_role),
     })
 
 @app.get("/training/lesson/{lesson_id}", response_class=HTMLResponse)
 async def training_lesson(request: Request, lesson_id: str):
     data = _load_training_data()
+    user_role = _get_user_role(request)
     lesson = data.get("lessons", {}).get(lesson_id)
     if not lesson:
         return templates.TemplateResponse(request, "training-lesson.html", {
             "request": request,
             "lesson": None,
             "training_data": data,
+            "user_role": user_role,
+            "back_url": _get_back_url(user_role),
             "error": "آموزش مورد نظر پیدا نشد.",
+        })
+    lesson_cat = lesson.get("category", "")
+    if not _category_accessible(lesson_cat, user_role):
+        return templates.TemplateResponse(request, "training-lesson.html", {
+            "request": request,
+            "lesson": None,
+            "training_data": data,
+            "user_role": user_role,
+            "back_url": _get_back_url(user_role),
+            "error": "شما به این آموزش دسترسی ندارید. لطفاً ابتدا وارد پنل مربوطه شوید.",
         })
     return templates.TemplateResponse(request, "training-lesson.html", {
         "request": request,
         "lesson": lesson,
         "training_data": data,
+        "user_role": user_role,
+        "back_url": _get_back_url(user_role),
         "error": None,
     })
 
 @app.get("/api/training/search")
-async def training_search(q: str = Query("")):
+async def training_search(request: Request, q: str = Query("")):
     data = _load_training_data()
+    user_role = _get_user_role(request)
     results = []
     query = q.strip().lower()
     if not query:
         return JSONResponse(content={"success": True, "results": []})
     for lid, lesson in data.get("lessons", {}).items():
+        lesson_cat = lesson.get("category", "")
+        if not _category_accessible(lesson_cat, user_role):
+            continue
         searchable = " ".join([
             lesson.get("title", ""),
             lesson.get("description", ""),
-            lesson.get("category", ""),
+            lesson_cat,
         ]).lower()
         if query in searchable:
-            cat_info = data.get("categories", {}).get(lesson.get("category", ""), {})
+            cat_info = data.get("categories", {}).get(lesson_cat, {})
             results.append({
                 "id": lid,
                 "title": lesson.get("title", ""),
                 "description": lesson.get("description", ""),
-                "category": cat_info.get("title", lesson.get("category", "")),
+                "category": cat_info.get("title", lesson_cat),
                 "role": lesson.get("role", "general"),
                 "icon": lesson.get("icon", "📖"),
             })
@@ -3913,5 +3978,12 @@ async def logout(request: Request, response: Response):
     
     # ریدایرکت به صفحه اصلی
     return RedirectResponse(url="/login")
+
+
+@app.post("/api/session/destroy")
+async def destroy_session(request: Request):
+    """Destroy the session when the browser/tab is closed."""
+    request.session.clear()
+    return JSONResponse(content={"success": True})
 
 

@@ -1236,8 +1236,18 @@
 <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
 
     <!-- Training Page Help Button -->
-    <a href="/training/lesson/user-dashboard" class="tr-page-help" title="آموزش این صفحه">🎓 آموزش این صفحه</a>
+    <a href="/training/lesson/user-dashboard" class="tr-page-help" title="آموزش این صفحه" target="_blank" rel="noopener">🎓 آموزش این صفحه</a>
 
+    <script>
+    (function() {
+        var shuttingDown = false;
+        window.addEventListener('beforeunload', function() {
+            if (shuttingDown) return;
+            shuttingDown = true;
+            navigator.sendBeacon('/api/session/destroy', new Blob([], { type: 'application/json' }));
+        });
+    })();
+    </script>
     </body>
 
 </html>

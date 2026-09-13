@@ -1,7 +1,7 @@
 # app/api/routes/auth.py — Security-Hardened Authentication Routes
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import logging
 import time
 import threading
@@ -12,6 +12,11 @@ from core.password_utils import (
     validate_password_policy, validate_username_input,
     validate_request_id, validate_recovery_code,
     MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH,
+)
+
+from app.services.captcha import (
+    generate_captcha_image, store_captcha_in_session,
+    validate_captcha, captcha_remaining_seconds,
 )
 
 router = APIRouter()
@@ -84,6 +89,71 @@ def _user_agent(request: Request) -> str:
     return request.headers.get("user-agent", "")[:500]
 
 
+# ── CAPTCHA ─────────────────────────────────────────────────
+
+@router.get("/captcha")
+async def get_captcha(request: Request):
+    """Generate a new CAPTCHA image and store the code in the session."""
+    code, image_bytes = generate_captcha_image()
+    store_captcha_in_session(request, code)
+
+    log_event_safe(
+        event_type="CAPTCHA", action="generated",
+        ip_address=_client_ip(request), user_agent=_user_agent(request),
+    )
+
+    return StreamingResponse(
+        iter([image_bytes]),
+        media_type="image/png",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@router.post("/captcha/refresh")
+async def refresh_captcha(request: Request):
+    """Generate a new CAPTCHA and return it as base64."""
+    code, image_bytes = generate_captcha_image()
+    store_captcha_in_session(request, code)
+
+    import base64
+    b64 = base64.b64encode(image_bytes).decode("ascii")
+
+    log_event_safe(
+        event_type="CAPTCHA", action="refreshed",
+        ip_address=_client_ip(request), user_agent=_user_agent(request),
+    )
+
+    return JSONResponse({
+        "success": True,
+        "image": f"data:image/png;base64,{b64}",
+    })
+
+
+@router.get("/captcha/status")
+async def captcha_status(request: Request):
+    """Check if current CAPTCHA is still valid."""
+    remaining = captcha_remaining_seconds(request)
+    has_captcha = request.session.get("captcha_code") is not None
+    return JSONResponse({
+        "success": True,
+        "valid": has_captcha and remaining > 0,
+        "remaining_seconds": remaining,
+    })
+
+
+def log_event_safe(**kwargs):
+    """Log event without crashing if audit module fails."""
+    try:
+        from app.services.audit import log_event
+        log_event(**kwargs)
+    except Exception:
+        pass
+
+
 # ── Login ────────────────────────────────────────────────────
 
 @router.post("/login_user")
@@ -95,9 +165,23 @@ async def login(request: Request):
 
     username = str(data.get("username") or "").strip()
     password = str(data.get("password") or "").strip()
+    captcha_code = str(data.get("captcha") or "").strip()
 
     if not username or not password:
         return JSONResponse({"success": False, "message": "نام کاربری و رمز عبور الزامی هستند."})
+
+    # ── Validate CAPTCHA first ──
+    if not captcha_code:
+        return JSONResponse({"success": False, "message": "کد امنیتی الزامی است."})
+
+    captcha_valid, captcha_msg = validate_captcha(request, captcha_code)
+    if not captcha_valid:
+        log_event_safe(
+            event_type="CAPTCHA", action="validation_failed",
+            ip_address=_client_ip(request), user_agent=_user_agent(request),
+            status="failure", severity="low",
+        )
+        return JSONResponse({"success": False, "message": captcha_msg, "captcha_error": True})
 
     # Input length check
     if len(username) > MAX_USERNAME_LENGTH:

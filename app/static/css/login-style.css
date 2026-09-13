@@ -872,6 +872,98 @@ body.dark-mode .login-logo {
     transition: all 0.3s ease;
 }
 
+/* ── CAPTCHA ─────────────────────────────────────────────── */
+.captcha-group {
+    margin-bottom: clamp(0.7rem, 1.5vw, 0.9rem);
+}
+.captcha-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.captcha-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.captcha-img {
+    flex: 1;
+    height: 52px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: #f8fafc;
+    object-fit: contain;
+    cursor: pointer;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    user-select: none;
+}
+.captcha-img:hover {
+    border-color: var(--brand-1, #0ea5e9);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+.captcha-refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: var(--surface, #fff);
+    color: var(--text, #334155);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+.captcha-refresh:hover {
+    border-color: var(--brand-1, #0ea5e9);
+    color: var(--brand-1, #0ea5e9);
+    background: rgba(14, 165, 233, 0.06);
+    transform: scale(1.05);
+}
+.captcha-refresh:active {
+    transform: scale(0.95);
+}
+.captcha-refresh.spinning svg {
+    animation: captchaSpin 0.5s ease;
+}
+@keyframes captchaSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.captcha-input-wrapper {
+    position: relative;
+}
+.captcha-input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: var(--surface, #fff);
+    color: var(--text, #334155);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    box-sizing: border-box;
+}
+.captcha-input:focus {
+    border-color: var(--brand-1, #0ea5e9);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+.captcha-input::placeholder {
+    color: var(--muted, #94a3b8);
+    font-family: 'Vazir', 'Tahoma', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0;
+}
+#captchaError {
+    color: var(--error, #dc2626);
+    font-size: 0.78rem;
+    margin: 4px 0 0;
+    display: none;
+}
+
 /* Form footer */
 .form-footer {
     display: flex;

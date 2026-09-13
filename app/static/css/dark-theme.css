@@ -2855,3 +2855,27 @@ body.dark-mode .notification-admin-table tbody tr[data-id]:hover {
     background: rgba(56, 189, 248, .08);
     box-shadow: inset 0 0 0 2px rgba(56, 189, 248, .15);
 }
+
+/* ── CAPTCHA (login page) ───────────────────────────────── */
+body.dark-mode .captcha-img {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+body.dark-mode .captcha-refresh {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .captcha-refresh:hover {
+    border-color: var(--dk-accent);
+    color: var(--dk-accent);
+    background: rgba(56, 189, 248, .08);
+}
+body.dark-mode .captcha-input {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .captcha-input::placeholder {
+    color: var(--dk-muted);
+}
