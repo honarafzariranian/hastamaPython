@@ -5534,7 +5534,7 @@ form button:active {
     }
 
     .page-shell.sidebar-expanded:has(#coworkerBox.is-visible) #coworkerBox {
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
+        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
         transform: none !important;
     }
 

@@ -267,12 +267,14 @@ def _category_accessible(cat_slug: str, user_role) -> bool:
 async def training_hub(request: Request):
     data = _load_training_data()
     user_role = _get_user_role(request)
+    from_login = request.query_params.get("from_login") == "true"
     return templates.TemplateResponse(request, "training.html", {
         "request": request,
         "training_data": data,
         "active_category": None,
         "user_role": user_role,
         "back_url": _get_back_url(user_role),
+        "from_login": from_login,
     })
 
 @app.get("/training/{category}", response_class=HTMLResponse)

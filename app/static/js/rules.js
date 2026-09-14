@@ -79,19 +79,6 @@
     });
   }
 
-  /* ── CTA Button Enable ─────────────────────────────────────── */
-  const checkbox = document.getElementById('rlAccept');
-  const ctaBtn = document.getElementById('rlCtaBtn');
-  if (checkbox && ctaBtn) {
-    ctaBtn.style.opacity = '0.5';
-    ctaBtn.style.pointerEvents = 'none';
-    checkbox.addEventListener('change', () => {
-      const on = checkbox.checked;
-      ctaBtn.style.opacity = on ? '1' : '0.5';
-      ctaBtn.style.pointerEvents = on ? 'auto' : 'none';
-    });
-  }
-
   /* ── Init ──────────────────────────────────────────────────── */
   onScroll();
 })();
