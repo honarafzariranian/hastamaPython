@@ -54,7 +54,7 @@ if not _session_secret and not DEBUG:
     raise RuntimeError("SESSION_SECRET_KEY or SECRET_KEY must be configured when DEBUG=false")
 if not _session_secret:
     _session_secret = os.urandom(32).hex()
-app.add_middleware(SessionMiddleware, secret_key=_session_secret, https_only=not DEBUG, same_site="lax", max_age=28800)
+app.add_middleware(SessionMiddleware, secret_key=_session_secret, same_site="lax", max_age=28800)
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 import secrets as _secrets
@@ -110,12 +110,14 @@ class _CSRFMiddleware:
 
         # Pass through and set csrf_token cookie on response
         async def _send(message):
-            if message["type"] == "http.response.start":
-                resp_headers = list(message.get("headers", []))
-                # Set cookie: csrf_token=...; SameSite=Lax; Path=/; HttpOnly (JS reads via meta)
-                cookie_val = f"csrf_token={csrf_token}; Path=/; SameSite=Lax; Max-Age=3600"
-                resp_headers.append((b"set-cookie", cookie_val.encode("latin-1")))
-                message["headers"] = resp_headers
+            try:
+                if message["type"] == "http.response.start":
+                    resp_headers = list(message.get("headers", []))
+                    cookie_val = f"csrf_token={csrf_token}; Path=/; SameSite=Lax; Max-Age=3600"
+                    resp_headers.append((b"set-cookie", cookie_val.encode("latin-1")))
+                    message["headers"] = resp_headers
+            except Exception:
+                pass
             await send(message)
 
         await self.app(scope, receive, _send)

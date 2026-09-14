@@ -27,6 +27,11 @@ function login() {
     }
 
     // ارسال درخواست به سرور برای اعتبارسنجی
+    var _loginController = null;
+    if (typeof AbortController !== 'undefined') {
+        _loginController = new AbortController();
+        setTimeout(function () { _loginController.abort(); }, 20000);
+    }
     fetch('/login_user', {
         method: 'POST',
         headers: {
@@ -36,7 +41,8 @@ function login() {
             username: username,
             password: password,
             captcha: captcha
-        })
+        }),
+        signal: _loginController ? _loginController.signal : undefined
     })
     .then(response => {
         if (!response.ok) {
