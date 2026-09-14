@@ -212,9 +212,10 @@ class DeviceProtocol:
 class AccessDBSource:
     """Read attendance records from Arazdb.mdb via pyodbc."""
 
-    def __init__(self, mdb_path: str, password: str = "meyer#perko"):
+    def __init__(self, mdb_path: str, password: str = None):
+        import os
         self.mdb_path = mdb_path
-        self.password = password
+        self.password = password or os.getenv("ARAZ_ACCESS_PASSWORD", "")
 
     def get_records(self) -> list[dict] | None:
         try:

@@ -23,7 +23,8 @@ dependencies = [
     "itsdangerous>=2.0.0",
     "python-multipart>=0.0.5",
     "apscheduler>=3.10.4,<4",
-    "websockets>=12.0"
+    "websockets>=12.0",
+    "bcrypt>=4.0.0"
 ]
 
 [dependency-groups]

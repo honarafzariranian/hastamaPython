@@ -6,6 +6,7 @@ Admin endpoints for approval/rejection workflow.
 from __future__ import annotations
 
 import re
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -14,6 +15,8 @@ from fastapi.responses import JSONResponse
 
 from app.core.database import connect as db_connect
 from app.services.audit import log_event, log_admin_action, generate_event_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/registration", tags=["registration"])
 
@@ -337,7 +340,8 @@ async def list_registration_requests(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -367,7 +371,8 @@ async def get_registration_request(request: Request, request_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -472,7 +477,8 @@ async def approve_registration(request: Request, request_id: str):
             "message": f"حساب کاربری {req['username']} با موفقیت ایجاد شد.",
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": f"خطا: {str(e)}"}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -519,7 +525,8 @@ async def reject_registration(request: Request, request_id: str):
 
         return JSONResponse(content={"success": True, "message": "درخواست رد شد."})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -564,8 +571,12 @@ async def get_work_schedules():
 # PUBLIC — Get active users (for substitute selection)
 # ══════════════════════════════════════════════════════════════
 @router.get("/active-users")
-async def get_active_users():
+async def get_active_users(request: Request):
     """Return list of active users for substitute selection."""
+    username = request.session.get("username")
+    is_admin = request.session.get("is_admin") is True
+    if not username or not is_admin:
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مدیریتی ندارید."})
     conn = db_connect()
     try:
         cur = conn.cursor()

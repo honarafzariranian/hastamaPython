@@ -4,9 +4,12 @@ hastama.local {
 	reverse_proxy 127.0.0.1:8000 {
 		flush_interval -1
 		transport http {
-			read_timeout 0
-			write_timeout 0
-			response_header_timeout 0
+			read_timeout 300s
+			write_timeout 300s
+			response_header_timeout 300s
 		}
 	}
+
+	# TODO: Add rate limiting middleware (e.g. via Caddy rate_limit plugin)
+	# to protect against brute-force and DDoS attacks.
 }

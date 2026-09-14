@@ -275,6 +275,15 @@
         var config = Object.assign({ credentials: 'same-origin' }, opts || {});
         if (signal) config.signal = signal;
 
+        // CSRF protection: include token header for state-changing methods
+        var m = (config.method || 'GET').toUpperCase();
+        if (m !== 'GET' && m !== 'HEAD' && m !== 'OPTIONS') {
+            var csrfToken = ux.getCsrfToken();
+            if (csrfToken) {
+                config.headers = Object.assign({ 'X-CSRF-Token': csrfToken }, config.headers || {});
+            }
+        }
+
         if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
             config.headers = Object.assign({ 'Content-Type': 'application/json', 'Accept': 'application/json' }, config.headers || {});
             config.body = JSON.stringify(config.body);
@@ -311,8 +320,37 @@
     }
 
     /* ──────────────────────────────────────────────────────────────────────
+       CSRF TOKEN HELPER
+       ────────────────────────────────────────────────────────────────────── */
+    ux.getCsrfToken = function () {
+        var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    };
+
+    /* ──────────────────────────────────────────────────────────────────────
        EXPOSE
        ────────────────────────────────────────────────────────────────────── */
     window.HastamaUX = ux;
+
+    /* ──────────────────────────────────────────────────────────────────────
+       GLOBAL FETCH INTERCEPTOR — CSRF
+       Wraps native fetch to inject X-CSRF-Token on state-changing methods
+       for ALL fetch calls site-wide (not just HastamaUX.fetch).
+       ────────────────────────────────────────────────────────────────────── */
+    if (typeof window.fetch === 'function') {
+        var _origFetch = window.fetch;
+        window.fetch = function (input, init) {
+            init = init || {};
+            var method = (init.method || 'GET').toUpperCase();
+            if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+                var token = ux.getCsrfToken();
+                if (token) {
+                    init.headers = Object.assign({}, init.headers || {});
+                    init.headers['X-CSRF-Token'] = token;
+                }
+            }
+            return _origFetch.call(this, input, init);
+        };
+    }
 
 })();

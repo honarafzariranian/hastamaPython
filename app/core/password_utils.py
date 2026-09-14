@@ -4,6 +4,7 @@ Uses bcrypt for password hashing with automatic salting.
 Maintains backward compatibility with existing SHA-512 and plain text passwords.
 """
 import hashlib
+import hmac
 import re
 
 import bcrypt
@@ -39,14 +40,20 @@ def verify_password(stored_password, stored_hash, provided_password: str) -> boo
             # Check if it's a bcrypt hash (starts with $2a$, $2b$, $2y$)
             if stored_hash[:4] in (b"$2a$", b"$2b$", b"$2y$"):
                 return bcrypt.checkpw(provided_password.encode("utf-8"), stored_hash)
-            # Legacy SHA-512 comparison
-            return bytes(stored_hash) == hashlib.sha512(provided_password.encode("utf-8")).digest()
+            # Legacy SHA-512 comparison — constant-time to prevent timing attacks
+            return hmac.compare_digest(
+                bytes(stored_hash),
+                hashlib.sha512(provided_password.encode("utf-8")).digest(),
+            )
         except Exception:
             return False
 
-    # 2. Fallback to plain text comparison (legacy, worst case)
+    # 2. Fallback to plain text comparison (legacy, worst case) — constant-time
     if stored_password is not None:
-        return str(stored_password).strip() == provided_password
+        return hmac.compare_digest(
+            str(stored_password).strip(),
+            provided_password,
+        )
 
     return False
 
@@ -199,14 +206,17 @@ def insert_user_with_optional_hash(cursor, user_id: int, username: str, password
                                    department: str, substitute: str, work_hours: str, role: str, hozoor_num: str,
                                    shanbeh: str, yekshanbeh: str, doshanbeh: str, seshanbeh: str, chrshanbeh: str,
                                    panjshanbeh: str):
+    """Insert a new user.  Plaintext is NEVER stored — only the bcrypt hash."""
+    if password_hash is None or password_hash == b"":
+        password_hash = hash_password(password)
     columns = get_user_table_columns(cursor)
     if "password_hash" in columns:
         cursor.execute('''
             INSERT INTO user_table (
                 id, username, password, password_hash, name, last_name, department, substitute, work_hours, role,
                 hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-        ''', (user_id, username, password, password_hash, name, last_name, department, substitute, work_hours, role,
+            ) VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+        ''', (user_id, username, password_hash, password_hash, name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))
     else:
         cursor.execute('''
@@ -214,5 +224,5 @@ def insert_user_with_optional_hash(cursor, user_id: int, username: str, password
                 id, username, password, name, last_name, department, substitute, work_hours, role,
                 hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-        ''', (user_id, username, password, name, last_name, department, substitute, work_hours, role,
+        ''', (user_id, username, password_hash, name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))

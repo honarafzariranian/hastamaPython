@@ -558,11 +558,12 @@ class ArazAccessDB:
 
     def __init__(
         self,
-        mdb_path: str = r"E:\Hastama\database\Arazdb.mdb",
-        password: str = "meyer#perko",
+        mdb_path: str = None,
+        password: str = None,
     ):
-        self.mdb_path = mdb_path
-        self.password = password
+        import os
+        self.mdb_path = mdb_path or os.getenv("ARAZ_ACCESS_PATH", r"E:\Hastama\database\Arazdb.mdb")
+        self.password = password or os.getenv("ARAZ_ACCESS_PASSWORD", "")
 
     def _connect(self):
         """Create an Access DB connection."""

@@ -54,9 +54,74 @@ if not _session_secret and not DEBUG:
     raise RuntimeError("SESSION_SECRET_KEY or SECRET_KEY must be configured when DEBUG=false")
 if not _session_secret:
     _session_secret = os.urandom(32).hex()
-app.add_middleware(SessionMiddleware, secret_key=_session_secret, https_only=not DEBUG, same_site="lax")
+app.add_middleware(SessionMiddleware, secret_key=_session_secret, https_only=not DEBUG, same_site="lax", max_age=28800)
 
 from starlette.types import ASGIApp, Receive, Scope, Send
+import secrets as _secrets
+
+
+class _CSRFMiddleware:
+    """Double-submit CSRF protection.
+    Generates a per-session token, sets it as a cookie, and validates
+    X-CSRF-Token header on state-changing requests (POST/PUT/DELETE/PATCH).
+    GET/HEAD/OPTIONS are safe and skipped.
+    """
+
+    _STATE_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "GET").upper()
+        headers = dict(scope.get("headers", []))
+        # Cookie header is bytes: b"cookie"
+        raw_cookie = headers.get(b"cookie", b"").decode("latin-1", errors="ignore")
+        cookies = {}
+        for part in raw_cookie.split(";"):
+            part = part.strip()
+            if "=" in part:
+                k, v = part.split("=", 1)
+                cookies[k.strip()] = v.strip()
+
+        # Read or generate CSRF token from session cookie (session_data is signed)
+        # We store the token in a separate cookie to avoid session parsing complexity
+        csrf_token = cookies.get("csrf_token", "")
+
+        if method in self._STATE_METHODS:
+            # Validate: X-CSRF-Token header must match the cookie value
+            header_token = headers.get(b"x-csrf-token", b"").decode("latin-1", errors="ignore")
+            if not csrf_token or not header_token or csrf_token != header_token:
+                from starlette.responses import JSONResponse
+                response = JSONResponse(
+                    status_code=403,
+                    content={"success": False, "error": "CSRF token mismatch."},
+                )
+                await response(scope, receive, send)
+                return
+
+        # Generate new CSRF token if missing
+        if not csrf_token:
+            csrf_token = _secrets.token_hex(32)
+
+        # Pass through and set csrf_token cookie on response
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                resp_headers = list(message.get("headers", []))
+                # Set cookie: csrf_token=...; SameSite=Lax; Path=/; HttpOnly (JS reads via meta)
+                cookie_val = f"csrf_token={csrf_token}; Path=/; SameSite=Lax; Max-Age=3600"
+                resp_headers.append((b"set-cookie", cookie_val.encode("latin-1")))
+                message["headers"] = resp_headers
+            await send(message)
+
+        await self.app(scope, receive, _send)
+
+
+app.add_middleware(_CSRFMiddleware)
 
 
 class _SecurityHeadersMiddleware:
@@ -546,8 +611,10 @@ async def user_panel(request: Request):
 
             entry_time = None
             try:
-                mdb_path = r"E:\Hastama\database\Arazdb.mdb"
-                password = "meyer#perko"
+                mdb_path = os.getenv("ARAZ_ACCESS_PATH", r"E:\Hastama\database\Arazdb.mdb")
+                password = os.getenv("ARAZ_ACCESS_PASSWORD", "")
+                if not password:
+                    raise RuntimeError("ARAZ_ACCESS_PASSWORD environment variable not configured")
                 conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
                             rf"DBQ={mdb_path};"
                             rf"PWD={password};")
@@ -743,7 +810,7 @@ async def get_user_info(request: Request):
             return JSONResponse(content={'success': False, 'message': 'اطلاعات کاربر پیدا نشد'})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         cursor.close()
@@ -751,9 +818,18 @@ async def get_user_info(request: Request):
 
 # تابع دریافت اطلاعات کاربر برای صفحه های گزارش انفرادی مرخصی و اضافه کاری
 @app.get("/get_user_info_report")
-async def get_user_info_report(username: str = Query(...)):
+async def get_user_info_report(request: Request, username: str = Query(...)):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     if not username:
         return JSONResponse(content={'success': False, 'message': 'نام کاربری ارائه نشده است'})
+
+    # IDOR protection: users can only access their own data; admins can access any
+    session_user = request.session.get("username", "")
+    is_admin = request.session.get("is_admin") is True
+    if not is_admin and session_user.strip().lower() != username.strip().lower():
+        return JSONResponse(status_code=403, content={'success': False, 'message': 'دسترسی غیرمجاز'})
 
     try:
         # اتصال به دیتابیس SQL Server
@@ -787,7 +863,7 @@ async def get_user_info_report(username: str = Query(...)):
             return JSONResponse(content={'success': False, 'message': 'اطلاعات کاربر پیدا نشد'})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         cursor.close()
@@ -869,7 +945,7 @@ async def get_leave_info(request: Request):
             })
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="خطای داخلی سرور.")
 
     finally:
         cursor.close()
@@ -1003,7 +1079,7 @@ async def submit_leave(
         except Exception as e:
             print(f"SQL Error: {e}")
             conn.rollback()
-            return JSONResponse(content={"success": False, "message": str(e)})
+            return JSONResponse(content={"success": False, "message": _safe_error_message(e)})
 
     except ValueError as e:
         print(f"Date or Days Conversion Error: {e}")
@@ -1046,7 +1122,7 @@ async def submit_overtime(
 
     except Exception as e:
         conn.rollback()
-        return JSONResponse(content={"success": False, "message": f"خطا در ثبت اضافه‌کار: {str(e)}"})
+        return JSONResponse(content={"success": False, "message": _safe_error_message(e)})
 
 # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر
 # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر # تابع ثبت درخواست پاس ساعتی کاربر
@@ -1130,7 +1206,7 @@ async def submit_hourly_pass(request: Request):
 
     except Exception as e:
         conn.rollback()
-        return JSONResponse(content={"success": False, "message": str(e)})
+        return JSONResponse(content={"success": False, "message": _safe_error_message(e)})
 
 # ابزارهای مشترک تیکتینگ
 TICKET_STATUSES = frozenset({"ارسال شده", "در حال پیگیری", "خوانده شده", "پاسخ داده شده"})
@@ -1313,7 +1389,10 @@ async def submit_ticket(request: Request):
 # تابع دریافت اطلاعات کاربر برای صفحه گزارش جامع# تابع دریافت اطلاعات کاربر برای صفحه گزارش جامع# تابع دریافت اطلاعات کاربر برای صفحه گزارش جامع
 
 @app.get("/get_user_info_final_report_page/{username}")
-def get_user_info_final_report_page(username: str):
+def get_user_info_final_report_page(request: Request, username: str):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     try:
         username = username.strip()
         cursor.execute("""
@@ -1333,14 +1412,17 @@ def get_user_info_final_report_page(username: str):
             raise HTTPException(status_code=404, detail="کاربر یافت نشد")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"خطای سرور: {str(e)}")
+        raise HTTPException(status_code=500, detail="خطای سرور")
 
 # تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران
 # تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران
 # تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران# تابع ثبت دستی حضور و غیاب کاربران
 
 @app.post("/get_hozoor_filtered")
-async def get_hozoor_filtered(data: dict = Body(...)):
+async def get_hozoor_filtered(request: Request, data: dict = Body(...)):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         username = data.get("username")
         from_date = data.get("from_date")
@@ -1378,7 +1460,7 @@ async def get_hozoor_filtered(data: dict = Body(...)):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=500, content={"error": _safe_error_message(e)})
 
 # تابع بارگزاری عکس پروفایل کاربران# تابع بارگزاری عکس پروفایل کاربران# تابع بارگزاری عکس پروفایل کاربران
 # تابع بارگزاری عکس پروفایل کاربران# تابع بارگزاری عکس پروفایل کاربران# تابع بارگزاری عکس پروفایل کاربران
@@ -1390,20 +1472,55 @@ async def upload_profile_image(request: Request, file: UploadFile = File(...)):
     if not username:
         return RedirectResponse(url="/login", status_code=303)
 
-    upload_folder = "app/static/uploads"
-    os.makedirs(upload_folder, exist_ok=True)
+    # ── File type allow-list ──
+    ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
-    file_ext = os.path.splitext(file.filename)[1]
-    filename = f"{username}{file_ext}"
-    file_path = os.path.join(upload_folder, filename)
+    original_name = os.path.basename(file.filename or "")  # strip path components
+    file_ext = os.path.splitext(original_name)[1].lower()
+
+    if file_ext not in ALLOWED_EXTENSIONS:
+        return RedirectResponse(url="/user_panel", status_code=303)
+
+    # Read and enforce size limit
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        return RedirectResponse(url="/user_panel", status_code=303)
+
+    # ── Magic byte validation ──
+    MAGIC_SIGNATURES = {
+        '.jpg':  b'\xff\xd8\xff',
+        '.jpeg': b'\xff\xd8\xff',
+        '.png':  b'\x89PNG',
+        '.gif':  b'GIF8',
+        '.webp': b'RIFF',
+    }
+    detected_ext = None
+    if contents[:3] == b'\xff\xd8\xff':
+        detected_ext = '.jpg'
+    elif contents[:4] == b'\x89PNG':
+        detected_ext = '.png'
+    elif contents[:4] == b'GIF8':
+        detected_ext = '.gif'
+    elif contents[:4] == b'RIFF' and len(contents) >= 12 and contents[8:12] == b'WEBP':
+        detected_ext = '.webp'
+
+    if detected_ext is None or detected_ext != file_ext:
+        return RedirectResponse(url="/user_panel", status_code=303)
+
+    # Server-generated filename — never use user-supplied name
+    safe_filename = f"{username}{file_ext}"
+    upload_folder = os.path.join("app", "static", "uploads")
+    os.makedirs(upload_folder, exist_ok=True)
+    file_path = os.path.join(upload_folder, safe_filename)
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(contents)
 
-    # ذخیره مسیر فایل در دیتابیس (اختیاری ولی توصیه شده)
+    # ذخیره مسیر فایل در دیتابیس (فقط نام فایل امن)
     cursor.execute("""
         UPDATE user_table SET profile_image = ? WHERE username = ?
-    """, (filename, username))
+    """, (safe_filename, username))
     conn.commit()
 
     return RedirectResponse(url="/user_panel", status_code=303)
@@ -1423,8 +1540,11 @@ async def delete_profile_image(request: Request):
     row = cursor.fetchone()
 
     if row and row[0]:
-        file_path = os.path.join("app/static/uploads", row[0])
-        if os.path.exists(file_path):
+        # Path traversal protection: normalize and verify the path is within uploads/
+        safe_name = os.path.basename(row[0])
+        file_path = os.path.join("app", "static", "uploads", safe_name)
+        real_uploads = os.path.realpath(os.path.join("app", "static", "uploads"))
+        if os.path.realpath(file_path).startswith(real_uploads + os.sep) and os.path.exists(file_path):
             os.remove(file_path)
 
     # حذف از دیتابیس
@@ -1484,6 +1604,28 @@ def get_user_from_session(request: Request):
 
 def get_is_admin_from_session(request: Request):
     return request.session.get("is_admin") is True
+
+
+def _require_admin(request: Request):
+    """Return a 403 JSONResponse if the session user is not an admin."""
+    if not get_user_from_session(request):
+        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
+    if not get_is_admin_from_session(request):
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مدیریتی ندارید."})
+    return None  # None means OK
+
+
+def _safe_error_message(e: Exception) -> str:
+    """Return a generic error message without leaking internal details."""
+    logger.error(f"Unhandled error: {type(e).__name__}: {e}")
+    return "خطای داخلی سرور. لطفاً با پشتیبانی تماس بگیرید."
+
+
+def _require_auth(request: Request):
+    """Return a 401 JSONResponse if the session user is not authenticated."""
+    if not get_user_from_session(request):
+        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
+    return None
 
 
 EMPLOYMENT_STATUS_VALUES = frozenset({"official", "unofficial"})
@@ -1637,9 +1779,9 @@ async def _render_admin_page(request: Request):
         """)
         reports = cursor.fetchall()
 
-        # دریافت اطلاعات از جدول user_table
+        # دریافت اطلاعات از جدول user_table — رمز عبور هرگز خوانده نمی‌شود.
         cursor.execute("""
-            SELECT username, department, work_hours, substitute, name, last_name, employment_status, is_active, password
+            SELECT username, department, work_hours, substitute, name, last_name, employment_status, is_active
             FROM user_table
         """)
         users_data = cursor.fetchall()
@@ -1647,12 +1789,12 @@ async def _render_admin_page(request: Request):
         # پردازش گزارش‌های مرخصی
         report_data = [ReportData(username=report[0], total_used=report[1], total_remaining=report[2]) for report in reports]
 
-        # پردازش اطلاعات کاربران
-        users = [            UserData(
+        # پردازش اطلاعات کاربران — رمز عبور هرگز به فرانت‌اند ارسال نمی‌شود.
+        users = [UserData(
                 username=user[0], department=user[1], work_hours=user[2], substitute=user[3],
                 name=user[4], last_name=user[5], employment_status=str(user[6] or "official").strip().lower()
                 if str(user[6] or "official").strip().lower() in EMPLOYMENT_STATUS_VALUES else "official",
-                is_active=user[7], password=str(user[8] or "")
+                is_active=user[7], password=""
             )
             for user in users_data
         ]
@@ -1794,7 +1936,7 @@ async def _render_admin_page(request: Request):
         })
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="خطای داخلی سرور.")
 
 # ─── Admin Section Routes (SPA) ─────────────────────────────────────────────
 ADMIN_SECTIONS = {'dashboard', 'coworkers', 'vacation', 'overtime', 'hourly-pass', 'tickets', 'shifts', 'attendance', 'payroll'}
@@ -1963,6 +2105,9 @@ async def add_user(
     panjshanbeh: str = Form(...),
     employment_status: str = Form("official"),
 ):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     try:
         user_id = random.randint(100, 999)
 
@@ -2013,7 +2158,7 @@ async def add_user(
     except Exception as e:
 
 
-        return {"error": f"خطا در ذخیره کاربر: {str(e)}"}
+        return {"error": "خطا در ذخیره کاربر"}
 
 
 # تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر
@@ -2022,6 +2167,9 @@ async def add_user(
 
 @app.post("/update_user")
 async def update_user(request: Request):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     conn = None
     cursor = None
     try:
@@ -2060,11 +2208,16 @@ async def update_user(request: Request):
             params.append(is_active)
 
         if password_value:
-            set_clauses.append("password = ?")
-            params.append(password_value)
+            new_hash = hash_password(password_value)
+            # Never store plaintext — store only bcrypt hash
             if "password_hash" in columns:
+                set_clauses.append("password = ''")
                 set_clauses.append("password_hash = ?")
-                params.append(hash_password(password_value))
+                params.append(new_hash)
+            else:
+                # Fallback: store bcrypt hash string in password column (not plaintext)
+                set_clauses.append("password = ?")
+                params.append(new_hash.decode("utf-8") if isinstance(new_hash, bytes) else str(new_hash))
 
         params.append(current_username)
         cursor.execute(
@@ -2082,7 +2235,7 @@ async def update_user(request: Request):
                 conn.rollback()
             except Exception:
                 pass
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "خطای داخلی سرور"}
 
     finally:
         if cursor is not None:
@@ -2108,7 +2261,10 @@ SHIFT_DAY_COLUMNS = {
 
 
 @app.get("/get_shifts/{username}/{year}/{month}")
-async def get_shifts(username: str, year: int, month: int):
+async def get_shifts(request: Request, username: str, year: int, month: int):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
                               r'SERVER=localhost\SQLEXPRESS;'
@@ -2135,7 +2291,7 @@ async def get_shifts(username: str, year: int, month: int):
         return JSONResponse(content={'success': True, 'shifts': shifts})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         try:
@@ -2147,6 +2303,9 @@ async def get_shifts(username: str, year: int, month: int):
 
 @app.post("/add_shift")
 async def add_shift(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         data = await request.json()
 
@@ -2189,7 +2348,7 @@ async def add_shift(request: Request):
         return JSONResponse(content={'success': True, 'message': 'شیفت با موفقیت ثبت شد'})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         try:
@@ -2201,6 +2360,9 @@ async def add_shift(request: Request):
 
 @app.post("/update_shift")
 async def update_shift(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         data = await request.json()
 
@@ -2246,7 +2408,7 @@ async def update_shift(request: Request):
         return JSONResponse(content={'success': True, 'message': 'شیفت با موفقیت به‌روزرسانی شد'})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         try:
@@ -2257,7 +2419,10 @@ async def update_shift(request: Request):
 
 
 @app.post("/delete_shift/{shift_id}")
-async def delete_shift(shift_id: int):
+async def delete_shift(shift_id: int, request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
                               r'SERVER=localhost\SQLEXPRESS;'
@@ -2269,7 +2434,7 @@ async def delete_shift(shift_id: int):
         return JSONResponse(content={'success': True, 'message': 'شیفت حذف شد'})
 
     except Exception as e:
-        return JSONResponse(content={'success': False, 'message': str(e)})
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
 
     finally:
         try:
@@ -2284,7 +2449,10 @@ async def delete_shift(shift_id: int):
 # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران
 
 @app.get("/get_leave_requests")
-async def get_leave_requests():
+async def get_leave_requests(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         conn = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost\\SQLEXPRESS;DATABASE=userDB;Trusted_Connection=yes;')
         cursor = conn.cursor()
@@ -2326,7 +2494,7 @@ async def get_leave_requests():
         return JSONResponse(content=requests_data)
 
     except Exception as e:
-        return JSONResponse(content={'error': 'خطا در دریافت درخواست‌ها', 'message': str(e)}, status_code=500)
+        return JSONResponse(            content={"error": "خطا در دریافت داده‌ها", "message": _safe_error_message(e)})
 
 
 # تابع بروزرسانی وضعیت مرخصی کاربر # تابع بروزرسانی وضعیت مرخصی کاربر # تابع بروزرسانی وضعیت مرخصی کاربر # تابع بروزرسانی وضعیت مرخصی کاربر
@@ -2335,6 +2503,9 @@ async def get_leave_requests():
 
 @app.post("/update_leave_status")
 async def update_leave_status(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     data = await request.json()
     request_id = data.get('requestId')
     new_status = data.get('status')
@@ -2363,6 +2534,9 @@ async def update_leave_status(request: Request):
 
 @app.post("/generate_individual_report")
 async def generate_individual_report(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     data = await request.json()
     username = data.get('user')         # نام کاربر
     from_date = data.get('fromDate')    # تاریخ شروع (شمسی)
@@ -2428,7 +2602,10 @@ async def report_page(request: Request):
     return templates.TemplateResponse(request, "leave_report_page.html", {"request": request})
 
 @app.get("/fetch_user_data")
-async def fetch_user_data(username: str = Query(...)):
+async def fetch_user_data(request: Request, username: str = Query(...)):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     try:
         # جستجوی اطلاعات کاربر
         query = """
@@ -2457,7 +2634,10 @@ async def fetch_user_data(username: str = Query(...)):
 # تابع دریافت اضافه کاری های کاربران # تابع دریافت اضافه کاری های کاربران # تابع دریافت اضافه کاری های کاربران
 
 @app.get("/get_hourly_pass_requests")
-async def get_hourly_pass_requests():
+async def get_hourly_pass_requests(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         # اتصال به دیتابیس
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
@@ -2497,7 +2677,7 @@ async def get_hourly_pass_requests():
 
     except Exception as e:
         return JSONResponse(
-            content={'error': 'خطا در دریافت داده‌های پاس ساعتی‌ها', 'message': str(e)},
+            content={"error": "خطا در دریافت داده‌ها", "message": _safe_error_message(e)},
             status_code=500
         )
 
@@ -2507,6 +2687,9 @@ async def get_hourly_pass_requests():
 
 @app.post("/change_hourly_pass_status")
 async def change_hourly_pass_status(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         data = await request.json()
         request_id = data.get("id")
@@ -2527,7 +2710,7 @@ async def change_hourly_pass_status(request: Request):
 
     except Exception as e:
         return JSONResponse(
-            content={"success": False, "message": str(e)},
+            content={"success": False, "message": "خطای داخلی سرور"},
             status_code=500
         )
 
@@ -2590,7 +2773,7 @@ async def get_hourly_pass_report(request: Request):
         return JSONResponse(content={'error': 'تاریخ وارد شده صحیح نیست. لطفاً فرمت صحیح را وارد کنید.'}, status_code=400)
 
     except Exception as e:
-        return JSONResponse(content={'error': str(e)}, status_code=500)
+        return JSONResponse(content={"error": "خطای داخلی سرور"}, status_code=500)
 
 # تابع بروزرسانی وضعیت پاس ساعتی # تابع بروزرسانی وضعیت پاس ساعتی # تابع بروزرسانی وضعیت پاس ساعتی
 # تابع بروزرسانی وضعیت پاس ساعتی # تابع بروزرسانی وضعیت پاس ساعتی # تابع بروزرسانی وضعیت پاس ساعتی
@@ -2598,6 +2781,9 @@ async def get_hourly_pass_report(request: Request):
 
 @app.post("/update_hourly_pass_status")
 async def update_hourly_pass_status(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         data = await request.json()
         row_id = data.get("id")
@@ -2611,14 +2797,17 @@ async def update_hourly_pass_status(request: Request):
         return JSONResponse(content={"success": True})
 
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        return JSONResponse(content={"success": False, "message": _safe_error_message(e)}, status_code=500)
 
 # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران
 # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران
 # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران # تابع دریافت اضافه کاری کاربران
 
 @app.get("/get_overtime_requests")
-async def get_overtime_requests():
+async def get_overtime_requests(request: Request):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         # اتصال به دیتابیس
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
@@ -2670,7 +2859,7 @@ async def get_overtime_requests():
 
     except Exception as e:
         return JSONResponse(
-            content={'error': 'خطا در دریافت داده‌های اضافه کاری‌ها', 'message': str(e)}
+            content={"error": "خطا در دریافت داده‌ها", "message": _safe_error_message(e)}
         )
 
 # تابع بروزرسانی وضعیت اضافه کاری کاربران # تابع بروزرسانی وضعیت اضافه کاری کاربران # تابع بروزرسانی وضعیت اضافه کاری کاربران
@@ -2683,7 +2872,10 @@ class OvertimeUpdateRequest(BaseModel):
     status: str
 
 @app.post("/update_overtime_status")
-async def update_overtime_status(data: OvertimeUpdateRequest):
+async def update_overtime_status(request: Request, data: OvertimeUpdateRequest):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         cursor.execute("""
             UPDATE ezafe_table
@@ -2714,7 +2906,10 @@ class OvertimeStatusUpdate(BaseModel):
     status: str
 
 @app.post("/update_overtime_Indivisual_status")
-async def update_overtime_indivisual_status(data: OvertimeStatusUpdate):
+async def update_overtime_indivisual_status(request: Request, data: OvertimeStatusUpdate):
+    admin_err = _require_admin(request)
+    if admin_err:
+        return admin_err
     try:
         query = '''
             UPDATE ezafe_table
@@ -2746,6 +2941,9 @@ async def overtime_report_page(request: Request):
 
 @app.get("/overtime_report", response_class=HTMLResponse)
 async def overtime_report(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     try:
         query = "SELECT username, total_ezafe_time FROM ezafe_total_table"
         cursor.execute(query)
@@ -3281,7 +3479,10 @@ def normalize_time_value(value) -> str:
 from datetime import time
 
 @app.get("/get_hozoor/{username}")
-def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Query(...)):
+def get_hozoor(request: Request, username: str, start_date: str = Query(...), end_date: str = Query(...)):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     # نرمال‌سازی نام کاربر و تاریخ‌ها قبل از دسترسی به دیتابیس.
     username = str(username or "").strip()
     start_date = convert_farsi_to_english(start_date).strip()
@@ -3358,7 +3559,9 @@ def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Quer
     cursor_access = None
     try:
         mdb_path = os.getenv("ARAZ_ACCESS_PATH") or r"E:\Hastama\database\Arazdb.mdb"
-        password = os.getenv("ARAZ_ACCESS_PASSWORD") or "meyer#perko"
+        password = os.getenv("ARAZ_ACCESS_PASSWORD", "")
+        if not password:
+            raise RuntimeError("ARAZ_ACCESS_PASSWORD not configured")
         conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
                     rf"DBQ={mdb_path};"
                     rf"PWD={password};")
@@ -3542,6 +3745,9 @@ def get_hozoor(username: str, start_date: str = Query(...), end_date: str = Quer
 
 @app.post("/sabt_hozoor")
 async def sabt_hozoor(request: Request):
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     data = await request.json()
 
     username = data.get("username") or data.get("usernamedast")
@@ -3590,7 +3796,7 @@ async def sabt_hozoor(request: Request):
 
     except Exception as e:
         conn.rollback()
-        return JSONResponse(content={"success": False, "message": f"خطا در ثبت اطلاعات: {str(e)}"})
+        return JSONResponse(content={"success": False, "message": _safe_error_message(e)})
 
 
 # ثبت ورود دستی (Check-In) از صفحه کاربران # ثبت ورود دستی (Check-In) از صفحه کاربران
@@ -3949,6 +4155,9 @@ async def final_report(request: Request):
 
 @app.get("/download_pdf")
 async def download_pdf(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     # مسیر فایل CSS برای استایل‌دهی PDF
     css_path = os.path.join("static", 'finalReportUserPrint.css')
 
@@ -3973,8 +4182,8 @@ async def get_today_date():
 
 @app.get("/logout")
 async def logout(request: Request, response: Response):
-    # حذف username از session
-    request.session.pop("username", None)
+    # Clear entire session on logout to remove all auth flags
+    request.session.clear()
     
     # ریدایرکت به صفحه اصلی
     return RedirectResponse(url="/login")

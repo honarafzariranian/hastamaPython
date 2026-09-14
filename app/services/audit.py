@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 import secrets
 import string
 import time
@@ -18,6 +20,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
 from app.core.database import connect as db_connect
+
+logger = logging.getLogger(__name__)
 
 # ── ID Generators ─────────────────────────────────────────────
 
@@ -257,7 +261,10 @@ import hmac as _hmac
 import hashlib as _hashlib
 
 # Server-side secret for HMAC. In production, load from environment variable.
-_HMAC_SECRET = b"hastama-recovery-code-secret-2026"
+_HMAC_SECRET = os.environ.get("HASTAMA_HMAC_SECRET", "").encode()
+if not _HMAC_SECRET:
+    import logging as _logging
+    _logging.getLogger(__name__).warning("HASTAMA_HMAC_SECRET not set — recovery codes are insecure")
 
 def _hash_code(code: str) -> str:
     """Hash recovery code using HMAC-SHA256 with server secret."""
@@ -289,7 +296,8 @@ def create_password_reset_request(
             conn.commit()
         return {"request_id": request_id, "status": "pending"}
     except Exception as e:
-        return {"request_id": None, "status": "error", "message": str(e)}
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return {"request_id": None, "status": "error", "message": "خطای داخلی سرور"}
     finally:
         if _close:
             conn.close()
@@ -325,7 +333,8 @@ def approve_password_reset(
             return {"success": True, "code": code, "expires": expires.isoformat()}
         return {"success": False, "message": "درخواست یافت نشد یا قبلاً پردازش شده است."}
     except Exception as e:
-        return {"success": False, "message": str(e)}
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return {"success": False, "message": "خطای داخلی سرور"}
     finally:
         if _close:
             conn.close()
@@ -416,7 +425,8 @@ def verify_recovery_code(request_id: str, code: str, conn=None) -> dict:
             conn.commit()
         return {"success": True, "username": username}
     except Exception as e:
-        return {"success": False, "message": str(e)}
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return {"success": False, "message": "خطای داخلی سرور"}
     finally:
         if _close:
             conn.close()

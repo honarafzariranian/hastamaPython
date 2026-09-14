@@ -18,7 +18,8 @@ from datetime import datetime, timedelta
 import os
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.services.araz_connector import (
@@ -35,6 +36,15 @@ BRIDGE_SECRET = os.environ.get("ARAZ_BRIDGE_SECRET", "")
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/araz", tags=["araz-device"])
+
+
+def _require_admin(request: Request):
+    """Check that the request comes from an authenticated admin session."""
+    username = request.session.get("username")
+    is_admin = request.session.get("is_admin")
+    if not username or not is_admin:
+        return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مدیریتی ندارید."})
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -83,8 +93,11 @@ _device_config = {
 
 
 @router.get("/config")
-async def get_device_config():
+async def get_device_config(request: Request):
     """Get current device connection configuration."""
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     return _device_config
 
 
@@ -96,8 +109,11 @@ class DeviceConfigUpdate(BaseModel):
 
 
 @router.post("/config")
-async def update_device_config(update: DeviceConfigUpdate):
+async def update_device_config(request: Request, update: DeviceConfigUpdate):
     """Update device connection configuration."""
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     if update.ip is not None:
         _device_config["ip"] = update.ip
     if update.port is not None:
@@ -114,11 +130,14 @@ async def update_device_config(update: DeviceConfigUpdate):
 # ---------------------------------------------------------------------------
 
 @router.get("/test", response_model=DeviceTestResponse)
-async def test_device_connection():
+async def test_device_connection(request: Request):
     """
     Test connectivity to the Araz T7 device.
     Returns device status including current time.
     """
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     device = ArazDevice(
         ip=_device_config["ip"],
         port=_device_config["port"],
@@ -155,8 +174,11 @@ async def test_device_connection():
 
 
 @router.get("/time", response_model=DeviceTimeResponse)
-async def get_device_time():
+async def get_device_time(request: Request):
     """Get the current time from the Araz T7 device."""
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     device = ArazDevice(
         ip=_device_config["ip"],
         port=_device_config["port"],
@@ -176,8 +198,11 @@ async def get_device_time():
 
 
 @router.post("/time/sync")
-async def sync_device_time():
+async def sync_device_time(request: Request):
     """Sync the Araz T7 device clock to the server's current time."""
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     device = ArazDevice(
         ip=_device_config["ip"],
         port=_device_config["port"],
@@ -192,6 +217,7 @@ async def sync_device_time():
 
 @router.get("/records", response_model=list[AttendanceRecordResponse])
 async def get_device_records(
+    request: Request,
     from_date: Optional[str] = Query(None, description="Start date (yyyy/MM/dd)"),
     to_date: Optional[str] = Query(None, description="End date (yyyy/MM/dd)"),
 ):
@@ -201,6 +227,9 @@ async def get_device_records(
     Optional date filters use Gregorian dates (yyyy/MM/dd).
     Without filters, returns all records on the device.
     """
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     device = ArazDevice(
         ip=_device_config["ip"],
         port=_device_config["port"],
@@ -234,6 +263,7 @@ async def get_device_records(
 
 @router.post("/sync")
 async def sync_records_to_database(
+    request: Request,
     from_date: Optional[str] = Query(None, description="Start date (yyyy/MM/dd)"),
     to_date: Optional[str] = Query(None, description="End date (yyyy/MM/dd)"),
 ):
@@ -243,6 +273,9 @@ async def sync_records_to_database(
 
     This replaces the Araz.exe + Access DB pipeline.
     """
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     device = ArazDevice(
         ip=_device_config["ip"],
         port=_device_config["port"],
@@ -387,7 +420,9 @@ async def bridge_sync(req: BridgeSyncRequest):
     }
     """
     # Auth check
-    if BRIDGE_SECRET and req.secret != BRIDGE_SECRET:
+    if not BRIDGE_SECRET:
+        return JSONResponse(status_code=500, content={"success": False, "error": "ARAZ_BRIDGE_SECRET not configured"})
+    if req.secret != BRIDGE_SECRET:
         raise HTTPException(status_code=401, detail="Invalid bridge secret")
 
     if not req.records:

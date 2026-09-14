@@ -1,5 +1,7 @@
 # app/api/routes/auth.py — Security-Hardened Authentication Routes
 
+import os
+
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 import logging
@@ -22,8 +24,9 @@ from app.services.captcha import (
 router = APIRouter()
 logger = logging.getLogger("hastama.auth")
 
-# Master admin usernames
-MASTER_ADMIN_USERNAMES = {"ali"}
+# Master admin usernames — loaded from env var (comma-separated)
+_master_admin_raw = os.environ.get("MASTER_ADMIN_USERNAMES", "ali")
+MASTER_ADMIN_USERNAMES = {u.strip().lower() for u in _master_admin_raw.split(",") if u.strip()}
 
 # ── Rate Limiting ────────────────────────────────────────────
 
@@ -196,6 +199,8 @@ async def login(request: Request):
         user = fetch_user_for_login(cursor, username)
 
         if user and verify_password(user[2], user[3] if len(user) > 3 else None, password):
+            # Session rotation: clear old session data, set new to prevent session fixation
+            request.session.clear()
             request.session["username"] = username
             role = user[1].strip().lower()
 
@@ -381,11 +386,20 @@ async def reset_password(request: Request):
                 (new_hash, username),
             )
         except Exception:
-            # password_hash column might not exist — store plain text as fallback
-            cur.execute(
-                "UPDATE user_table SET password = ? WHERE LTRIM(RTRIM(username)) = ?",
-                (new_password, username),
-            )
+            # password_hash column might not exist — add it, then migrate
+            try:
+                cur.execute("ALTER TABLE user_table ADD password_hash VARBINARY(MAX) NULL")
+                conn.commit()
+                cur.execute(
+                    "UPDATE user_table SET password = '', password_hash = ? WHERE LTRIM(RTRIM(username)) = ?",
+                    (new_hash, username),
+                )
+            except Exception:
+                # Column already exists or migration failed — store hash in password column as last resort
+                cur.execute(
+                    "UPDATE user_table SET password = ? WHERE LTRIM(RTRIM(username)) = ?",
+                    (new_hash.decode("utf-8") if isinstance(new_hash, bytes) else str(new_hash), username),
+                )
         conn.commit()
 
         log_event(

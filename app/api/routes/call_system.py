@@ -548,8 +548,11 @@ async def add_to_waiting_queue(request: Request):
 
 
 @router.delete("/calls/waiting-queue/{item_id}")
-async def remove_from_waiting_queue(item_id: int):
+async def remove_from_waiting_queue(request: Request, item_id: int):
     """Remove an item from the waiting queue."""
+    username = request.session.get("username")
+    if not username:
+        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -778,7 +781,7 @@ async def list_active_slides():
 @router.post("/calls/slides/upload")
 async def upload_slide(request: Request, file: UploadFile = File(...)):
     """Upload a slide image."""
-    _actor(request, admin=True, required=False)
+    _actor(request, admin=True, required=True)
     _ensure_slides_dir()
 
     # Validate file type
@@ -833,8 +836,11 @@ async def upload_slide(request: Request, file: UploadFile = File(...)):
 
 
 @router.put("/calls/slides/{slide_id}/toggle")
-async def toggle_slide(slide_id: int):
+async def toggle_slide(request: Request, slide_id: int):
     """Toggle active/inactive status of a slide."""
+    username = request.session.get("username")
+    if not username:
+        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -849,8 +855,11 @@ async def toggle_slide(slide_id: int):
 
 
 @router.delete("/calls/slides/{slide_id}")
-async def delete_slide(slide_id: int):
+async def delete_slide(request: Request, slide_id: int):
     """Delete a slide from database and disk."""
+    username = request.session.get("username")
+    if not username:
+        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -883,6 +892,10 @@ async def delete_slide(slide_id: int):
 @router.websocket("/ws/call-display")
 async def call_display_ws(websocket: WebSocket):
     """WebSocket endpoint for TV display pages."""
+    session = websocket.session if hasattr(websocket, 'session') else None
+    if not session or not session.get("username"):
+        await websocket.close(code=4001)
+        return
     await display_manager.connect(websocket)
     try:
         while True:

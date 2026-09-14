@@ -7,6 +7,7 @@ for the designated master-admin user(s).
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
@@ -15,6 +16,8 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from app.core.database import connect as db_connect
+
+logger = logging.getLogger(__name__)
 from app.services.audit import (
     log_event, log_admin_action, log_system_error,
     create_security_event, terminate_session,
@@ -124,7 +127,8 @@ async def dashboard_stats(request: Request):
 
         return JSONResponse(content={"success": True, "data": stats})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -144,7 +148,8 @@ async def dashboard_activity(request: Request, limit: int = Query(50, ge=1, le=2
         rows = _dict_rows(cur)
         return JSONResponse(content={"success": True, "data": [_serialize(r) for r in rows]})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -220,7 +225,8 @@ async def list_audit_logs(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -239,7 +245,8 @@ async def get_audit_event(request: Request, event_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -290,7 +297,8 @@ async def list_users(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -339,7 +347,8 @@ async def get_user_detail(request: Request, username: str):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -372,7 +381,8 @@ async def toggle_user_status(request: Request, username: str):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -408,7 +418,8 @@ async def change_user_role(request: Request, username: str):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -451,7 +462,8 @@ async def list_sessions(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -507,7 +519,8 @@ async def list_password_resets(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -576,7 +589,8 @@ async def list_security_events(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -601,7 +615,8 @@ async def resolve_security_event(request: Request, event_id: str):
         )
         return JSONResponse(content={"success": True})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -647,7 +662,8 @@ async def list_errors(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -672,7 +688,8 @@ async def resolve_error(request: Request, error_id: str):
         )
         return JSONResponse(content={"success": True})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -715,7 +732,8 @@ async def list_admin_actions(
             "pages": max(1, (total + per_page - 1) // per_page),
         })
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -739,7 +757,8 @@ async def system_health(request: Request):
         health["database"] = {"status": "healthy", "latency_ms": round(latency, 1)}
         conn.close()
     except Exception as e:
-        health["database"] = {"status": "error", "message": str(e)}
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        health["database"] = {"status": "error", "message": "خطای اتصال به پایگاه داده"}
 
     # Session count
     try:
@@ -816,7 +835,8 @@ async def global_search(request: Request, q: str = Query("")):
 
         return JSONResponse(content={"success": True, "results": results})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -847,7 +867,8 @@ async def list_all_tickets(
         )
         return JSONResponse(content={"success": True, "data": result})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         service.close()
 
@@ -869,7 +890,8 @@ async def ticket_stats(request: Request):
         stats["by_priority"] = {row[0]: row[1] for row in cur.fetchall()}
         return JSONResponse(content={"success": True, "data": stats})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -887,7 +909,8 @@ async def get_ticket_detail(ticket_id: int, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         service.close()
 
@@ -914,7 +937,8 @@ async def update_ticket_admin(ticket_id: int, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         service.close()
 
@@ -941,7 +965,8 @@ async def reply_ticket_admin(ticket_id: int, request: Request):
         )
         return JSONResponse(content={"success": True, "data": result})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         service.close()
 
@@ -972,7 +997,8 @@ async def delete_ticket_admin(ticket_id: int, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -985,7 +1011,8 @@ async def ticket_categories_admin(request: Request):
     try:
         return JSONResponse(content={"success": True, "data": service.categories()})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         service.close()
 
@@ -1013,7 +1040,8 @@ async def ticket_users_admin(request: Request):
             })
         return JSONResponse(content={"success": True, "data": users})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -1032,7 +1060,8 @@ async def get_config(request: Request):
         rows = [_serialize(r) for r in _dict_rows(cur)]
         return JSONResponse(content={"success": True, "data": rows})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
 
@@ -1060,6 +1089,7 @@ async def update_config(request: Request):
         )
         return JSONResponse(content={"success": True})
     except Exception as e:
-        return JSONResponse(content={"success": False, "message": str(e)}, status_code=500)
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
