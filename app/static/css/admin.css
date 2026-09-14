@@ -745,7 +745,7 @@ html, body {
 
 .rightSidebar:hover,
 .rightSidebar.open {
-    width: clamp(180px, 18vw, 230px);
+    width: clamp(180px, 18vw, 240px);
     overflow: hidden;
 }
 
@@ -790,11 +790,13 @@ html, body {
 
 .icon-container.active img,
 .icon-container.active svg {
-    filter: brightness(0) invert(1);
+    /* legacy filter disabled — new tile system handles colors */
+    filter: none !important;
 }
 
+/* Old bare-SVG rules — disabled for tile-based sidebar */
 .icon-container img,
-.icon-container svg,
+.icon-container svg:not(.sidebar-icon-tile svg),
 .icon-container .hourlyPass-icon,
 .icon-container .ticket-icon {
     width: 24px;
@@ -4640,8 +4642,7 @@ form button:active {
     /* وقتی سایدبار با هاور باز می‌شود، لبه‌ی راست کنار لبه‌ی بازشده
        می‌نشیند و scaleXی سراسری خنثی می‌شود تا فاصله ثابت بماند. */
     .page-shell.sidebar-expanded #shiftBox {
-        right: calc(clamp(180px, 18vw, 230px) + 1rem) !important;
-        transform: none !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
     /* سربرگ/نوار فیلتر/دکمه‌ی پایین ثابت؛ فقط ناحیه‌ی جدول اسکرول می‌شود */
@@ -5511,7 +5512,7 @@ form button:active {
     /* وقتی سایدبار با هاور باز می‌شود، لبه‌ی راست کنار لبه‌ی بازشده می‌نشیند؛
        scaleXی سراسری خنثی می‌شود تا فاصله‌ی ۱rem ثابت بماند. */
     .page-shell.sidebar-expanded:has(#hozoorbox.is-visible) #hozoorbox {
-        right: calc(clamp(180px, 18vw, 230px) + 1rem) !important;
+        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
         transform: none !important;
     }
 
@@ -5533,7 +5534,7 @@ form button:active {
     }
 
     .page-shell.sidebar-expanded:has(#coworkerBox.is-visible) #coworkerBox {
-        right: calc(clamp(180px, 18vw, 230px) + 1rem) !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
         transform: none !important;
     }
 
@@ -6305,7 +6306,8 @@ form button:active {
     }
 
     .page-shell.sidebar-expanded #payrollBox.payroll-panel {
-        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
+        width: auto !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
 
@@ -6346,11 +6348,13 @@ form button:active {
     }
 
     .page-shell.sidebar-expanded #vacationBox.vacation-panel {
-        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
+        width: auto !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
     .page-shell.sidebar-expanded #ticketBox {
-        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
+        width: auto !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
     .vacation-panel .vacation-frame {
@@ -6378,7 +6382,8 @@ form button:active {
     }
 
     .page-shell.sidebar-expanded #overtimeBox.overtime-panel {
-        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
+        width: auto !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
     .overtime-panel .overtime-frame {
@@ -6403,10 +6408,12 @@ form button:active {
         height: auto !important;
         overflow: hidden;
         margin: 0 !important;
+        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .page-shell.sidebar-expanded #hourlyPassBox.hourlyPass-panel {
-        right: calc(clamp(180px, 18vw, 230px) + 10%) !important;
+        width: auto !important;
+        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
     }
 
     .hourlyPass-panel .hourlyPass-frame {

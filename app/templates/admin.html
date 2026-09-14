@@ -492,10 +492,6 @@
 
                 <!-- تب اطلاعات کاربران -->
                 <div id="cw-users-tab" class="coworker-tab-content active" role="tabpanel">
-            <div class="userInfo-header">
-                <span class="userInfo-header-icon">👥</span>
-                <h2>اطلاعات کاربران</h2>
-            </div>
             <div class="user-table-scroll" role="region" aria-label="جدول اطلاعات کاربران، قابل پیمایش افقی">
                 <table id="userTable">
                 <thead>
@@ -789,6 +785,37 @@
             </div>
         </div>
 
+            </div><!-- /cw-new-user-tab -->
+
+            <!-- تب درخواست ثبت نام -->
+            <div id="cw-reg-requests-tab" class="coworker-tab-content" role="tabpanel">
+        <div id="regRequestsBox" class="management-box">
+            <div class="new-user-header">
+                <h2>
+                    <span class="header-icon">📝</span>
+                    درخواست‌های ثبت نام کاربران جدید
+                </h2>
+            </div>
+            <div style="padding:16px">
+                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                    <input type="text" id="regSearchInput" placeholder="جستجو..." style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem;flex:1;min-width:150px">
+                    <select id="regStatusFilter" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="pending">انتظار بررسی</option>
+                        <option value="approved">تأیید شده</option>
+                        <option value="rejected">رد شده</option>
+                    </select>
+                    <button onclick="loadRegRequests()" style="padding:8px 16px;border:none;border-radius:8px;background:#0ea5e9;color:#fff;font-family:Vazir;font-size:0.82rem;font-weight:700;cursor:pointer">بارگذاری</button>
+                </div>
+                <div id="regRequestsTable">
+                    <p style="text-align:center;color:#94a3b8;padding:20px">روی «بارگذاری» کلیک کنید.</p>
+                </div>
+                <div id="regRequestsPagination" style="display:flex;justify-content:center;gap:4px;margin-top:12px"></div>
+            </div>
+        </div>
+            </div><!-- /cw-reg-requests-tab -->
+            </div><!-- /coworker-frame -->
+
         <!-- پاپ‌آپ ویرایش -->
         <div id="editPopup" class="modal-virayesh">
             <div class="popup-content-virayesh">
@@ -901,36 +928,6 @@
             </div>
         </div>
 
-            </div><!-- /cw-new-user-tab -->
-
-            <!-- تب درخواست ثبت نام -->
-            <div id="cw-reg-requests-tab" class="coworker-tab-content" role="tabpanel">
-        <div id="regRequestsBox" class="management-box">
-            <div class="new-user-header">
-                <h2>
-                    <span class="header-icon">📝</span>
-                    درخواست‌های ثبت نام کاربران جدید
-                </h2>
-            </div>
-            <div style="padding:16px">
-                <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-                    <input type="text" id="regSearchInput" placeholder="جستجو..." style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem;flex:1;min-width:150px">
-                    <select id="regStatusFilter" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:Vazir;font-size:0.82rem">
-                        <option value="">همه وضعیت‌ها</option>
-                        <option value="pending">انتظار بررسی</option>
-                        <option value="approved">تأیید شده</option>
-                        <option value="rejected">رد شده</option>
-                    </select>
-                    <button onclick="loadRegRequests()" style="padding:8px 16px;border:none;border-radius:8px;background:#0ea5e9;color:#fff;font-family:Vazir;font-size:0.82rem;font-weight:700;cursor:pointer">بارگذاری</button>
-                </div>
-                <div id="regRequestsTable">
-                    <p style="text-align:center;color:#94a3b8;padding:20px">روی «بارگذاری» کلیک کنید.</p>
-                </div>
-                <div id="regRequestsPagination" style="display:flex;justify-content:center;gap:4px;margin-top:12px"></div>
-            </div>
-        </div>
-            </div><!-- /cw-reg-requests-tab -->
-            </div><!-- /coworker-frame -->
         </div><!-- /coworkerBox -->
 
         <!-- باکس مدیریت شیفت‌های ماهانه پرسنل -->
