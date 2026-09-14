@@ -44,12 +44,9 @@
                         <svg class="theme-toggle-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <svg class="theme-toggle-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div class="topbar-user" id="profileCard">
+                    <div class="topbar-user" id="profileCard" onclick="toggleProfileDropdown(event)">
                         <div class="topbar-avatar-wrap">
                             <img class="topbar-avatar" id="topbarAvatar" src="{{ user_image_url or '/static/images/user.png' }}" alt="پروفایل کاربر">
-                            <span class="avatar-edit-btn" data-action="open-profile-panel" title="ویرایش پروفایل">
-                                <svg viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </span>
                         </div>
                         <div class="topbar-user-info">
                             <span class="topbar-user-name">{{ username }}</span>
@@ -57,21 +54,51 @@
                         </div>
                         <svg class="chevron-icon" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 
-                        <!-- منوی کوچک حذف/ویرایش پروفایل -->
-                        <div class="avatar-menu" id="avatarMenu">
-                            <div class="virayeshProfile" data-action="open-profile-panel">
-                                <span class="avatar-menu-icon">
-                                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </span>
-                                <p>ویرایش پروفایل</p>
+                        <!-- دراپ‌داون پروفایل -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="pd-header">
+                                <div class="pd-header__avatar">
+                                    <img src="{{ user_image_url or '/static/images/user.png' }}" alt="پروفایل">
+                                    <span class="pd-header__status"></span>
+                                </div>
+                                <div class="pd-header__info">
+                                    <div class="pd-header__name">{{ username }}</div>
+                                    <div class="pd-header__role">{{ user_role or 'کارشناس فناوری اطلاعات' }}</div>
+                                </div>
                             </div>
-                            <div class="hazfeProfile" data-action="confirm-delete">
-                                <span class="avatar-menu-icon">
-                                    <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 6l-1 14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                                </span>
-                                <p>حذف عکس</p>
+
+                            <div class="pd-section">
+                                <div class="pd-section__label">حساب کاربری</div>
+                                <button type="button" class="pd-item" data-action="open-profile-panel">
+                                    <span class="pd-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                                    <span class="pd-item__text">پروفایل من</span>
+                                    <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                                </button>
+                                <button type="button" class="pd-item" data-action="open-security-panel">
+                                    <span class="pd-item__icon pd-item__icon--green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                                    <span class="pd-item__text">امنیت و رمز عبور</span>
+                                    <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                                </button>
+                            </div>
+
+                            <div class="pd-section">
+                                <div class="pd-section__label">پشتیبانی</div>
+                                <button type="button" class="pd-item" data-action="open-support-center">
+                                    <span class="pd-item__icon pd-item__icon--cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                                    <span class="pd-item__text">پشتیبانی فنی</span>
+                                    <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                                </button>
+                            </div>
+
+                            <div class="pd-section">
+                                <a href="/training/lesson/user-dashboard" class="pd-item pd-item--link" target="_blank" rel="noopener">
+                                    <span class="pd-item__icon pd-item__icon--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                                    <span class="pd-item__text">آموزش این صفحه</span>
+                                    <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+                                </a>
                             </div>
                         </div>
+
                         <form id="uploadForm" method="post" enctype="multipart/form-data" action="/upload-profile-image">
                             <input type="file" id="fileInput" name="file" accept="image/*" style="display: none;">
                         </form>
@@ -1234,9 +1261,6 @@
         <script src="{{ url_for('static', path='js/user-panel-script.js') }}"></script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
-
-    <!-- Training Page Help Button -->
-    <a href="/training/lesson/user-dashboard" class="tr-page-help" title="آموزش این صفحه" target="_blank" rel="noopener">🎓 آموزش این صفحه</a>
 
     <script>
     (function() {

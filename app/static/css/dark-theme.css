@@ -222,6 +222,37 @@ body.dark-mode .status-dropdown {
     box-shadow: var(--dk-shadow);
 }
 
+body.dark-mode .pd-header {
+    background: linear-gradient(135deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-bottom-color: var(--dk-border);
+}
+body.dark-mode .pd-header__name { color: var(--dk-text); }
+body.dark-mode .pd-header__role { color: var(--dk-text-3); }
+body.dark-mode .pd-header__avatar img { border-color: var(--dk-surface); }
+body.dark-mode .pd-header__status { border-color: var(--dk-surface); }
+body.dark-mode .pd-section__label { color: var(--dk-text-3); }
+body.dark-mode .pd-item { color: var(--dk-text); }
+body.dark-mode .pd-item:hover { color: var(--dk-text); }
+body.dark-mode .pd-item--link { color: var(--dk-text); }
+body.dark-mode .pd-item__icon { background: var(--dk-surface-2); }
+body.dark-mode .pd-item__icon svg { color: var(--dk-text-2); }
+body.dark-mode .pd-item:hover .pd-item__icon { background: var(--dk-surface-3); }
+body.dark-mode .pd-item:hover .pd-item__icon svg { color: var(--dk-accent); }
+body.dark-mode .pd-item__icon--green { background: rgba(16,185,129,.15); }
+body.dark-mode .pd-item__icon--green svg { color: #34d399; }
+body.dark-mode .pd-item__icon--purple { background: rgba(139,92,246,.15); }
+body.dark-mode .pd-item__icon--purple svg { color: #a78bfa; }
+body.dark-mode .pd-item__icon--amber { background: rgba(245,158,11,.15); }
+body.dark-mode .pd-item__icon--amber svg { color: #fbbf24; }
+body.dark-mode .pd-item__icon--cyan { background: rgba(6,182,212,.15); }
+body.dark-mode .pd-item__icon--cyan svg { color: #22d3ee; }
+body.dark-mode .pd-item__icon--slate { background: var(--dk-surface-2); }
+body.dark-mode .pd-item__icon--slate svg { color: var(--dk-text-2); }
+body.dark-mode .pd-item__icon--blue { background: rgba(59,130,246,.15); }
+body.dark-mode .pd-item__icon--blue svg { color: #60a5fa; }
+body.dark-mode .pd-item__arrow svg { color: var(--dk-text-3); }
+body.dark-mode .pd-section + .pd-section { border-top-color: var(--dk-border); }
+
 body.dark-mode .dropdown-item {
     background: transparent;
     color: var(--dk-text);

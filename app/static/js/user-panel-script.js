@@ -2520,42 +2520,52 @@ function updateTopbarClock() {
 setInterval(updateTopbarClock, 1000);
 document.addEventListener('DOMContentLoaded', updateTopbarClock);
 
-// باز و بسته کردن منوی پروفایل کاربر
-document.addEventListener('DOMContentLoaded', function () {
-    const profileCard = document.getElementById('profileCard');
-    const avatarMenu = document.getElementById('avatarMenu');
-    if (profileCard && avatarMenu) {
-        let closeTimer;
-
-        const openMenu = () => {
-            clearTimeout(closeTimer);
-            profileCard.classList.add('menu-open');
-        };
-
-        const closeMenu = () => {
-            clearTimeout(closeTimer);
-            closeTimer = setTimeout(() => {
-                profileCard.classList.remove('menu-open');
-            }, 140);
-        };
-
-        profileCard.addEventListener('mouseenter', openMenu);
-        profileCard.addEventListener('mouseleave', closeMenu);
-        profileCard.addEventListener('click', openMenu);
-        profileCard.addEventListener('focusin', openMenu);
-        profileCard.addEventListener('focusout', (event) => {
-            if (!profileCard.contains(event.relatedTarget)) {
-                closeMenu();
-            }
-        });
-
-        avatarMenu.addEventListener('mouseenter', openMenu);
-        avatarMenu.addEventListener('mouseleave', closeMenu);
-
-        document.addEventListener('click', function (event) {
-            if (!profileCard.contains(event.target)) {
-                profileCard.classList.remove('menu-open');
-            }
-        });
+// باز و بسته کردن دراپ‌داون پروفایل
+function toggleProfileDropdown(event) {
+    event.stopPropagation();
+    var dropdown = document.getElementById('profileDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('open');
     }
+}
+
+function closeProfileDropdown() {
+    var dropdown = document.getElementById('profileDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // بستن دراپ‌داون با کلیک بیرون
+    document.addEventListener('click', function (event) {
+        var dropdown = document.getElementById('profileDropdown');
+        var profileCard = document.getElementById('profileCard');
+        if (dropdown && profileCard && !profileCard.contains(event.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+
+    // بستن دراپ‌داون با Escape
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeProfileDropdown();
+        }
+    });
+
+    // کلیک روی آیتم‌های دراپ‌داون
+    document.querySelectorAll('.pd-item[data-action]').forEach(function (item) {
+        item.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var action = this.getAttribute('data-action');
+            closeProfileDropdown();
+            if (action === 'open-profile-panel') {
+                openProfilePanel('profile');
+            } else if (action === 'open-security-panel') {
+                openProfilePanel('security');
+            } else if (action === 'open-support-center') {
+                openUserSupportCenter();
+            }
+        });
+    });
 });
