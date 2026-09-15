@@ -456,10 +456,10 @@ function renderLeaveDatePicker(picker, state) {
         <div class="leave-date-picker-header">
             <button type="button" class="leave-date-picker-nav" data-action="prev-month">‹</button>
             <div class="leave-date-picker-controls">
-                <select class="leave-date-picker-month" data-action="month-change">
+                <select id="${picker.dataset.inputId}-month" name="${picker.dataset.inputId}-month" class="leave-date-picker-month" data-action="month-change">
                     ${monthNames.map((name, index) => `<option value="${index + 1}" ${index + 1 === state.month ? 'selected' : ''}>${name}</option>`).join('')}
                 </select>
-                <select class="leave-date-picker-year" data-action="year-change">
+                <select id="${picker.dataset.inputId}-year" name="${picker.dataset.inputId}-year" class="leave-date-picker-year" data-action="year-change">
                     ${Array.from({ length: 21 }, (_, i) => state.year - 10 + i).map((year) => `<option value="${year}" ${year === state.year ? 'selected' : ''}>${convertToPersianNumbers(String(year))}</option>`).join('')}
                 </select>
             </div>
@@ -2355,19 +2355,26 @@ function sendTicketResponse() {
 // تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر
 // تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر// تنظیمات تایمر بستن صفحه پنل کاربر
 
-let timeout = setTimeout(function() {
-    window.location.href = "/login";
-}, 300000); // 30 ثانیه
+// ── Idle Timeout (configurable from master admin) ──
+var _idleTimeoutMs = 300000; // default 5 minutes
+var _idleTimeoutEnabled = true;
+var _idleTimer = null;
 
-document.addEventListener("mousemove", resetTimer);
-document.addEventListener("keydown", resetTimer);
+fetch('/api/system-config').then(function(r){return r.json();}).then(function(res){
+    if(!res.success||!res.data)return;
+    _idleTimeoutEnabled = res.data.idle_timeout_enabled !== '0';
+    var sec = parseInt(res.data.idle_timeout_seconds,10);
+    if(!isNaN(sec) && sec > 0) _idleTimeoutMs = sec * 1000;
+    if(_idleTimeoutEnabled) _startIdleTimer();
+}).catch(function(){});
 
-function resetTimer() {
-    clearTimeout(timeout);
-    timeout = setTimeout(function() {
-        window.location.href = "/login";
-    }, 300000); // ریست تایمر
+function _startIdleTimer(){
+    clearTimeout(_idleTimer);
+    _idleTimer = setTimeout(function(){ window.location.href = '/login'; }, _idleTimeoutMs);
 }
+
+document.addEventListener('mousemove', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
+document.addEventListener('keydown', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
 
 // تابع برای تبدیل اعداد به فارسی
 function convertToPersianNumbers(str) {

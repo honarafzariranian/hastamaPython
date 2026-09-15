@@ -387,19 +387,26 @@ document.querySelector("#attendanceNumBoxID").textContent = adjustedPresenceTime
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
 
-let timeout = setTimeout(function() {
-    window.location.href = "/login";
-}, 300000); // 30 ثانیه
+// ── Idle Timeout (configurable from master admin) ──
+var _idleTimeoutMs = 300000; // default 5 minutes
+var _idleTimeoutEnabled = true;
+var _idleTimer = null;
 
-document.addEventListener("mousemove", resetTimer);
-document.addEventListener("keydown", resetTimer);
+fetch('/api/system-config').then(function(r){return r.json();}).then(function(res){
+    if(!res.success||!res.data)return;
+    _idleTimeoutEnabled = res.data.idle_timeout_enabled !== '0';
+    var sec = parseInt(res.data.idle_timeout_seconds,10);
+    if(!isNaN(sec) && sec > 0) _idleTimeoutMs = sec * 1000;
+    if(_idleTimeoutEnabled) _startIdleTimer();
+}).catch(function(){});
 
-function resetTimer() {
-    clearTimeout(timeout);
-    timeout = setTimeout(function() {
-        window.location.href = "/login";
-    }, 300000); // ریست تایمر
+function _startIdleTimer(){
+    clearTimeout(_idleTimer);
+    _idleTimer = setTimeout(function(){ window.location.href = '/login'; }, _idleTimeoutMs);
 }
+
+document.addEventListener('mousemove', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
+document.addEventListener('keydown', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
 
 // تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی
 // تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی// تبدیل اعداد به فارسی

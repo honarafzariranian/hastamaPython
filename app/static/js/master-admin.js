@@ -51,9 +51,20 @@
   }
 
   // ── API Helper ───────────────────────────────────────────
+  function _getCsrfToken() {
+    var match = document.cookie.match(/(^|;\s*)csrf_token=([^;]*)/);
+    return match ? decodeURIComponent(match[2]) : '';
+  }
+
   async function api(path, opts = {}) {
     const url = BASE + path;
-    const fetchOpts = { headers: { 'Content-Type': 'application/json' }, ...opts };
+    const csrf = _getCsrfToken();
+    const method = (opts.method || 'GET').toUpperCase();
+    const headers = { 'Content-Type': 'application/json', ...opts.headers };
+    if (method !== 'GET' && method !== 'HEAD' && csrf) {
+      headers['X-CSRF-Token'] = csrf;
+    }
+    const fetchOpts = { headers, ...opts };
     if (opts.body && typeof opts.body === 'object') fetchOpts.body = JSON.stringify(opts.body);
     try {
       const res = await fetch(url, fetchOpts);
@@ -506,6 +517,111 @@
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری عملیات</div></div>'; }
   }
 
+  // ── System Settings ─────────────────────────────────────
+  async function loadSystemSettings() {
+    const container = document.getElementById('maSystemSettings');
+    if (!container) return;
+    try {
+      const res = await api('/config');
+      if (!res.success) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری تنظیمات</div></div>'; return; }
+      const configs = res.data || [];
+      const getConfig = (key) => configs.find(c => c.config_key === key) || {};
+
+      const captchaCfg = getConfig('captcha_enabled');
+      const idleEnabledCfg = getConfig('idle_timeout_enabled');
+      const idleSecondsCfg = getConfig('idle_timeout_seconds');
+
+      container.innerHTML = `
+        <div class="ma-settings-grid">
+          <div class="ma-settings-card">
+            <div class="ma-settings-card__header">
+              <div class="ma-settings-card__icon">🔐</div>
+              <div>
+                <div class="ma-settings-card__title">کپچای صفحه ورود</div>
+                <div class="ma-settings-card__desc">فعال یا غیرفعال کردن کد امنیتی در صفحه ورود</div>
+              </div>
+            </div>
+            <div class="ma-settings-card__body">
+              <label class="ma-toggle">
+                <input type="checkbox" id="maCfgCaptcha" ${captchaCfg.config_value === '1' ? 'checked' : ''}>
+                <span class="ma-toggle__slider"></span>
+              </label>
+              <span class="ma-toggle-label" id="maCfgCaptchaLabel">${captchaCfg.config_value === '1' ? 'فعال' : 'غیرفعال'}</span>
+            </div>
+            <div class="ma-settings-card__footer">
+              ${captchaCfg.updated_by ? `<span class="ma-settings-card__meta">آخرین تغییر: ${captchaCfg.updated_by} — ${captchaCfg.updated_at ? new Date(captchaCfg.updated_at).toLocaleString('fa-IR') : '—'}</span>` : ''}
+            </div>
+          </div>
+
+          <div class="ma-settings-card">
+            <div class="ma-settings-card__header">
+              <div class="ma-settings-card__icon">⏱️</div>
+              <div>
+                <div class="ma-settings-card__title">خروج خودکار (بیکاری)</div>
+                <div class="ma-settings-card__desc">خروج خودکار کاربران پس از مدتی بیکاری</div>
+              </div>
+            </div>
+            <div class="ma-settings-card__body">
+              <label class="ma-toggle">
+                <input type="checkbox" id="maCfgIdleEnabled" ${idleEnabledCfg.config_value === '1' ? 'checked' : ''}>
+                <span class="ma-toggle__slider"></span>
+              </label>
+              <span class="ma-toggle-label" id="maCfgIdleEnabledLabel">${idleEnabledCfg.config_value === '1' ? 'فعال' : 'غیرفعال'}</span>
+            </div>
+            <div class="ma-settings-card__body" style="margin-top:12px">
+              <label for="maCfgIdleSeconds" style="font-size:.85rem;color:#64748b;display:block;margin-bottom:6px">زمان بیکاری (ثانیه)</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="number" id="maCfgIdleSeconds" class="ma-filter" style="width:120px" min="10" max="86400" value="${idleSecondsCfg.config_value || '300'}">
+                <button class="ma-btn ma-btn--primary ma-btn--sm" id="maSaveIdleSeconds">ذخیره زمان</button>
+              </div>
+              <div style="font-size:.78rem;color:#94a3b8;margin-top:4px">پیش‌فرض: ۳۰۰ ثانیه (۵ دقیقه)</div>
+            </div>
+            <div class="ma-settings-card__footer">
+              ${idleEnabledCfg.updated_by ? `<span class="ma-settings-card__meta">آخرین تغییر: ${idleEnabledCfg.updated_by} — ${idleEnabledCfg.updated_at ? new Date(idleEnabledCfg.updated_at).toLocaleString('fa-IR') : '—'}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;padding:16px;background:rgba(99,102,241,.06);border-radius:12px;border:1px solid rgba(99,102,241,.12)">
+          <div style="font-size:.85rem;color:#6366f1;font-weight:600;margin-bottom:6px">💡 راهنما</div>
+          <ul style="font-size:.82rem;color:#64748b;margin:0;padding-inline-start:18px;line-height:1.8">
+            <li>غیرفعال کردن کپچا: کاربران فقط با نام کاربری و رمز عبور وارد می‌شوند (امنیت کمتر).</li>
+            <li>غیرفعال کردن خروج خودکار: کاربران تا زمانی که خودشان خارج شوند، در سامانه می‌مانند.</li>
+            <li>زمان بیکاری: حداقل ۱۰ ثانیه، حداکثر ۸۶۴۰۰ ثانیه (۲۴ ساعت).</li>
+          </ul>
+        </div>
+      `;
+
+      document.getElementById('maCfgCaptcha').addEventListener('change', async function() {
+        const val = this.checked ? '1' : '0';
+        await api('/config', { method: 'POST', body: { key: 'captcha_enabled', value: val } });
+        document.getElementById('maCfgCaptchaLabel').textContent = this.checked ? 'فعال' : 'غیرفعال';
+        showToast(this.checked ? 'کپچا فعال شد' : 'کپچا غیرفعال شد');
+      });
+
+      document.getElementById('maCfgIdleEnabled').addEventListener('change', async function() {
+        const val = this.checked ? '1' : '0';
+        await api('/config', { method: 'POST', body: { key: 'idle_timeout_enabled', value: val } });
+        document.getElementById('maCfgIdleEnabledLabel').textContent = this.checked ? 'فعال' : 'غیرفعال';
+        showToast(this.checked ? 'خروج خودکار فعال شد' : 'خروج خودکار غیرفعال شد');
+      });
+
+      document.getElementById('maSaveIdleSeconds').addEventListener('click', async function() {
+        const input = document.getElementById('maCfgIdleSeconds');
+        const val = parseInt(input.value, 10);
+        if (isNaN(val) || val < 10 || val > 86400) {
+          showToast('زمان باید بین ۱۰ تا ۸۶۴۰۰ ثانیه باشد', 'error');
+          return;
+        }
+        await api('/config', { method: 'POST', body: { key: 'idle_timeout_seconds', value: String(val) } });
+        showToast('زمان بیکاری ذخیره شد');
+      });
+
+    } catch (e) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری تنظیمات</div></div>';
+    }
+  }
+
   // ── Tickets ─────────────────────────────────────────────
   const TICKET_STATUS_MAP = {
     new: { label: 'جدید', cls: 'info' },
@@ -840,6 +956,7 @@
     'admin-actions': loadAdminActions,
     tickets: loadTickets,
     'ticket-detail': loadTicketDetail,
+    'system-settings': loadSystemSettings,
   };
 
   // ── Expose filter setter for inline onclick handlers ─────

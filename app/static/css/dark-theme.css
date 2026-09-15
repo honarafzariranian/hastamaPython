@@ -1532,6 +1532,36 @@ body.dark-mode .confirm-delete-popup {
     box-shadow: var(--dk-shadow);
 }
 
+body.dark-mode .leave-date-picker-controls select,
+body.dark-mode .leave-date-picker-controls select option {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .leave-date-picker-nav {
+    background: var(--dk-surface-2, #1e293b);
+    color: var(--dk-accent, #93c5fd);
+}
+
+body.dark-mode .leave-date-picker-day {
+    background: var(--dk-surface-2, #1e293b);
+    color: var(--dk-text);
+}
+
+body.dark-mode .leave-date-picker-day:hover {
+    background: var(--dk-accent-bg, #1e3a5f);
+    color: var(--dk-accent, #93c5fd);
+}
+
+body.dark-mode .leave-date-picker-weekday {
+    color: var(--dk-muted, #94a3b8);
+}
+
+body.dark-mode .date-input-shell {
+    background: transparent;
+}
+
 body.dark-mode .modal-content h2,
 body.dark-mode .modal-content label,
 body.dark-mode .modal-content p,
@@ -2958,4 +2988,309 @@ body.dark-mode .rightSidebar .sidebar-icon-tile svg {
 
 body.dark-mode .rightSidebar .sidebar-divider span {
     background: linear-gradient(90deg, transparent, rgba(148,163,184,.28), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ثبت‌نام کاربران جدید — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .reg-stat-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .reg-stat-card__body strong {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-stat-card--total .reg-stat-card__icon { background: rgba(99,102,241,0.15); }
+body.dark-mode .reg-stat-card--pending .reg-stat-card__icon { background: rgba(251,191,36,0.15); }
+body.dark-mode .reg-stat-card--approved .reg-stat-card__icon { background: rgba(16,185,129,0.15); }
+body.dark-mode .reg-stat-card--rejected .reg-stat-card__icon { background: rgba(239,68,68,0.15); }
+
+body.dark-mode .reg-search input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-select {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-table-wrap {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .reg-table thead {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-table th {
+    color: var(--dk-muted);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .reg-table td {
+    border-bottom-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-row:hover {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-row__username {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-row__date {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-modal__card {
+    background: var(--dk-surface);
+}
+
+body.dark-mode .reg-detail-modal__head {
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .reg-detail-modal__head h3 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-detail-modal__close {
+    background: var(--dk-surface-2);
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-modal__foot {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .reg-detail-field {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-detail-field:hover {
+    background: var(--dk-surface-3, #334155);
+}
+
+body.dark-mode .reg-detail-field--danger {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.2);
+}
+
+body.dark-mode .reg-detail-field__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-field__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-reject-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-reject-textarea {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-page-btn {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-empty-state {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .new-user-form .form-row-krbrjadid.schedule-row {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .new-user-footer {
+    background: transparent;
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .apply-all-group .apply-all-input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   گزارش ورود و خروج — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .hozoor-report-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .hozoor-report-card__head {
+    background: var(--dk-surface-2);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .hozoor-report-card__title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-report-card__sub {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .hozoor-report-form__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .hozoor-report-form__select {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-report-form__input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-table-wrap {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable thead {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode #hozoorUsersReportTable th {
+    color: var(--dk-muted);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable td {
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable tbody tr:hover td {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode #hozoorUsersReportTable tbody tr.holiday-row td {
+    background: rgba(239,68,68,0.08);
+}
+
+body.dark-mode .hozoor-table-empty__state {
+    color: var(--dk-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   فرم تعریف کاربر جدید — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .nu-section {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .nu-section__head {
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .nu-section__title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-section__sub {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-field__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-field__input,
+body.dark-mode .nu-field__select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-field__input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-apply-all__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-apply-all__input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-apply-all__input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-col {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .nu-schedule-col:hover {
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .nu-schedule-day {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-schedule-input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-col--friday {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.2);
+}
+
+body.dark-mode .nu-schedule-col--friday .nu-schedule-day {
+    color: #f87171;
+}
+
+body.dark-mode .nu-schedule-col--friday .nu-schedule-input {
+    background: rgba(239,68,68,0.06);
+    color: #f87171;
+}
+
+body.dark-mode .nu-footer {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .nu-footer__hint {
+    color: var(--dk-muted);
 }

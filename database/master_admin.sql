@@ -236,4 +236,19 @@ BEGIN
     ALTER TABLE dbo.user_table ADD password_changed_at DATETIME2(3) NULL;
 END;
 
+-- ─────────────────────────────────────────────────────────────
+-- 9. CAPTCHA & IDLE TIMEOUT config keys
+-- ─────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM dbo.system_config WHERE config_key = 'captcha_enabled')
+    INSERT INTO dbo.system_config (config_key, config_value, description)
+    VALUES ('captcha_enabled', '1', 'فعال‌سازی کپچا در صفحه ورود');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.system_config WHERE config_key = 'idle_timeout_enabled')
+    INSERT INTO dbo.system_config (config_key, config_value, description)
+    VALUES ('idle_timeout_enabled', '1', 'فعال‌سازی خروج خودکار پس از بیکاری');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.system_config WHERE config_key = 'idle_timeout_seconds')
+    INSERT INTO dbo.system_config (config_key, config_value, description)
+    VALUES ('idle_timeout_seconds', '300', 'زمان بیکاری برای خروج خودکار (ثانیه)');
+
 PRINT 'Master Admin migration completed successfully.';

@@ -3968,19 +3968,26 @@ function logout() {
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
 // تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت// تنظیمات تایمر خروج از صفحه مدیریت
 
-let timeout = setTimeout(function() {
-    window.location.href = "/login";
-}, 300000); // 30 ثانیه
+// ── Idle Timeout (configurable from master admin) ──
+var _idleTimeoutMs = 300000; // default 5 minutes
+var _idleTimeoutEnabled = true;
+var _idleTimer = null;
 
-document.addEventListener("mousemove", resetTimer);
-document.addEventListener("keydown", resetTimer);
+fetch('/api/system-config').then(function(r){return r.json();}).then(function(res){
+    if(!res.success||!res.data)return;
+    _idleTimeoutEnabled = res.data.idle_timeout_enabled !== '0';
+    var sec = parseInt(res.data.idle_timeout_seconds,10);
+    if(!isNaN(sec) && sec > 0) _idleTimeoutMs = sec * 1000;
+    if(_idleTimeoutEnabled) _startIdleTimer();
+}).catch(function(){});
 
-function resetTimer() {
-    clearTimeout(timeout);
-    timeout = setTimeout(function() {
-        window.location.href = "/login";
-    }, 300000); // ریست تایمر
+function _startIdleTimer(){
+    clearTimeout(_idleTimer);
+    _idleTimer = setTimeout(function(){ window.location.href = '/login'; }, _idleTimeoutMs);
 }
+
+document.addEventListener('mousemove', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
+document.addEventListener('keydown', function(){ if(_idleTimeoutEnabled) _startIdleTimer(); });
 
 // تنظیمات ارسال به صفحه گزارش نهایی کاربر// تنظیمات ارسال به صفحه گزارش نهایی کاربر// تنظیمات ارسال به صفحه گزارش نهایی کاربر
 // تنظیمات ارسال به صفحه گزارش نهایی کاربر// تنظیمات ارسال به صفحه گزارش نهایی کاربر// تنظیمات ارسال به صفحه گزارش نهایی کاربر
@@ -5370,3 +5377,243 @@ function deleteShift(shiftId) {
             showSystemError('خطا در حذف شیفت');
         });
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// تقویم شمسی (Persian Date Picker) — مشترک با پنل کاربری
+// ═══════════════════════════════════════════════════════════════════════
+
+function convertToEnglishNumbers(str) {
+    return String(str).replace(/[\u0660-\u0669\u06F0-\u06F9]/g, function (match) {
+        return ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'].indexOf(match);
+    });
+}
+
+function adminGetCurrentPersianDate() {
+    var formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+        year: 'numeric', month: 'numeric', day: 'numeric'
+    });
+    var parts = formatter.formatToParts(new Date());
+    var values = {};
+    parts.forEach(function (part) {
+        if (part.type !== 'literal') values[part.type] = part.value;
+    });
+    return {
+        year: Number(convertToEnglishNumbers(values.year || '1404')),
+        month: Number(convertToEnglishNumbers(values.month || '1')),
+        day: Number(convertToEnglishNumbers(values.day || '1'))
+    };
+}
+
+function adminPersianToGregorian(year, month, day) {
+    var targetKey = year * 10000 + month * 100 + day;
+    var low = Date.UTC(2000, 0, 1);
+    var high = Date.UTC(2050, 0, 1);
+    while (low <= high) {
+        var midTime = Math.floor((low + high) / 2);
+        var midDate = new Date(midTime);
+        var parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+            year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC'
+        }).formatToParts(midDate);
+        var values = {};
+        parts.forEach(function (part) {
+            if (part.type !== 'literal') values[part.type] = part.value;
+        });
+        var currentKey = Number(convertToEnglishNumbers(values.year || '0')) * 10000 +
+            Number(convertToEnglishNumbers(values.month || '0')) * 100 +
+            Number(convertToEnglishNumbers(values.day || '0'));
+        if (currentKey === targetKey) return midDate;
+        if (currentKey < targetKey) low = midTime + 86400000;
+        else high = midTime - 86400000;
+    }
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+function adminGetPersianMonthLength(year, month) {
+    if (month <= 6) return 31;
+    if (month <= 11) return 30;
+    return (((year * 8) + 13) % 33) < 8 ? 30 : 29;
+}
+
+function adminGetPersianWeekdayIndex(year, month, day) {
+    var gregorianDate = adminPersianToGregorian(year, month, day);
+    var weekday = gregorianDate.getUTCDay();
+    return weekday === 6 ? 0 : weekday + 1;
+}
+
+function adminParsePersianDateValue(value) {
+    if (!value) return null;
+    var normalized = String(value).trim();
+    var match = normalized.match(/([\u06F0-\u06F90-9]{2,4})[\/\-]([\u06F0-\u06F90-9]{1,2})[\/\-]([\u06F0-\u06F90-9]{1,2})/);
+    if (!match) return null;
+    return {
+        year: Number(convertToEnglishNumbers(match[1])),
+        month: Number(convertToEnglishNumbers(match[2])),
+        day: Number(convertToEnglishNumbers(match[3]))
+    };
+}
+
+function adminFormatPersianDateValue(year, month, day) {
+    return convertToPersianNumbers(String(year)) + '/' +
+        convertToPersianNumbers(String(month).padStart(2, '0')) + '/' +
+        convertToPersianNumbers(String(day).padStart(2, '0'));
+}
+
+function adminRenderDatePicker(picker, state) {
+    var monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    var dayNames = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+    var days = adminGetPersianMonthLength(state.year, state.month);
+    var firstWeekday = adminGetPersianWeekdayIndex(state.year, state.month, 1);
+
+    state.day = Math.min(Math.max(state.day || 1, 1), days);
+
+    var cells = [];
+    for (var i = 0; i < firstWeekday; i++) {
+        cells.push('<div class="leave-date-picker-day is-empty"></div>');
+    }
+    for (var day = 1; day <= days; day++) {
+        var isSelected = state.day === day;
+        cells.push('<button type="button" class="leave-date-picker-day' + (isSelected ? ' is-selected' : '') + '" data-action="select-day" data-day="' + day + '">' + convertToPersianNumbers(String(day)) + '</button>');
+    }
+    var totalCells = cells.length;
+    var rows = Math.ceil(totalCells / 7);
+    var remainingCells = rows * 7 - totalCells;
+    for (var j = 0; j < remainingCells; j++) {
+        cells.push('<div class="leave-date-picker-day is-empty"></div>');
+    }
+
+    picker.innerHTML =
+        '<div class="leave-date-picker-header">' +
+            '<button type="button" class="leave-date-picker-nav" data-action="prev-month">&#8249;</button>' +
+            '<div class="leave-date-picker-controls">' +
+                '<select id="' + picker.dataset.inputId + '-month' + '" name="' + picker.dataset.inputId + '-month' + '" class="leave-date-picker-month" data-action="month-change">' +
+                    monthNames.map(function (name, index) {
+                        return '<option value="' + (index + 1) + '"' + (index + 1 === state.month ? ' selected' : '') + '>' + name + '</option>';
+                    }).join('') +
+                '</select>' +
+                '<select id="' + picker.dataset.inputId + '-year' + '" name="' + picker.dataset.inputId + '-year' + '" class="leave-date-picker-year" data-action="year-change">' +
+                    Array.from({ length: 21 }, function (_, i) { return state.year - 10 + i; }).map(function (year) {
+                        return '<option value="' + year + '"' + (year === state.year ? ' selected' : '') + '>' + convertToPersianNumbers(String(year)) + '</option>';
+                    }).join('') +
+                '</select>' +
+            '</div>' +
+            '<button type="button" class="leave-date-picker-nav" data-action="next-month">&#8250;</button>' +
+        '</div>' +
+        '<div class="leave-date-picker-weekdays">' +
+            dayNames.map(function (name) { return '<div class="leave-date-picker-weekday">' + name + '</div>'; }).join('') +
+        '</div>' +
+        '<div class="leave-date-picker-days">' +
+            cells.join('') +
+        '</div>';
+
+    picker.querySelector('[data-action="prev-month"]').addEventListener('click', function () {
+        state.month -= 1;
+        if (state.month < 1) { state.month = 12; state.year -= 1; }
+        adminRenderDatePicker(picker, state);
+    });
+
+    picker.querySelector('[data-action="next-month"]').addEventListener('click', function () {
+        state.month += 1;
+        if (state.month > 12) { state.month = 1; state.year += 1; }
+        adminRenderDatePicker(picker, state);
+    });
+
+    picker.querySelector('.leave-date-picker-month').addEventListener('change', function (event) {
+        state.month = Number(event.target.value);
+        adminRenderDatePicker(picker, state);
+    });
+
+    picker.querySelector('.leave-date-picker-year').addEventListener('change', function (event) {
+        state.year = Number(event.target.value);
+        adminRenderDatePicker(picker, state);
+    });
+
+    picker.querySelectorAll('[data-action="select-day"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var selectedDay = Number(btn.dataset.day);
+            state.day = selectedDay;
+            var targetInput = document.getElementById(picker.dataset.inputId);
+            if (targetInput) {
+                targetInput.value = adminFormatPersianDateValue(state.year, state.month, state.day);
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            picker.hidden = true;
+        });
+    });
+}
+
+function adminOpenDatePicker(input, picker) {
+    var parsed = adminParsePersianDateValue(input.value);
+    var today = adminGetCurrentPersianDate();
+    var state = {
+        year: parsed ? parsed.year : today.year,
+        month: parsed ? parsed.month : today.month,
+        day: parsed ? parsed.day : today.day
+    };
+    picker.dataset.inputId = input.id;
+    picker.hidden = false;
+    adminRenderDatePicker(picker, state);
+}
+
+function adminAttachDatePickerToInput(input) {
+    if (!input || input.dataset.datePickerBound === 'true') return;
+
+    var shell = input.closest('.date-input-shell');
+    if (!shell) {
+        shell = document.createElement('div');
+        shell.className = 'date-input-shell';
+        input.parentNode.insertBefore(shell, input);
+        shell.appendChild(input);
+    }
+
+    var picker = shell.querySelector('.leave-date-picker');
+    if (!picker) {
+        picker = document.createElement('div');
+        picker.className = 'leave-date-picker';
+        picker.hidden = true;
+        picker.setAttribute('role', 'dialog');
+        picker.setAttribute('aria-label', 'انتخاب تاریخ');
+        shell.appendChild(picker);
+    }
+
+    input.addEventListener('focus', function (event) {
+        event.stopPropagation();
+        adminOpenDatePicker(input, picker);
+    });
+    input.addEventListener('click', function (event) {
+        event.stopPropagation();
+        adminOpenDatePicker(input, picker);
+    });
+    input.addEventListener('touchstart', function (event) {
+        event.stopPropagation();
+        adminOpenDatePicker(input, picker);
+    }, { passive: true });
+
+    input.dataset.datePickerBound = 'true';
+}
+
+function initAdminDatePickers() {
+    var dateInputIds = [
+        'fromDate', 'toDate',
+        'start_date', 'end_date',
+        'start_date_hourlypass', 'end_date_hourlypass',
+        'start_date_hozoor', 'end_date_hozoor'
+    ];
+
+    dateInputIds.forEach(function (inputId) {
+        var input = document.getElementById(inputId);
+        if (input) adminAttachDatePickerToInput(input);
+    });
+
+    // بستن تقویم با کلیک خارج
+    document.addEventListener('click', function (event) {
+        document.querySelectorAll('.date-input-shell').forEach(function (shell) {
+            var picker = shell.querySelector('.leave-date-picker');
+            if (!picker) return;
+            if (!shell.contains(event.target)) {
+                picker.hidden = true;
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initAdminDatePickers);

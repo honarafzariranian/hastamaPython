@@ -2731,8 +2731,8 @@ async def get_hourly_pass_report(request: Request):
     try:
         data = await request.json()
         username = data.get('username')
-        start_date_str = data.get('start_date')
-        end_date_str = data.get('end_date')
+        start_date_str = convert_farsi_to_english(str(data.get('start_date', '')))
+        end_date_str = convert_farsi_to_english(str(data.get('end_date', '')))
 
         # تبدیل تاریخ شمسی به میلادی
         start_date_jalali = JalaliDate(*map(int, start_date_str.split('/')))
@@ -2970,15 +2970,15 @@ async def overtime_report(request: Request):
 @app.post("/get_overtime_report")
 async def get_overtime_report(data: dict):
     username = data.get('username')
-    start_date_str = data.get('start_date')
-    end_date_str = data.get('end_date')
+    start_date_str = convert_farsi_to_english(str(data.get('start_date', '')))
+    end_date_str = convert_farsi_to_english(str(data.get('end_date', '')))
 
     try:
         start_date_jalali = JalaliDate(*map(int, start_date_str.split('/')))
         end_date_jalali = JalaliDate(*map(int, end_date_str.split('/')))
         start_date = start_date_jalali.to_gregorian()
         end_date = end_date_jalali.to_gregorian()
-    except ValueError:
+    except (ValueError, TypeError):
         return JSONResponse({'error': 'تاریخ وارد شده صحیح نیست. لطفاً فرمت صحیح را وارد کنید.'}, status_code=400)
 
     if username == 'all_users':
@@ -3518,21 +3518,24 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
 
     hozoor_num, default_work_hours, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh = user
     weekday_map = {0: shanbeh, 1: yekshanbeh, 2: doshanbeh, 3: seshanbeh, 4: chrshanbeh, 5: panjshanbeh}
-    # اگر لازم باشه میتونی برای جمعه هم map بذاری یا از default_work_hours استفاده کنی
 
-    # خواندن شیفت‌های اختصاصی این کاربر از جدول shiftha (مستقل برای هر ماه شمسی و قابل تعریف برای بازه‌های خاص داخل ماه)
-    cursor.execute("""
-        SELECT jalali_year, jalali_month, start_day, end_day,
-               shanbeh, yekshanbeh, doshanbeh, seshanbeh, chaharshanbeh, panjshanbeh, jomeh
-        FROM shiftha
-        WHERE username = ?
-        ORDER BY jalali_year, jalali_month, start_day
-    """, (username,))
-    shift_rows = [{
-        'jalali_year': r[0], 'jalali_month': r[1], 'start_day': r[2], 'end_day': r[3],
-        'shanbeh': r[4], 'yekshanbeh': r[5], 'doshanbeh': r[6], 'seshanbeh': r[7],
-        'chaharshanbeh': r[8], 'panjshanbeh': r[9], 'jomeh': r[10]
-    } for r in cursor.fetchall()]
+    # خواندن شیفت‌های اختصاصی این کاربر از جدول shiftha
+    shift_rows = []
+    try:
+        cursor.execute("""
+            SELECT jalali_year, jalali_month, start_day, end_day,
+                   shanbeh, yekshanbeh, doshanbeh, seshanbeh, chaharshanbeh, panjshanbeh, jomeh
+            FROM shiftha
+            WHERE username = ?
+            ORDER BY jalali_year, jalali_month, start_day
+        """, (username,))
+        shift_rows = [{
+            'jalali_year': r[0], 'jalali_month': r[1], 'start_day': r[2], 'end_day': r[3],
+            'shanbeh': r[4], 'yekshanbeh': r[5], 'doshanbeh': r[6], 'seshanbeh': r[7],
+            'chaharshanbeh': r[8], 'panjshanbeh': r[9], 'jomeh': r[10]
+        } for r in cursor.fetchall()]
+    except Exception as shift_err:
+        print(f"get_hozoor shiftha fallback for {username}: {shift_err}")
 
     def resolve_work_hours(sh_year, sh_month, sh_day, wd):
         # اول دنبال بازه‌ی تعریف‌شده در shiftha برای همین ماه/روز می‌گردیم.
@@ -3625,20 +3628,23 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             attendance[date_str]["ExitTime2"] = times[3]
 
     # حالا از جدول hozoor در SQL Server تاریخ‌های ثبت‌شده رو هم اضافه کن
-    cursor.execute("""
-        SELECT [date], vrood, khoroj FROM hozoor
-        WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?)) AND [date] BETWEEN ? AND ?
-        ORDER BY [date]
-    """, (username, from_g, to_g))
-    rows_sql = cursor.fetchall()
+    try:
+        cursor.execute("""
+            SELECT [date], vrood, khoroj FROM hozoor
+            WHERE LTRIM(RTRIM(username)) = LTRIM(RTRIM(?)) AND [date] BETWEEN ? AND ?
+            ORDER BY [date]
+        """, (username, from_g, to_g))
+        rows_sql = cursor.fetchall()
 
-    for row in rows_sql:
-        g_date, vrood, khoroj = row
-        shamsi = JalaliDate(g_date).strftime('%Y-%m-%d')
-        if shamsi not in attendance:
-            entry = normalize_time_value(vrood)
-            exit_ = normalize_time_value(khoroj)
-            attendance[shamsi] = {"CardNo": "DB", "Date": shamsi, "EntryTime": entry, "ExitTime": exit_}
+        for row in rows_sql:
+            g_date, vrood, khoroj = row
+            shamsi = JalaliDate(g_date).strftime('%Y-%m-%d')
+            if shamsi not in attendance:
+                entry = normalize_time_value(vrood)
+                exit_ = normalize_time_value(khoroj)
+                attendance[shamsi] = {"CardNo": "DB", "Date": shamsi, "EntryTime": entry, "ExitTime": exit_}
+    except Exception as hozoor_err:
+        print(f"get_hozoor hozoor table fallback for {username}: {hozoor_err}")
 
     # **اضافه کردن تمام تاریخ‌های بین from_g و to_g که رکورد ندارند**
     total_days = (to_g - from_g).days
@@ -3741,6 +3747,10 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
         result.append(data)
 
     # نتیجه مرتب‌شده برگردون
+    try:
+        conn.close()
+    except Exception:
+        pass
     return result
 
 # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن
@@ -4191,6 +4201,24 @@ async def logout(request: Request, response: Response):
     
     # ریدایرکت به صفحه اصلی
     return RedirectResponse(url="/login")
+
+
+@app.get("/api/system-config")
+async def public_system_config():
+    """Public endpoint: return public-facing system config keys (no auth required)."""
+    from app.core.database import connect as db_connect
+    keys = ('captcha_enabled', 'idle_timeout_enabled', 'idle_timeout_seconds')
+    config = {'captcha_enabled': '1', 'idle_timeout_enabled': '1', 'idle_timeout_seconds': '300'}
+    try:
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("SELECT config_key, config_value FROM system_config WHERE config_key IN (?,?,?)", keys)
+        for row in cur.fetchall():
+            config[row[0]] = row[1]
+        conn.close()
+    except Exception:
+        pass
+    return JSONResponse(content={"success": True, "data": config})
 
 
 @app.post("/api/session/destroy")

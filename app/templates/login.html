@@ -140,8 +140,8 @@
                         <p class="field-error" id="passwordError" role="alert"></p>
                     </div>
 
-                    <!-- CAPTCHA Section -->
-                    <div class="form-group captcha-group">
+                    <!-- CAPTCHA Section (hidden by default, shown if captcha_enabled -->
+                    <div class="form-group captcha-group" id="captchaGroup" style="display:none">
                         <div class="captcha-wrapper">
                             <div class="captcha-display">
                                 <img id="captchaImage" src="/captcha" alt="کد امنیتی" class="captcha-img">
@@ -658,6 +658,27 @@
                 hint.className = 'fp-hint fp-hint--error';
             });
         });
+    })();
+    </script>
+
+    <!-- Fetch system config to toggle CAPTCHA visibility -->
+    <script>
+    (function() {
+        fetch('/api/system-config')
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res.success || !res.data) return;
+                var cfg = res.data;
+                var captchaGroup = document.getElementById('captchaGroup');
+                if (captchaGroup) {
+                    if (cfg.captcha_enabled === '1' || cfg.captcha_enabled === 'true') {
+                        captchaGroup.style.display = '';
+                    } else {
+                        captchaGroup.style.display = 'none';
+                    }
+                }
+            })
+            .catch(function() {});
     })();
     </script>
 </body>

@@ -10,7 +10,9 @@ function login() {
         return;
     }
 
-    if (!captcha) {
+    var captchaGroup = document.getElementById('captchaGroup');
+    var captchaVisible = captchaGroup && captchaGroup.style.display !== 'none';
+    if (captchaVisible && !captcha) {
         showCaptchaError('لطفاً کد امنیتی را وارد کنید.');
         document.getElementById('captcha').focus();
         return;

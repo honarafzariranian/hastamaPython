@@ -1981,312 +1981,435 @@ form button:hover {background-color: #506bff;}
 }
 
 /* ===== تعریف کاربر جدید — طراحی مدرن ===== */
-#newUserBox {
-    width: min(94vw, 1100px);
-    max-height: calc(100vh - 140px);
-    overflow-y: auto;
-    position: relative;
-    margin: 0px auto 0 !important;
+#newUserBox,
+.coworker-newuser-box {
+    width: 100%;
+    max-height: none;
+    overflow-y: visible;
+    position: static;
+    margin: 0;
     padding: 0;
-    background: #fff;
+    background: transparent;
     border: 0;
-    border-radius: 18px;
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12), 0 4px 16px rgba(15, 23, 42, 0.06);
+    border-radius: 0;
+    box-shadow: none;
     font-family: 'Vazir', sans-serif;
 }
 
-#newUserBox .new-user-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px 10px;
-    border-bottom: 1px solid #e8edf2;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 18px 18px 0 0;
-    direction: rtl;
-    gap: 10px;
-}
+/* ═══════════════════════════════════════════════════════════════
+   فرم تعریف کاربر جدید — طراحی مدرن
+   ═══════════════════════════════════════════════════════════════ */
 
-#newUserBox .new-user-header h2 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 700;
-    color: #1f3345;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#newUserBox .new-user-header .header-icon {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-}
-
-/* فرم تعریف کاربر — گرید مدرن */
 .new-user-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 14px;
-    padding: 16px 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 24px;
     width: 100%;
     box-sizing: border-box;
     direction: rtl;
     text-align: right;
 }
 
-.new-user-form .form-row-krbrjadid {
+/* ── بخش‌های فرم (fieldset) ── */
+.nu-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+    animation: nuSectionFadeIn 0.4s ease both;
+}
+
+.nu-section:nth-child(1) { animation-delay: 0ms; }
+.nu-section:nth-child(2) { animation-delay: 80ms; }
+.nu-section:nth-child(3) { animation-delay: 160ms; }
+
+@keyframes nuSectionFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.nu-section__head {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    direction: rtl;
-    text-align: right;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.new-user-form .form-row-krbrjadid.full-width {
-    grid-column: 1 / -1;
-}
-
-.new-user-form .form-row-krbrjadid.inline-row {
-    grid-column: 1 / -1;
+.nu-section__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: end;
+    place-items: center;
+    flex-shrink: 0;
 }
 
-.new-user-form .form-row-krbrjadid.inline-row.five-col {
+.nu-section__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.nu-section__icon--identity {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: #fff;
+}
+
+.nu-section__icon--job {
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
+}
+
+.nu-section__icon--schedule {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #fff;
+}
+
+.nu-section__title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.nu-section__sub {
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.nu-section__body {
+    padding: 16px 20px 18px;
+}
+
+/* ── گرید فیلدها ── */
+.nu-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.nu-grid--5 {
     grid-template-columns: repeat(5, 1fr);
 }
 
-/* ردیف ساعات روزهای هفته — افقی */
-.new-user-form .form-row-krbrjadid.schedule-row {
-    grid-column: 1 / -1;
+.nu-field {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 1px solid #e8edf2;
-    border-radius: 10px;
-    padding: 10px 14px;
-    width: 100%;
-    box-sizing: border-box;
+    gap: 5px;
 }
 
-/* ردیف اعمال بر همه روزها */
-.apply-all-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.apply-all-row label {
-    font-size: 11px;
-    font-weight: 600;
+.nu-field__label {
+    font-size: 0.7rem;
+    font-weight: 700;
     color: #475569;
-    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.apply-all-group {
+.nu-field__input,
+.nu-field__select {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-family: 'Vazir', sans-serif;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #0f172a;
+    direction: rtl;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nu-field__input:focus,
+.nu-field__select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+.nu-field__input::placeholder {
+    color: #94a3b8;
+}
+
+.nu-field__input--mono {
+    font-family: 'Courier New', monospace;
+    direction: ltr;
+    text-align: left;
+}
+
+.nu-field__select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 10px center;
+    padding-left: 30px;
+}
+
+/* ── بخش برنامه هفتگی ── */
+.nu-apply-all {
     display: flex;
     align-items: center;
-    direction: ltr;
-    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.apply-all-row input {
-    flex: 1;
-    min-width: 0;
-    height: 28px;
-    padding: 4px 10px;
-    font-size: 12px;
+.nu-apply-all__label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.nu-apply-all__group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    direction: ltr;
+}
+
+.nu-apply-all__input {
+    width: 180px;
+    height: 34px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
     font-family: 'Vazir', sans-serif;
-    border: 1px solid #d8e1e8;
-    border-radius: 8px;
-    background: #fbfdff;
-    color: #1f3345;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px 0 0 10px;
+    background: #fff;
+    color: #0f172a;
     direction: ltr;
     text-align: center;
-    box-sizing: border-box;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-.apply-all-row .apply-all-input {
-    border-radius: 0 8px 8px 0 !important;
-}
-
-.apply-all-row input:focus {
     outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nu-apply-all__input:focus {
     border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
 
-.apply-all-row input::placeholder {
+.nu-apply-all__input::placeholder {
     color: #94a3b8;
-    font-size: 11px;
+    font-size: 0.72rem;
 }
 
-.apply-all-btn {
-    height: 28px;
-    padding: 0 12px;
-    font-size: 11px;
-    font-weight: 600;
+.nu-apply-all__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 16px;
+    font-size: 0.78rem;
+    font-weight: 700;
     font-family: 'Vazir', sans-serif;
-    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    background: linear-gradient(135deg, #6366f1, #818cf8);
     color: #fff;
     border: none;
-    border-right: 0;
-    border-radius: 8px 0 0 8px;
+    border-radius: 0 10px 10px 0;
     cursor: pointer;
     white-space: nowrap;
-    transition: box-shadow .2s ease;
-    box-shadow: unset;
-    margin-right: -1px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.apply-all-btn:hover {
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+.nu-apply-all__btn svg {
+    width: 14px;
+    height: 14px;
 }
 
-/* جدول افقی ۷ ستونه روزها */
-.schedule-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-}
-
-.schedule-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.schedule-col .day-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-    white-space: nowrap;
-    text-align: center;
-}
-
-.schedule-col input {
-    width: 100%;
-    height: 28px;
-    padding: 4px 6px;
-    font-size: 11px;
-    font-family: 'Vazir', sans-serif;
-    border: 1px solid #d8e1e8;
-    border-radius: 8px;
-    background: #fbfdff;
-    color: #1f3345;
-    direction: ltr;
-    text-align: center;
-    box-sizing: border-box;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-.schedule-col input:focus {
-    outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.schedule-col input::placeholder {
-    color: #94a3b8;
-    font-size: 10px;
-}
-
-.new-user-form .inline-row .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    direction: rtl;
-}
-
-.new-user-form .form-row-krbrjadid label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #415466;
-    margin: 0;
-    text-align: right;
-    display: block;
-}
-
-.new-user-form .form-row-krbrjadid input,
-.new-user-form .form-row-krbrjadid select {
-    box-sizing: border-box;
-    min-height: 30px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-family: 'Vazir', sans-serif;
-    border: 1px solid #d8e1e8;
-    border-radius: 8px;
-    background: #fbfdff;
-    color: #1f3345;
-    width: 100%;
-    direction: rtl;
-    text-align: right;
-    transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-.new-user-form .form-row-krbrjadid input:focus,
-.new-user-form .form-row-krbrjadid select:focus {
-    outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.new-user-form .form-row-krbrjadid input::placeholder {
-    color: #94a3b8;
-}
-
-/* فوتر با دکمه‌ها */
-.new-user-footer {
-    display: flex;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 10px 20px 14px;
-    border-top: 1px solid #e8edf2;
-    background: #f8fafc;
-    border-radius: 0 0 18px 18px;
-    direction: rtl;
-}
-
-.new-user-footer .save-btn-krbrjad {
-    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
-    color: #fff;
-    border: 0;
-    padding: 10px 28px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'Vazir', sans-serif;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    transition: box-shadow .2s ease, transform .15s ease;
-    width: auto;
-    bottom: auto;
-    left: auto;
-    margin: 0;
-    position: relative;
-}
-
-.new-user-footer .save-btn-krbrjad:hover {
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+.nu-apply-all__btn:hover {
+    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
     transform: translateY(-1px);
 }
 
-.new-user-footer .save-btn-krbrjad:active {
+.nu-apply-all__btn:active {
     transform: scale(0.97);
+}
+
+/* ── گرید روزها ── */
+.nu-schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.nu-schedule-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 6px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    animation: nuScheduleFadeIn 0.3s ease both;
+}
+
+.nu-schedule-col:hover {
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+    transform: translateY(-2px);
+}
+
+@keyframes nuScheduleFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.nu-schedule-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-bottom: 2px;
+}
+
+.nu-schedule-dot--active {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34,197,94,0.4);
+}
+
+.nu-schedule-dot--rest {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239,68,68,0.3);
+}
+
+.nu-schedule-day {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.nu-schedule-input {
+    width: 100%;
+    height: 30px;
+    padding: 4px 6px;
+    font-size: 0.72rem;
+    font-family: 'Vazir', sans-serif;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    direction: ltr;
+    text-align: center;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nu-schedule-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+.nu-schedule-input::placeholder {
+    color: #94a3b8;
+    font-size: 0.68rem;
+}
+
+.nu-schedule-col--friday {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.nu-schedule-col--friday .nu-schedule-day {
+    color: #dc2626;
+}
+
+.nu-schedule-col--friday .nu-schedule-input {
+    background: #fef2f2;
+    color: #dc2626;
+    cursor: not-allowed;
+}
+
+/* ── فوتر ── */
+.nu-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 24px 16px;
+    border-top: 1px solid #f1f5f9;
+    direction: rtl;
+}
+
+.nu-footer__hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+.nu-footer__hint svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.nu-footer__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 28px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: #fff;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(99,102,241,0.25);
+}
+
+.nu-footer__btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.nu-footer__btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+}
+
+.nu-footer__btn:active {
+    transform: scale(0.97);
+}
+
+/* ── ریسپانسیو ── */
+@media (max-width: 1100px) {
+    .nu-grid--5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .nu-grid--5 {
+        grid-template-columns: 1fr 1fr;
+    }
+    .nu-schedule-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .nu-grid--5 {
+        grid-template-columns: 1fr;
+    }
+    .nu-schedule-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 #viray-gap {gap: 2px;}
@@ -2599,24 +2722,9 @@ form button:active {
     border-color: #0ea5e9;
 }
 
-#gozareshHozoor {
-    display: flex;
-    align-items: center; /* برای تراز عمودی درست */
-    gap: 15px;
-    justify-content: flex-start; /* چیدن المان‌ها به سمت چپ */
-    flex-direction: row-reverse; /* ترتیب چیدمان المان‌ها را معکوس می‌کند */
-    flex-wrap: wrap; /* برای سازگاری در اندازه‌های کوچک‌تر */
-}
+/* gozareshHozoor / usernameGozareshHozoor styles replaced by .hozoor-report-* classes */
 
 #usernameHozoor {
-    padding: 8px;
-    font-size: 14px;
-    border-radius: 10px;
-    border: 1px solid #919191;
-    font-family: 'Vazir';
-}
-
-#usernameGozareshHozoor {
     padding: 8px;
     font-size: 14px;
     border-radius: 10px;
@@ -3191,35 +3299,7 @@ form button:active {
     background-color: #f9f9f9;
 }
 
-#hozoorUsersReportTable {
-    display: block;
-    max-height: 315px; /* مقدار قابل تغییر بسته به ارتفاع هر ردیف */
-    overflow-y: auto;
-    border-collapse: collapse;
-    margin-top: 1%;
-}
-
-#hozoorUsersReportTable thead, 
-#hozoorUsersReportTable tbody, 
-#hozoorUsersReportTable tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-}
-
-.mjmoo-hozoor-gzrsh {width: 2.4%;}
-.ezafe-hozoor-gzrsh {width: 1.6%;}
-.khorojzd-hozoor-gzrsh {width: 2.2%;}
-.shorozd-hozoor-gzrsh {width: 2.2%;}
-.takhir-hozoor-gzrsh {width: 1.1%;}
-.zmnkhrj-hozoor-gzrsh {width: 2%;}
-.zmnvrd-hozoor-gzrsh {width: 2%;}
-.zmnvrd2-hozoor-gzrsh {width: 2%;}
-.zmnkhrj2-hozoor-gzrsh {width: 2%;}
-.hfte-hozoor-gzrsh {width: 1.7%;}
-.sbt-hozoor-gzrsh {width: 1.7%;}
-.zmnkhrj2-hozoor-gzrsh {width: 2%;}
-.zmnvrd2-hozoor-gzrsh {width: 2%;}
+/* Column widths replaced by modern table design */
 
 /*  --- = تنظیمات مجموعه ساعت کاری همکاران ---  */
 /*  --- = تنظیمات مجموعه ساعت کاری همکاران ---  */
@@ -6408,7 +6488,6 @@ form button:active {
         height: auto !important;
         overflow: hidden;
         margin: 0 !important;
-        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .page-shell.sidebar-expanded #hourlyPassBox.hourlyPass-panel {
@@ -7098,14 +7177,7 @@ form button:active {
         margin-right: 10px;
     }
 
-    #usernameGozareshHozoor {
-        width: 47%;
-        font-size: 10px;
-        padding: 5px;
-        border-radius: 10px;
-        border: 1px solid #919191;
-        margin-right: 0;
-    }
+    /* #usernameGozareshHozoor styles replaced by .hozoor-report-form__select */
 
     #hozoorUsersReportTable {
         margin-top: 9px;
@@ -7143,7 +7215,6 @@ form button:active {
     .entekhab-form,
     #individualOvertimeReportForm,
     .hourlyPass-config,
-    #gozareshHozoor,
     #sabtdastHozoor {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -7170,8 +7241,6 @@ form button:active {
     #individualOvertimeReportForm select,
     .hourlyPass-config-item input,
     .hourlyPass-config-item select,
-    #gozareshHozoor input,
-    #gozareshHozoor select,
     #sabtdastHozoor input,
     #sabtdastHozoor select {
         width: 100% !important;
@@ -7184,7 +7253,6 @@ form button:active {
     .entekhab-form button,
     #individualOvertimeReportForm button,
     .hourlyPass-config-actions button,
-    #gozareshHozoor button,
     #sabtdastHozoor button {
         position: static;
         width: 100%;
@@ -7614,7 +7682,6 @@ form button:active {
     .entekhab-form,
     #individualOvertimeReportForm,
     .hourlyPass-config,
-    #gozareshHozoor,
     #sabtdastHozoor,
     .formsabtdast,
     .formgozareshhozoor,
@@ -7702,11 +7769,17 @@ form button:active {
     .hourlyPassTotaluserReport-table,
     .hourlyPassIndivisualuserReport-table,
     .ticketUsersReport-table,
-    .hozoorUsersReport-table,
     .dashboard-table {
         min-width: 680px;
         width: 100%;
         table-layout: auto;
+    }
+
+    /* جدول حضور و غیاب: table-layout: fixed حفظ شود تا عرض ستون‌ها بر اساس درصد باشد */
+    .hozoor-table-wrap #hozoorUsersReportTable,
+    #hozoorUsersReportTable.hozoorUsersReport-table {
+        table-layout: fixed !important;
+        min-width: 900px !important;
     }
 
     .management-box th,
@@ -9804,5 +9877,1339 @@ form button:active {
     .rightSidebar .icon-container,
     .rightSidebar .sidebar-icon-tile {
         transition: none;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   تقویم شمسی (Persian Date Picker)
+   ═══════════════════════════════════════════ */
+
+.date-input-shell {
+    position: relative;
+}
+
+.date-input-shell input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.leave-date-picker {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1100;
+    width: min(100%, 320px);
+    max-height: min(70vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
+    padding: 12px;
+}
+
+.leave-date-picker[hidden] {
+    display: none;
+}
+
+.leave-date-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.leave-date-picker-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.leave-date-picker-controls select {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 13px;
+    background: #fff;
+}
+
+.leave-date-picker-nav {
+    border: none;
+    background: #eff6ff;
+    color: #2563eb;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.leave-date-picker-weekdays,
+.leave-date-picker-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    direction: rtl;
+}
+
+.leave-date-picker-weekdays {
+    margin-bottom: 6px;
+}
+
+.leave-date-picker-weekday,
+.leave-date-picker-day {
+    text-align: center;
+    font-size: 12px;
+    padding: 6px 0;
+    border-radius: 8px;
+}
+
+.leave-date-picker-weekday {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.leave-date-picker-day {
+    background: #f8fafc;
+    cursor: pointer;
+    color: #0f172a;
+}
+
+.leave-date-picker-day:hover {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.leave-date-picker-day.is-selected {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+}
+
+.leave-date-picker-day.is-empty {
+    background: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* محدوده گزارش‌ها: اضافه کردن display grid برای config-item ها */
+.vacation-config-grid,
+.overtime-config-grid,
+.hourlyPass-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ثبت‌نام کاربران جدید — طراحی مدرن
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── هدر قهرمانی ── */
+.reg-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 28px 32px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    color: #fff;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.reg-hero__icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    display: grid;
+    place-items: center;
+    animation: regHeroIconPulse 3s ease-in-out infinite;
+}
+
+.reg-hero__icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+@keyframes regHeroIconPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px 4px rgba(255,255,255,0.15); }
+}
+
+.reg-hero__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.reg-hero__kicker {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.85;
+    margin-bottom: 4px;
+}
+
+.reg-hero__text h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.reg-hero__text p {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.reg-hero__glow {
+    position: absolute;
+    top: -40%;
+    left: -20%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: regGlowFloat 6s ease-in-out infinite;
+}
+
+@keyframes regGlowFloat {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, 15px); }
+}
+
+/* ── کارت‌های آماری ── */
+.reg-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.reg-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s ease;
+    animation: regStatFadeIn 0.5s ease both;
+}
+
+.reg-stat-card:nth-child(1) { animation-delay: 0ms; }
+.reg-stat-card:nth-child(2) { animation-delay: 80ms; }
+.reg-stat-card:nth-child(3) { animation-delay: 160ms; }
+.reg-stat-card:nth-child(4) { animation-delay: 240ms; }
+
+@keyframes regStatFadeIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reg-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.reg-stat-card__icon {
+    font-size: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.reg-stat-card--total .reg-stat-card__icon { background: #eff6ff; }
+.reg-stat-card--pending .reg-stat-card__icon { background: #fef3c7; }
+.reg-stat-card--approved .reg-stat-card__icon { background: #d1fae5; }
+.reg-stat-card--rejected .reg-stat-card__icon { background: #fee2e2; }
+
+.reg-stat-card__body strong {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.reg-stat-card__body span {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+/* ── نوار ابزار ── */
+.reg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.reg-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.reg-search__icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.reg-search input {
+    width: 100%;
+    padding: 10px 14px 10px 40px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    color: #0f172a;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+
+.reg-search input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+.reg-search input:focus + .reg-search__icon,
+.reg-search:has(input:focus) .reg-search__icon {
+    color: #6366f1;
+}
+
+.reg-select {
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    padding-left: 32px;
+}
+
+.reg-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+.reg-load-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    white-space: nowrap;
+}
+
+.reg-load-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.reg-load-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99,102,241,0.35);
+}
+
+.reg-load-btn:active {
+    transform: scale(0.97);
+}
+
+/* ── جدول ── */
+.reg-table-wrap {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.reg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.reg-table thead {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.reg-table th {
+    padding: 12px 14px;
+    text-align: right;
+    font-weight: 700;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.reg-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+/* ردیف‌ها با انیمیشن stagger */
+.reg-row {
+    animation: regRowSlideIn 0.35s ease both;
+    transition: background 0.2s;
+}
+
+.reg-row:hover {
+    background: #f8fafc;
+}
+
+@keyframes regRowSlideIn {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.reg-row:last-child td {
+    border-bottom: none;
+}
+
+.reg-row__idx {
+    width: 40px;
+    text-align: center !important;
+    color: #94a3b8 !important;
+    font-weight: 600;
+}
+
+.reg-row__name {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.reg-row__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a78bfa);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.reg-row__username {
+    font-family: 'Courier New', monospace;
+    direction: ltr;
+    text-align: right;
+    color: #475569;
+}
+
+.reg-row__date {
+    font-size: 0.75rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* ── بج وضعیت ── */
+.reg-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.reg-badge:hover {
+    transform: scale(1.05);
+}
+
+.reg-badge--pending {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    box-shadow: 0 2px 8px rgba(251,191,36,0.2);
+}
+
+.reg-badge--approved {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.2);
+}
+
+.reg-badge--rejected {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.2);
+}
+
+.reg-badge--neutral {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* ── دکمه‌های عملیات ── */
+.reg-row__actions {
+    text-align: center !important;
+    white-space: nowrap;
+}
+
+.reg-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    margin: 0 2px;
+    vertical-align: middle;
+}
+
+.reg-action-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.reg-action-btn:hover {
+    transform: translateY(-2px) scale(1.08);
+}
+
+.reg-action-btn:active {
+    transform: scale(0.92);
+}
+
+.reg-action-btn--view {
+    background: #eff6ff;
+    color: #2563eb;
+}
+.reg-action-btn--view:hover {
+    background: #dbeafe;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+}
+
+.reg-action-btn--approve {
+    background: #d1fae5;
+    color: #059669;
+}
+.reg-action-btn--approve:hover {
+    background: #a7f3d0;
+    box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+}
+
+.reg-action-btn--reject {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.reg-action-btn--reject:hover {
+    background: #fecaca;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+}
+
+/* ── حالت خالی ── */
+.reg-empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: #94a3b8;
+}
+
+.reg-empty-state__icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+    animation: regEmptyBounce 2s ease-in-out infinite;
+}
+
+@keyframes regEmptyBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.reg-empty-state p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.reg-empty-state--error {
+    color: #ef4444 !important;
+}
+
+/* ── لودینگ ── */
+.reg-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
+.reg-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: regSpin 0.7s linear infinite;
+}
+
+@keyframes regSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── صفحه‌بندی ── */
+.reg-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 18px;
+}
+
+.reg-page-btn {
+    min-width: 36px;
+    height: 36px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #475569;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reg-page-btn:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(99,102,241,0.12);
+}
+
+.reg-page-btn--active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+.reg-page-btn--active:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* ── مدال جزئیات ── */
+.reg-detail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.reg-detail-modal[hidden] {
+    display: none;
+}
+
+.reg-detail-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(6px);
+    animation: regBackdropIn 0.25s ease;
+}
+
+@keyframes regBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.reg-detail-modal__card {
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15,23,42,0.2);
+    animation: regCardSlideIn 0.35s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes regCardSlideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reg-detail-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.reg-detail-modal__kicker {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #6366f1;
+    margin-bottom: 2px;
+}
+
+.reg-detail-modal__head h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.reg-detail-modal__close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: grid;
+    place-items: center;
+}
+
+.reg-detail-modal__close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+
+.reg-detail-modal__body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.reg-detail-modal__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 24px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* ── فیلدهای جزئیات ── */
+.reg-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.reg-detail-field {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    transition: background 0.2s;
+}
+
+.reg-detail-field:hover {
+    background: #f1f5f9;
+}
+
+.reg-detail-field--full {
+    grid-column: span 2;
+}
+
+.reg-detail-field--danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.reg-detail-field__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.reg-detail-field__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.reg-detail-field__label {
+    display: block;
+    font-size: 0.68rem;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.reg-detail-field__value {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.reg-detail-field__value--accent {
+    color: #6366f1;
+}
+
+.reg-detail-field__value--mono {
+    font-family: 'Courier New', monospace;
+    direction: ltr;
+    text-align: right;
+}
+
+/* ── دکمه‌های مدال ── */
+.reg-btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reg-btn:active {
+    transform: scale(0.96);
+}
+
+.reg-btn--success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+}
+.reg-btn--success:hover {
+    box-shadow: 0 6px 18px rgba(16,185,129,0.3);
+    transform: translateY(-1px);
+}
+
+.reg-btn--danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+}
+.reg-btn--danger:hover {
+    box-shadow: 0 6px 18px rgba(239,68,68,0.3);
+    transform: translateY(-1px);
+}
+
+.reg-btn--ghost {
+    background: #f1f5f9;
+    color: #475569;
+}
+.reg-btn--ghost:hover {
+    background: #e2e8f0;
+}
+
+/* ── مدال رد درخواست ── */
+.reg-reject-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
+}
+
+.reg-reject-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reg-reject-textarea:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+}
+
+.reg-textarea--error {
+    border-color: #ef4444 !important;
+    animation: regShake 0.4s ease;
+}
+
+@keyframes regShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
+}
+
+/* ── Toast ── */
+.reg-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.reg-toast--show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.reg-toast--success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.reg-toast--error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* ── قفل اسکرول مدال ── */
+body.reg-modal-open {
+    overflow: hidden;
+}
+
+/* ── ریسپانسیو ── */
+@media (max-width: 768px) {
+    .reg-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 20px;
+    }
+    .reg-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    .reg-toolbar {
+        flex-direction: column;
+    }
+    .reg-search {
+        min-width: 100%;
+    }
+    .reg-table-wrap {
+        overflow-x: auto;
+    }
+    .reg-table {
+        min-width: 600px;
+    }
+    .reg-detail-grid {
+        grid-template-columns: 1fr;
+    }
+    .reg-detail-field--full {
+        grid-column: span 1;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   گزارش ورود و خروج — طراحی مدرن
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── کارت فرم ── */
+.hozoor-report-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: visible;
+    box-shadow: 0 4px 20px rgba(15,23,42,0.04);
+    margin-bottom: 20px;
+    animation: hozoorCardFadeIn 0.4s ease both;
+    position: relative;
+    z-index: 1;
+    direction: rtl;
+    text-align: right;
+}
+
+@keyframes hozoorCardFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hozoor-report-card__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px 14px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 18px 18px 0 0;
+    direction: rtl;
+}
+
+.hozoor-report-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.hozoor-report-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.hozoor-report-card__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.hozoor-report-card__sub {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* ── فرم ── */
+.hozoor-report-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 14px;
+    padding: 18px 24px 20px;
+    align-items: end;
+    direction: rtl;
+    text-align: right;
+}
+
+.hozoor-report-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hozoor-report-form__field--btn {
+    justify-content: flex-end;
+}
+
+.hozoor-report-form__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hozoor-report-form__select-wrap,
+.hozoor-report-form__date-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* در حالت RTL آیکون سمت چپ قرار می‌گیرد */
+.hozoor-report-form__date-wrap .date-input-shell {
+    position: relative;
+    width: 100%;
+}
+
+.hozoor-report-form__date-wrap .leave-date-picker {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1200;
+}
+
+.hozoor-report-form__select-icon {
+    position: absolute;
+    right: 12px;
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.hozoor-report-form__date-icon {
+    position: absolute;
+    left: 12px;
+    z-index: 1;
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.hozoor-report-form__select {
+    width: 100%;
+    padding: 10px 36px 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+}
+
+.hozoor-report-form__select:focus,
+.hozoor-report-form__input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+}
+
+.hozoor-report-form__input {
+    width: 100%;
+    padding: 10px 36px 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    background: #fff;
+    color: #334155;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    direction: rtl;
+    text-align: right;
+}
+
+.hozoor-report-form__submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    color: #fff;
+    font-family: 'Vazir', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hozoor-report-form__submit svg {
+    width: 16px;
+    height: 16px;
+}
+
+.hozoor-report-form__submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(14,165,233,0.3);
+}
+
+.hozoor-report-form__submit:active {
+    transform: scale(0.97);
+}
+
+/* ── جدول ── */
+.hozoor-table-wrap {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+    overflow-y: visible;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.hozoor-table-wrap #hozoorUsersReportTable,
+#hozoorUsersReportTable.hozoorUsersReport-table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 900px;
+    max-height: none;
+    overflow-y: visible;
+    border-collapse: collapse !important;
+    border-spacing: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    margin-top: 0;
+    table-layout: fixed !important;
+}
+
+/* display: table-row حذف شد — با responsive-tables.js تداخل داشت */
+
+.hozoor-table-wrap #hozoorUsersReportTable thead,
+#hozoorUsersReportTable.hozoorUsersReport-table thead {
+    background: linear-gradient(135deg, #f0f9ff, #f0fdf4);
+}
+
+.hozoor-table-wrap #hozoorUsersReportTable th,
+#hozoorUsersReportTable.hozoorUsersReport-table th {
+    padding: 12px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.hozoor-table-wrap #hozoorUsersReportTable td,
+#hozoorUsersReportTable.hozoorUsersReport-table td {
+    padding: 10px 10px;
+    font-size: 0.88rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+.hozoor-table-wrap #hozoorUsersReportTable tbody tr:hover td,
+#hozoorUsersReportTable.hozoorUsersReport-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+.hozoor-table-wrap #hozoorUsersReportTable tbody tr:last-child td,
+#hozoorUsersReportTable.hozoorUsersReport-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ردیف تعطیلات */
+.hozoor-table-wrap #hozoorUsersReportTable tbody tr.holiday-row td,
+#hozoorUsersReportTable.hozoorUsersReport-table tbody tr.holiday-row td {
+    background: rgba(239,68,68,0.04);
+    color: #dc2626;
+}
+
+/* حالت خالی */
+.hozoor-table-empty td {
+    padding: 0 !important;
+}
+
+.hozoor-table-empty__state {
+    text-align: center;
+    padding: 48px 20px;
+    color: #94a3b8;
+}
+
+.hozoor-table-empty__icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    animation: hozoorEmptyBounce 2s ease-in-out infinite;
+}
+
+@keyframes hozoorEmptyBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.hozoor-table-empty__state p {
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+/* عرض ستون‌ها — ۱۱ ستون با عرض متناسب */
+.hozoor-table-wrap .sbt-hozoor-gzrsh { width: 12% !important; }
+.hozoor-table-wrap .hfte-hozoor-gzrsh { width: 10% !important; }
+.hozoor-table-wrap .zmnvrd-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .zmnkhrj-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .zmnvrd2-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .zmnkhrj2-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .takhir-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .shorozd-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .khorojzd-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .ezafe-hozoor-gzrsh { width: 9% !important; }
+.hozoor-table-wrap .mjmoo-hozoor-gzrsh { width: 9% !important; }
+
+/* ── ریسپانسیو ── */
+@media (max-width: 900px) {
+    .hozoor-report-form {
+        grid-template-columns: 1fr 1fr;
+    }
+    .hozoor-report-form__field--btn {
+        grid-column: span 2;
+    }
+    .hozoor-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #hozoorUsersReportTable {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 600px) {
+    .hozoor-report-form {
+        grid-template-columns: 1fr;
+    }
+    .hozoor-report-form__field--btn {
+        grid-column: span 1;
+    }
+    .hozoor-report-card__head {
+        padding: 14px 16px 12px;
+    }
+    .hozoor-report-form {
+        padding: 14px 16px 16px;
     }
 }

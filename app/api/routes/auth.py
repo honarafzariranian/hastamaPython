@@ -173,18 +173,32 @@ async def login(request: Request):
     if not username or not password:
         return JSONResponse({"success": False, "message": "نام کاربری و رمز عبور الزامی هستند."})
 
-    # ── Validate CAPTCHA first ──
-    if not captcha_code:
-        return JSONResponse({"success": False, "message": "کد امنیتی الزامی است."})
+    # ── Check if CAPTCHA is enabled in system config ──
+    captcha_enabled = True
+    try:
+        _conn_cfg = _get_connection()
+        _cur_cfg = _conn_cfg.cursor()
+        _cur_cfg.execute("SELECT config_value FROM system_config WHERE config_key = 'captcha_enabled'")
+        _row_cfg = _cur_cfg.fetchone()
+        if _row_cfg and str(_row_cfg[0]).strip() in ('0', 'false', 'False'):
+            captcha_enabled = False
+        _conn_cfg.close()
+    except Exception:
+        pass
 
-    captcha_valid, captcha_msg = validate_captcha(request, captcha_code)
-    if not captcha_valid:
-        log_event_safe(
-            event_type="CAPTCHA", action="validation_failed",
-            ip_address=_client_ip(request), user_agent=_user_agent(request),
-            status="failure", severity="low",
-        )
-        return JSONResponse({"success": False, "message": captcha_msg, "captcha_error": True})
+    # ── Validate CAPTCHA (only if enabled) ──
+    if captcha_enabled:
+        if not captcha_code:
+            return JSONResponse({"success": False, "message": "کد امنیتی الزامی است."})
+
+        captcha_valid, captcha_msg = validate_captcha(request, captcha_code)
+        if not captcha_valid:
+            log_event_safe(
+                event_type="CAPTCHA", action="validation_failed",
+                ip_address=_client_ip(request), user_agent=_user_agent(request),
+                status="failure", severity="low",
+            )
+            return JSONResponse({"success": False, "message": captcha_msg, "captcha_error": True})
 
     # Input length check
     if len(username) > MAX_USERNAME_LENGTH:
