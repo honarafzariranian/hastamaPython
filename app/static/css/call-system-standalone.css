@@ -665,3 +665,57 @@ body.dark-mode .cs-waiting-time { color: #92700a; }
         transform: none;
     }
 }
+
+/* ── Live Preview Card ── */
+.cs-card--preview { margin-bottom: 0; }
+.cs-card--preview .cs-card-header { position: relative; }
+
+.cs-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: cs-live-pulse 2s ease-in-out infinite;
+    margin-right: auto;
+}
+@keyframes cs-live-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,.5); }
+    50% { opacity: .7; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+}
+
+.cs-preview-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0f172a;
+    border: 1px solid var(--c-border);
+}
+
+.cs-preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+.cs-preview-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15,23,42,.85);
+    color: #94a3b8;
+    font-size: .85rem;
+    transition: opacity .4s;
+}
+.cs-preview-overlay.is-hidden { opacity: 0; pointer-events: none; }
+
+body.dark-mode .cs-preview-wrap { border-color: #334155; }
+
+@media (max-width: 900px) {
+    .cs-preview-wrap { aspect-ratio: 16 / 10; }
+}

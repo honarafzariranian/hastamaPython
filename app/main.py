@@ -93,16 +93,20 @@ class _CSRFMiddleware:
         csrf_token = cookies.get("csrf_token", "")
 
         if method in self._STATE_METHODS:
-            # Validate: X-CSRF-Token header must match the cookie value
-            header_token = headers.get(b"x-csrf-token", b"").decode("latin-1", errors="ignore")
-            if not csrf_token or not header_token or csrf_token != header_token:
-                from starlette.responses import JSONResponse
-                response = JSONResponse(
-                    status_code=403,
-                    content={"success": False, "error": "CSRF token mismatch."},
-                )
-                await response(scope, receive, send)
-                return
+            # مسیرهای سیستم تماس نیاز به CSRF ندارند (بدون احراز هویت کار می‌کنند)
+            path = scope.get("path", "")
+            csrf_exempt_paths = ("/api/calls", "/api/call-display", "/api/display-queue", "/api/waiting-queue", "/api/slides")
+            if not any(path.startswith(p) for p in csrf_exempt_paths):
+                # Validate: X-CSRF-Token header must match the cookie value
+                header_token = headers.get(b"x-csrf-token", b"").decode("latin-1", errors="ignore")
+                if not csrf_token or not header_token or csrf_token != header_token:
+                    from starlette.responses import JSONResponse
+                    response = JSONResponse(
+                        status_code=403,
+                        content={"success": False, "error": "CSRF token mismatch."},
+                    )
+                    await response(scope, receive, send)
+                    return
 
         # Generate new CSRF token if missing
         if not csrf_token:
@@ -3579,8 +3583,10 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
         FROM TPrsInOut
         WHERE CardNo = ? AND Date BETWEEN ? AND ?
         """
+        print(f"get_hozoor DEBUG: username={username}, hozoor_num={hozoor_num}, start={start_date}, end={end_date}")
         cursor_access.execute(query, (hozoor_num, start_date, end_date))
         rows = cursor_access.fetchall()
+        print(f"get_hozoor DEBUG: Access returned {len(rows)} rows for {username}")
     except Exception as access_error:
         print(f"get_hozoor Access fallback for {username}: {access_error}")
     finally:

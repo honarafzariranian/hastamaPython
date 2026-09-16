@@ -828,4 +828,24 @@
     } else {
         init();
     }
+
+    /* ── Back-Forward Cache: reconnect WebSocket on pageshow ── */
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            if (typeof ws !== 'undefined' && ws) {
+                try { ws.close(); } catch (err) { /* ignore */ }
+                ws = null;
+            }
+            connectWS();
+        }
+    });
+
+    /* ── Live Preview: hide overlay when iframe loads ── */
+    var previewFrame = document.getElementById('csPreviewFrame');
+    var previewOverlay = document.getElementById('csPreviewOverlay');
+    if (previewFrame && previewOverlay) {
+        previewFrame.addEventListener('load', function () {
+            previewOverlay.classList.add('is-hidden');
+        });
+    }
 })();

@@ -459,4 +459,16 @@
     } else {
         init();
     }
+
+    /* ── Back-Forward Cache: reconnect WebSocket on pageshow ── */
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            /* Page restored from bfcache — force reconnect */
+            if (typeof ws !== 'undefined' && ws) {
+                try { ws.close(); } catch (err) { /* ignore */ }
+                ws = null;
+            }
+            connect();
+        }
+    });
 })();

@@ -891,11 +891,7 @@ async def delete_slide(request: Request, slide_id: int):
 
 @router.websocket("/ws/call-display")
 async def call_display_ws(websocket: WebSocket):
-    """WebSocket endpoint for TV display pages."""
-    session = websocket.session if hasattr(websocket, 'session') else None
-    if not session or not session.get("username"):
-        await websocket.close(code=4001)
-        return
+    """WebSocket endpoint for TV display pages — no authentication required."""
     await display_manager.connect(websocket)
     try:
         while True:

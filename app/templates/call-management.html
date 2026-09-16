@@ -151,8 +151,29 @@
                 </div>
             </div>
 
-            <!-- Right column: Display queue + history -->
+            <!-- Right column: Live preview + Display queue + history -->
             <div class="cs-col cs-col--right">
+
+                <!-- Live Preview of TV Display -->
+                <div class="cs-card cs-card--preview">
+                    <div class="cs-card-header">
+                        <div class="cs-card-icon cs-card-icon--display">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <h2 class="cs-card-title">پیش‌نمایش زنده نمایشگر</h2>
+                        <span class="cs-live-dot" id="csPreviewLive"></span>
+                    </div>
+                    <div class="cs-preview-wrap">
+                        <iframe id="csPreviewFrame" src="/call-display" class="cs-preview-iframe" allow="autoplay" loading="lazy"></iframe>
+                        <div class="cs-preview-overlay" id="csPreviewOverlay">
+                            <span>بارگذاری نمایشگر...</span>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Display queue (what's on TV now) -->
                 <div class="cs-card cs-card--queue">

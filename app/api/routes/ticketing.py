@@ -56,7 +56,7 @@ class TicketUpdate(BaseModel):
     assigned_to: str | None = Field(default=None, max_length=255)
 
 
-def _actor(request: Request) -> tuple[str, bool]:
+def _actor(request: Request) -> tuple[str, bool, bool]:
     try:
         return actor_from_session(request)
     except PermissionError as exc:
@@ -101,7 +101,7 @@ def categories(request: Request):
 
 @router.get("/users")
 def ticket_users(request: Request):
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     service = _service()
     try:
         service.cursor.execute(
@@ -139,10 +139,10 @@ def list_tickets(
     assignee: str = Query("", max_length=255),
     sort: str = Query("newest", max_length=16),
 ):
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     service = _service()
     try:
-        return service.list_tickets(actor, is_admin, page, page_size, search, status, priority, assignee, sort)
+        return service.list_tickets(actor, is_admin, page, page_size, search, status, priority, assignee, sort, is_master_admin=is_master_admin)
     finally:
         service.close()
 
@@ -150,7 +150,7 @@ def list_tickets(
 @router.post("", status_code=201)
 def create_ticket(payload: TicketCreate, request: Request):
     _assert_same_origin(request)
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     if payload.priority not in TICKET_PRIORITIES:
         raise HTTPException(status_code=422, detail="اولویت تیکت معتبر نیست.")
     service = _service()
@@ -173,7 +173,7 @@ def create_ticket(payload: TicketCreate, request: Request):
 
 @router.get("/{ticket_id}")
 def get_ticket(ticket_id: int, request: Request):
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     service = _service()
     try:
         ticket = service.get_ticket(ticket_id, actor, is_admin)
@@ -187,7 +187,7 @@ def get_ticket(ticket_id: int, request: Request):
 @router.post("/{ticket_id}/messages")
 def add_message(ticket_id: int, payload: MessageCreate, request: Request):
     _assert_same_origin(request)
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     if payload.visibility not in MESSAGE_VISIBILITIES:
         raise HTTPException(status_code=422, detail="نوع پیام معتبر نیست.")
     service = _service()
@@ -203,7 +203,7 @@ def add_message(ticket_id: int, payload: MessageCreate, request: Request):
 @router.patch("/{ticket_id}")
 def update_ticket(ticket_id: int, payload: TicketUpdate, request: Request):
     _assert_same_origin(request)
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     service = _service()
     try:
         try:
@@ -230,7 +230,7 @@ async def upload_attachment(
     message_id: int | None = Query(default=None, ge=1),
 ):
     _assert_same_origin(request)
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     payload = await file.read(10 * 1024 * 1024 + 1)
     try:
         metadata = store_private_attachment(file.filename or "attachment", file.content_type or "", payload)
@@ -253,7 +253,7 @@ async def upload_attachment(
 
 @router.get("/{ticket_id}/attachments/{attachment_id}")
 def download_attachment(ticket_id: int, attachment_id: int, request: Request):
-    actor, is_admin = _actor(request)
+    actor, is_admin, is_master_admin = _actor(request)
     service = _service()
     try:
         attachment = service.attachment(ticket_id, attachment_id, actor, is_admin)

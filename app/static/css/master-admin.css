@@ -4,6 +4,18 @@
    master-admin-specific rules.
    ═══════════════════════════════════════════════════════════════ */
 
+/* --- پالت رنگی آیکون‌های سایدبار مستر ادمین --- */
+.rightSidebar .icon-container[data-accent="ma-dashboard"]   { --tile-from:#4F8DFF; --tile-to:#7C5CFF; --acc:#5B7CFF; --tint:rgba(91,124,255,.12);  --glow:rgba(91,124,255,.45); }
+.rightSidebar .icon-container[data-accent="ma-users"]        { --tile-from:#10B981; --tile-to:#14B8A6; --acc:#10B981; --tint:rgba(16,185,129,.12);  --glow:rgba(16,185,129,.45); }
+.rightSidebar .icon-container[data-accent="ma-sessions"]     { --tile-from:#6366F1; --tile-to:#0EA5E9; --acc:#6366F1; --tint:rgba(99,102,241,.12);  --glow:rgba(99,102,241,.45); }
+.rightSidebar .icon-container[data-accent="ma-passport"]     { --tile-from:#FBBF24; --tile-to:#F97316; --acc:#F59E0B; --tint:rgba(245,158,11,.14);  --glow:rgba(245,158,11,.45); }
+.rightSidebar .icon-container[data-accent="ma-audit"]        { --tile-from:#06B6D4; --tile-to:#3B82F6; --acc:#0EA5E9; --tint:rgba(14,165,233,.12);  --glow:rgba(14,165,233,.45); }
+.rightSidebar .icon-container[data-accent="ma-security"]     { --tile-from:#22C55E; --tile-to:#14B8A6; --acc:#22C55E; --tint:rgba(34,197,94,.12);   --glow:rgba(34,197,94,.42); }
+.rightSidebar .icon-container[data-accent="ma-errors"]       { --tile-from:#EF4444; --tile-to:#F97316; --acc:#EF4444; --tint:rgba(239,68,68,.12);   --glow:rgba(239,68,68,.42); }
+.rightSidebar .icon-container[data-accent="ma-ticket"]       { --tile-from:#F43F5E; --tile-to:#EC4899; --acc:#F43F5E; --tint:rgba(244,63,94,.10);   --glow:rgba(244,63,94,.42); }
+.rightSidebar .icon-container[data-accent="ma-admin-actions"]{ --tile-from:#8B5CF6; --tile-to:#A855F7; --acc:#8B5CF6; --tint:rgba(139,92,246,.12);  --glow:rgba(139,92,246,.45); }
+.rightSidebar .icon-container[data-accent="ma-settings"]     { --tile-from:#64748B; --tile-to:#475569; --acc:#64748B; --tint:rgba(100,116,139,.12); --glow:rgba(100,116,139,.42); }
+
 /* ── Base Overrides ──────────────────────────────────────── */
 body {
     direction: rtl;

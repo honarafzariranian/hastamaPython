@@ -863,7 +863,7 @@ async def list_all_tickets(
         result = service.list_tickets(
             actor="", is_admin=True, page=page, page_size=per_page,
             search=search, status=status, priority=priority,
-            assignee=assignee, sort=sort,
+            assignee=assignee, sort=sort, is_master_admin=True,
         )
         return JSONResponse(content={"success": True, "data": result})
     except Exception as e:

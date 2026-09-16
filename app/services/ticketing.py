@@ -92,11 +92,13 @@ def ensure_schema(conn) -> None:
         _SCHEMA_READY = True
 
 
-def actor_from_session(request) -> tuple[str, bool]:
+def actor_from_session(request) -> tuple[str, bool, bool]:
     actor = str(request.session.get("username") or "").strip()
     if not actor:
         raise PermissionError("برای ادامه وارد سامانه شوید.")
-    return actor, request.session.get("is_admin") is True
+    is_admin = request.session.get("is_admin") is True
+    is_master_admin = request.session.get("is_master_admin") is True
+    return actor, is_admin, is_master_admin
 
 
 def clean_text(value, field: str, minimum: int = 1, maximum: int = 4000) -> str:
@@ -238,6 +240,7 @@ class TicketService:
         priority: str = "",
         assignee: str = "",
         sort: str = "newest",
+        is_master_admin: bool = False,
     ) -> dict:
         page = max(1, int(page))
         page_size = min(100, max(5, int(page_size)))
@@ -246,6 +249,9 @@ class TicketService:
         if not is_admin:
             visibility_clauses.append("(t.requester_username=? OR t.recipient_username=? OR t.assigned_to=?)")
             visibility_params.extend([actor, actor, actor])
+        # تیکت‌های بازیابی رمز (ناشناس) فقط برای مدیر اصلی قابل مشاهده است
+        if is_admin and not is_master_admin:
+            visibility_clauses.append("t.requester_username != '__anonymous__'")
         clauses = list(visibility_clauses)
         params: list = list(visibility_params)
         if search.strip():
