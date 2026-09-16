@@ -31,7 +31,7 @@ from app.api.routes.registration import router as registration_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
-from core.config import API_PREFIX, DEBUG, MEMOIZATION_FLAG, PROJECT_NAME, VERSION, SECRET_KEY
+from core.config import API_PREFIX, DEBUG, MEMOIZATION_FLAG, PROJECT_NAME, VERSION, SECRET_KEY, config
 from core.events import create_start_app_handler
 from core.number_format import convert_to_persian_numbers
 from core.password_utils import get_user_table_columns, hash_password, insert_user_with_optional_hash
@@ -136,11 +136,11 @@ class _SecurityHeadersMiddleware:
 
     _HEADERS = [
         (b"x-content-type-options", b"nosniff"),
-        (b"x-frame-options", b"DENY"),
+        (b"x-frame-options", b"SAMEORIGIN"),
         (b"referrer-policy", b"strict-origin-when-cross-origin"),
         (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
         (b"content-security-policy",
-         b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"),
+         b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
     ]
 
     def __init__(self, app: ASGIApp) -> None:
@@ -619,8 +619,8 @@ async def user_panel(request: Request):
 
             entry_time = None
             try:
-                mdb_path = os.getenv("ARAZ_ACCESS_PATH", r"E:\Hastama\database\Arazdb.mdb")
-                password = os.getenv("ARAZ_ACCESS_PASSWORD", "")
+                mdb_path = config("ARAZ_ACCESS_PATH", default=r"E:\Hastama\database\Arazdb.mdb")
+                password = config("ARAZ_ACCESS_PASSWORD", default="")
                 if not password:
                     raise RuntimeError("ARAZ_ACCESS_PASSWORD environment variable not configured")
                 conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
@@ -2452,6 +2452,55 @@ async def delete_shift(shift_id: int, request: Request):
             pass
 
 
+@app.get("/get_active_shifts")
+async def get_active_shifts(request: Request):
+    """Return all shifts where today's Jalali day falls within [start_day, end_day]
+    for the current Jalali year/month — i.e. active shifts right now."""
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
+    try:
+        import jdatetime
+        today = jdatetime.date.today()
+        year = today.year
+        month = today.month
+        day = today.day
+
+        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
+                              r'SERVER=localhost\SQLEXPRESS;'
+                              'DATABASE=userDB;'
+                              'Trusted_Connection=yes;')
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, start_day, end_day, title,
+                   shanbeh, yekshanbeh, doshanbeh, seshanbeh,
+                   chaharshanbeh, panjshanbeh, jomeh
+            FROM shiftha
+            WHERE jalali_year = ? AND jalali_month = ?
+              AND start_day <= ? AND end_day >= ?
+            ORDER BY username, start_day
+        """, (year, month, day, day))
+        rows = cursor.fetchall()
+
+        shifts = [{
+            'id': r[0], 'username': r[1], 'start_day': r[2], 'end_day': r[3],
+            'title': r[4] or '',
+            'shanbeh': r[5] or '', 'yekshanbeh': r[6] or '', 'doshanbeh': r[7] or '',
+            'seshanbeh': r[8] or '', 'chaharshanbeh': r[9] or '',
+            'panjshanbeh': r[10] or '', 'jomeh': r[11] or ''
+        } for r in rows]
+
+        return JSONResponse(content={'success': True, 'shifts': shifts, 'today': str(day), 'year': year, 'month': month})
+    except Exception as e:
+        return JSONResponse(content={'success': False, 'message': _safe_error_message(e)})
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
+
 # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران
 # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران
 # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران # تابع دریافت مرخصی های کاربران
@@ -3495,6 +3544,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
     username = str(username or "").strip()
     start_date = convert_farsi_to_english(start_date).strip()
     end_date = convert_farsi_to_english(end_date).strip()
+    print(f"[HOZOOR-DBG] endpoint hit: user={username!r} start={start_date!r} end={end_date!r}", flush=True)
     try:
         from_g = JalaliDate.strptime(start_date, "%Y/%m/%d").to_gregorian()
         to_g = JalaliDate.strptime(end_date, "%Y/%m/%d").to_gregorian()
@@ -3568,13 +3618,14 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
     rows = []
     conn_access = None
     cursor_access = None
+    _access_error_msg = None
+    _mdb_path = config("ARAZ_ACCESS_PATH", default=r"E:\Hastama\database\Arazdb.mdb")
     try:
-        mdb_path = os.getenv("ARAZ_ACCESS_PATH") or r"E:\Hastama\database\Arazdb.mdb"
-        password = os.getenv("ARAZ_ACCESS_PASSWORD", "")
+        password = config("ARAZ_ACCESS_PASSWORD", default="")
         if not password:
             raise RuntimeError("ARAZ_ACCESS_PASSWORD not configured")
         conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
-                    rf"DBQ={mdb_path};"
+                    rf"DBQ={_mdb_path};"
                     rf"PWD={password};")
         conn_access = pyodbc.connect(conn_str)
         cursor_access = conn_access.cursor()
@@ -3583,11 +3634,10 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
         FROM TPrsInOut
         WHERE CardNo = ? AND Date BETWEEN ? AND ?
         """
-        print(f"get_hozoor DEBUG: username={username}, hozoor_num={hozoor_num}, start={start_date}, end={end_date}")
         cursor_access.execute(query, (hozoor_num, start_date, end_date))
         rows = cursor_access.fetchall()
-        print(f"get_hozoor DEBUG: Access returned {len(rows)} rows for {username}")
     except Exception as access_error:
+        _access_error_msg = str(access_error)
         print(f"get_hozoor Access fallback for {username}: {access_error}")
     finally:
         if cursor_access is not None:
@@ -3641,6 +3691,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             ORDER BY [date]
         """, (username, from_g, to_g))
         rows_sql = cursor.fetchall()
+        print(f"[HOZOOR-DBG] SQL hozoor table returned {len(rows_sql)} rows for {username!r}, from_g={from_g}, to_g={to_g}", flush=True)
 
         for row in rows_sql:
             g_date, vrood, khoroj = row
@@ -3669,6 +3720,8 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             }
 
     # حالا پردازش نهایی و تعیین وضعیت — خروجی را به صورت مرتب (بر اساس تاریخ) می‌دهیم
+    non_zero = sum(1 for d in attendance.values() if d.get('EntryTime','0000') != '0000' or d.get('ExitTime','0000') != '0000')
+    print(f"[HOZOOR-DBG] attendance has {len(attendance)} days, {non_zero} with actual data for {username!r}", flush=True)
     result = []
     for date_str in sorted(attendance.keys()):
         data = attendance[date_str]
@@ -3756,8 +3809,17 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
     try:
         conn.close()
     except Exception:
-        pass
-    return result
+        pass    # debug info into response
+    _dbg = {
+        "user": username,
+        "hozoor_num": hozoor_num,
+        "access_rows": len(rows),
+        "access_error": _access_error_msg,
+        "mdb_path": _mdb_path,
+        "attendance_days": len(attendance),
+        "non_zero_days": sum(1 for d in attendance.values() if d.get('EntryTime','0000') != '0000'),
+    }
+    return JSONResponse(content={"_debug": _dbg, "data": result})
 
 # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن
 # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن

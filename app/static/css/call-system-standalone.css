@@ -425,16 +425,148 @@ html { height: 100%; overflow: hidden; }
 
 
 .cs-card--waiting {
-    height: 35%;
+    height: auto;
 }
 
-.cs-card--history {
-    height: 36.8%;
+.cs-card--history { height: auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   باکس پیش‌نمایش — طراحی مدرن با فاصله و ترنزیشن
+   ══════════════════════════════════════════════════════════════ */
+
+#cs-tab-preview.cs-tab-content--active {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(248,250,252,0.6) 100%);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 0 0 18px 18px;
+    box-shadow:
+        0 0 0 1px rgba(15,23,42,0.03),
+        0 2px 6px rgba(15,23,42,0.04),
+        0 8px 20px rgba(15,23,42,0.06);
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148,163,184,0.3) transparent;
 }
 
-.cs-card--slides {
-    height: 50.6%;
+#cs-tab-preview::-webkit-scrollbar { width: 5px; }
+#cs-tab-preview::-webkit-scrollbar-track { background: transparent; }
+#cs-tab-preview::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(14,165,233,0.25), rgba(99,102,241,0.25));
+    border-radius: 99px;
 }
+
+/* ── کارت پیش‌نمایش ── */
+#cs-tab-preview .cs-card--preview {
+    border: 1.5px solid rgba(226,232,240,0.6);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.8) 100%);
+    box-shadow:
+        0 1px 3px rgba(15,23,42,0.04),
+        0 4px 12px rgba(15,23,42,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#cs-tab-preview .cs-card--preview:hover {
+    box-shadow:
+        0 2px 6px rgba(14,165,233,0.08),
+        0 8px 24px rgba(14,165,233,0.1);
+    border-color: rgba(14,165,233,0.2);
+    transform: translateY(-2px);
+}
+
+#cs-tab-preview .cs-card--preview .cs-preview-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 14px;
+    border: 1.5px solid rgba(226,232,240,0.5);
+}
+
+/* ── کارت وضعیت نمایشگر ── */
+#cs-tab-preview .cs-card--display-status {
+    border: 1.5px solid rgba(226,232,240,0.6);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.8) 100%);
+    box-shadow:
+        0 1px 3px rgba(15,23,42,0.04),
+        0 4px 12px rgba(15,23,42,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+#cs-tab-preview .cs-card--display-status:hover {
+    box-shadow:
+        0 2px 6px rgba(14,165,233,0.08),
+        0 8px 24px rgba(14,165,233,0.1);
+    border-color: rgba(14,165,233,0.2);
+    transform: translateY(-2px);
+}
+
+/* ── کارت صف ── */
+#cs-tab-preview .cs-card--queue {
+    border: 1.5px solid rgba(226,232,240,0.6);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.8) 100%);
+    box-shadow:
+        0 1px 3px rgba(15,23,42,0.04),
+        0 4px 12px rgba(15,23,42,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+#cs-tab-preview .cs-card--queue:hover {
+    box-shadow:
+        0 2px 6px rgba(14,165,233,0.08),
+        0 8px 24px rgba(14,165,233,0.1);
+    border-color: rgba(14,165,233,0.2);
+    transform: translateY(-2px);
+}
+
+/* ── کارت صف پذیرش ── */
+#cs-tab-preview .cs-card--waiting {
+    border: 1.5px solid rgba(226,232,240,0.6);
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.8) 100%);
+    box-shadow:
+        0 1px 3px rgba(15,23,42,0.04),
+        0 4px 12px rgba(15,23,42,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+#cs-tab-preview .cs-card--waiting:hover {
+    box-shadow:
+        0 2px 6px rgba(14,165,233,0.08),
+        0 8px 24px rgba(14,165,233,0.1);
+    border-color: rgba(14,165,233,0.2);
+    transform: translateY(-2px);
+}
+
+/* ── انیمیشن ورود کارت‌ها ── */
+@keyframes csCardSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+#cs-tab-preview .cs-card--preview { animation: csCardSlideIn 0.35s cubic-bezier(0.4,0,0.2,1) 0.05s both; }
+#cs-tab-preview .cs-card--display-status { animation: csCardSlideIn 0.35s cubic-bezier(0.4,0,0.2,1) 0.1s both; }
+#cs-tab-preview .cs-card--queue { animation: csCardSlideIn 0.35s cubic-bezier(0.4,0,0.2,1) 0.15s both; }
+#cs-tab-preview .cs-card--waiting { animation: csCardSlideIn 0.35s cubic-bezier(0.4,0,0.2,1) 0.2s both; }
+
 /* ── Slides management ── */
 .cs-card--slides { grid-column: 1 / -1; }
 .cs-card-icon--slides { background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); }
@@ -718,4 +850,273 @@ body.dark-mode .cs-preview-wrap { border-color: #334155; }
 
 @media (max-width: 900px) {
     .cs-preview-wrap { aspect-ratio: 16 / 10; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Display connection status card
+   ══════════════════════════════════════════════════════════════ */
+.cs-card--display-status { margin-bottom: 0; }
+
+.cs-display-status-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff8f0 0%, #fff5f5 100%);
+    border: 1.5px solid #fecaca;
+    transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.cs-display-status-body--connected {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-color: #86efac;
+}
+
+.cs-display-status-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    transition: background 0.3s ease;
+}
+
+.cs-display-status-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.cs-display-status-icon--waiting {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    animation: displayStatusPulse 2s ease-in-out infinite;
+}
+
+.cs-display-status-icon--connected {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+}
+
+@keyframes displayStatusPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.95); }
+}
+
+.cs-display-status-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.cs-display-status-label {
+    font: 600 0.95rem/1.3 'Vazir', sans-serif;
+    color: #1e293b;
+    transition: color 0.3s ease;
+}
+
+.cs-display-status-sub {
+    font: 400 0.8rem/1.4 'Vazir', sans-serif;
+    color: #64748b;
+}
+
+.cs-display-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cs-display-status-dot--off {
+    background: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+    animation: displayDotBlink 1.5s ease-in-out infinite;
+}
+
+.cs-display-status-dot--on {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+@keyframes displayDotBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+body.dark-mode .cs-display-status-body {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.06), rgba(239, 68, 68, 0.03));
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+body.dark-mode .cs-display-status-body--connected {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), rgba(34, 197, 94, 0.03));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .cs-display-status-icon--waiting {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+body.dark-mode .cs-display-status-icon--connected {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+body.dark-mode .cs-display-status-label { color: #e2e8f0; }
+body.dark-mode .cs-display-status-sub { color: #94a3b8; }
+
+/* ══════════════════════════════════════════════════════════════
+   تب‌بندی سمت راست
+   ══════════════════════════════════════════════════════════════ */
+
+.cs-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 6px 6px 0;
+    background: var(--cs-surface-alt);
+    border: 1px solid var(--cs-border);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+}
+
+/* راست‌چین کردن محتوای ستون سمت راست با تب‌ها */
+.cs-col--right {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cs-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: var(--cs-text-dim);
+    font: 600 0.82rem/1 'Vazir', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+    position: relative;
+}
+
+.cs-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--cs-text);
+}
+
+.cs-tab-btn--active {
+    background: var(--cs-surface);
+    color: var(--cs-text);
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.cs-tab-btn--active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--cs-accent);
+    border-radius: 2px 2px 0 0;
+}
+
+.cs-tab-content {
+    display: none;
+    padding: 16px;
+    background: var(--cs-surface);
+    border: 1px solid var(--cs-border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    animation: csTabFadeIn 0.25s ease;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cs-tab-content--active {
+    display: flex;
+}
+
+/* ── کارت تاریخچه — اسکرول داخلی ── */
+.cs-card--history {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: auto;
+}
+
+.cs-card--history .cs-history-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 220px);
+    scrollbar-width: thin;
+    scrollbar-color: var(--cs-border) transparent;
+}
+
+@keyframes csTabFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── ریسپانسیو ── */
+@media (max-width: 900px) {
+    .cs-tabs { flex-wrap: wrap; gap: 2px; padding: 4px 4px 0; }
+    .cs-tab-btn { padding: 8px 12px; font-size: 0.76rem; }
+    .cs-tab-content { padding: 12px; }
+    #cs-tab-preview { gap: 12px; padding: 12px; }
+    #cs-tab-preview .cs-card--preview { border-radius: 14px; }
+    #cs-tab-preview .cs-card--display-status,
+    #cs-tab-preview .cs-card--queue,
+    #cs-tab-preview .cs-card--waiting { border-radius: 14px; }
+}
+
+/* ── دارک‌مد ── */
+body.dark-mode .cs-tabs {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .cs-tab-btn { color: var(--dk-text-2); }
+body.dark-mode .cs-tab-btn:hover { background: rgba(56, 189, 248, 0.06); color: var(--dk-text); }
+body.dark-mode .cs-tab-btn--active { background: var(--dk-surface); color: var(--dk-text); }
+body.dark-mode .cs-tab-btn--active::after { background: var(--dk-accent); }
+body.dark-mode .cs-tab-content {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+/* ── دارک‌مد — تب پیش‌نمایش ── */
+body.dark-mode #cs-tab-preview {
+    background: linear-gradient(135deg, rgba(30,41,59,0.6), rgba(15,23,42,0.55));
+    border-color: rgba(255,255,255,0.05);
+}
+
+body.dark-mode #cs-tab-preview .cs-card--preview,
+body.dark-mode #cs-tab-preview .cs-card--display-status,
+body.dark-mode #cs-tab-preview .cs-card--queue,
+body.dark-mode #cs-tab-preview .cs-card--waiting {
+    background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.75));
+    border-color: var(--dk-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.2);
+}
+
+body.dark-mode #cs-tab-preview .cs-card--preview:hover,
+body.dark-mode #cs-tab-preview .cs-card--display-status:hover,
+body.dark-mode #cs-tab-preview .cs-card--queue:hover,
+body.dark-mode #cs-tab-preview .cs-card--waiting:hover {
+    box-shadow: 0 2px 6px rgba(56,189,248,0.08), 0 8px 24px rgba(56,189,248,0.1);
+    border-color: rgba(56,189,248,0.15);
 }

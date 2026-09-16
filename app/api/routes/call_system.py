@@ -54,22 +54,30 @@ def _ensure_schema(conn) -> None:
 # WebSocket manager — in-memory broadcast to all connected TV displays
 # ---------------------------------------------------------------------------
 class DisplayManager:
-    """Manages active TV display WebSocket connections."""
+    """Manages active TV display WebSocket connections.
+
+    Each connection is tagged as either 'display' (real TV screen)
+    or 'preview' (iframe inside management page) so the management
+    panel can distinguish them.
+    """
 
     def __init__(self):
         self._connections: list[WebSocket] = []
+        self._tags: dict[int, str] = {}          # id(ws) -> 'display'|'preview'
         self._lock = threading.Lock()
 
-    async def connect(self, ws: WebSocket) -> None:
+    async def connect(self, ws: WebSocket, tag: str = 'display') -> None:
         await ws.accept()
         with self._lock:
             self._connections.append(ws)
-        logger.info("display connected — total: %d", len(self._connections))
+            self._tags[id(ws)] = tag
+        logger.info("display connected (tag=%s) — total: %d", tag, len(self._connections))
 
     def disconnect(self, ws: WebSocket) -> None:
         with self._lock:
             if ws in self._connections:
                 self._connections.remove(ws)
+            self._tags.pop(id(ws), None)
         logger.info("display disconnected — total: %d", len(self._connections))
 
     async def broadcast(self, message: dict) -> int:
@@ -90,12 +98,24 @@ class DisplayManager:
                 for ws in dead:
                     if ws in self._connections:
                         self._connections.remove(ws)
+                    self._tags.pop(id(ws), None)
         return sent
 
     @property
     def count(self) -> int:
         with self._lock:
             return len(self._connections)
+
+    @property
+    def display_count(self) -> int:
+        """Count of real TV display connections (excludes preview iframes)."""
+        with self._lock:
+            return sum(1 for ws in self._connections if self._tags.get(id(ws)) == 'display')
+
+    @property
+    def preview_count(self) -> int:
+        with self._lock:
+            return sum(1 for ws in self._connections if self._tags.get(id(ws)) == 'preview')
 
 
 display_manager = DisplayManager()
@@ -714,10 +734,17 @@ async def recent_calls(request: Request, limit: int = 20):
 
 @router.get("/calls/status")
 async def display_status():
-    """Return the number of active TV display connections."""
+    """Return the number of active TV display connections.
+
+    ``connected_displays``  — total WebSocket connections
+    ``real_displays``       — real TV screens (excludes iframe previews)
+    ``preview_displays``    — management-page iframe previews
+    """
     return JSONResponse({
         "success": True,
         "connected_displays": display_manager.count,
+        "real_displays": display_manager.display_count,
+        "preview_displays": display_manager.preview_count,
     })
 
 
@@ -891,11 +918,33 @@ async def delete_slide(request: Request, slide_id: int):
 
 @router.websocket("/ws/call-display")
 async def call_display_ws(websocket: WebSocket):
-    """WebSocket endpoint for TV display pages — no authentication required."""
-    await display_manager.connect(websocket)
+    """WebSocket endpoint for TV display pages — no authentication required.
+
+    The first message after connect may be a JSON `{"tag": "preview"}` or
+    `{"tag": "display"}`.  If omitted the connection is treated as a real
+    TV display.
+    """
+    tag = 'display'          # default: real TV display
+    await display_manager.connect(websocket, tag=tag)
     try:
+        # Check if the first message declares a tag
+        first = await websocket.receive_text()
+        try:
+            msg = json.loads(first)
+            if isinstance(msg, dict) and 'tag' in msg:
+                tag = msg['tag']
+                with display_manager._lock:
+                    display_manager._tags[id(websocket)] = tag
+                logger.info("display tag updated to: %s", tag)
+                await websocket.send_text(json.dumps({"type": "pong"}))
+                first = None   # consumed
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        if first == "ping":
+            await websocket.send_text(json.dumps({"type": "pong"}))
+
         while True:
-            # Keep connection alive; TV page may send pings
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text(json.dumps({"type": "pong"}))

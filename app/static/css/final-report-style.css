@@ -15,11 +15,66 @@ html, body {
     font-family: 'Vazir';
     margin: 0;
     padding: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     background-color: #f4f4f4;
-    align-items: center;
+    align-items: stretch;
     flex-direction: column;
+}
+
+/* ── محدود کردن ارتفاع صفحه به viewport ── */
+.report-content-layout {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.report-content-layout .report-tabs {
+    flex-shrink: 0;
+}
+
+.bala {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding: 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.bala::-webkit-scrollbar { width: 5px; }
+.bala::-webkit-scrollbar-track { background: transparent; }
+.bala::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+    border-radius: 99px;
+}
+
+.paein {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    gap: 3%;
+    margin-top: 1%;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding: 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.paein::-webkit-scrollbar { width: 5px; }
+.paein::-webkit-scrollbar-track { background: transparent; }
+.paein::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+    border-radius: 99px;
 }
 
 .titleBox {
@@ -68,31 +123,59 @@ html, body {
     width: 100%;
 }
 
-.bala {
-    margin-top: 1%;
-}
-
-/* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر */
-/* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر */
-/* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر *//* تنظیمات باکس های جداول گزارش کاربر */
+/* ══════════════════════════════════════════════════════════════
+   باکس جدول حضور و غیاب — طراحی شیشه‌ای مدرن
+   ══════════════════════════════════════════════════════════════ */
 
 .hozoorBox {
     width: 96rem;
-    max-height: fit-content;
-    background-color: #fbfff9;
-    padding: 17px;
-    border-radius: 20px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    padding: 0;
+    border-radius: 24px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(248, 250, 252, 0.65) 100%);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.03),
+        0 4px 8px rgba(15, 23, 42, 0.04),
+        0 12px 28px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    overflow: hidden;
 }
 
 .hozoorBox h2 {
     text-align: center;
     width: 100%;
-    margin: 0 auto;
-    font-size: 20px;
-    font-weight: bold;
+    margin: 0;
+    padding: 20px 24px 16px;
+    font: 700 1.15rem/1.4 'Vazir', sans-serif;
+    color: #0f172a;
+    background:
+        linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(99, 102, 241, 0.04));
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+/* ── اسکرول‌بند داخلی ── */
+.hozoorBox .rt-scroll-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: var(--rt-mh, 60vh);
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.hozoorBox .rt-scroll-wrap::-webkit-scrollbar { width: 6px; }
+.hozoorBox .rt-scroll-wrap::-webkit-scrollbar-track { background: transparent; }
+.hozoorBox .rt-scroll-wrap::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+    border-radius: 99px;
 }
 
 .left-section {
@@ -143,15 +226,6 @@ html, body {
 .stn5-passBox {
     width: 4%;
 }
-
-.paein {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    gap: 3%;
-    margin-top: 1%;
-}
-
 #hozoorUsersReportTable {
     display: block;
     max-height: 22rem; /* مقدار قابل تغییر بسته به ارتفاع هر ردیف */
@@ -208,6 +282,132 @@ html, body {
     color: red;
     font-weight: bold;
     background-color: #f9f9f9;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   جدول حضور و غیاب — استایل شیشه‌ای مدرن
+   ══════════════════════════════════════════════════════════════ */
+
+.hozoorBox .hozoorUsersReport-table {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    border-collapse: collapse;
+}
+
+.hozoorBox .hozoorUsersReport-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 14px 12px;
+    font: 700 0.82rem/1.4 'Vazir', sans-serif;
+    color: #334155;
+    text-align: center;
+    white-space: nowrap;
+    background:
+        linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(99, 102, 241, 0.04));
+    border-bottom: 2px solid rgba(14, 165, 233, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.hozoorBox .hozoorUsersReport-table tbody td {
+    padding: 11px 12px;
+    font: 400 0.84rem/1.5 'Vazir', sans-serif;
+    color: #475569;
+    text-align: center;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    transition: background 0.2s ease;
+}
+
+.hozoorBox .hozoorUsersReport-table tbody tr:hover td {
+    background: rgba(14, 165, 233, 0.04);
+}
+
+.hozoorBox .hozoorUsersReport-table tbody tr:nth-child(even) td {
+    background: rgba(241, 245, 249, 0.3);
+}
+
+.hozoorBox .hozoorUsersReport-table tbody tr:nth-child(even):hover td {
+    background: rgba(14, 165, 233, 0.06);
+}
+
+/* ردیف تعطیلی */
+.hozoorBox .hozoorUsersReport-table tbody tr.holiday-row td {
+    background: rgba(239, 68, 68, 0.06);
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.hozoorBox .hozoorUsersReport-table tbody tr.holiday-row:hover td {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ستون ردیف و تاریخ (چسبناک) */
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s1,
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s2 {
+    position: sticky;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s1 {
+    right: 0;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s2 {
+    right: 3%;
+    font-weight: 500;
+    color: #334155;
+    direction: ltr;
+    text-align: right;
+}
+
+/* هدر sticky */
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s1.rt-sticky,
+.hozoorBox .hozoorUsersReport-table .rt-sticky--s2.rt-sticky {
+    background:
+        linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(99, 102, 241, 0.04));
+}
+
+/* ── اسکرول‌بار ظریف ── */
+.hozoorBox .rt-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.hozoorBox .rt-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.hozoorBox .rt-scroll::-webkit-scrollbar-track { background: transparent; }
+.hozoorBox .rt-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(99, 102, 241, 0.3));
+    border-radius: 99px;
+}
+
+/* ── هینت اسکرول افقی ── */
+.hozoorBox .rt-scroll-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    font: 500 0.75rem/1 'Vazir', sans-serif;
+    color: #94a3b8;
+    border-top: 1px solid rgba(226, 232, 240, 0.4);
+}
+
+.hozoorBox .rt-scroll-hint svg {
+    width: 14px;
+    height: 14px;
+    animation: scrollHintPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollHintPulse {
+    0%, 100% { transform: translateX(0); opacity: 0.6; }
+    50% { transform: translateX(-3px); opacity: 1; }
 }
 
 #hozoorUsersReportTable {
@@ -708,12 +908,17 @@ html, body {
 
     .hozoorBox {
         width: 93%;
+        max-height: 70vh;
         position: relative;
         margin: 0 auto;
-        padding: 9px;
+        padding: 0;
+        border-radius: 18px;
     }
 
-    .hozoorBox h2 {font-size: 10px;}
+    .hozoorBox h2 {
+        font-size: 0.85rem;
+        padding: 14px 16px 12px;
+    }
 
     .hozoorUsersReport-table {margin-top: 5px;}
     .hozoorUsersReport-table th, .hozoorUsersReport-table td{font-size: 8px;}

@@ -23,6 +23,15 @@
     var maxReconnectDelay = 30000;
     var reconnectTimer = null;
 
+    /* ── Tab switching ── */
+    window.switchCsTab = function (tabId, btnEl) {
+        document.querySelectorAll('.cs-tab-btn').forEach(function (b) { b.classList.remove('cs-tab-btn--active'); });
+        document.querySelectorAll('.cs-tab-content').forEach(function (c) { c.classList.remove('cs-tab-content--active'); });
+        if (btnEl) btnEl.classList.add('cs-tab-btn--active');
+        var target = document.getElementById(tabId);
+        if (target) target.classList.add('cs-tab-content--active');
+    };
+
     /* ── Persian digits ── */
     var FA = '\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9';
     function toFA(n) { return String(n).replace(/[0-9]/g, function (d) { return FA[+d]; }); }
@@ -380,9 +389,38 @@
         fetch('/api/calls/status')
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.success) setStatus(res.connected_displays > 0 ? 'connected' : 'disconnected');
+            if (res.success) {
+                setStatus(res.connected_displays > 0 ? 'connected' : 'disconnected');
+                updateDisplayStatusCard(res);
+            }
         })
         .catch(function () { setStatus('disconnected'); });
+    }
+
+    /* ── Update display status card ── */
+    function updateDisplayStatusCard(res) {
+        var label = document.getElementById('csDisplayStatusLabel');
+        var sub = document.getElementById('csDisplayStatusSub');
+        var dot = document.getElementById('csDisplayDot');
+        var body = document.getElementById('csDisplayStatusBody');
+        var iconWrap = body ? body.querySelector('.cs-display-status-icon') : null;
+        if (!label || !sub || !dot) return;
+
+        var realCount = res.real_displays || 0;
+
+        if (realCount > 0) {
+            label.textContent = 'نمایشگر متصل است';
+            sub.textContent = realCount + ' دستگاه نمایشگر فعال در شبکه';
+            dot.className = 'cs-display-status-dot cs-display-status-dot--on';
+            if (body) body.className = 'cs-display-status-body cs-display-status-body--connected';
+            if (iconWrap) iconWrap.className = 'cs-display-status-icon cs-display-status-icon--connected';
+        } else {
+            label.textContent = 'در انتظار اتصال نمایشگر';
+            sub.textContent = 'هیچ دستگاهی صفحه نمایش را باز نکرده است';
+            dot.className = 'cs-display-status-dot cs-display-status-dot--off';
+            if (body) body.className = 'cs-display-status-body';
+            if (iconWrap) iconWrap.className = 'cs-display-status-icon cs-display-status-icon--waiting';
+        }
     }
 
     /* ── WebSocket ── */
@@ -396,6 +434,10 @@
         ws.onopen = function () {
             reconnectDelay = 1000;
             setStatus('connected');
+            /* Management page identifies as preview, not a real TV display */
+            try {
+                ws.send(JSON.stringify({ tag: 'preview' }));
+            } catch (e) { /* ignore */ }
             ws._pingInterval = setInterval(function () {
                 if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping');
             }, 30000);
@@ -821,6 +863,9 @@
         loadAudioStatus();
         loadSlides();
         connectWS();
+
+        /* Poll display status every 8 seconds */
+        setInterval(loadStatus, 8000);
     }
 
     if (document.readyState === 'loading') {

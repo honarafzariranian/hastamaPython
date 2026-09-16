@@ -101,6 +101,16 @@ document.addEventListener('DOMContentLoaded', function() {
             closeMobileSidebar();
         }
     });
+
+    /* بستن دراپ‌داون پروفایل با کلیک بیرون */
+    document.addEventListener('click', function(event) {
+        var dropdown = document.getElementById('profileDropdown');
+        if (dropdown && dropdown.classList.contains('open')) {
+            if (!dropdown.contains(event.target) && !event.target.closest('[onclick*="toggleProfileDropdown"]')) {
+                closeProfileDropdown();
+            }
+        }
+    });
 });
 setInterval(updateTopbarClock, 30000);
 
@@ -1950,7 +1960,7 @@ function openProfilePanel(panelType) {
             title: 'پروفایل من',
             subtitle: 'اطلاعات حساب و وضعیت دسترسی',
             content: `
-                <div class="profile-panel-card">
+                <div class="profile-panel-avatar-wrap">
                     <div class="profile-panel-avatar">
                         <img src="/static/images/user.png" alt="پروفایل کاربر">
                     </div>
@@ -2859,7 +2869,10 @@ function loadOvertimeRequests() {
                 }
 
                 row.innerHTML = `
-                    <td><button class="update-button" onclick="applyStatusChangeForApproval(${rowId})">ثبت تغییرات</button></td>
+                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td>${convertToPersianNumbers(request.overtime_date)}</td>
+                    <td>${convertToPersianNumbers(request.daily_overtime)}</td>
+                    <td>${convertToPersianNumbers(request.description)}</td>
                     <td>
                         <div class="status-container">
                             <div class="status-navbar ${statusClass}" id="statusNavbar_${rowId}" onclick="toggleRequestDropdown(${rowId})">
@@ -2872,10 +2885,7 @@ function loadOvertimeRequests() {
                             </div>
                         </div>
                     </td>
-                    <td>${convertToPersianNumbers(request.description)}</td>
-                    <td>${convertToPersianNumbers(request.daily_overtime)}</td>
-                    <td>${convertToPersianNumbers(request.overtime_date)}</td>
-                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td><button class="update-button" onclick="applyStatusChangeForApproval(${rowId})">ثبت تغییرات</button></td>
                     <td style="display: none;">${request.id}</td>
                 `;
 
@@ -3185,7 +3195,10 @@ function loadHourlyPassRequests() {
                 let statusClass = getHourlyStatusClass(request.status);
 
                 row.innerHTML = `
-                    <td><button class="update-button" onclick="applyStatusChangeForHourlyPass(${rowId})">ثبت تغییرات</button></td>
+                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td>${convertToPersianNumbers(request.request_date)}</td>
+                    <td>${convertToPersianNumbers(request.pass_title)}</td>
+                    <td>${convertToPersianNumbers(formatTimeToHourMinute(request.pass_duration))}</td>
                     <td>
                         <div class="status-container">
                             <div class="status-navbar ${statusClass}" id="statusNavbarHourly_${rowId}" onclick="toggleRequestHourlypassDropdown(${rowId})">
@@ -3198,10 +3211,7 @@ function loadHourlyPassRequests() {
                             </div>
                         </div>
                     </td>
-                    <td>${convertToPersianNumbers(formatTimeToHourMinute(request.pass_duration))}</td>  <!-- نمایش زمان به صورت ساعت و دقیقه -->
-                    <td>${convertToPersianNumbers(request.pass_title)}</td>
-                    <td>${convertToPersianNumbers(request.request_date)}</td>
-                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td><button class="update-button" onclick="applyStatusChangeForHourlyPass(${rowId})">ثبت تغییرات</button></td>
                     <td style="display: none;">${request.id}</td>
                 `;
 
@@ -4180,7 +4190,10 @@ document.getElementById("extractButton").addEventListener("click", function () {
 
     fetch(`/get_hozoor/${selectedUsername}?start_date=${startDate}&end_date=${endDate}`)
         .then(response => response.json())
-        .then(data => {
+        .then(resp => {
+            // debug info
+            if (resp._debug) { console.table(resp._debug); }
+            const data = Array.isArray(resp) ? resp : (resp.data || []);
             if (Array.isArray(data)) {
                 let tableBody = document.querySelector("#hozoorUsersReportTable tbody");
                 tableBody.innerHTML = "";
@@ -5375,6 +5388,70 @@ function deleteShift(shiftId) {
         .catch(error => {
             console.error(error);
             showSystemError('خطا در حذف شیفت');
+        });
+}
+
+/* ─── تب‌بندی شیفت ─── */
+function switchShiftTab(tabId, btnEl) {
+    document.querySelectorAll('.shift-tab-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.shift-tab-content').forEach(function (c) { c.classList.remove('active'); });
+    if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+    }
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+
+    /* بارگذاری خودکار شیفت‌های فعال هنگام باز شدن تب دوم */
+    if (tabId === 'shift-active') loadActiveShifts();
+}
+
+/* ─── بارگذاری شیفت‌های فعال امروز ─── */
+function loadActiveShifts() {
+    var container = document.getElementById('shiftActiveCards');
+    if (!container) return;
+    container.innerHTML = '<p class="shifts-empty-row">در حال بارگذاری…</p>';
+
+    fetch('/get_active_shifts')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                container.innerHTML = '<p class="shifts-empty-row">' + (data.message || 'خطا در دریافت اطلاعات') + '</p>';
+                return;
+            }
+            var shifts = data.shifts || [];
+            if (shifts.length === 0) {
+                container.innerHTML = '<p class="shifts-empty-row">هیچ شیفت فعالی برای امروز (روز ' + data.today + ' ماه ' + data.month + ' سال ' + data.year + ') یافت نشد</p>';
+                return;
+            }
+            var dayNames = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'];
+            var dayKeys = ['shanbeh','yekshanbeh','doshanbeh','seshanbeh','chaharshanbeh','panjshanbeh','jomeh'];
+            var html = '';
+            shifts.forEach(function (s) {
+                var scheduleRows = '';
+                dayKeys.forEach(function (k, i) {
+                    var val = s[k];
+                    if (val && val.trim()) {
+                        scheduleRows += '<div class="shift-active-card__schedule-row"><span class="shift-active-card__day">' + dayNames[i] + '</span><span class="shift-active-card__time">' + val + '</span></div>';
+                    }
+                });
+                html += '<div class="shift-active-card">'
+                    + '<div class="shift-active-card__header">'
+                    + '<span class="shift-active-card__user">' + s.username + '</span>'
+                    + (s.title ? '<span class="shift-active-card__title">' + s.title + '</span>' : '')
+                    + '<span class="shift-active-card__range">روز ' + s.start_day + ' تا ' + s.end_day + '</span>'
+                    + '</div>'
+                    + (scheduleRows ? '<div class="shift-active-card__schedule">' + scheduleRows + '</div>' : '<p class="shift-active-card__empty">ساعتی ثبت نشده</p>')
+                    + '</div>';
+            });
+            container.innerHTML = html;
+        })
+        .catch(function (err) {
+            console.error(err);
+            container.innerHTML = '<p class="shifts-empty-row">خطا در بارگذاری شیفت‌های فعال</p>';
         });
 }
 

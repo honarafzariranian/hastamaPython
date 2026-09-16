@@ -265,6 +265,11 @@
         ws.onopen = function () {
             reconnectDelay = 1000;
             setStatus('connected');
+            /* Identify as preview (iframe) or real display */
+            var isPreview = (window.location !== window.parent.location);
+            try {
+                ws.send(JSON.stringify({ tag: isPreview ? 'preview' : 'display' }));
+            } catch (e) { /* ignore */ }
             ws._pingInterval = setInterval(function () {
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     try { ws.send('ping'); } catch (e) { /* ignore */ }

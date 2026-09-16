@@ -561,9 +561,9 @@ class ArazAccessDB:
         mdb_path: str = None,
         password: str = None,
     ):
-        import os
-        self.mdb_path = mdb_path or os.getenv("ARAZ_ACCESS_PATH", r"E:\Hastama\database\Arazdb.mdb")
-        self.password = password or os.getenv("ARAZ_ACCESS_PASSWORD", "")
+        from core.config import config as _cfg
+        self.mdb_path = mdb_path or _cfg("ARAZ_ACCESS_PATH", default=r"E:\Hastama\database\Arazdb.mdb")
+        self.password = password or _cfg("ARAZ_ACCESS_PASSWORD", default="")
 
     def _connect(self):
         """Create an Access DB connection."""
