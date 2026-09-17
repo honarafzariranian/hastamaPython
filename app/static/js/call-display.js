@@ -45,6 +45,7 @@
     var audioQueue = [];
     var audioPlaying = false;
     var heroData = null;
+    var autoResumedRemote = false;   /* true when page reloaded by a remote refresh command */
 
     var AUDIO_BASE = '/static/audio/sample_call/fa-IR-DilaraNeural/';
 
@@ -94,7 +95,16 @@
                 audioEl.play().then(function () {
                     audioEl.pause(); audioEl.currentTime = 0; audioEl.volume = 1;
                     audioReady = true; setAudioStatus('active');
-                }).catch(function () { audioReady = false; });
+                }).catch(function () {
+                    audioReady = false;
+                    /* autoplay مسدود بود — اگر این تلاش بعد از رفرش از راه دور بوده،
+                       overlay فعال‌سازی رو برگردان تا با یک کلیک روی تلویزیون صدا برگردد */
+                    if (autoResumedRemote) {
+                        autoResumedRemote = false;
+                        if (activateOverlay) activateOverlay.hidden = false;
+                        if (activateBtn) activateBtn.addEventListener('click', initAudio);
+                    }
+                });
             }
         } catch (e) { /* ignore */ }
         audioReady = true;
@@ -203,6 +213,14 @@
         if (heroMessage) heroMessage.textContent = heroData.message || '';
     }
 
+    /* ── Remote refresh (command from management panel) ── */
+    function handleRemoteRefresh() {
+        /* قبل از رفرش فلگ می‌گذاریم تا بعد از لود مجدد، صدا بدون نیاز به
+           کلیک روی تلویزیون دوباره فعال شود */
+        try { sessionStorage.setItem('cd-auto-resume', '1'); } catch (e) { /* ignore */ }
+        setTimeout(function () { window.location.reload(); }, 400);
+    }
+
     /* ── Reset all displays ── */
     function resetDisplay() {
         heroData = null;
@@ -274,6 +292,11 @@
             try {
                 ws.send(JSON.stringify({ tag: isPreview ? 'preview' : 'display' }));
             } catch (e) { /* ignore */ }
+            /* بعد از رفرش از راه دور، فعال بودن صدا رو دوباره اعلام می‌کنیم
+               تا پیش‌نمایش‌ها همگام بمانند */
+            if (autoResumedRemote) {
+                try { ws.send(JSON.stringify({ type: 'audio_activated' })); } catch (e) { /* ignore */ }
+            }
             ws._pingInterval = setInterval(function () {
                 if (ws && ws.readyState === WebSocket.OPEN) {
                     try { ws.send('ping'); } catch (e) { /* ignore */ }
@@ -288,6 +311,7 @@
                 if (msg.type === 'reception_call' && msg.data) displayCall(msg.data);
                 if (msg.type === 'remove_call' && msg.data) removeCall(msg.data.number);
                 if (msg.type === 'reset_display') resetDisplay();
+                if (msg.type === 'refresh_display') { handleRemoteRefresh(); return; }
                 /* تلویزیون صدا رو فعال کرد → overlay رو در پیش‌نمایش ببند */
                 if (msg.type === 'audio_activated') {
                     if (activateOverlay) activateOverlay.hidden = true;
@@ -438,7 +462,7 @@
             if (!res.success || !res.queue || res.queue.length === 0) return;
             // Queue is ordered by position: 0=hero, 1-4=previous
             heroData = res.queue[0] || null;
-            for (var i = 1; i < QUEUE_MAX; i++) {
+            for (var i = 1; i <= MAX_PREV; i++) {
                 prevData[i - 1] = res.queue[i] || null;
             }
             renderHero();
@@ -449,7 +473,20 @@
 
     function init() {
         var isPreview = (window.location !== window.parent.location);
-        if (isPreview) {
+        var autoResume = false;
+        try {
+            autoResume = sessionStorage.getItem('cd-auto-resume') === '1';
+            sessionStorage.removeItem('cd-auto-resume');
+        } catch (e) { /* ignore */ }
+
+        if (autoResume && !isPreview) {
+            /* رفرش از راه دور: بدون کلیک روی تلویزیون، صدا رو خودکار فعال کن.
+               (در مرورگر کیوسک بدون محدودیت autoplay صدا فعال می‌شود؛ در غیر
+               این صورت overlay فعال‌سازی نمایش داده می‌شود) */
+            autoResumedRemote = true;
+            if (activateOverlay) activateOverlay.hidden = true;
+            initAudio();
+        } else if (isPreview) {
             /* در حالت پیش‌نمایش، overlay رو باز نگه‌دار تا وقتی تلویزیون صدا رو فعال کرد */
             if (activateOverlay) activateOverlay.hidden = false;
         } else if (activateOverlay) {
