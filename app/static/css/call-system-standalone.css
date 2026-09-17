@@ -1896,6 +1896,9 @@ body.dark-mode {
     --cs-text-dim: #94a3b8;
     --cs-text-muted: #475569;
     --cs-accent-glow: rgba(14, 165, 233, 0.4);
+    --cs-glass: rgba(17, 24, 39, 0.65);
+    --cs-glass-border: rgba(255, 255, 255, 0.06);
+    --cs-glass-highlight: rgba(255, 255, 255, 0.08);
     --cs-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --cs-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
     --cs-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
@@ -2102,3 +2105,19 @@ body.dark-mode .cs-theme-toggle:hover {
     color: var(--cs-accent);
     box-shadow: 0 4px 16px rgba(var(--cs-accent-rgb), 0.15);
 }
+
+body.dark-mode #cs-tab-preview .cs-card--preview,
+body.dark-mode #cs-tab-preview .cs-card--display-status {
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .cs-preview-wrap { border-color: rgba(255, 255, 255, 0.08); }
+
+body.dark-mode .cs-footer-sep { color: rgba(255, 255, 255, 0.1); }
+
+body.dark-mode .cs-slide-thumb { border-color: rgba(255, 255, 255, 0.08); }
+
+body.dark-mode .cs-waiting-time { color: #c9a227; }
+
+body.dark-mode .cs-audio-info--ok { color: #4ade80; }
+body.dark-mode .cs-audio-info--missing { color: #fbbf24; }

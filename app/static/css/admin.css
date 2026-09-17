@@ -4995,16 +4995,18 @@ form button:active {
     flex: 0 0 auto;
     border-radius: 16px;
     color: #fff;
-    background: linear-gradient(135deg, var(--shf-accent) 0%, var(--shf-accent-2) 100%);
-    box-shadow: 0 10px 24px -8px rgba(14, 165, 233, 0.55);
+    background: linear-gradient(135deg, #6366F1 0%, #0EA5E9 100%);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 10px 24px -8px rgba(99, 102, 241, 0.45);
     animation: shiftIconFloat 5.5s ease-in-out infinite;
 }
 
 .shift-hero__icon svg { width: 27px; height: 27px; }
 
 @keyframes shiftIconFloat {
-    0%, 100% { transform: translateY(0); box-shadow: 0 10px 24px -8px rgba(14, 165, 233, 0.55); }
-    50%      { transform: translateY(-4px); box-shadow: 0 16px 30px -8px rgba(14, 165, 233, 0.65); }
+    0%, 100% { transform: translateY(0); box-shadow: inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 6px rgba(0,0,0,.14), 0 10px 24px -8px rgba(99, 102, 241, 0.45); }
+    50%      { transform: translateY(-4px); box-shadow: inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 6px rgba(0,0,0,.14), 0 16px 30px -8px rgba(99, 102, 241, 0.55); }
 }
 
 .shift-hero__text { position: relative; z-index: 1; }

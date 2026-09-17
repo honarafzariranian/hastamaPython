@@ -581,6 +581,15 @@ html.rt-sheet-open, html.rt-sheet-open body { overflow: hidden !important; }
 
 .rt-scroll:focus-visible { outline: 2px solid var(--rt-primary); outline-offset: -2px; }
 
+/* جدول حضور و غیاب گزارش نهایی: نوار اسکرول نمایش داده نمی‌شود
+   (اسکرول با چرخ ماوس/لمس فعال می‌ماند؛ اشاره‌گر «بیشتر» سرریز را اعلام می‌کند) */
+.hozoorBox .rt-scroll {
+  scrollbar-width: none;
+}
+.hozoorBox .rt-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* اشاره‌گر اسکرول: فقط وقتی محتوا سرریز دارد و هنوز به انتها نرسیده‌ایم */
 .rt-scroll-hint {
   position: absolute;
