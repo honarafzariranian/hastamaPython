@@ -193,7 +193,7 @@ body.final-report-page .exportButtons {
 body.final-report-page .hozoorBox {
     display: block;
     padding: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 body.final-report-page .hozoorBox h2,

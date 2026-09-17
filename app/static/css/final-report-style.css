@@ -145,7 +145,7 @@ html, body {
         0 4px 8px rgba(15, 23, 42, 0.04),
         0 12px 28px rgba(15, 23, 42, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .hozoorBox h2 {
@@ -164,16 +164,21 @@ html, body {
 .hozoorBox .rt-scroll-wrap {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: var(--rt-mh, 60vh);
+    overflow: visible;
+    max-height: none;
+}
+
+.hozoorBox .rt-scroll-wrap .rt-scroll {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+    overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
 
-.hozoorBox .rt-scroll-wrap::-webkit-scrollbar { width: 6px; }
-.hozoorBox .rt-scroll-wrap::-webkit-scrollbar-track { background: transparent; }
-.hozoorBox .rt-scroll-wrap::-webkit-scrollbar-thumb {
+.hozoorBox .rt-scroll-wrap .rt-scroll::-webkit-scrollbar { width: 6px; }
+.hozoorBox .rt-scroll-wrap .rt-scroll::-webkit-scrollbar-track { background: transparent; }
+.hozoorBox .rt-scroll-wrap .rt-scroll::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #cbd5e1, #94a3b8);
     border-radius: 99px;
 }

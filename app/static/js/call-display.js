@@ -100,6 +100,10 @@
         audioReady = true;
         setAudioStatus('active');
         if (activateOverlay) activateOverlay.hidden = true;
+        /* اطلاع‌رسانی فعال‌سازی صدا به سرور (برای پیش‌نمایش) */
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            try { ws.send(JSON.stringify({ type: 'audio_activated' })); } catch (e) { /* ignore */ }
+        }
     }
 
     /* ── Audio URL ── */
@@ -284,6 +288,11 @@
                 if (msg.type === 'reception_call' && msg.data) displayCall(msg.data);
                 if (msg.type === 'remove_call' && msg.data) removeCall(msg.data.number);
                 if (msg.type === 'reset_display') resetDisplay();
+                /* تلویزیون صدا رو فعال کرد → overlay رو در پیش‌نمایش ببند */
+                if (msg.type === 'audio_activated') {
+                    if (activateOverlay) activateOverlay.hidden = true;
+                    audioReady = true;
+                }
             } catch (e) { /* ignore */ }
         };
 
@@ -439,7 +448,11 @@
     }
 
     function init() {
-        if (activateOverlay) {
+        var isPreview = (window.location !== window.parent.location);
+        if (isPreview) {
+            /* در حالت پیش‌نمایش، overlay رو باز نگه‌دار تا وقتی تلویزیون صدا رو فعال کرد */
+            if (activateOverlay) activateOverlay.hidden = false;
+        } else if (activateOverlay) {
             activateOverlay.hidden = false;
             if (activateBtn) activateBtn.addEventListener('click', initAudio);
         } else {

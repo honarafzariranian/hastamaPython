@@ -1841,6 +1841,17 @@ body.dark-mode .shift-popup-head__text p {
     color: var(--dk-text-2);
 }
 
+body.dark-mode .section-hero {
+    background:
+        radial-gradient(120% 170% at 88% -30%, rgba(56, 189, 248, 0.12), transparent 55%),
+        radial-gradient(90% 150% at 8% 130%, rgba(45, 212, 191, 0.1), transparent 55%),
+        var(--dk-surface);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .section-hero__text h2 { color: var(--dk-text); }
+body.dark-mode .section-hero__text p  { color: var(--dk-text-2); }
+
 body.dark-mode #shiftBox .form-row-krbrjadid label {
     color: var(--dk-text-2);
 }

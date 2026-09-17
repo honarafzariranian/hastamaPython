@@ -948,6 +948,14 @@ async def call_display_ws(websocket: WebSocket):
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text(json.dumps({"type": "pong"}))
+            else:
+                # Forward JSON messages (e.g. audio_activated) to all displays
+                try:
+                    msg = json.loads(data)
+                    if isinstance(msg, dict) and msg.get('type') == 'audio_activated':
+                        await display_manager.broadcast(msg)
+                except (json.JSONDecodeError, TypeError):
+                    pass
     except WebSocketDisconnect:
         display_manager.disconnect(websocket)
     except Exception:

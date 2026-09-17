@@ -5042,6 +5042,71 @@ form button:active {
     85%, 100% { transform: rotate(12deg) translateX(420%); }
 }
 
+/* ── سربرگ یکسان بخش‌ها (section-hero) ──────────────────────── */
+.section-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px 14px;
+    border-radius: 16px 16px 0 0;
+    background:
+        radial-gradient(120% 170% at 88% -30%, var(--hero-glow-1, rgba(14, 165, 233, 0.14)), transparent 55%),
+        radial-gradient(90% 150% at 8% 130%, var(--hero-glow-2, rgba(20, 184, 166, 0.12)), transparent 55%),
+        linear-gradient(135deg, #f8fbff 0%, #f0f5ff 100%);
+    border-bottom: 1px solid #e8eef7;
+    overflow: hidden;
+}
+
+.section-hero__icon {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--hero-accent, #0ea5e9) 0%, var(--hero-accent-2, #14b8a6) 100%);
+    box-shadow: 0 10px 24px -8px var(--hero-shadow, rgba(14, 165, 233, 0.55));
+    animation: sectionIconFloat 5.5s ease-in-out infinite;
+}
+
+.section-hero__icon svg { width: 27px; height: 27px; }
+
+@keyframes sectionIconFloat {
+    0%, 100% { transform: translateY(0); box-shadow: 0 10px 24px -8px var(--hero-shadow, rgba(14, 165, 233, 0.55)); }
+    50%      { transform: translateY(-4px); box-shadow: 0 16px 30px -8px var(--hero-shadow, rgba(14, 165, 233, 0.65)); }
+}
+
+.section-hero__text { position: relative; z-index: 1; }
+
+.section-hero__text h2 {
+    margin: 0 0 4px;
+    font-size: clamp(1.1rem, 1.9vw, 1.42rem);
+    font-weight: 800;
+    color: var(--hero-ink, #16233a);
+    letter-spacing: -0.01em;
+}
+
+.section-hero__text p {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--hero-muted, #5a6b80);
+    line-height: 1.8;
+}
+
+.section-hero__glow {
+    position: absolute;
+    top: -70%;
+    left: -30%;
+    width: 45%;
+    height: 240%;
+    background: linear-gradient(105deg, transparent 30%, var(--hero-glow-sheen, rgba(14, 165, 233, 0.08)) 50%, transparent 70%);
+    transform: rotate(12deg) translateX(-100%);
+    animation: shiftHeroSheen 9s ease-in-out infinite;
+    pointer-events: none;
+}
+
 /* ── تب‌بندی شیفت ────────────────────────────────────────────── */
 .shift-frame {
     width: 100%;
@@ -5892,6 +5957,11 @@ form button:active {
     .shift-hero__icon { width: 46px; height: 46px; border-radius: 13px; }
     .shift-hero__icon svg { width: 23px; height: 23px; }
     .shift-hero__text p { font-size: 0.78rem; }
+
+    .section-hero { padding: 14px 16px; gap: 12px; }
+    .section-hero__icon { width: 46px; height: 46px; border-radius: 13px; }
+    .section-hero__icon svg { width: 23px; height: 23px; }
+    .section-hero__text p { font-size: 0.78rem; }
 
     .form-container-shift { flex-direction: column; align-items: stretch; }
     .form-shift-krbr { flex: 1 1 100%; }
@@ -9201,6 +9271,7 @@ form button:active {
         overflow-y: auto !important;
         padding-bottom: 24px;
         overscroll-behavior: contain;
+        flex-direction: column;
     }
 
     /* اضافه‌کاری — overflow کنترل */
@@ -9210,6 +9281,7 @@ form button:active {
         overflow-y: auto !important;
         padding-bottom: 24px;
         overscroll-behavior: contain;
+        flex-direction: column;
     }
 
     /* پاس ساعتی — overflow کنترل */
@@ -9219,6 +9291,7 @@ form button:active {
         overflow-y: auto !important;
         padding-bottom: 24px;
         overscroll-behavior: contain;
+        flex-direction: column;
     }
 }
 

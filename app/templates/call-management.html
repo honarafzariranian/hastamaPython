@@ -22,7 +22,7 @@
 </head>
 <body class="cs-page">
 
-    <!-- Header -->
+    <!-- ═══ Header ═══ -->
     <header class="cs-header">
         <div class="cs-header-inner">
             <div class="cs-header-brand">
@@ -42,17 +42,34 @@
                 </div>
             </div>
 
+            <!-- Theme Toggle -->
+            <button type="button" class="cs-theme-toggle" id="csThemeToggle" title="تغییر حالت نمایش">
+                <svg class="cs-theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <svg class="cs-theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+            </button>
         </div>
     </header>
 
-    <!-- Main -->
+    <!-- ═══ Main ═══ -->
     <main class="cs-main">
         <div class="cs-grid">
 
-            <!-- Left column: Call controls -->
+            <!-- ─── Left Column: Call Controls ─── -->
             <div class="cs-col cs-col--left">
 
-                <!-- Call input card -->
+                <!-- Call Input Card -->
                 <div class="cs-card cs-card--call">
                     <div class="cs-card-header">
                         <div class="cs-card-icon cs-card-icon--call">
@@ -82,11 +99,11 @@
                     </div>
                 </div>
 
-                <!-- Actions card -->
+                <!-- Action Buttons Card -->
                 <div class="cs-card cs-card--actions">
                     <div class="cs-action-grid">
                         <button type="button" id="csRepeatBtn" class="cs-action-btn cs-action-btn--repeat">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px">
                                 <polyline points="17 1 21 5 17 9"/>
                                 <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
                                 <polyline points="7 23 3 19 7 15"/>
@@ -95,7 +112,7 @@
                             تکرار فراخوان
                         </button>
                         <button type="button" id="csTestDisplayBtn" class="cs-action-btn cs-action-btn--test">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px">
                                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                                 <line x1="8" y1="21" x2="16" y2="21"/>
                                 <line x1="12" y1="17" x2="12" y2="21"/>
@@ -103,7 +120,7 @@
                             تست نمایشگر
                         </button>
                         <button type="button" id="csTestVoiceBtn" class="cs-action-btn cs-action-btn--voice">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                             </svg>
@@ -115,7 +132,7 @@
 
             </div>
 
-            <!-- Right column: Tabs -->
+            <!-- ─── Right Column: Tabs ─── -->
             <div class="cs-col cs-col--right">
 
                 <!-- Tabs -->
@@ -155,133 +172,140 @@
                     </button>
                 </div>
 
-                <!-- ── تب ۱: پیش‌نمایش زنده ── -->
-                <div id="cs-tab-preview" class="cs-tab-content">
-
-                <!-- Live Preview of TV Display -->
-                <div class="cs-card cs-card--preview">
-                    <div class="cs-card-header">
-                        <div class="cs-card-icon cs-card-icon--display">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                                <line x1="8" y1="21" x2="16" y2="21"/>
-                                <line x1="12" y1="17" x2="12" y2="21"/>
-                            </svg>
-                        </div>
-                        <h2 class="cs-card-title">پیش‌نمایش زنده نمایشگر</h2>
-                        <span class="cs-live-dot" id="csPreviewLive"></span>
-                    </div>
-                    <div class="cs-preview-wrap">
-                        <iframe id="csPreviewFrame" src="/call-display" class="cs-preview-iframe" allow="autoplay" loading="lazy"></iframe>
-                        <div class="cs-preview-overlay" id="csPreviewOverlay">
-                            <span>بارگذاری نمایشگر...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Display connection status -->
-                <div class="cs-card cs-card--display-status" id="csDisplayStatusCard">
-                    <div class="cs-card-header">
-                        <div class="cs-card-icon cs-card-icon--display">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                                <line x1="8" y1="21" x2="16" y2="21"/>
-                                <line x1="12" y1="17" x2="12" y2="21"/>
-                            </svg>
-                        </div>
-                        <h2 class="cs-card-title">وضعیت نمایشگر</h2>
-                    </div>
-                    <div class="cs-display-status-body" id="csDisplayStatusBody">
-                        <div class="cs-display-status-icon cs-display-status-icon--waiting">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                        </div>
-                        <div class="cs-display-status-text">
-                            <span class="cs-display-status-label" id="csDisplayStatusLabel">در انتظار اتصال نمایشگر</span>
-                            <span class="cs-display-status-sub" id="csDisplayStatusSub">هیچ دستگاهی صفحه نمایش را باز نکرده است</span>
-                        </div>
-                        <div class="cs-display-status-dot cs-display-status-dot--off" id="csDisplayDot"></div>
-                    </div>
-                </div>
-
-                </div><!-- /cs-tab-preview -->
-
-                <!-- ── تب ۲: صف نمایش ── -->
+                <!-- ── Tab 1: Queue ── -->
                 <div id="cs-tab-queue" class="cs-tab-content cs-tab-content--active">
 
-                <!-- Display queue (what's on TV now) -->
-                <div class="cs-card cs-card--queue">
-                    <div class="cs-card-header">
-                        <div class="cs-card-icon cs-card-icon--display">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                                <line x1="8" y1="21" x2="16" y2="21"/>
-                                <line x1="12" y1="17" x2="12" y2="21"/>
-                            </svg>
+                    <!-- Display Queue (what's on TV now) -->
+                    <div class="cs-card cs-card--queue">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--display">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                    <line x1="8" y1="21" x2="16" y2="21"/>
+                                    <line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">در حال نمایش روی تلویزیون</h2>
+                            <span class="cs-queue-badge" id="csQueueCount">0 / 5</span>
+                            <button type="button" class="cs-reset-btn" id="csResetBtn" title="پاک کردن تمام شماره‌ها از نمایشگر">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    <line x1="10" y1="11" x2="10" y2="17"/>
+                                    <line x1="14" y1="11" x2="14" y2="17"/>
+                                </svg>
+                                پاک کردن همه
+                            </button>
                         </div>
-                        <h2 class="cs-card-title">در حال نمایش روی تلویزیون</h2>
-                        <span class="cs-queue-badge" id="csQueueCount">0 / 5</span>
-                        <button type="button" class="cs-reset-btn" id="csResetBtn" title="پاک کردن تمام شماره‌ها از نمایشگر">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                <line x1="10" y1="11" x2="10" y2="17"/>
-                                <line x1="14" y1="11" x2="14" y2="17"/>
-                            </svg>
-                            پاک کردن همه
-                        </button>
-                    </div>
-                    <div class="cs-queue-grid" id="csQueueGrid">
-                        <div class="cs-queue-slot cs-queue-slot--hero" id="csQueueHero">
-                            <div class="cs-queue-slot-num"></div>
-                            <div class="cs-queue-slot-dept"></div>
-                            <div class="cs-queue-slot-empty">—</div>
+                        <div class="cs-queue-grid" id="csQueueGrid">
+                            <div class="cs-queue-slot cs-queue-slot--hero" id="csQueueHero">
+                                <div class="cs-queue-slot-num"></div>
+                                <div class="cs-queue-slot-dept"></div>
+                                <div class="cs-queue-slot-empty">—</div>
+                            </div>
+                            <div class="cs-queue-slot" id="csQueue1"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
+                            <div class="cs-queue-slot" id="csQueue2"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
+                            <div class="cs-queue-slot" id="csQueue3"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
+                            <div class="cs-queue-slot" id="csQueue4"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
                         </div>
-                        <div class="cs-queue-slot" id="csQueue1"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
-                        <div class="cs-queue-slot" id="csQueue2"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
-                        <div class="cs-queue-slot" id="csQueue3"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
-                        <div class="cs-queue-slot" id="csQueue4"><div class="cs-queue-slot-num"></div><div class="cs-queue-slot-dept"></div><div class="cs-queue-slot-empty">—</div></div>
                     </div>
-                </div>
 
-                <!-- Waiting queue (reception → sample collection) -->
-                <div class="cs-card cs-card--waiting">
-                    <div class="cs-card-header">
-                        <div class="cs-card-icon cs-card-icon--waiting">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
+                    <!-- Waiting Queue (reception → sample collection) -->
+                    <div class="cs-card cs-card--waiting">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--waiting">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">صف پذیرش (در انتظار فراخوان)</h2>
+                            <span class="cs-queue-badge cs-queue-badge--waiting" id="csWaitingCount">0</span>
                         </div>
-                        <h2 class="cs-card-title">صف پذیرش (در انتظار فراخوان)</h2>
-                        <span class="cs-queue-badge cs-queue-badge--waiting" id="csWaitingCount">0</span>
+                        <div class="cs-waiting-add">
+                            <input type="text" id="csWaitingInput" class="cs-waiting-input" placeholder="شماره پذیرش" autocomplete="off" inputmode="numeric">
+                            <select id="csWaitingDept" class="cs-waiting-select">
+                                <option value="نمونه‌گیری">نمونه‌گیری</option>
+                                <option value="خون‌گیری">خون‌گیری</option>
+                            </select>
+                            <button type="button" class="cs-waiting-add-btn" id="csWaitingAddBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                افزودن به صف
+                            </button>
+                        </div>
+                        <div class="cs-waiting-list" id="csWaitingList">
+                            <div class="cs-waiting-empty" id="csWaitingEmpty">هنوز شماره‌ای در صف نیست</div>
+                        </div>
                     </div>
-                    <div class="cs-waiting-add">
-                        <input type="text" id="csWaitingInput" class="cs-waiting-input" placeholder="شماره پذیرش" autocomplete="off" inputmode="numeric">
-                        <select id="csWaitingDept" class="cs-waiting-select">
-                            <option value="نمونه‌گیری">نمونه‌گیری</option>
-                            <option value="خون‌گیری">خون‌گیری</option>
-                        </select>
-                        <button type="button" class="cs-waiting-add-btn" id="csWaitingAddBtn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
-                                <line x1="12" y1="5" x2="12" y2="19"/>
-                                <line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            افزودن به صف
-                        </button>
-                    </div>
-                    <div class="cs-waiting-list" id="csWaitingList">
-                        <div class="cs-waiting-empty" id="csWaitingEmpty">هنوز شماره‌ای در صف نیست</div>
-                    </div>
-                </div>
 
                 </div><!-- /cs-tab-queue -->
 
-                <!-- ── تب ۳: اسلایدشو ── -->
+                <!-- ── Tab 2: Live Preview ── -->
+                <div id="cs-tab-preview" class="cs-tab-content">
+
+                    <!-- Live Preview of TV Display -->
+                    <div class="cs-card cs-card--preview">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--display">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                    <line x1="8" y1="21" x2="16" y2="21"/>
+                                    <line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">پیش‌نمایش زنده نمایشگر</h2>
+                            <span class="cs-live-dot" id="csPreviewLive"></span>
+                        </div>
+                        <div class="cs-preview-wrap">
+                            <iframe id="csPreviewFrame" src="/call-display" class="cs-preview-iframe" allow="autoplay" loading="lazy"></iframe>
+                            <div class="cs-preview-overlay" id="csPreviewOverlay">
+                                <div class="cs-preview-overlay-content">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:44px;height:44px;margin-bottom:14px;opacity:0.4">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                        <line x1="8" y1="21" x2="16" y2="21"/>
+                                        <line x1="12" y1="17" x2="12" y2="21"/>
+                                    </svg>
+                                    <span>در انتظار اتصال نمایشگر</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Display Connection Status -->
+                    <div class="cs-card cs-card--display-status" id="csDisplayStatusCard">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--display">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                    <line x1="8" y1="21" x2="16" y2="21"/>
+                                    <line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">وضعیت نمایشگر</h2>
+                        </div>
+                        <div class="cs-display-status-body" id="csDisplayStatusBody">
+                            <div class="cs-display-status-icon cs-display-status-icon--waiting">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="cs-display-status-text">
+                                <span class="cs-display-status-label" id="csDisplayStatusLabel">در انتظار اتصال نمایشگر</span>
+                                <span class="cs-display-status-sub" id="csDisplayStatusSub">هیچ دستگاهی صفحه نمایش را باز نکرده است</span>
+                            </div>
+                            <div class="cs-display-status-dot cs-display-status-dot--off" id="csDisplayDot"></div>
+                        </div>
+                    </div>
+
+                </div><!-- /cs-tab-preview -->
+
+                <!-- ── Tab 3: Slideshow ── -->
                 <div id="cs-tab-slides" class="cs-tab-content">
                     <div class="cs-card cs-card--slides">
                         <div class="cs-card-header">
@@ -318,28 +342,29 @@
                     </div>
                 </div>
 
-                <!-- ── تب ۴: تاریخچه ── -->
+                <!-- ── Tab 4: History ── -->
                 <div id="cs-tab-history" class="cs-tab-content">
-                <div class="cs-card cs-card--history">
-                    <div class="cs-card-header">
-                        <div class="cs-card-icon cs-card-icon--history">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
+                    <div class="cs-card cs-card--history">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--history">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">تاریخچه فراخوان‌ها</h2>
                         </div>
-                        <h2 class="cs-card-title">تاریخچه فراخوان‌ها</h2>
+                        <div class="cs-history-list" id="csRecentList">
+                            <div class="cs-history-empty" id="csHistoryEmpty">هنوز فراخوانی ثبت نشده است</div>
+                        </div>
                     </div>
-                    <div class="cs-history-list" id="csRecentList">
-                        <div class="cs-history-empty" id="csHistoryEmpty">هنوز فراخوانی ثبت نشده است</div>
-                    </div>
-                </div>
                 </div><!-- /cs-tab-history -->
+
             </div>
         </div>
     </main>
 
-    <!-- Connection status (above footer) -->
+    <!-- ═══ Connection Status Badge ═══ -->
     <div class="cs-conn-float" id="csConnBadge">
         <svg class="cs-conn-icon cs-conn-icon--connecting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -358,7 +383,7 @@
         <span class="cs-conn-text" id="csStatusText">در حال اتصال...</span>
     </div>
 
-    <!-- Footer -->
+    <!-- ═══ Footer ═══ -->
     <footer class="cs-footer">
         <span class="cs-footer-brand">سامانه فراخوان نمونه‌گیری</span>
         <span class="cs-footer-sep">|</span>
@@ -366,7 +391,7 @@
         <span class="cs-footer-tm">&#x00AE;</span>
     </footer>
 
-    <!-- Confirm modal -->
+    <!-- ═══ Confirm Modal ═══ -->
     <div class="cs-modal" id="csModal">
         <div class="cs-modal-backdrop"></div>
         <div class="cs-modal-card">
@@ -385,7 +410,7 @@
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- ═══ Toast ═══ -->
     <div class="cs-toast" id="csToast"></div>
 
     <script src="/static/js/call-system-standalone.js"></script>

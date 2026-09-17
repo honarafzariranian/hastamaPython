@@ -659,23 +659,24 @@ html.rt-sheet-open, html.rt-sheet-open body { overflow: hidden !important; }
   box-shadow: 6px 0 10px -6px rgba(15, 23, 42, .28);
 }
 
-/* سرصفحهٔ چسبان (فقط موبایل + جدول‌های بلند) */
+/* سرصفحهٔ چسبان (دسکتاپ + موبایل) */
+.rt-scroll-wrap[data-sticky-head] thead th {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background-color: var(--rt-th-bg, #f8fafc);
+  background-image: var(--rt-th-img, none);
+}
+
+/* گوشهٔ تقاطع سرصفحه و ستون چسبان */
+.rt-scroll-wrap[data-sticky-head] thead th.rt-sticky { z-index: 9; }
+
 @media screen and (max-width: 768px) {
+  /* موبایل: اضافه کردن کلاس rt-on برای sticky head */
   .rt-scroll-wrap.rt-on[data-sticky-head] .rt-scroll {
     max-height: var(--rt-mh, 62vh);
     overflow-y: auto;
   }
-
-  .rt-scroll-wrap.rt-on[data-sticky-head] thead th {
-    position: sticky;
-    top: 0;
-    z-index: 8;
-    background-color: var(--rt-th-bg, #f8fafc);
-    background-image: var(--rt-th-img, none);
-  }
-
-  /* گوشهٔ تقاطع سرصفحه و ستون چسبان */
-  .rt-scroll-wrap.rt-on[data-sticky-head] thead th.rt-sticky { z-index: 9; }
 }
 
 /* --------------------------------------------------------------------------

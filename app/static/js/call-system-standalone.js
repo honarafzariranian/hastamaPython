@@ -69,7 +69,11 @@
             if (icons[k]) icons[k].style.display = (k === state) ? '' : 'none';
         });
         var labels = { connected: '\u0645\u062a\u0635\u0644', disconnected: '\u0642\u0637\u0639', connecting: '\u062f\u0631 \u062d\u0627\u0644 \u0627\u062a\u0635\u0627\u0644...' };
-        if (statusText) statusText.textContent = labels[state] || state;
+        var label = labels[state] || state;
+        if (state === 'connected' && typeof arguments[1] === 'number' && arguments[1] > 0) {
+            label += ' (' + arguments[1] + ')';
+        }
+        if (statusText) statusText.textContent = label;
     }
 
     /* ── Queue rendering ── */
@@ -390,7 +394,9 @@
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.success) {
-                setStatus(res.connected_displays > 0 ? 'connected' : 'disconnected');
+                /* فقط دستگاه‌های واقعی نمایشگر (نه iframe پیش‌نمایش) */
+                var realCount = res.real_displays || 0;
+                setStatus(realCount > 0 ? 'connected' : 'disconnected', realCount);
                 updateDisplayStatusCard(res);
             }
         })
@@ -404,6 +410,7 @@
         var dot = document.getElementById('csDisplayDot');
         var body = document.getElementById('csDisplayStatusBody');
         var iconWrap = body ? body.querySelector('.cs-display-status-icon') : null;
+        var previewOverlay = document.getElementById('csPreviewOverlay');
         if (!label || !sub || !dot) return;
 
         var realCount = res.real_displays || 0;
@@ -414,12 +421,16 @@
             dot.className = 'cs-display-status-dot cs-display-status-dot--on';
             if (body) body.className = 'cs-display-status-body cs-display-status-body--connected';
             if (iconWrap) iconWrap.className = 'cs-display-status-icon cs-display-status-icon--connected';
+            /* نمایشگر متصل → مخفی کردن overlay پیش‌نمایش */
+            if (previewOverlay) previewOverlay.classList.add('is-hidden');
         } else {
             label.textContent = 'در انتظار اتصال نمایشگر';
             sub.textContent = 'هیچ دستگاهی صفحه نمایش را باز نکرده است';
             dot.className = 'cs-display-status-dot cs-display-status-dot--off';
             if (body) body.className = 'cs-display-status-body';
             if (iconWrap) iconWrap.className = 'cs-display-status-icon cs-display-status-icon--waiting';
+            /* نمایشگر متصل نیست → نمایش overlay */
+            if (previewOverlay) previewOverlay.classList.remove('is-hidden');
         }
     }
 
@@ -433,7 +444,7 @@
 
         ws.onopen = function () {
             reconnectDelay = 1000;
-            setStatus('connected');
+            /* وضعیت اتصال توسط loadStatus بر اساس real_displays تعیین می‌شود */
             /* Management page identifies as preview, not a real TV display */
             try {
                 ws.send(JSON.stringify({ tag: 'preview' }));
@@ -866,6 +877,20 @@
 
         /* Poll display status every 8 seconds */
         setInterval(loadStatus, 8000);
+
+        /* ── Theme Toggle ── */
+        var themeToggle = document.getElementById('csThemeToggle');
+        var savedTheme = localStorage.getItem('cs-theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function () {
+                document.body.classList.toggle('dark-mode');
+                var isDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem('cs-theme', isDark ? 'dark' : 'light');
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
@@ -885,12 +910,6 @@
         }
     });
 
-    /* ── Live Preview: hide overlay when iframe loads ── */
-    var previewFrame = document.getElementById('csPreviewFrame');
-    var previewOverlay = document.getElementById('csPreviewOverlay');
-    if (previewFrame && previewOverlay) {
-        previewFrame.addEventListener('load', function () {
-            previewOverlay.classList.add('is-hidden');
-        });
-    }
+    /* ── Live Preview: overlay کنترل‌شده توسط وضعیت اتصال ── */
+    /* (overlay توسط updateDisplayStatusCard نمایش/مخفی می‌شود) */
 })();
