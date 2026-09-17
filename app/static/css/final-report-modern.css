@@ -732,33 +732,221 @@ body.dark-mode.final-report-page .attendanceSamanehValueInput {
 
 /* ─── چاپ ─── */
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 8mm 6mm;
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
     body.final-report-page {
-        background: #fff;
-        color: #111;
+        overflow: visible !important;
+        background: #fff !important;
+        color: #111 !important;
+    }
+
+    body.final-report-page .report-tabs,
+    body.final-report-page .report-actions,
+    body.final-report-page .dokmeha,
+    body.final-report-page .exportButtons,
+    body.final-report-page .report-action,
+    body.final-report-page .report-content-layout[data-tab] > .bala,
+    body.final-report-page .report-content-layout[data-tab] > .paein {
+        display: none !important;
+    }
+
+    body.final-report-page .report-content-layout {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     body.final-report-page .onvanha,
     body.final-report-page .bala,
     body.final-report-page .paein,
     body.final-report-page .emzaha {
-        width: 100%;
-        margin: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
 
     body.final-report-page .onvanha {
-        padding: 12px;
+        padding: 12px 14px 10px;
         border-radius: 0;
         box-shadow: none;
+        background: linear-gradient(135deg, #0c3d4d 0%, #0d6d62 65%, #0b8a7a 100%);
+    }
+
+    body.final-report-page .titleBox {
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    body.final-report-page .userInfoBox {
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 10px;
     }
 
     body.final-report-page .bala,
-    body.final-report-page .paein { margin-top: 10px; }
+    body.final-report-page .paein {
+        display: block !important;
+        margin-top: 8px !important;
+    }
+
     body.final-report-page .hozoorBox,
     body.final-report-page .ezafeBox,
     body.final-report-page .passBox,
     body.final-report-page .hourlyPassBox,
-    body.final-report-page .numberReport { box-shadow: none; }
-    body.final-report-page .report-actions { display: none; }
+    body.final-report-page .numberReport,
+    body.final-report-page .report-summary-grid,
+    body.final-report-page .report-summary-card {
+        box-shadow: none !important;
+    }
+
+    body.final-report-page .hozoorBox,
+    body.final-report-page .ezafeBox,
+    body.final-report-page .passBox,
+    body.final-report-page .hourlyPassBox {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 10px;
+        padding: 0;
+        overflow: visible;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    body.final-report-page .hozoorBox {
+        margin-bottom: 6mm;
+    }
+
+    body.final-report-page .paein {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.9fr);
+        gap: 5mm;
+        align-items: start;
+    }
+
+    body.final-report-page .left-section {
+        display: grid;
+        gap: 4mm;
+    }
+
+    body.final-report-page .report-summary-panel {
+        min-width: 0;
+    }
+
+    body.final-report-page .report-summary-panel .report-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4mm;
+        padding: 5mm 4mm;
+        border-radius: 12px;
+    }
+
+    body.final-report-page .report-summary-panel .report-summary-card {
+        min-height: 18mm;
+        padding: 3mm 3.2mm;
+        border-radius: 10px;
+    }
+
+    body.final-report-page .report-summary-panel .report-summary-card .title {
+        font-size: .62rem;
+    }
+
+    body.final-report-page .report-summary-panel .report-summary-card .value,
+    body.final-report-page .report-summary-panel .report-summary-card .jscode,
+    body.final-report-page .report-summary-panel .report-summary-card .overtimeSystemValue,
+    body.final-report-page .report-summary-panel .report-summary-card .overtimeSamanehValue,
+    body.final-report-page .report-summary-panel .report-summary-card .attendanceSystemValue,
+    body.final-report-page .report-summary-panel .report-summary-card .attendanceSamanehValue {
+        font-size: .8rem;
+    }
+
+    body.final-report-page #hozoorUsersReportTable,
+    body.final-report-page #ezafeKarUsersReportTable,
+    body.final-report-page #morkhcUsersReportTable,
+    body.final-report-page #hourlyPassUsersReportTable {
+        width: 100% !important;
+        table-layout: fixed;
+        font-size: 7.6px;
+    }
+
+    body.final-report-page #hozoorUsersReportTable th,
+    body.final-report-page #hozoorUsersReportTable td,
+    body.final-report-page #ezafeKarUsersReportTable th,
+    body.final-report-page #ezafeKarUsersReportTable td,
+    body.final-report-page #morkhcUsersReportTable th,
+    body.final-report-page #morkhcUsersReportTable td,
+    body.final-report-page #hourlyPassUsersReportTable th,
+    body.final-report-page #hourlyPassUsersReportTable td {
+        padding: 1.5mm 1.2mm;
+        font-size: 7.2px;
+        line-height: 1.4;
+        white-space: nowrap;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    body.final-report-page #hozoorUsersReportTable th,
+    body.final-report-page #ezafeKarUsersReportTable th,
+    body.final-report-page #morkhcUsersReportTable th,
+    body.final-report-page #hourlyPassUsersReportTable th {
+        font-size: 7px;
+    }
+
+    body.final-report-page.report-multi-page .bala {
+        break-after: page;
+        page-break-after: always;
+    }
+
+    body.final-report-page.report-multi-page .paein {
+        break-before: page;
+        page-break-before: always;
+    }
+
+    body.final-report-page .emzaha {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10mm;
+        margin-top: 6mm !important;
+        padding-top: 2mm;
+        border-top: 1px solid rgba(17, 17, 17, .18);
+    }
+
+    body.final-report-page .signature-box,
+    body.final-report-page .signature-box-hamkar {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 45%;
+        min-height: 18mm;
+        margin: 0;
+        padding: 2mm 3mm;
+        border: 1px solid rgba(17, 17, 17, .26);
+        border-radius: 8px;
+        background: #fff;
+        color: #111;
+        font-size: 10pt;
+        text-align: center;
+    }
+
+    body.final-report-page .signature-box strong,
+    body.final-report-page .signature-box-hamkar strong {
+        font-weight: 800;
+    }
+
+    body.final-report-page .report-content-layout[data-tab] > .bala,
+    body.final-report-page .report-content-layout[data-tab] > .paein {
+        display: block !important;
+    }
 }
 
 /* =====================================================================
@@ -1582,5 +1770,189 @@ body.dark-mode.final-report-page .report-tab.is-active {
 
     body.final-report-page .report-content-layout[data-tab] > .paein {
         display: flex !important;
+    }
+
+    /*
+     * The responsive-table layer wraps the daily table in .rt-scroll-wrap.
+     * Its screen rule uses overflow:hidden, which otherwise clips rows when
+     * the report is printed. Let the browser paginate the complete table.
+     */
+    body.final-report-page .report-content-layout .hozoorBox,
+    body.final-report-page .report-content-layout .hozoorBox .rt-scroll-wrap,
+    body.final-report-page .report-content-layout .hozoorBox .rt-scroll,
+    body.final-report-page .report-content-layout #hozoorUsersReportTable {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    body.final-report-page #hozoorUsersReportTable {
+        display: table !important;
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    body.final-report-page #hozoorUsersReportTable thead {
+        display: table-header-group !important;
+    }
+
+    body.final-report-page #hozoorUsersReportTable tbody {
+        display: table-row-group !important;
+    }
+
+    body.final-report-page #hozoorUsersReportTable tr {
+        display: table-row !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    body.final-report-page #hozoorUsersReportTable th,
+    body.final-report-page #hozoorUsersReportTable td {
+        overflow: visible !important;
+    }
+
+    /* Do not force a large daily table to fit on one page. */
+    body.final-report-page .hozoorBox {
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+}
+
+/*
+ * A normal month is a single A4 form. Keep the compact layout below the
+ * browser's printable height; the multi-page class is intentionally excluded
+ * so longer daily tables can paginate normally.
+ */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 5mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) {
+        font-size: 8px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .onvanha {
+        padding: 5px 8px 4px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .titleBox {
+        font-size: 10px;
+        line-height: 1.25;
+    }
+
+    body.final-report-page:not(.report-multi-page) .titleBox::before {
+        display: none;
+    }
+
+    body.final-report-page:not(.report-multi-page) .userInfoSection,
+    body.final-report-page:not(.report-multi-page) .userInfoName {
+        padding: 4px 8px;
+        gap: 1px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .userInfoTitle {
+        font-size: 6px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .userInfoValue {
+        font-size: 7px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-content-layout {
+        margin-top: 3px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .hozoorBox {
+        margin-bottom: 2mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) .hozoorBox::before {
+        padding: 3px 6px;
+        font-size: 7px;
+    }
+
+    body.final-report-page:not(.report-multi-page) #hozoorUsersReportTable th,
+    body.final-report-page:not(.report-multi-page) #hozoorUsersReportTable td,
+    body.final-report-page:not(.report-multi-page) #ezafeKarUsersReportTable th,
+    body.final-report-page:not(.report-multi-page) #ezafeKarUsersReportTable td,
+    body.final-report-page:not(.report-multi-page) #morkhcUsersReportTable th,
+    body.final-report-page:not(.report-multi-page) #morkhcUsersReportTable td,
+    body.final-report-page:not(.report-multi-page) #hourlyPassUsersReportTable th,
+    body.final-report-page:not(.report-multi-page) #hourlyPassUsersReportTable td {
+        padding: .65mm .55mm;
+        font-size: 5.7px;
+        line-height: 1.15;
+    }
+
+    body.final-report-page:not(.report-multi-page) .paein {
+        gap: 2mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) .left-section {
+        gap: 1.5mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) .ezafeBox,
+    body.final-report-page:not(.report-multi-page) .passBox,
+    body.final-report-page:not(.report-multi-page) .hourlyPassBox {
+        border-radius: 5px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .ezafeBox h2,
+    body.final-report-page:not(.report-multi-page) .passBox h2,
+    body.final-report-page:not(.report-multi-page) .hourlyPassBox h2 {
+        font-size: 7px;
+        line-height: 1.2;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-panel {
+        gap: 2px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-heading {
+        min-height: 18px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-heading h2 {
+        font-size: 8px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-grid {
+        gap: 2px;
+        padding: 2mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-card {
+        min-height: 9mm;
+        padding: 1mm;
+        border-radius: 4px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-card .title {
+        font-size: 5.5px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .report-summary-card .value,
+    body.final-report-page:not(.report-multi-page) .report-summary-card .jscode,
+    body.final-report-page:not(.report-multi-page) .report-summary-card .overtimeSystemValue,
+    body.final-report-page:not(.report-multi-page) .report-summary-card .overtimeSamanehValue,
+    body.final-report-page:not(.report-multi-page) .report-summary-card .attendanceSystemValue,
+    body.final-report-page:not(.report-multi-page) .report-summary-card .attendanceSamanehValue {
+        font-size: 6.5px;
+    }
+
+    body.final-report-page:not(.report-multi-page) .emzaha {
+        gap: 3mm;
+        margin-top: 2mm !important;
+        padding-top: 1mm;
+    }
+
+    body.final-report-page:not(.report-multi-page) .signature-box,
+    body.final-report-page:not(.report-multi-page) .signature-box-hamkar {
+        min-height: 9mm;
+        padding: 1mm 2mm;
+        font-size: 7px;
     }
 }

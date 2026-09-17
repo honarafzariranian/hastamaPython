@@ -39,6 +39,10 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
+    if (tableData.length > 31) {
+        document.body.classList.add("report-multi-page");
+    }
+
     let firstDate = tableData[0].date;
     if (!firstDate) {
         console.warn("⚠️ فیلد 'date' در اولین رکورد موجود نیست.");
