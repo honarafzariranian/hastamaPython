@@ -498,9 +498,178 @@ body.dark-theme .ma-qcard:hover {
     align-items: center; justify-content: center; z-index: 10;
 }
 
+/* ── سایدبار چپ — دسترسی سریع به سامانه فراخوان نمونه‌گیری ── */
+/* هم‌شکل با سایدبار راست (rightSidebar): تایل گرادیانی + لیبل در هاور */
+.ma-sidebar-left {
+    position: fixed;
+    top: 8rem;
+    left: 0;
+    bottom: 12px;
+    width: clamp(64px, 6vw, 78px);
+    background-color: #ffffff;
+    border: 1px solid rgba(13, 59, 78, 0.12);
+    border-radius: 22px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: 0 8px 24px rgba(20, 40, 70, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 22px 14px;
+    overflow: hidden;
+    z-index: 59;
+    transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), padding 0.25s ease;
+    will-change: width;
+}
+
+.ma-sidebar-left:hover {
+    width: clamp(180px, 18vw, 240px);
+}
+
+/* فاصله محتوا از سایدبار چپ — مثل margin-right فعلی */
+.ma-dashboard-main {
+    margin-left: calc(clamp(64px, 6vw, 78px) + 16px);
+}
+
+/* باز شدن لیبل‌ها و فاصله‌ها هنگام هاور سایدبار */
+.ma-sidebar-left .icon-container {
+    gap: 0;
+}
+
+/* خنثی‌سازی قوانین عمومی آیتم آخر (پایین‌چسبی + رنگ قرمز لاگ‌اوت سایدبار راست) */
+.ma-sidebar-left .icon-container:last-child {
+    margin-top: 0;
+}
+.ma-sidebar-left .icon-container:last-child:hover {
+    background: var(--tint);
+    background-color: var(--tint);
+    color: inherit;
+}
+.ma-sidebar-left .icon-container:last-child:hover .icon-label {
+    color: #0B2A3B;
+}
+body.dark-theme .ma-sidebar-left .icon-container:last-child:hover {
+    background: var(--tint);
+    background-color: var(--tint);
+}
+body.dark-theme .ma-sidebar-left .icon-container:last-child:hover .icon-label {
+    color: #e2e8f0;
+}
+.ma-sidebar-left:hover .icon-container {
+    gap: 10px;
+    padding: 12px 14px;
+}
+.ma-sidebar-left:hover .icon-label {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+    max-width: 150px;
+}
+
+/* پالت رنگی آیتم‌های سامانه فراخوان */
+.ma-sidebar-left .icon-container[data-accent="ma-call-mgmt"] {
+    --tile-from:#0EA5E9; --tile-to:#6366F1; --acc:#0EA5E9; --tint:rgba(14,165,233,.12); --glow:rgba(14,165,233,.45);
+}
+.ma-sidebar-left .icon-container[data-accent="ma-call-display"] {
+    --tile-from:#F59E0B; --tile-to:#EF4444; --acc:#F59E0B; --tint:rgba(245,158,11,.14); --glow:rgba(245,158,11,.45);
+}
+
+/* تایل گرادیانی (کپی از نسخه‌ی سایدبار راست) */
+.ma-sidebar-left .sidebar-icon-tile {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--tile-from), var(--tile-to));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 8px 16px -8px var(--glow);
+    overflow: hidden;
+    transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+
+.ma-sidebar-left .sidebar-icon-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 8%;
+    right: 8%;
+    height: 46%;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,.35), transparent);
+    pointer-events: none;
+}
+
+.ma-sidebar-left .sidebar-icon-tile::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.5) 50%, transparent 58%);
+    transform: translateX(-130%);
+    transition: transform .65s ease;
+    pointer-events: none;
+}
+
+.ma-sidebar-left .icon-container:hover .sidebar-icon-tile::after {
+    transform: translateX(130%);
+}
+
+.ma-sidebar-left .sidebar-icon-tile svg {
+    position: relative;
+    z-index: 1;
+    width: 21px;
+    height: 21px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    color: #fff;
+    filter: none !important;
+    transform: none;
+    transition: none;
+}
+
+.ma-sidebar-left .icon-container:hover .sidebar-icon-tile {
+    transform: translateY(-2px) scale(1.06);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
+                inset 0 -3px 6px rgba(0,0,0,.14),
+                0 12px 22px -8px var(--glow);
+}
+
+.ma-sidebar-left .icon-container:hover {
+    background: var(--tint);
+}
+
+.ma-sidebar-left .icon-container:hover .icon-label {
+    color: #0B2A3B;
+}
+
+body.dark-theme .ma-sidebar-left {
+    background: linear-gradient(180deg, rgba(30,41,59,.96) 0%, rgba(15,23,42,.94) 100%);
+    border-color: rgba(255,255,255,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);
+}
+body.dark-theme .ma-sidebar-left .icon-container {
+    color: #94a3b8;
+}
+body.dark-theme .ma-sidebar-left .icon-container:hover {
+    background: var(--tint);
+    background-color: var(--tint);
+}
+body.dark-theme .ma-sidebar-left .icon-container:hover .icon-label {
+    color: #e2e8f0;
+}
+body.dark-theme .ma-sidebar-left .icon-label {
+    color: #94a3b8;
+}
+
 /* ═══ Responsive ═══ */
 @media (max-width: 1024px) {
-    .ma-dashboard-main { margin-right: 0; padding: 16px 16px 40px; }
+    .ma-dashboard-main { margin-right: 0; margin-left: 0; padding: 16px 16px 40px; }
     .ma-grid-2, .ma-grid-3 { grid-template-columns: 1fr; }
     .ma-top-cards-row { grid-template-columns: repeat(3, 1fr); }
     .ma-header-box { margin: 10px 12px 0; }
@@ -518,6 +687,21 @@ body.dark-theme .ma-qcard:hover {
     .ma-dashboard-main { margin-right: 0; }
     .ma-top-cards-row { grid-template-columns: repeat(2, 1fr); }
     .ma-header-brand .sidebar-top-card-sub { display: none; }
+
+    /* سایدبار چپ در موبایل: پیلی جمع‌وجور پایین-چپ، فقط آیکون */
+    .ma-sidebar-left {
+        top: auto;
+        bottom: 14px;
+        left: 10px;
+        width: 58px;
+        height: auto;
+        padding: 12px 8px;
+        gap: 8px;
+        border-radius: 18px;
+    }
+    .ma-sidebar-left:hover { width: 58px; }
+    .ma-sidebar-left .icon-container { justify-content: center; padding: 8px 6px; }
+    .ma-sidebar-left .icon-label { display: none; }
 }
 @media (max-width: 480px) {
     .ma-header-box { padding: 8px 10px; }
