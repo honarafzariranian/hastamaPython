@@ -476,6 +476,40 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
 
 .cs-reset-btn:active { transform: scale(0.97); }
 
+.cs-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid rgba(var(--cs-accent-rgb), 0.2);
+    border-radius: var(--cs-radius-xs);
+    background: rgba(var(--cs-accent-rgb), 0.08);
+    color: var(--cs-accent);
+    font: var(--c-fw-bold) 0.7rem var(--c-font);
+    cursor: pointer;
+    transition: all var(--cs-transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cs-refresh-btn:hover {
+    background: rgba(var(--cs-accent-rgb), 0.16);
+    border-color: rgba(var(--cs-accent-rgb), 0.35);
+    transform: scale(1.03);
+    box-shadow: 0 0 16px rgba(var(--cs-accent-rgb), 0.15);
+}
+
+.cs-refresh-btn:active { transform: scale(0.97); }
+
+.cs-refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cs-refresh-btn.is-loading svg { animation: cs-refresh-spin 0.7s linear infinite; }
+
+@keyframes cs-refresh-spin { to { transform: rotate(-360deg); } }
+
 /* ══════════════════════════════════════════════════════════════
    CALL FORM (Light)
    ══════════════════════════════════════════════════════════════ */
@@ -1874,7 +1908,7 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
    ══════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
     .cs-conn-icon--connecting { animation-duration: 4s; }
-    .cs-btn:hover, .cs-action-btn:hover, .cs-reset-btn:hover { transform: none; }
+    .cs-btn:hover, .cs-action-btn:hover, .cs-reset-btn:hover, .cs-refresh-btn:hover { transform: none; }
     .cs-page::before, .cs-page::after { animation: none; }
     .cs-card:hover { transform: none; }
 }

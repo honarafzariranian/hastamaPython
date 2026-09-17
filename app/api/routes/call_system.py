@@ -671,6 +671,26 @@ async def reset_display(request: Request):
     })
 
 
+@router.post("/calls/refresh-display")
+async def refresh_display(request: Request):
+    """Broadcast a refresh event so every TV display reloads its page.
+
+    Lets the operator refresh remote kiosk/TV browsers (e.g. when the
+    screen is stuck or after an update) without walking to the device.
+    """
+    _actor(request, admin=True, required=False)
+
+    event = {"type": "refresh_display", "data": {}}
+    sent = await display_manager.broadcast(event)
+    logger.info("display refresh broadcast — displays=%d", sent)
+    return JSONResponse({
+        "success": True,
+        "message": "دستور رفرش به نمایشگر ارسال شد.",
+        "display_count": sent,
+        "real_displays": display_manager.display_count,
+    })
+
+
 @router.post("/calls/remove")
 async def remove_call(request: Request):
     """Broadcast a remove event to TV displays to remove a specific number."""

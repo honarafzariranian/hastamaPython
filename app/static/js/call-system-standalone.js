@@ -7,6 +7,7 @@
 
     /* ── DOM ── */
     var numberInput, callBtn, repeatBtn, testDisplayBtn, testVoiceBtn, resetBtn;
+    var refreshDisplayBtn;
     var statusText;
     var recentList, historyEmpty;
 
@@ -260,6 +261,39 @@
         .catch(function () {
             setLoading(repeatBtn, false);
             showToast('\u062a\u06a9\u0631\u0627\u0631 \u0627\u0646\u062c\u0627\u0645 \u0646\u0634\u062f.', 'error');
+        });
+    }
+
+    /* ── API: Refresh display (بارگذاری مجدد صفحه تلویزیون از راه دور) ── */
+    function refreshDisplays() {
+        if (refreshDisplayBtn) {
+            refreshDisplayBtn.disabled = true;
+            refreshDisplayBtn.classList.add('is-loading');
+        }
+        fetch('/api/calls/refresh-display', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (refreshDisplayBtn) {
+                refreshDisplayBtn.disabled = false;
+                refreshDisplayBtn.classList.remove('is-loading');
+            }
+            if (res.success) {
+                var realCount = res.real_displays || 0;
+                if (realCount > 0) {
+                    showToast('دستور رفرش به ' + toPersianNum(realCount) + ' نمایشگر ارسال شد.', 'success');
+                } else {
+                    showToast('هیچ نمایشگر فعالی متصل نیست.', 'error');
+                }
+            } else {
+                showToast(res.detail || 'خطا', 'error');
+            }
+        })
+        .catch(function () {
+            if (refreshDisplayBtn) {
+                refreshDisplayBtn.disabled = false;
+                refreshDisplayBtn.classList.remove('is-loading');
+            }
+            showToast('ارسال دستور رفرش انجام نشد.', 'error');
         });
     }
 
@@ -816,6 +850,7 @@
         testDisplayBtn = document.getElementById('csTestDisplayBtn');
         testVoiceBtn = document.getElementById('csTestVoiceBtn');
         resetBtn = document.getElementById('csResetBtn');
+        refreshDisplayBtn = document.getElementById('csRefreshDisplayBtn');
         statusText = document.getElementById('csStatusText');
         recentList = document.getElementById('csRecentList');
         historyEmpty = document.getElementById('csHistoryEmpty');
@@ -842,6 +877,7 @@
         if (testDisplayBtn) testDisplayBtn.addEventListener('click', testDisplay);
         if (testVoiceBtn) testVoiceBtn.addEventListener('click', testVoice);
         if (resetBtn) resetBtn.addEventListener('click', resetDisplay);
+        if (refreshDisplayBtn) refreshDisplayBtn.addEventListener('click', refreshDisplays);
         if (waitingAddBtn) waitingAddBtn.addEventListener('click', addToWaitingQueue);
 
         // Slideshow elements
