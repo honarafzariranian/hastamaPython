@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/final-report-modern.css') }}">
+    <!-- لایهٔ اختصاصی چاپ: باید آخرین stylesheet باشد تا بر قوانین print قدیمی اولویت داشته باشد -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/final-report-print.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
@@ -214,9 +216,19 @@
 
             <div class="dokmeha">
                 <div class="exportButtons">
-                    <a href="/download_pdf" class="btn report-action report-action--primary"><span aria-hidden="true">↓</span>دریافت فایل گزارش</a>
-                    <button type="button" class="btn report-action report-action--secondary" onclick="window.print()"><span aria-hidden="true">⎙</span>چاپ گزارش</button>
+                    <button type="button" class="btn report-action report-action--primary" id="savePdfReportBtn">
+                        <span aria-hidden="true">↓</span>دریافت فایل گزارش (PDF)
+                    </button>
+                    <button type="button" class="btn report-action report-action--secondary" id="printReportBtn">
+                        <span aria-hidden="true">⎙</span>چاپ گزارش
+                    </button>
                 </div>
+                <p class="printHint" id="printHint" role="status">
+                    خروجی چاپ یک فرم A4 است: در هر برگ حداکثر ۳۱ رکورد، همراه با خلاصهٔ عملکرد،
+                    جداول اضافه‌کار/مرخصی/پاس ساعتی و محل امضاها.
+                    در گفت‌وگوی چاپ، اندازهٔ کاغذ A4 و مقیاس ۱۰۰٪ باشد و
+                    «Headers and footers» خاموش شود.
+                </p>
             </div>
         </div>
     </div>
@@ -235,9 +247,18 @@
     </div>
 
 
+    <!-- ────────────────────────────────────────────────────────────────
+         لایهٔ چاپ: این ظرف روی نمایشگر پنهان است و فقط هنگام چاپ دیده
+         می‌شود. محتوای آن را final-report-print.js از همان داده‌های
+         رندرشدهٔ صفحه می‌سازد (حداکثر ۳۱ رکورد در هر برگ A4).
+         ──────────────────────────────────────────────────────────────── -->
+    <div id="printReport" class="print-report" aria-hidden="true"></div>
+
+
     <!-- moment/moment-jalaali CDN removed — not used by final-report-script.js -->
         <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>
 <script src="{{ url_for('static', path='js/final-report-script.js') }}"></script>
+<script src="{{ url_for('static', path='js/final-report-print.js') }}"></script>
 
 
 

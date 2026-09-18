@@ -1,0 +1,446 @@
+/* =====================================================================
+   final-report-print.css
+   ---------------------------------------------------------------------
+   لایهٔ اختصاصی «چاپ» گزارش نهایی حضور و غیاب.
+
+   این فایل عمداً آخر از همه در <head> بارگذاری می‌شود تا بر تمام
+   قوانین @media print قدیمی (final-report-style.css،
+   final-report-modern.css، responsive-tables.css و dark-theme.css)
+   اولویت داشته باشد.
+
+   ایدهٔ اصلی: آنچه روی نمایشگر دیده می‌شود (کارت‌های رنگی، تب‌ها،
+   سایه‌ها، گرادیان‌ها و اسکرول افقی) به‌هیچ‌وجه چاپ نمی‌شود.
+   به‌جای آن، اسکریپت final-report-print.js یک DOM کاملاً مجزا به نام
+   #printReport می‌سازد که یک «فرم اداری» سیاه‌وسفید روی A4 است:
+
+       ┌ سربرگ (عنوان / نام / بخش / شمارهٔ صفحه) ┐
+       ├ خلاصهٔ عملکرد (۱۰ شاخص)                  ┤
+       ├ جدول حضور و غیاب — حداکثر ۳۱ رکورد       ┤
+       ├ اضافه‌کار | مرخصی | پاس ساعتی            ┤
+       ├ امضاها                                     ┤
+       └ پانوشت ─────────────────────────────────── ┘
+
+   اگر رکوردها بیش از ۳۱ روز باشند، گزارش به چند صفحهٔ A4 تقسیم
+   می‌شود؛ سربرگ در همهٔ صفحه‌ها تکرار می‌شود و خلاصه/جداول جانبی/امضاها
+   روی صفحهٔ آخر قرار می‌گیرند.
+   ===================================================================== */
+
+:root {
+    --pr-ink: #10171c;
+    --pr-muted: #4c5a63;
+    --pr-line: #37424a;
+    --pr-line-soft: #9aa5ad;
+    --pr-head-bg: #dde4e8;
+    --pr-zebra: #f4f6f7;
+    --pr-holiday: #ececec;
+    --pr-sheet-w: 196mm;
+    --pr-sheet-h: 279mm;
+}
+
+/* ── روی نمایشگر، لایهٔ چاپ دیده نمی‌شود ───────────────────────────── */
+#printReport {
+    display: none !important;
+}
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 8mm 7mm;
+    }
+
+    html,
+    body {
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.final-report-page {
+        overflow: visible !important;
+        background: #fff !important;
+        color: var(--pr-ink) !important;
+        font-size: 8pt !important;
+    }
+
+    #printReport,
+    #printReport * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box;
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+
+    /* ── همهٔ چیدمان نمایشگری خاموش؛ فقط فرم چاپ چاپ می‌شود ─────────
+       کلاس pr-ready فقط وقتی افزوده می‌شود که ساخت فرم چاپ موفق بوده
+       باشد؛ در غیر این صورت همان رفتار قدیمی به‌عنوان fallback باقی
+       می‌ماند و کاربر با صفحهٔ سفید روبه‌رو نمی‌شود. */
+    body.final-report-page.pr-ready > *:not(#printReport) {
+        display: none !important;
+    }
+
+    #printReport {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: var(--pr-ink);
+        direction: rtl;
+        font-family: 'Vazir', Tahoma, Arial, sans-serif;
+        font-size: 8pt;
+        line-height: 1.35;
+    }
+
+    /* ── هر برگ = یک صفحهٔ A4 ─────────────────────────────────────── */
+    #printReport .pr-sheet {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: var(--pr-sheet-w);
+        min-height: var(--pr-sheet-h);
+        height: var(--pr-sheet-h);
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #fff;
+        page-break-after: always;
+        break-after: page;
+    }
+
+    #printReport .pr-sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    /* برگ جریان‌دار: فقط وقتی ساخته می‌شود که جداول جانبی آن‌قدر بلند باشند
+       که با ارتفاع ثابت A4 نگنجند؛ در این حالت محتوا به صفحهٔ بعد می‌رود
+       و هیچ ردیفی بریده نمی‌شود. */
+    #printReport .pr-sheet--flow {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    #printReport .pr-sheet--flow .pr-details > .pr-sect {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* ── سربرگ ────────────────────────────────────────────────────── */
+    #printReport .pr-head {
+        display: flex;
+        align-items: stretch;
+        flex: 0 0 auto;
+        border: 0.35mm solid var(--pr-line);
+        border-bottom: 0;
+    }
+
+    #printReport .pr-head__cell {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 1.2mm 2.5mm;
+    }
+
+    #printReport .pr-head__brand {
+        flex: 0 0 42mm;
+        gap: 0.6mm;
+        border-left: 0.35mm solid var(--pr-line);
+    }
+
+    #printReport .pr-head__org {
+        font-size: 9pt;
+        font-weight: 700;
+    }
+
+    #printReport .pr-head__sys {
+        font-size: 6.4pt;
+        color: var(--pr-muted);
+    }
+
+    #printReport .pr-head__main {
+        flex: 1 1 auto;
+        align-items: center;
+        text-align: center;
+    }
+
+    #printReport .pr-head__title {
+        margin: 0;
+        font-size: 11pt;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    #printReport .pr-head__sub {
+        margin: 0.4mm 0 0;
+        font-size: 7pt;
+        color: var(--pr-muted);
+    }
+
+    #printReport .pr-head__meta {
+        flex: 0 0 34mm;
+        align-items: flex-start;
+        gap: 0.5mm;
+        border-right: 0.35mm solid var(--pr-line);
+        font-size: 6.8pt;
+    }
+
+    #printReport .pr-head__meta b {
+        font-size: 7.4pt;
+    }
+
+    #printReport .pr-idstrip {
+        display: flex;
+        flex: 0 0 auto;
+        border: 0.35mm solid var(--pr-line);
+        border-top: 0;
+        font-size: 7.2pt;
+    }
+
+    #printReport .pr-idstrip > div {
+        flex: 1 1 0;
+        padding: 1mm 2.5mm;
+        border-left: 0.3mm solid var(--pr-line-soft);
+    }
+
+    #printReport .pr-idstrip > div:last-child {
+        border-left: 0;
+    }
+
+    #printReport .pr-idstrip span {
+        color: var(--pr-muted);
+        font-size: 6.6pt;
+    }
+
+    #printReport .pr-idstrip b {
+        font-weight: 700;
+    }
+
+    /* ── عنوان بخش‌ها ─────────────────────────────────────────────── */
+    #printReport .pr-sect {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 auto;
+    }
+
+    #printReport .pr-sect__title {
+        padding: 0.9mm 2.5mm;
+        border: 0.35mm solid var(--pr-line);
+        border-bottom: 0;
+        background: var(--pr-head-bg);
+        font-size: 7.6pt;
+        font-weight: 700;
+    }
+
+    #printReport .pr-sect__title small {
+        margin-right: 2mm;
+        font-size: 6.4pt;
+        font-weight: 400;
+        color: var(--pr-muted);
+    }
+
+    /* ── جدول‌ها ──────────────────────────────────────────────────── */
+    #printReport .pr-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 8pt;
+    }
+
+    #printReport .pr-table th,
+    #printReport .pr-table td {
+        padding: 0 0.8mm;
+        border: 0.28mm solid var(--pr-line-soft);
+        overflow: hidden;
+        color: var(--pr-ink);
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    #printReport .pr-table thead th {
+        padding: 0.8mm 0.6mm;
+        border-color: var(--pr-line);
+        background: var(--pr-head-bg);
+        color: var(--pr-ink);
+        font-size: 7pt;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: normal;
+    }
+
+    #printReport .pr-table thead tr,
+    #printReport .pr-table tbody tr {
+        color: var(--pr-ink);
+        background-color: transparent;
+    }
+
+    #printReport .pr-table tbody tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* جدول حضور و غیاب: ارتفاع ردیف‌ها از JS تنظیم می‌شود */
+    #printReport .pr-att tbody tr {
+        height: var(--pr-row-h, 5.4mm);
+    }
+
+    #printReport .pr-att tbody tr:nth-child(even) {
+        background: var(--pr-zebra);
+    }
+
+    #printReport .pr-att tbody tr.pr-row--holiday {
+        background: var(--pr-holiday);
+    }
+
+    #printReport .pr-att tbody tr.pr-row--holiday td:first-child {
+        border-right: 0.9mm solid #6b7176;
+    }
+
+    #printReport .pr-att td.pr-cell--total {
+        font-weight: 700;
+    }
+
+    #printReport .pr-att td.pr-empty {
+        color: #8b959c;
+    }
+
+    /* جدول‌های جانبی */
+    #printReport .pr-side-table tbody tr {
+        height: var(--pr-side-row-h, 4.7mm);
+    }
+
+    #printReport .pr-side-table tbody tr:nth-child(even) {
+        background: var(--pr-zebra);
+    }
+
+    #printReport .pr-side-table td {
+        font-size: 7.2pt;
+    }
+
+    #printReport .pr-side-table thead th {
+        font-size: 6.6pt;
+    }
+
+    #printReport .pr-side-table td.pr-empty-row {
+        color: #8b959c;
+        font-size: 7pt;
+    }
+
+    /* ── خلاصهٔ عملکرد ────────────────────────────────────────────── */
+    #printReport .pr-summary {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        border: 0.35mm solid var(--pr-line);
+        border-top: 0;
+    }
+
+    #printReport .pr-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6mm;
+        min-height: 11mm;
+        padding: 1.2mm 1.5mm;
+        border-left: 0.3mm solid var(--pr-line-soft);
+        border-bottom: 0.3mm solid var(--pr-line-soft);
+    }
+
+    #printReport .pr-stat:nth-child(5n) {
+        border-left: 0;
+    }
+
+    #printReport .pr-stat--last-row {
+        border-bottom: 0;
+    }
+
+    #printReport .pr-stat__label {
+        font-size: 6.4pt;
+        color: var(--pr-muted);
+        line-height: 1.2;
+        text-align: center;
+    }
+
+    #printReport .pr-stat__value {
+        font-size: 10.5pt;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    #printReport .pr-stat--fill {
+        background: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 1.6mm,
+            rgba(55, 66, 74, 0.05) 1.6mm,
+            rgba(55, 66, 74, 0.05) 3.2mm
+        );
+    }
+
+    /* ── نوار جداول جانبی ─────────────────────────────────────────── */
+    #printReport .pr-details {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 3mm;
+    }
+
+    #printReport .pr-details > .pr-sect {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* ── امضاها ───────────────────────────────────────────────────── */
+    #printReport .pr-sign {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 5mm;
+    }
+
+    #printReport .pr-sign__box {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        justify-content: space-between;
+        min-width: 0;
+        padding: 1.4mm 3mm 2mm;
+        border: 0.35mm solid var(--pr-line);
+    }
+
+    #printReport .pr-sign__label {
+        font-size: 7.6pt;
+        font-weight: 700;
+    }
+
+    #printReport .pr-sign__line {
+        margin-top: 2mm;
+        border-bottom: 0.3mm dotted var(--pr-line-soft);
+    }
+
+    #printReport .pr-sign__hint {
+        font-size: 6.2pt;
+        color: var(--pr-muted);
+    }
+
+    /* ── پانوشت ───────────────────────────────────────────────────── */
+    #printReport .pr-foot {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: 1mm;
+        border-top: 0.3mm solid var(--pr-line-soft);
+        font-size: 6.2pt;
+        color: var(--pr-muted);
+    }
+
+    /* ── فاصلهٔ عمودی بین بلوک‌ها ─────────────────────────────────── */
+    #printReport .pr-gap {
+        flex: 0 0 auto;
+        height: var(--pr-gap, 2.4mm);
+    }
+}

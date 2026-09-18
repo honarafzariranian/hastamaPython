@@ -597,6 +597,23 @@ body.final-report-page .report-signatures {
     display: none;
 }
 
+/* راهنمای کوتاهِ رفتار خروجی چاپ */
+body.final-report-page .printHint {
+    margin: 10px 2px 0;
+    padding: 8px 10px;
+    border: 1px dashed var(--report-line);
+    border-radius: 10px;
+    color: var(--report-muted);
+    font: 500 .7rem/1.9 'Vazir', sans-serif;
+    text-align: center;
+}
+
+@media print {
+    body.final-report-page .printHint {
+        display: none !important;
+    }
+}
+
 /* ─── ریسپانسیو ─── */
 @media screen and (max-width: 920px) {
     body.final-report-page .onvanha,
