@@ -1178,25 +1178,25 @@
         </div>
 
         <div id="shiftBox" class="management-box">
-            <!-- ── فریم یکپارچه: سربرگ + تب‌ها ── -->
-            <div class="shift-frame">
-                <header class="shift-hero">
-                    <div class="shift-hero__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="3" y="4.5" width="18" height="16" rx="3.5" stroke="#fff" stroke-width="1.9"/>
-                            <path d="M3 9.5h18" stroke="#fff" stroke-width="1.9"/>
-                            <path d="M7.5 2.8v3.4M16.5 2.8v3.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
-                            <circle cx="12" cy="15" r="4.6" fill="#fff"/>
-                            <path d="M12 12.7v2.5l1.8 1.1" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="shift-hero__text">
-                        <h2>مدیریت شیفت‌های ماهانه پرسنل</h2>
-                        <p>بازه‌های شیفتی هر پرسنل را ماه‌به‌ماه تعریف، ویرایش و مرور کنید</p>
-                    </div>
-                    <div class="shift-hero__glow" aria-hidden="true"></div>
-                </header>
+            <!-- ── سربرگ استاندارد بخش‌ها ── -->
+            <header class="section-hero" style="--hero-accent:#6366F1;--hero-accent-2:#0EA5E9;--hero-glow-1:rgba(99,102,241,0.14);--hero-glow-2:rgba(14,165,233,0.12);--hero-shadow:rgba(99,102,241,0.45);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(99,102,241,0.08);">
+                <div class="section-hero__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4.5" width="18" height="16" rx="3.5" stroke="#fff" stroke-width="1.9"/>
+                        <path d="M3 9.5h18" stroke="#fff" stroke-width="1.9"/>
+                        <path d="M7.5 2.8v3.4M16.5 2.8v3.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+                        <circle cx="12" cy="15" r="4.6" fill="#fff"/>
+                        <path d="M12 12.7v2.5l1.8 1.1" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="section-hero__text">
+                    <h2>مدیریت شیفت‌های ماهانه پرسنل</h2>
+                    <p>بازه‌های شیفتی هر پرسنل را ماه‌به‌ماه تعریف، ویرایش و مرور کنید</p>
+                </div>
+                <div class="section-hero__glow" aria-hidden="true"></div>
+            </header>
 
+            <div class="shift-frame">
                 <div class="shift-tabs" role="tablist">
                     <button class="shift-tab-btn active" role="tab" aria-selected="true" data-stab="shift-define" onclick="switchShiftTab('shift-define', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -1820,10 +1820,11 @@
                 <div class="section-hero__glow" aria-hidden="true"></div>
             </header>
 
-            <div class="attendance-tabs" role="tablist">
-                <button type="button" class="attendance-tab-btn active" role="tab" aria-selected="true" data-tab="hozoor-report-tab" onclick="switchAttendanceTab('hozoor-report-tab', this)">گزارش ورود و خروج</button>
-                <button type="button" class="attendance-tab-btn" role="tab" aria-selected="false" data-tab="hozoor-panels-tab" onclick="switchAttendanceTab('hozoor-panels-tab', this)">خلاصه و ثبت دستی</button>
-            </div>
+            <div class="attendance-frame">
+                <div class="attendance-tabs" role="tablist">
+                    <button type="button" class="attendance-tab-btn active" role="tab" aria-selected="true" data-tab="hozoor-report-tab" onclick="switchAttendanceTab('hozoor-report-tab', this)">گزارش ورود و خروج</button>
+                    <button type="button" class="attendance-tab-btn" role="tab" aria-selected="false" data-tab="hozoor-panels-tab" onclick="switchAttendanceTab('hozoor-panels-tab', this)">خلاصه و ثبت دستی</button>
+                </div>
 
             <div id="hozoor-report-tab" class="attendance-tab-content active" role="tabpanel">
 
@@ -2055,6 +2056,7 @@
         </div>
         </div>
             </div>
+            </div><!-- /attendance-frame -->
         </div>
 
         <!-- باکس حقوق و دستمزد -->

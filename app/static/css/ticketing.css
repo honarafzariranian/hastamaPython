@@ -84,15 +84,8 @@
 
 /* ─── Panel Base ─── */
 .ticketing-panel {
-    width: min(92vw, 1180px) !important;
-    padding: 0 !important;
-    border: 1px solid var(--tk-border) !important;
-    border-radius: var(--tk-radius-lg) !important;
-    background: var(--tk-surface) !important;
-    box-shadow: var(--tk-shadow-lg) !important;
     text-align: right;
     animation: tkFadeIn 0.4s ease;
-    overflow: hidden;
 }
 
 /* ─── Ticket Heading ─── */
@@ -629,7 +622,7 @@
     gap: 16px;
     flex: 1;
     min-height: 0;
-    padding: 20px 24px 24px;
+    padding: 20px 0px 24px;
 }
 
 /* ─── Views Sidebar ─── */
@@ -1774,27 +1767,12 @@
 /* ─── Desktop: Sticky Panel ─── */
 @media screen and (min-width: 769px) {
     #ticketBox.ticketing-panel {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        margin: 0 !important;
         flex-direction: column !important;
-        overflow: hidden !important;
         box-sizing: border-box;
-        z-index: 58;
-        border-radius: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 0 !important;
-        background-color: #ffffff;
     }
 
     #ticketBox.ticketing-panel .userInfo-header {
         flex-shrink: 0;
-        border-radius: 20px 20px 0 0;
     }
 
     #ticketBox.ticketing-panel .helpdesk-layout {

@@ -2743,16 +2743,7 @@ form button:active {
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
-    position: fixed !important;
-    top: 8rem !important;
-    bottom: 12px !important;
-    left: 10% !important;
-    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-    width: auto !important;
-    max-width: none !important;
-    margin: 0 !important;
-    z-index: 58;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .overtime-heading {
@@ -3021,16 +3012,7 @@ form button:active {
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
-    position: fixed !important;
-    top: 8rem !important;
-    bottom: 12px !important;
-    left: 10% !important;
-    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-    width: auto !important;
-    max-width: none !important;
-    margin: 0 !important;
-    z-index: 58;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .hourlyPass-heading {
@@ -3228,27 +3210,14 @@ form button:active {
 /*  --- = مدیریت تیکت ---  */
 /*  --- = مدیریت تیکت ---  */
 /*  --- = مدیریت تیکت ---  */
-#ticketBox {
-    position: fixed !important;
-    top: 8rem !important;
-    bottom: 12px !important;
-    left: 1% !important;
-    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-    width: 94% !important;
-    max-width: none !important;
-    padding: 20px;
-    background-color: #ffffff;
-    display: none;
-    border-radius: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    contain: layout style;
-    margin: 0 !important;
-    z-index: 58;
+#ticketBox.ticketing-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%) !important;
+    border-radius: 18px !important;
+    padding: 16px 24px 20px !important;
+    direction: rtl;
+    text-align: right;
+    border: 1px solid #ddd !important;
     overflow: hidden;
-}
-
-#ticketBox h2{
-    text-align: center;
 }
 
 .ticket-heading {
@@ -3482,17 +3451,13 @@ form button:active {
 /*  --- = باکس مدیریت حضور و غیاب ---  */
 
 #hozoorbox {
-    padding: 20px;
-    background-color: #ffffff;
-    display: none;
-    border-radius: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-#hozoorbox h2{
-    text-align: center;
-    margin-bottom: 15px;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+    border-radius: 18px;
+    padding: 16px 24px 20px;
+    direction: rtl;
+    text-align: right;
+    border: 1px solid #ddd;
+    overflow: hidden;
 }
 
 .karbr-hozoorboxtable {
@@ -4900,13 +4865,13 @@ form button:active {
     position: relative;
     display: none;
     flex-direction: column;
-    gap: 18px;
+    gap: 0;
     width: min(96%, 1180px);
     margin: 0 auto;
-    padding: clamp(16px, 2.4vw, 28px);
-    background: transparent;
-    border: 0;
-    border-radius: 24px;
+    padding: 16px 24px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+    border: 1px solid #ddd;
+    border-radius: 18px;
     box-shadow: none;
     text-align: right;
     direction: rtl;
@@ -4928,7 +4893,7 @@ form button:active {
    همان ناحیه اسکرول داخلی می‌شود و فشرده‌شدن هنگام باز شدن سایدبار
    نرم و همگام است. */
 @media (min-width: 769px) {
-    #shiftBox {
+    body:has(#shiftBox.is-visible) #shiftBox {
         position: fixed !important;
         top: 8rem !important;
         bottom: 12px !important;
@@ -4940,18 +4905,17 @@ form button:active {
         margin: 0 !important;
         overflow: hidden;
         z-index: 50;
-        /* همگام با transition عرض سایدبار برای فشردگی نرم */
         transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    /* وقتی سایدبار با هاور باز می‌شود، لبه‌ی راست کنار لبه‌ی بازشده
-       می‌نشیند و scaleXی سراسری خنثی می‌شود تا فاصله ثابت بماند. */
-    .page-shell.sidebar-expanded #shiftBox {
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
+    body:has(.page-shell.sidebar-expanded):has(#shiftBox.is-visible) #shiftBox {
+        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
+        transform: none !important;
     }
 
     /* سربرگ/نوار فیلتر/دکمه‌ی پایین ثابت؛ فقط ناحیه‌ی جدول اسکرول می‌شود */
-    #shiftBox .shift-hero,
+    #shiftBox .section-hero,
+    #shiftBox .shift-tabs,
     #shiftBox .form-container-shift,
     #shiftBox .shift-footer-row {
         flex: 0 0 auto;
@@ -4969,82 +4933,7 @@ form button:active {
         min-height: 0;
         overflow: auto;
     }
-}
-
-/* ── سربرگ قهرمان ─────────────────────────────────────────────── */
-.shift-hero {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px 14px;
-    border-radius: 16px 16px 0 0;
-    background:
-        radial-gradient(120% 170% at 88% -30%, rgba(14, 165, 233, 0.14), transparent 55%),
-        radial-gradient(90% 150% at 8% 130%, rgba(20, 184, 166, 0.12), transparent 55%),
-        linear-gradient(135deg, #f8fbff 0%, #f0f5ff 100%);
-    border-bottom: 1px solid #e8eef7;
-    overflow: hidden;
-}
-
-.shift-hero__icon {
-    display: grid;
-    place-items: center;
-    width: 54px;
-    height: 54px;
-    flex: 0 0 auto;
-    border-radius: 16px;
-    color: #fff;
-    background: linear-gradient(135deg, #6366F1 0%, #0EA5E9 100%);
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.55),
-                inset 0 -3px 6px rgba(0,0,0,.14),
-                0 10px 24px -8px rgba(99, 102, 241, 0.45);
-    animation: shiftIconFloat 5.5s ease-in-out infinite;
-}
-
-.shift-hero__icon svg { width: 27px; height: 27px; }
-
-@keyframes shiftIconFloat {
-    0%, 100% { transform: translateY(0); box-shadow: inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 6px rgba(0,0,0,.14), 0 10px 24px -8px rgba(99, 102, 241, 0.45); }
-    50%      { transform: translateY(-4px); box-shadow: inset 0 1px 1px rgba(255,255,255,.55), inset 0 -3px 6px rgba(0,0,0,.14), 0 16px 30px -8px rgba(99, 102, 241, 0.55); }
-}
-
-.shift-hero__text { position: relative; z-index: 1; }
-
-.shift-hero__text h2 {
-    margin: 0 0 4px;
-    font-size: clamp(1.1rem, 1.9vw, 1.42rem);
-    font-weight: 800;
-    color: var(--shf-ink);
-    letter-spacing: -0.01em;
-}
-
-.shift-hero__text p {
-    margin: 0;
-    font-size: 0.86rem;
-    color: var(--shf-muted);
-    line-height: 1.8;
-}
-
-/* هالهٔ متحرک روی سربرگ */
-.shift-hero__glow {
-    position: absolute;
-    top: -70%;
-    left: -30%;
-    width: 45%;
-    height: 240%;
-    background: linear-gradient(105deg, transparent 30%, rgba(14, 165, 233, 0.08) 50%, transparent 70%);
-    transform: rotate(12deg) translateX(-100%);
-    animation: shiftHeroSheen 9s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes shiftHeroSheen {
-    0%, 55%  { transform: rotate(12deg) translateX(-160%); }
-    85%, 100% { transform: rotate(12deg) translateX(420%); }
-}
-
-/* ── سربرگ یکسان بخش‌ها (section-hero) ──────────────────────── */
+}/* ── سربرگ یکسان بخش‌ها (section-hero) ──────────────────────── */
 .section-hero {
     position: relative;
     display: flex;
@@ -5113,13 +5002,11 @@ form button:active {
 .shift-frame {
     width: 100%;
     border: 1.5px solid #E6ECF2;
-    border-radius: 20px;
+    border-radius: 16px;
     background: #fff;
-    box-shadow:
-        0 0 0 1px rgba(15, 23, 42, 0.03),
-        0 4px 8px rgba(15, 23, 42, 0.04),
-        0 10px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
     overflow: hidden;
+    margin-top: 16px;
 }
 
 .shift-tabs {
@@ -5953,12 +5840,7 @@ form button:active {
 
 /* ═══════════════ موبایل (≤768px) ═══════════════ */
 @media (max-width: 768px) {
-    #shiftBox { width: 100%; padding: 12px; gap: 14px; border-radius: 18px; }
-
-    .shift-hero { padding: 14px 16px; gap: 12px; }
-    .shift-hero__icon { width: 46px; height: 46px; border-radius: 13px; }
-    .shift-hero__icon svg { width: 23px; height: 23px; }
-    .shift-hero__text p { font-size: 0.78rem; }
+    #shiftBox { width: 100%; padding: 12px; gap: 0; border-radius: 18px; }
 
     .section-hero { padding: 14px 16px; gap: 12px; }
     .section-hero__icon { width: 46px; height: 46px; border-radius: 13px; }
@@ -6019,7 +5901,14 @@ form button:active {
     transform: scaleX(0.92) !important;
 }
 
-.page-shell.sidebar-expanded #coworkerBox {
+.page-shell.sidebar-expanded #coworkerBox,
+.page-shell.sidebar-expanded #vacationBox,
+.page-shell.sidebar-expanded #overtimeBox,
+.page-shell.sidebar-expanded #hourlyPassBox,
+.page-shell.sidebar-expanded #ticketBox,
+.page-shell.sidebar-expanded #hozoorbox,
+.page-shell.sidebar-expanded #payrollBox,
+.page-shell.sidebar-expanded #shiftBox {
     transform: none !important;
 }
 
@@ -6042,54 +5931,15 @@ form button:active {
 /* ===== کارکنان — دسکتاپ: باکس تب‌دار، هم‌راستا با سایدبار ===== */
 
 /* ===== حضور و غیاب — دسکتاپ: باکس تب‌دار، هم‌راستا با سایدبار ===== */
-/* باکس از top سایدبار (8rem) تا bottom سایدبار (12px) کشیده می‌شود؛
-   لبه‌ی راست با فاصله‌ی 1rem چسبیده به سایدبار است و موقع باز شدن سایدبار
-   با همان فاصله‌ی 1rem و انیمیشنی همگام با سایدبار فشرده می‌شود. */
 @media (min-width: 769px) {
 
-    .page-shell:has(#hozoorbox.is-visible) #hozoorbox {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        right: calc(clamp(64px, 6vw, 78px) + 1rem) !important;
-        left: 2rem !important;
-        width: auto !important;
-        max-width: none !important;
-        height: auto !important;
-        margin: 0 !important;
-        overflow-y: auto;
-        overflow-x: hidden;
-        z-index: 50;
-        /* همگام با transition عرض سایدبار تا فشرده‌شدن نرم و روون باشد */
-        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* ===== کارکنان — باکس تب‌دار، هم‌راستا با سایدبار =====
+       (مقادیر در بلوک الگوی یکسانِ body:has() بالاتر تعریف شده‌اند) */
+    body:has(#coworkerBox.is-visible) #coworkerBox {
+        flex-direction: column;
     }
 
-    /* وقتی سایدبار با هاور باز می‌شود، لبه‌ی راست کنار لبه‌ی بازشده می‌نشیند؛
-       scaleXی سراسری خنثی می‌شود تا فاصله‌ی ۱rem ثابت بماند. */
-    .page-shell.sidebar-expanded:has(#hozoorbox.is-visible) #hozoorbox {
-        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
-        transform: none !important;
-    }
-
-    /* ===== کارکنان — باکس تب‌دار، هم‌راستا با سایدبار ===== */
-    .page-shell:has(#coworkerBox.is-visible) #coworkerBox {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        right: calc(clamp(64px, 6vw, 78px) + 1rem) !important;
-        left: 2rem !important;
-        width: auto !important;
-        max-width: none !important;
-        height: auto !important;
-        margin: 0 !important;
-        overflow-y: auto;
-        overflow-x: hidden;
-        z-index: 50;
-        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    .page-shell.sidebar-expanded:has(#coworkerBox.is-visible) #coworkerBox {
-        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
+    body:has(.page-shell.sidebar-expanded):has(#coworkerBox.is-visible) #coworkerBox {
         transform: none !important;
     }
 
@@ -6108,15 +5958,12 @@ form button:active {
 /* ===== تب‌های حضور و غیاب — همان الگوی تب‌های حقوق و دستمزد ===== */
 .attendance-tabs {
     display: flex;
-    flex-direction: row-reverse;
     align-items: flex-end;
     gap: 4px;
     padding: 10px 12px 0 12px;
     background: #EFF4F8;
-    margin: 0 -20px 18px;
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 .attendance-tab-btn {
@@ -6233,16 +6080,7 @@ form button:active {
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
-    position: fixed !important;
-    top: 8rem !important;
-    bottom: 12px !important;
-    left: 10% !important;
-    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-    width: auto !important;
-    max-width: none !important;
-    margin: 0 !important;
-    z-index: 58;
-    overflow: auto;
+    overflow: hidden;
 }
 
 /* عنوان بالای پنل + زیرمجموعه‌ی آن (باکس تب‌ها) */
@@ -6269,6 +6107,17 @@ form button:active {
 /* --- payroll frame (زیرمجموعه‌ی عنوان) --- */
 .payroll-frame {
     margin-top: 16px;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+/* --- attendance frame (زیرمجموعه‌ی عنوان) --- */
+.attendance-frame {
+    margin-top: 16px;
+    width: 100%;
     border: 1.5px solid #E6ECF2;
     border-radius: 16px;
     background: #fff;
@@ -6344,16 +6193,7 @@ form button:active {
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
-    position: fixed !important;
-    top: 8rem !important;
-    bottom: 12px !important;
-    left: 10% !important;
-    right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-    width: auto !important;
-    max-width: none !important;
-    margin: 0 !important;
-    z-index: 58;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .vacation-heading {
@@ -6845,138 +6685,80 @@ form button:active {
 /* --- حقوق و دستمزد — دسکتاپ/تبلت: باکس ثابت می‌ماند و فقط جدول داخلش اسکرول می‌شود --- */
 @media (min-width: 769px) {
 
-    /* باکس زیر نوار بالایی چسبان می‌ماند و با اسکرول صفحه جابه‌جا نمی‌شود */
-    #payrollBox.payroll-panel {
+    /* ══════ الگوی یکسان تمام باکس‌ها (هم‌راستا با سایدبار) ══════ */
+    /* باکس‌ها فقط وقتی .is-visible دارند fixed می‌شوند و کنار سایدبار قرار می‌گیرند */
+    /* نکته: بعضی باکس‌ها در HTML بیرون از .page-shell رندر می‌شوند؛ بنابراین
+       سلکتورها روی body سوار شده‌اند تا به محل باکس در DOM وابسته نباشند. */
+
+    body:has(#coworkerBox.is-visible) #coworkerBox,
+    body:has(#vacationBox.is-visible) #vacationBox,
+    body:has(#overtimeBox.is-visible) #overtimeBox,
+    body:has(#hourlyPassBox.is-visible) #hourlyPassBox,
+    body:has(#ticketBox.is-visible) #ticketBox,
+    body:has(#hozoorbox.is-visible) #hozoorbox,
+    body:has(#payrollBox.is-visible) #payrollBox {
         position: fixed !important;
         top: 8rem !important;
         bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        z-index: 58;
-        height: auto !important;
-        overflow: hidden;
-        margin: 0 !important;
-    }
-
-    .page-shell.sidebar-expanded #payrollBox.payroll-panel {
+        right: calc(clamp(64px, 6vw, 78px) + 1rem) !important;
+        left: 2rem !important;
         width: auto !important;
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
+        max-width: none !important;
+        height: auto !important;
+        margin: 0 !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 50;
+        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
+    /* وقتی سایدبار با هاور باز می‌شود (کلاس sidebar-expanded روی .page-shell است) */
+    body:has(.page-shell.sidebar-expanded):has(#coworkerBox.is-visible) #coworkerBox,
+    body:has(.page-shell.sidebar-expanded):has(#vacationBox.is-visible) #vacationBox,
+    body:has(.page-shell.sidebar-expanded):has(#overtimeBox.is-visible) #overtimeBox,
+    body:has(.page-shell.sidebar-expanded):has(#hourlyPassBox.is-visible) #hourlyPassBox,
+    body:has(.page-shell.sidebar-expanded):has(#ticketBox.is-visible) #ticketBox,
+    body:has(.page-shell.sidebar-expanded):has(#hozoorbox.is-visible) #hozoorbox,
+    body:has(.page-shell.sidebar-expanded):has(#payrollBox.is-visible) #payrollBox {
+        right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
+        transform: none !important;
+    }
 
-    /* فقط جدول داخل باکس اسکرول عمودی می‌گیرد؛ عنوان، تب‌ها و تنظیمات ثابت می‌مانند */
+    /* فقط جدول داخل باکس اسکرول عمودی می‌گیرد */
     .payroll-panel .payroll-table-scroll {
         max-height: calc(100vh - 440px);
         min-height: 0;
         overflow-y: auto;
     }
 
-    /* ردیف «مجموع کل» هنگام اسکرول جدول همیشه در پایین دیده می‌ماند */
     .payroll-panel .payroll-table tfoot {
         position: sticky;
         bottom: 0;
         z-index: 2;
     }
 
-    /* هدر جدول (ردیف گروهی + زیرعنوان) هنگام اسکرول عمودی ثابت می‌ماند */
     .payroll-panel .payroll-table thead {
         position: sticky;
         top: 0;
         z-index: 2;
     }
 
-    /* مرخصی — دسکتاپ: باکس ثابت و اسکرول جدول */
-    #vacationBox.vacation-panel {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        z-index: 58;
-        height: auto !important;
-        overflow: hidden;
-        margin: 0 !important;
-    }
-
-    .page-shell.sidebar-expanded #vacationBox.vacation-panel {
-        width: auto !important;
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
-    }
-
-    .page-shell.sidebar-expanded #ticketBox {
-        width: auto !important;
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
-    }
-
-    .vacation-panel .vacation-frame {
+    .vacation-panel .vacation-frame,
+    .overtime-panel .overtime-frame,
+    .hourlyPass-panel .hourlyPass-frame,
+    .attendance-frame {
         overflow: visible;
     }
 
-    .vacation-panel .vacation-tab-content.active {
-        min-height: 0;
-        padding-bottom: 4px;
-    }
-
-    /* اضافه‌کاری — دسکتاپ: باکس ثابت و اسکرول جدول */
-    #overtimeBox.overtime-panel {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        z-index: 58;
-        height: auto !important;
-        overflow: hidden;
-        margin: 0 !important;
-    }
-
-    .page-shell.sidebar-expanded #overtimeBox.overtime-panel {
-        width: auto !important;
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
-    }
-
-    .overtime-panel .overtime-frame {
-        overflow: visible;
-    }
-
-    .overtime-panel .overtime-tab-content.active {
-        min-height: 0;
-        padding-bottom: 4px;
-    }
-
-    /* پاس ساعتی — دسکتاپ: باکس ثابت و اسکرول جدول */
-    #hourlyPassBox.hourlyPass-panel {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        z-index: 58;
-        height: auto !important;
-        overflow: hidden;
-        margin: 0 !important;
-    }
-
-    .page-shell.sidebar-expanded #hourlyPassBox.hourlyPass-panel {
-        width: auto !important;
-        right: calc(clamp(120px, 19.5vw, 120px) + 0%) !important;
-    }
-
-    .hourlyPass-panel .hourlyPass-frame {
-        overflow: visible;
-    }
-
+    .vacation-panel .vacation-tab-content.active,
+    .overtime-panel .overtime-tab-content.active,
     .hourlyPass-panel .hourlyPass-tab-content.active {
         min-height: 0;
         padding-bottom: 4px;
+    }
+
+    .ticketing-panel .helpdesk-layout {
+        overflow: visible;
     }
 }
 
@@ -7585,21 +7367,13 @@ form button:active {
         padding: 4px 10px;
     }
 
-    #ticketBox {
-        position: fixed !important;
-        top: 8rem !important;
-        bottom: 12px !important;
-        left: 1% !important;
-        right: calc(clamp(64px, 6vw, 78px) + 10%) !important;
-        width: 94% !important;
-        max-width: none !important;
-        padding: 4px 10px 16px 10px;
-        margin: 0 !important;
-    }
-
-    #ticketBox h2 {
-        font-size: 16px;
-        margin: 0px 0px 4px 0px;
+    #ticketBox.ticketing-panel {
+        position: static !important;
+        width: 100% !important;
+        padding: 12px !important;
+        margin: 0 0 12px !important;
+        overflow-x: auto;
+        overflow-y: visible;
     }
 
     .ticketUsersReport-table {
@@ -7619,19 +7393,12 @@ form button:active {
     .taghir-ticketboxtable { width: 3%; }
 
     #hozoorbox {
-        width: 80%;
-        padding: 20px;
-        background-color: #fbfff9;
-        margin-top: 3.7rem;
-        display: none;
-        position: relative;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    #hozoorbox h2 {
-        text-align: center;
-        margin-bottom: 15px;
+        position: static !important;
+        width: 100% !important;
+        padding: 14px !important;
+        margin: 0 0 12px !important;
+        overflow-x: auto;
+        overflow-y: visible;
     }
 
     #gozareshHozoor {
@@ -8364,7 +8131,6 @@ form button:active {
     .attendance-tabs {
         padding: 8px 8px 0 8px;
         overflow-x: auto;
-        margin: 0 -14px 14px;
     }
 
     .attendance-tab-btn {

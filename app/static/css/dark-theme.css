@@ -846,6 +846,12 @@ body.dark-mode .hourlyPass-frame {
     box-shadow: var(--dk-shadow-sm);
 }
 
+body.dark-mode .attendance-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
 body.dark-mode .hourlyPass-tabs {
     background: var(--dk-bg);
 }
@@ -1822,21 +1828,11 @@ body.dark-mode #shiftBox {
     --shf-panel: rgba(24, 34, 51, 0.82);
 }
 
-body.dark-mode .shift-hero {
-    background:
-        radial-gradient(120% 170% at 88% -30%, rgba(56, 189, 248, 0.12), transparent 55%),
-        radial-gradient(90% 150% at 8% 130%, rgba(45, 212, 191, 0.1), transparent 55%),
-        var(--dk-surface);
-    border-bottom-color: var(--dk-border);
-}
-
-body.dark-mode .shift-hero__text h2,
 body.dark-mode .shift-popup-head__text h2,
 body.dark-mode .shift-table-card__title {
     color: var(--dk-text);
 }
 
-body.dark-mode .shift-hero__text p,
 body.dark-mode .shift-popup-head__text p {
     color: var(--dk-text-2);
 }
@@ -2664,6 +2660,7 @@ body.dark-mode .trash-icon:hover {
 body.dark-mode .sidebar-right .icon-container img,
 body.dark-mode .sidebar-right .icon-container svg,
 body.dark-mode .icon-container-leftSidebar img,
+body.dark-mode .icon-container-leftSidebar svg {
     background-color: var(--dk-surface-2);
 }
 
