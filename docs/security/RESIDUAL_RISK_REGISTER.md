@@ -1,0 +1,32 @@
+# Residual Risk Register — Hastama
+
+Each risk states the residual exposure **after** the hardening work, the reason
+it remains, and the owner. Severities use the same scale as the findings.
+"Acceptance" column: whether the risk needs a formal decision by the system
+owner before the system is treated as ready.
+
+| ID | Risk | Severity | Why it remains | Owner | Acceptance required |
+|---|---|---|---|---|---|
+| RR-01 | **No backup / restore procedure.** Nothing in the repository performs or verifies a database backup; a ransomware or disk event destroys all attendance and payroll data | High | Operational gap, outside the application code; needs DBA + Windows task setup | DBA / Infra | **Yes** |
+| RR-02 | **Historic data still in Git history.** The plaintext password export (`exported_data.sql`) and Araz Access databases (attendance/payroll schema `TPrsInOut`, `TPrsPeyment`, `TPrsSalaryAdditions`) remain in past commits and in the working tree | High | Removal would rewrite published history and delete vendor installers; the working copy was quarantined and ignore rules added | Repository owner | **Yes** |
+| RR-03 | **No MFA for administrators / master administrators.** A stolen admin password plus LAN access is full control | High | Feature work; offline environment still allows TOTP | Product owner | **Yes** |
+| RR-04 | **CSP still allows `'unsafe-inline'` for scripts.** The legacy inline event handlers (`onclick=` in Jinja templates) cannot be removed without a front-end refactor | Medium | Documented migration path: extract handlers to JS files, then drop `'unsafe-inline'` and add nonces | Front-end owner | Yes (time-boxed) |
+| RR-05 | **No content scanning for uploads.** Ticket attachments and slides are validated by extension/size only | Medium | Offline LAN; Antivirus products are not installed on the app server | Infra | Yes |
+| RR-06 | **pdfkit CVE-2025-26240 has no upstream fix.** Call-site mitigation is in place, but a future developer could reintroduce `from_string` | Medium | Dependency abandoned upstream (last release 1.0.0) | Maintainer | Yes |
+| RR-07 | **Static shared bridge secret.** `ARAZ_BRIDGE_SECRET` never rotates and is stored in a JSON file next to the agent | Medium | No key-management service on the LAN; rotation requires a coordinated restart | Infra | Yes |
+| RR-08 | **In-memory rate limiting only.** Limits reset when the service restarts, and there is no proxy-level limit (Caddy plugin unavailable offline) | Medium | Single-process deployment makes this acceptable for the login flow | Infra | Yes |
+| RR-09 | **Audit logs live only in the database.** An attacker with DB access can edit or delete them; no off-host shipping | Medium | Offline environment; a second host or append-only file would be needed | DBA | Yes |
+| RR-10 | **Legacy session entries.** Sessions created before the registry existed are rejected (fail-closed) — users must log in again after deployment | Low | Intentional; documented in the deployment notes | Infra | No |
+| RR-11 | **Registration endpoint exposes username/national-id availability** (`/check-username`, `/check-national-id`) | Low | Product requirement for the self-service form; rate-limited | Product owner | Yes |
+| RR-12 | **Kiosk endpoints are unauthenticated by design.** They disclose the reception queue (numbers, departments) to anyone on the LAN | Low | A TV cannot hold a session; the compensating control is the LAN boundary + Origin checks | Infra | Yes |
+| RR-13 | **`/predict` ML endpoint is public.** No data access, but it consumes CPU and was never designed for public exposure | Low | Shipped with the repo; must be reviewed before wider exposure | Product owner | Yes |
+| RR-14 | **Legacy rows may still be SHA-512/plaintext** until `tools/migrate_passwords.py` runs | Medium | Requires a maintenance window with DB access | DBA | Yes |
+| RR-15 | **`/download_pdf` depends on a template that is absent from this repository.** Installs lacking `finalReportUser.html` return 503 instead of a PDF | Low | Either the template exists only in the deployed installation, or the feature is dead | Maintainer | No |
+| RR-16 | **No secret scanning / dependency gate in CI.** Secret and dependency checks were performed manually in this assessment | Low | No CI pipeline exists in the repository | Maintainer | No |
+| RR-17 | **Vendor binaries and Access databases committed** (~330 MB, `arazin/`, `database/`), including dated payroll/attendance DB copies | High | Deleting them may break field installations (Araz needs its own DB) | Repository owner | **Yes** |
+| RR-18 | **Iranian regulatory status unresolved.** AFTA applicability and the data-protection bill's status could not be verified from primary sources | Medium | Needs an authorized Iranian assessor / legal review | Management | **Yes** |
+
+## Acceptance template
+
+> I, the system owner, accept residual risk RR-xx (*title*) with the stated
+> mitigation and review date. — name, role, date.
