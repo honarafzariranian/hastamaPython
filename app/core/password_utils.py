@@ -19,36 +19,96 @@ def hash_password(password: str) -> bytes:
     return bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt(rounds=12))
 
 
-def verify_password(stored_password, stored_hash, provided_password: str) -> bool:
-    """Verify a password against stored hash or plain text.
+BCRYPT_PREFIXES = (b"$2a$", b"$2b$", b"$2y$")
 
-    Supports:
-    - bcrypt hashes (new format)
-    - SHA-512 hashes (legacy format)
-    - Plain text (legacy format, worst case)
+
+def _as_bytes(value) -> bytes:
+    if isinstance(value, (bytearray, memoryview)):
+        return bytes(value)
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, str):
+        return value.encode("utf-8", errors="ignore")
+    return b""
+
+
+def looks_like_bcrypt(value) -> bool:
+    """Whether *value* is a bcrypt hash (bytes or text)."""
+    return _as_bytes(value)[:4] in BCRYPT_PREFIXES
+
+
+def is_legacy_plaintext(stored_password, stored_hash) -> bool:
+    """Whether this row still stores a password we must migrate.
+
+    ``True`` for a non-empty ``password`` column that is neither a bcrypt hash
+    nor a SHA-512 digest (those two formats are handled by
+    :func:`verify_password`).
+    """
+    if stored_hash is not None or stored_password is None:
+        return False
+    raw = str(stored_password).strip()
+    if not raw or looks_like_bcrypt(raw):
+        return False
+    return not re.fullmatch(r"[0-9a-fA-F]{128}", raw)
+
+
+def verify_password(stored_password, stored_hash, provided_password: str) -> bool:
+    """Verify a password against the stored hash or a legacy stored value.
+
+    Supported, in order of preference:
+
+    1. bcrypt hash in ``password_hash`` (current format);
+    2. bcrypt hash stored in the ``password`` column (pre-migration installs
+       where ``password_hash`` does not exist yet);
+    3. legacy SHA-512 digest in ``password_hash``;
+    4. legacy plaintext in ``password`` (worst case, documented migration debt —
+       see ``tools/migrate_passwords.py``).
     """
     if provided_password is None:
         return False
 
     provided_password = str(provided_password).strip()
 
-    # 1. Try bcrypt verification (new format)
+    # 1./3. Preferred: hash column.
     if stored_hash is not None:
         try:
-            if isinstance(stored_hash, (bytearray, memoryview)):
-                stored_hash = bytes(stored_hash)
-            # Check if it's a bcrypt hash (starts with $2a$, $2b$, $2y$)
-            if stored_hash[:4] in (b"$2a$", b"$2b$", b"$2y$"):
+            stored_hash = _as_bytes(stored_hash)
+            if stored_hash[:4] in BCRYPT_PREFIXES:
                 return bcrypt.checkpw(provided_password.encode("utf-8"), stored_hash)
-            # Legacy SHA-512 comparison — constant-time to prevent timing attacks
-            return hmac.compare_digest(
-                bytes(stored_hash),
-                hashlib.sha512(provided_password.encode("utf-8")).digest(),
-            )
+            # Legacy SHA-512 comparison — constant-time to prevent timing
+            # attacks.  Historical installs stored the digest in two different
+            # shapes (raw VARBINARY or a 128 character hex string); both must
+            # keep authenticating, otherwise a schema difference would lock
+            # every legacy user out.
+            digest = hashlib.sha512(provided_password.encode("utf-8")).digest()
+            candidates = (digest, digest.hex().encode("ascii"))
+            for candidate in candidates:
+                if len(stored_hash) == len(candidate) and hmac.compare_digest(stored_hash, candidate):
+                    return True
+            return False
         except Exception:
             return False
 
-    # 2. Fallback to plain text comparison (legacy, worst case) — constant-time
+    # 2. bcrypt hash that ended up in the plaintext column (no hash column).
+    if stored_password is not None and looks_like_bcrypt(stored_password):
+        try:
+            return bcrypt.checkpw(provided_password.encode("utf-8"), _as_bytes(stored_password))
+        except Exception:
+            return False
+
+    # 3b. SHA-512 digest that ended up in the plaintext column (very old
+    # installs, before the hash column existed) — hex or raw digest.
+    if stored_password is not None and not looks_like_bcrypt(stored_password):
+        raw = str(stored_password).strip()
+        if re.fullmatch(r"[0-9a-fA-F]{128}", raw):
+            digest = hashlib.sha512(provided_password.encode("utf-8"))
+            if hmac.compare_digest(raw.lower(), digest.hexdigest()):
+                return True
+            return False
+
+    # 4. Legacy plaintext comparison — constant-time.  This path is temporary:
+    # it disappears once ``tools/migrate_passwords.py`` has been run (verified
+    # by the "no plaintext password column" check in the deployment checklist).
     if stored_password is not None:
         return hmac.compare_digest(
             str(stored_password).strip(),
@@ -193,12 +253,25 @@ def get_user_table_columns(cursor) -> set:
 
 
 def fetch_user_for_login(cursor, username: str):
+    """Fetch the authentication row for *username*.
+
+    Returns ``(username, role, password, password_hash, is_active)`` where the
+    trailing ``is_active`` element is ``None`` when the column does not exist in
+    this installation.  The caller (``/login_user``) refuses to authenticate
+    accounts whose status is not active.
+    """
     normalized_username = str(username or "").strip()
     columns = get_user_table_columns(cursor)
-    if "password_hash" in columns:
-        cursor.execute("SELECT username, role, password, password_hash FROM user_table WHERE LTRIM(RTRIM(username)) = ?", (normalized_username,))
-    else:
-        cursor.execute("SELECT username, role, password FROM user_table WHERE LTRIM(RTRIM(username)) = ?", (normalized_username,))
+    has_hash = "password_hash" in columns
+    has_active = "is_active" in columns
+
+    select = ["username", "role", "password"]
+    select.append("password_hash" if has_hash else "NULL AS password_hash")
+    select.append("is_active" if has_active else "NULL AS is_active")
+    cursor.execute(
+        f"SELECT {', '.join(select)} FROM user_table WHERE LTRIM(RTRIM(username)) = ?",
+        (normalized_username,),
+    )
     return cursor.fetchone()
 
 
@@ -211,18 +284,27 @@ def insert_user_with_optional_hash(cursor, user_id: int, username: str, password
         password_hash = hash_password(password)
     columns = get_user_table_columns(cursor)
     if "password_hash" in columns:
+        # NOTE: the previous revision passed 17 parameters to a statement with
+        # 16 markers and a literal '' in the username slot, so `/add_user` could
+        # never insert a row.  The parameter count now matches the markers and
+        # the plaintext ``password`` column is written as '' — the bcrypt hash is
+        # the only credential material stored.
         cursor.execute('''
             INSERT INTO user_table (
                 id, username, password, password_hash, name, last_name, department, substitute, work_hours, role,
                 hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
-            ) VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-        ''', (user_id, username, password_hash, password_hash, name, last_name, department, substitute, work_hours, role,
+            ) VALUES (?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+        ''', (user_id, username, password_hash, name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))
     else:
+        # Legacy install without a hash column: store the bcrypt hash as text in
+        # the ``password`` column (``verify_password`` understands that form).
         cursor.execute('''
             INSERT INTO user_table (
                 id, username, password, name, last_name, department, substitute, work_hours, role,
                 hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh, is_active
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-        ''', (user_id, username, password_hash, name, last_name, department, substitute, work_hours, role,
+        ''', (user_id, username,
+              password_hash.decode("utf-8") if isinstance(password_hash, bytes) else str(password_hash),
+              name, last_name, department, substitute, work_hours, role,
               hozoor_num, shanbeh, yekshanbeh, doshanbeh, seshanbeh, chrshanbeh, panjshanbeh))

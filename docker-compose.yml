@@ -14,3 +14,15 @@ services:
     volumes:
       - ./app:/app/
       - ./ml/model/:/app/ml/model/
+# ── Production notes ─────────────────────────────────────────────────────────
+# The settings above are for local development (bind mount + --reload + port
+# 8080 published on all interfaces).  The supported LAN deployment runs the
+# application on loopback behind Caddy:
+#
+#   uvicorn main:app --host 127.0.0.1 --port 8000 --proxy-headers \
+#           --forwarded-allow-ips 127.0.0.1
+#
+# When Hastama runs in a container behind a proxy on the host, set
+# TRUSTED_PROXY_IPS to the address the container sees the proxy as (for example
+# 172.17.0.1 for the default Docker bridge) — otherwise forwarding headers are
+# ignored on purpose and rate limiting keys on the proxy address.

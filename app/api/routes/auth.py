@@ -1,6 +1,7 @@
 # app/api/routes/auth.py — Security-Hardened Authentication Routes
 
 import os
+import secrets
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -21,6 +22,10 @@ from app.services.captcha import (
     validate_captcha, captcha_remaining_seconds,
 )
 
+from app.core.net import client_ip as _trusted_client_ip
+from app.core.net import user_agent as _safe_user_agent
+from app.core import sessions as session_registry
+
 router = APIRouter()
 logger = logging.getLogger("hastama.auth")
 
@@ -36,6 +41,7 @@ class RateLimiter:
     def __init__(self):
         self._ip_requests = defaultdict(list)      # ip -> [timestamp, ...]
         self._username_requests = defaultdict(list)  # username -> [timestamp, ...]
+        self._failures = defaultdict(list)         # ip/username -> [failed login timestamps]
         self._lock = threading.Lock()
 
     def _clean_old(self, store, key, window_seconds):
@@ -65,8 +71,47 @@ class RateLimiter:
             self._username_requests[username].append(time.time())
             return True
 
+    # ── Failure counters (login brute-force protection) ──
+
+    def failure_count(self, key: str, window: int) -> int:
+        with self._lock:
+            cutoff = time.time() - window
+            return len([t for t in self._failures.get(key, []) if t > cutoff])
+
+    def register_failure(self, key: str, window: int) -> int:
+        with self._lock:
+            cutoff = time.time() - window
+            entries = [t for t in self._failures.get(key, []) if t > cutoff]
+            entries.append(time.time())
+            self._failures[key] = entries
+            if len(self._failures) > 20000:  # defensive bound
+                self._failures = defaultdict(list, {k: v for k, v in self._failures.items() if v})
+            return len(entries)
+
+    def clear_failures(self, key: str) -> None:
+        with self._lock:
+            self._failures.pop(key, None)
+
+    def retry_after(self, key: str, window: int) -> int:
+        with self._lock:
+            entries = self._failures.get(key) or []
+            if not entries:
+                return 0
+            remaining = int(window - (time.time() - min(entries)))
+            return max(1, remaining)
+
 
 _rate_limiter = RateLimiter()
+
+# Login throttling policy.  The IP limit is the primary brute-force control;
+# the per-account limit is intentionally higher so that an attacker cannot lock
+# a known username out with a handful of requests (denial of service).
+LOGIN_FAILURE_WINDOW = 600
+LOGIN_MAX_FAILURES_PER_IP = 15
+LOGIN_MAX_FAILURES_PER_USER = 30
+
+# Lifetime of the readable CSRF cookie — mirrors SESSION_MAX_AGE_SECONDS.
+CSRF_COOKIE_MAX_AGE = int(os.environ.get("SESSION_MAX_AGE_SECONDS", "28800") or 28800)
 
 
 # ── Safe DB Connection ───────────────────────────────────────
@@ -83,13 +128,57 @@ def _get_connection():
 
 
 def _client_ip(request: Request) -> str:
-    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
-        request.client.host if request.client else "unknown"
-    )
+    """Trustworthy client address (see ``app.core.net.client_ip``).
+
+    ``X-Forwarded-For`` is only honoured when it contains a syntactically valid
+    address; the previous implementation trusted the first, client supplied,
+    entry which made every IP based control bypassable.
+    """
+    return _trusted_client_ip(request)
 
 
 def _user_agent(request: Request) -> str:
-    return request.headers.get("user-agent", "")[:500]
+    return _safe_user_agent(request)
+
+
+def _set_csrf_cookie(response, token: str, request: Request) -> None:
+    """Publish the session CSRF token in the readable ``csrf_token`` cookie.
+
+    The cookie is intentionally *not* HttpOnly: the front-end must read it to
+    echo the value in the ``X-CSRF-Token`` header.  Confidentiality does not
+    depend on it — the authoritative copy lives inside the signed session, and
+    the middleware requires the header, the cookie and the session value to be
+    identical.
+    """
+    from app.core.net import is_https as _is_https
+
+    response.set_cookie(
+        "csrf_token",
+        token,
+        max_age=CSRF_COOKIE_MAX_AGE,
+        httponly=False,
+        samesite="lax",
+        secure=_is_https(request),
+        path="/",
+    )
+
+
+@router.get("/api/csrf-token")
+async def csrf_token_bootstrap(request: Request):
+    """Return the token the front-end must echo in ``X-CSRF-Token``.
+
+    Safe method (no state change) and therefore not CSRF protected.  The value
+    is only useful together with the matching signed session cookie, which the
+    browser refuses to hand to a third-party origin — the endpoint gives the
+    SPA a way to recover when the readable cookie was cleared.
+    """
+    token = str(request.session.get("csrf_token") or "")
+    if not token:
+        token = secrets.token_hex(32)
+        request.session["csrf_token"] = token
+    response = JSONResponse({"success": True, "csrf_token": token})
+    _set_csrf_cookie(response, token, request)
+    return response
 
 
 # ── CAPTCHA ─────────────────────────────────────────────────
@@ -157,6 +246,50 @@ def log_event_safe(**kwargs):
         pass
 
 
+def _account_is_active(user) -> bool:
+    """Return ``True`` unless the account row is explicitly disabled.
+
+    ``fetch_user_for_login`` returns ``(username, role, password, password_hash,
+    is_active)`` when the ``is_active`` column exists.  A disabled account must
+    not be able to authenticate even when the password is correct.
+    """
+    if user is None:
+        return False
+    if len(user) <= 4:
+        return True  # column not migrated yet — keep legacy behaviour
+    status = str(user[4] or "active").strip().lower()
+    return status not in {"disabled", "inactive", "locked", "0", "false"}
+
+
+def _record_login_result(username: str, *, success: bool) -> None:
+    """Best-effort bookkeeping for the master-admin dashboard."""
+    conn = None
+    try:
+        conn = _get_connection()
+        cur = conn.cursor()
+        if success:
+            cur.execute(
+                "UPDATE user_table SET last_login = SYSUTCDATETIME(), failed_login_count = 0 "
+                "WHERE LTRIM(RTRIM(username)) = ?",
+                (username.strip(),),
+            )
+        else:
+            cur.execute(
+                "UPDATE user_table SET failed_login_count = ISNULL(failed_login_count, 0) + 1 "
+                "WHERE LTRIM(RTRIM(username)) = ?",
+                (username.strip(),),
+            )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 # ── Login ────────────────────────────────────────────────────
 
 @router.post("/login_user")
@@ -206,16 +339,50 @@ async def login(request: Request):
     if len(password) > MAX_PASSWORD_LENGTH:
         return JSONResponse({"success": False, "message": "نام کاربری یا رمز عبور اشتباه است."})
 
+    # ── Brute-force throttling ──────────────────────────────
+    ip = _client_ip(request)
+    ip_key = f"ip:{ip}"
+    user_key = f"user:{username.strip().lower()}"
+    if _rate_limiter.failure_count(ip_key, LOGIN_FAILURE_WINDOW) >= LOGIN_MAX_FAILURES_PER_IP:
+        log_event_safe(
+            event_type="AUTHENTICATION", action="login_throttled",
+            username=username, ip_address=ip, user_agent=_user_agent(request),
+            status="failure", severity="high",
+        )
+        return JSONResponse(
+            {"success": False, "message": "تعداد تلاش‌های ناموفق زیاد است. لطفاً چند دقیقه بعد تلاش کنید."},
+            status_code=429,
+        )
+
     conn = None
     try:
         conn = _get_connection()
         cursor = conn.cursor()
         user = fetch_user_for_login(cursor, username)
+        account_active = _account_is_active(user)
 
-        if user and verify_password(user[2], user[3] if len(user) > 3 else None, password):
+        if user and account_active and verify_password(user[2], user[3] if len(user) > 3 else None, password):
             # Session rotation: clear old session data, set new to prevent session fixation
             request.session.clear()
             request.session["username"] = username
+            # Server-side session id — enables revocation (password reset,
+            # account disable, administrator "terminate session").
+            session_token = session_registry.new_session_token()
+            request.session[session_registry.SESSION_TOKEN_KEY] = session_token
+            request.session[session_registry.SESSION_ISSUED_KEY] = int(time.time())
+            # Session-bound CSRF token: minted here so that every authenticated
+            # state-changing request can be verified against the signed session
+            # (see _CSRFMiddleware in app.main).  The same value is written to
+            # the readable csrf_token cookie on the way out so the front-end
+            # fetch interceptor can echo it back in the X-CSRF-Token header.
+            csrf_token = secrets.token_hex(32)
+            request.session["csrf_token"] = csrf_token
+            session_registry.register_session(
+                session_token, username, ip, _user_agent(request)
+            )
+            _rate_limiter.clear_failures(ip_key)
+            _rate_limiter.clear_failures(user_key)
+            _record_login_result(username, success=True)
             role = user[1].strip().lower()
 
             if role == "admin":
@@ -235,7 +402,7 @@ async def login(request: Request):
                     status="success",
                 )
                 track_session_login(
-                    session_key=request.session.get("session", ""),
+                    session_key=session_token,
                     username=username,
                     ip_address=_client_ip(request),
                     user_agent=_user_agent(request),
@@ -250,16 +417,32 @@ async def login(request: Request):
                 redirect = "/admin/dashboard"
             else:
                 redirect = "/user_panel"
-            return JSONResponse({"success": True, "redirect": redirect})
+            response = JSONResponse({"success": True, "redirect": redirect})
+            _set_csrf_cookie(response, csrf_token, request)
+            return response
 
-        # Audit: failed login
+        # Failed authentication — count against both the source address and the
+        # account, then answer with a single generic message (no user
+        # enumeration, no distinction between unknown user / wrong password /
+        # disabled account).
+        failures = _rate_limiter.register_failure(ip_key, LOGIN_FAILURE_WINDOW)
+        account_failures = _rate_limiter.register_failure(user_key, LOGIN_FAILURE_WINDOW)
+        _record_login_result(username, success=False)
+
+        # Audit: failed login (severity escalates when throttling triggers)
         try:
             from app.services.audit import log_event
             log_event(
                 event_type="AUTHENTICATION", action="login",
                 username=username,
-                ip_address=_client_ip(request), user_agent=_user_agent(request),
-                status="failure", severity="low",
+                ip_address=ip, user_agent=_user_agent(request),
+                status="failure",
+                severity="high" if failures >= LOGIN_MAX_FAILURES_PER_IP else "low",
+                metadata={
+                    "failures_from_ip": failures,
+                    "failures_for_account": account_failures,
+                    "account_known": bool(user),
+                },
             )
         except Exception:
             pass
@@ -309,27 +492,44 @@ async def forgot_password(request: Request):
 
     conn = None
     try:
+        from app.services.audit import (
+            create_password_reset_request, generate_request_id, recovery_codes_available,
+        )
+
+        if not recovery_codes_available():
+            # Fail closed: without the HMAC key the issued codes would have no
+            # integrity protection, so recovery is disabled until it is set.
+            logger.error("password recovery requested but HASTAMA_HMAC_SECRET is not configured")
+            return JSONResponse({"success": False, "message": "بازیابی رمز عبور در این نصب غیرفعال است. با مدیر سامانه تماس بگیرید."})
+
         conn = _get_connection()
         cursor = conn.cursor()
 
-        # Check user exists (but don't reveal to caller)
+        # Does the account exist?  The answer must not be observable: both
+        # branches return the same body shape and the same headers, and the
+        # request id returned for an unknown account is an unused decoy value.
         user = fetch_user_for_login(cursor, username)
         if not user:
-            # Always return success to prevent user enumeration
-            return JSONResponse({"success": True, "message": UNIFIED_MESSAGE})
+            decoy = generate_request_id()
+            log_event_safe(
+                event_type="AUTHENTICATION", action="password_reset_requested",
+                username=username, module="password",
+                ip_address=ip, user_agent=_user_agent(request),
+                status="failure", severity="low",
+            )
+            return JSONResponse({"success": True, "message": UNIFIED_MESSAGE, "request_id": decoy})
 
-        from app.services.audit import create_password_reset_request
         result = create_password_reset_request(
             username=username,
             ip_address=ip,
             user_agent=_user_agent(request),
         )
-        if result.get("request_id"):
-            return JSONResponse({"success": True, "message": UNIFIED_MESSAGE, "request_id": result["request_id"]})
-        else:
-            return JSONResponse({"success": True, "message": UNIFIED_MESSAGE})
+        request_id = result.get("request_id") or generate_request_id()
+        if not result.get("request_id"):
+            logger.warning("password reset request could not be persisted for %s", username)
+        return JSONResponse({"success": True, "message": UNIFIED_MESSAGE, "request_id": request_id})
     except Exception as e:
-        logger.error(f"Forgot password error: {e}")
+        logger.error(f"Forgot password error: {type(e).__name__}: {e}")
         return JSONResponse({"success": True, "message": UNIFIED_MESSAGE})
     finally:
         if conn:
@@ -416,11 +616,16 @@ async def reset_password(request: Request):
                 )
         conn.commit()
 
+        # Any session that existed before the reset must be invalidated, not just
+        # the browser the user happens to be sitting in front of.
+        revoked = session_registry.revoke_user_sessions(username, "password_reset")
+
         log_event(
             event_type="AUTHENTICATION", action="password_reset_complete",
             username=username, module="password",
             status="success", severity="medium",
             ip_address=ip, user_agent=_user_agent(request),
+            metadata={"sessions_revoked": revoked},
         )
 
         return JSONResponse({"success": True, "message": "رمز عبور با موفقیت تغییر کرد. حالا می‌توانید وارد شوید."})

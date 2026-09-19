@@ -78,10 +78,10 @@ window.addEventListener('load', function () {
         overtimeData.forEach((row, index) => {
             const newRow = tbody.insertRow();
             newRow.innerHTML = `
-                <td>${convertToPersianNumbers(row.description)}</td>
-                <td>${convertToPersianNumbers(row.daily_overtime)}</td>
-                <td>${convertToPersianNumbers(row.overtime_date)}</td>
-                <td>${convertToPersianNumbers(index + 1)}</td>
+                <td>${esc(convertToPersianNumbers(row.description))}}</td>
+                <td>${esc(convertToPersianNumbers(row.daily_overtime))}}</td>
+                <td>${esc(convertToPersianNumbers(row.overtime_date))}}</td>
+                <td>${esc(convertToPersianNumbers(index + 1))}}</td>
             `;
         });
     }

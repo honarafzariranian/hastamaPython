@@ -95,3 +95,8 @@ target/
 # Dev-only node deps for the responsive-tables DOM suite (tests/js)
 node_modules/
 package-lock.json
+
+# Database exports / dumps must never be committed (contain live PII and credentials)
+exported_data.sql
+*.dump
+*.sql.gz

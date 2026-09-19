@@ -1,8 +1,15 @@
 """Hastama Master Administration & Control Center — API Routes.
 
-All routes require session authentication with is_master_admin=True.
-The middleware / login hook must set request.session["is_master_admin"]
-for the designated master-admin user(s).
+Every route in this module requires a **master administrator** session
+(``is_master_admin`` is only set by ``/login_user`` for usernames listed in
+``MASTER_ADMIN_USERNAMES``).
+
+Previously the helper accepted any ``is_admin`` session.  Because
+``POST /password-resets/{id}/approve`` returns the one-time recovery code to
+its caller, that made full account takeover — including takeover of the master
+administrator account — a single request for any ordinary admin.  The same flag
+also allowed role changes, account disabling, session termination, audit-log
+reads and system-config writes, i.e. a complete vertical privilege escalation.
 """
 from __future__ import annotations
 
@@ -31,24 +38,48 @@ router = APIRouter(prefix="/master-admin/api", tags=["master-admin"])
 # ── Authorization Helper ──────────────────────────────────────
 
 def _master_admin(request: Request):
+    """Return the master-admin username or raise 401/403.
+
+    Only ``is_master_admin`` is accepted — a regular ``is_admin`` session must
+    not be able to reach this control plane (see module docstring).
+    """
     username = str(request.session.get("username") or "").strip()
-    is_ma = request.session.get("is_master_admin") is True
-    is_admin = request.session.get("is_admin") is True
     if not username:
         raise HTTPException(status_code=401, detail="ورود لازم است.")
-    if not (is_ma or is_admin):
+    if request.session.get("is_master_admin") is not True:
+        _log_denied_master_admin(request, username)
         raise HTTPException(status_code=403, detail="دسترسی مدیریت اصلی لازم است.")
     return username
 
 
+def _log_denied_master_admin(request: Request, username: str) -> None:
+    """Audit every rejected attempt to use the master-admin control plane."""
+    try:
+        from app.services.audit import create_security_event
+
+        create_security_event(
+            event_type="authorization",
+            severity="high",
+            username=username,
+            ip_address=_client_ip(request),
+            description="non-master admin attempted to access master-admin API",
+            metadata={"path": str(request.url.path), "method": request.method},
+        )
+    except Exception:
+        pass
+
+
 def _client_ip(request: Request) -> str:
-    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
-        request.client.host if request.client else "unknown"
-    )
+    """Trustworthy client address (validated ``X-Forwarded-For``)."""
+    from app.core.net import client_ip
+
+    return client_ip(request)
 
 
 def _user_agent(request: Request) -> str:
-    return request.headers.get("user-agent", "")[:500]
+    from app.core.net import user_agent
+
+    return user_agent(request)
 
 
 def _dict_rows(cursor) -> list[dict]:
@@ -212,7 +243,9 @@ async def list_audit_logs(
         # Page
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM audit_logs{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT event_id, event_type, action, username, role, module, resource_type,
+                       resource_id, request_id, session_id, ip_address, status, severity, created_at
+                FROM audit_logs{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = [_serialize(r) for r in _dict_rows(cur)]
@@ -237,7 +270,13 @@ async def get_audit_event(request: Request, event_id: str):
     conn = db_connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM audit_logs WHERE event_id = ?", (event_id,))
+        cur.execute(
+            """SELECT event_id, event_type, action, username, role, module, resource_type,
+                      resource_id, request_id, session_id, ip_address, user_agent, status,
+                      severity, before_data, after_data, metadata, error_id, created_at
+               FROM audit_logs WHERE event_id = ?""",
+            (event_id,),
+        )
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="رویداد یافت نشد.")
@@ -322,23 +361,31 @@ async def get_user_detail(request: Request, username: str):
         columns = [c[0] for c in cur.description]
         user_data = _serialize(dict(zip(columns, row)))
 
-        # Recent audit events
+        # Recent audit events (explicit columns — never SELECT *)
         cur.execute(
-            "SELECT TOP 50 * FROM audit_logs WHERE username = ? ORDER BY created_at DESC",
+            """SELECT TOP 50 event_id, event_type, action, module, resource_type,
+                      resource_id, status, severity, ip_address, created_at
+               FROM audit_logs WHERE username = ? ORDER BY created_at DESC""",
             (username.strip(),),
         )
         user_data["recent_audit"] = [_serialize(r) for r in _dict_rows(cur)]
 
-        # Sessions
+        # Sessions (no session_key in the detail payload: the opaque key is only
+        # needed by the session list where the terminate action lives)
         cur.execute(
-            "SELECT TOP 20 * FROM user_sessions WHERE username = ? ORDER BY login_at DESC",
+            """SELECT TOP 20 id, username, ip_address, user_agent, login_at,
+                      last_activity, logout_at, is_active, terminated_by
+               FROM user_sessions WHERE username = ? ORDER BY login_at DESC""",
             (username.strip(),),
         )
         user_data["sessions"] = [_serialize(r) for r in _dict_rows(cur)]
 
-        # Password reset history
+        # Password reset history — deliberately excludes recovery_code so the
+        # code digest is not exposed through the API.
         cur.execute(
-            "SELECT TOP 10 * FROM password_reset_requests WHERE username = ? ORDER BY created_at DESC",
+            """SELECT TOP 10 request_id, username, ip_address, status, code_attempts,
+                      max_attempts, approved_by, approved_at, completed_at, created_at
+               FROM password_reset_requests WHERE username = ? ORDER BY created_at DESC""",
             (username.strip(),),
         )
         user_data["password_resets"] = [_serialize(r) for r in _dict_rows(cur)]
@@ -370,14 +417,21 @@ async def toggle_user_status(request: Request, username: str):
             (new_status, username.strip()),
         )
         conn.commit()
+        # Disabling an account must also invalidate the sessions that account
+        # already holds (a signed cookie cannot be revoked otherwise).
+        revoked = 0
+        if new_status != "active":
+            from app.core.sessions import revoke_user_sessions
+
+            revoked = revoke_user_sessions(username.strip(), admin)
         log_admin_action(
             admin_username=admin, action="toggle_user_status",
             target_username=username.strip(), target_type="user",
             description=f"تغییر وضعیت به {new_status}",
-            before_data={"is_active": current}, after_data={"is_active": new_status},
+            before_data={"is_active": current}, after_data={"is_active": new_status, "sessions_revoked": revoked},
             ip_address=_client_ip(request),
         )
-        return JSONResponse(content={"success": True, "new_status": new_status})
+        return JSONResponse(content={"success": True, "new_status": new_status, "sessions_revoked": revoked})
     except HTTPException:
         raise
     except Exception as e:
@@ -407,14 +461,19 @@ async def change_user_role(request: Request, username: str):
             (new_role, username.strip()),
         )
         conn.commit()
+        # A role change must not keep the previous privilege set alive inside
+        # sessions that were issued for the old role.
+        from app.core.sessions import revoke_user_sessions
+
+        revoked = revoke_user_sessions(username.strip(), admin)
         log_admin_action(
             admin_username=admin, action="change_role",
             target_username=username.strip(), target_type="user",
             description=f"تغییر نقش از {old_role} به {new_role}",
-            before_data={"role": old_role}, after_data={"role": new_role},
+            before_data={"role": old_role}, after_data={"role": new_role, "sessions_revoked": revoked},
             ip_address=_client_ip(request),
         )
-        return JSONResponse(content={"success": True})
+        return JSONResponse(content={"success": True, "sessions_revoked": revoked})
     except HTTPException:
         raise
     except Exception as e:
@@ -452,7 +511,9 @@ async def list_sessions(
 
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM user_sessions{clause} ORDER BY login_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT id, session_key, username, ip_address, user_agent, login_at,
+                       last_activity, logout_at, is_active, terminated_by
+                FROM user_sessions{clause} ORDER BY login_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = [_serialize(r) for r in _dict_rows(cur)]
@@ -579,7 +640,9 @@ async def list_security_events(
 
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM security_events{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT event_id, event_type, severity, username, ip_address, description,
+                       status, resolved_by, resolved_at, created_at
+                FROM security_events{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = [_serialize(r) for r in _dict_rows(cur)]
@@ -652,7 +715,9 @@ async def list_errors(
 
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM system_errors{clause} ORDER BY first_seen DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT error_id, error_type, severity, message, endpoint, method, username,
+                       ip_address, occurrences, status, resolved_at, first_seen, last_seen
+                FROM system_errors{clause} ORDER BY first_seen DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = [_serialize(r) for r in _dict_rows(cur)]
@@ -722,7 +787,9 @@ async def list_admin_actions(
 
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM admin_actions{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT action_id, admin_username, action, target_username, target_type,
+                       target_id, description, ip_address, created_at
+                FROM admin_actions{clause} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = [_serialize(r) for r in _dict_rows(cur)]

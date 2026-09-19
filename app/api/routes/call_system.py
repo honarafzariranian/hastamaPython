@@ -125,6 +125,10 @@ display_manager = DisplayManager()
 # ---------------------------------------------------------------------------
 MAX_DISPLAY_SLOTS = 5
 
+# Resource limits for the unauthenticated display socket.
+MAX_WS_CONNECTIONS = 200
+MAX_WS_FRAME_CHARS = 2048
+
 
 def _queue_add(conn, number: str, department: str, username: str) -> None:
     """Add a number to the display queue, shifting older entries."""
@@ -207,6 +211,49 @@ def _actor(request: Request, admin: bool = False, required: bool = True) -> str:
     return username or "guest"
 
 
+def _require_admin(request: Request) -> str:
+    """Administrator-only helper for slide management."""
+    username = str(request.session.get("username") or "").strip()
+    if not username:
+        raise HTTPException(status_code=401, detail="برای ادامه وارد سامانه شوید.")
+    if request.session.get("is_admin") is not True:
+        raise HTTPException(status_code=403, detail="دسترسی مدیریت لازم است.")
+    return username
+
+
+# The kiosk endpoints (create/repeat call, waiting queue) intentionally work
+# without a login for the reception desk.  Because they are CSRF-exempt in the
+# middleware, every one of them performs an explicit Origin check and is rate
+# limited: a cross-site page can no longer drive them from a logged-in browser,
+# and an abusive client cannot flood the TV displays or the waiting queue.
+CALL_SYSTEM_WRITE_LIMIT = 120      # per IP / minute
+CALL_SYSTEM_WRITE_WINDOW = 60
+
+
+def _guard_kiosk_write(request: Request, bucket: str) -> None:
+    from app.core.net import client_ip, origin_is_same_site
+    from app.core.rate_limit import limiter
+
+    if not origin_is_same_site(request):
+        logger.warning("call-system write rejected for cross-site origin: %s", request.headers.get("origin"))
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
+    if not limiter.allow(
+        f"{bucket}:{client_ip(request)}",
+        limit=CALL_SYSTEM_WRITE_LIMIT,
+        window_seconds=CALL_SYSTEM_WRITE_WINDOW,
+    ):
+        raise HTTPException(status_code=429, detail="تعداد درخواست‌ها بیش از حد مجاز است.")
+
+
+def _clean_department(value) -> str:
+    from app.core.validation import clean_display_text
+
+    try:
+        return clean_display_text(value, max_length=100, field="بخش") or "نمونه‌گیری"
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 def _dict_rows(cursor) -> list[dict]:
     columns = [item[0] for item in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -268,9 +315,10 @@ class CallInput(BaseModel):
 @router.post("/calls")
 async def create_call(request: Request, payload: CallInput):
     """Create a new reception call and broadcast to all TV displays."""
+    _guard_kiosk_write(request, "calls-create")
     username = _actor(request, admin=True, required=False)
     number = _validate_reception_number(payload.reception_number)
-    department = payload.department.strip() or "نمونه‌گیری"
+    department = _clean_department(payload.department)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -320,6 +368,7 @@ async def create_call(request: Request, payload: CallInput):
 @router.post("/calls/repeat")
 async def repeat_last_call(request: Request):
     """Repeat the most recent non-test call."""
+    _guard_kiosk_write(request, "calls-repeat")
     username = _actor(request, admin=True, required=False)
 
     conn = _get_connection()
@@ -384,6 +433,7 @@ async def repeat_last_call(request: Request):
 @router.post("/calls/test-display")
 async def test_display(request: Request):
     """Send a test event to TV displays (no database record)."""
+    _guard_kiosk_write(request, "calls-test")
     _actor(request, admin=True, required=False)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
@@ -410,6 +460,7 @@ async def test_display(request: Request):
 @router.post("/calls/test-voice")
 async def test_voice(request: Request):
     """Send a voice-only test event to TV displays."""
+    _guard_kiosk_write(request, "calls-test")
     _actor(request, admin=True, required=False)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
@@ -436,6 +487,7 @@ async def test_voice(request: Request):
 @router.post("/calls/test-audio")
 async def test_audio(request: Request, number: int = 1):
     """Send a test call with a specific number to test local MP3 audio playback."""
+    _guard_kiosk_write(request, "calls-test")
     _actor(request, admin=True, required=False)
 
     if number < 1 or number > 2000:
@@ -473,14 +525,18 @@ async def test_audio(request: Request, number: int = 1):
 
 @router.get("/calls/audio-status")
 async def audio_status():
-    """Check how many audio files exist in the audio directory."""
+    """Check how many audio files exist in the audio directory.
+
+    The response intentionally no longer contains the absolute filesystem path:
+    this endpoint is reachable without a session and the path disclosed internal
+    server layout (previously it returned e.g. ``/srv/hastama/app/static/...``).
+    """
     audio_dir = Path(__file__).resolve().parents[3] / "app" / "static" / "audio" / "sample_call" / "fa-IR-DilaraNeural"
     if not audio_dir.exists():
         return JSONResponse({
             "success": True,
             "total_files": 0,
             "total_expected": 2000,
-            "directory": str(audio_dir),
             "exists": False,
         })
 
@@ -490,7 +546,7 @@ async def audio_status():
         "success": True,
         "total_files": count,
         "total_expected": 2000,
-        "directory": str(audio_dir),        "exists": True,
+        "exists": True,
     })
 
 
@@ -539,12 +595,16 @@ async def get_waiting_queue():
 @router.post("/calls/waiting-queue")
 async def add_to_waiting_queue(request: Request):
     """Add a number to the waiting queue."""
+    _guard_kiosk_write(request, "calls-waiting-add")
     username = _actor(request, admin=True, required=False)
-    body = await request.json()
-    number = str(body.get("number", "")).strip()
-    department = str(body.get("department", "نمونه‌گیری")).strip()
-    if not number:
-        raise HTTPException(status_code=422, detail="شماره پذیرش را وارد کنید.")
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="داده نامعتبر.")
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="داده نامعتبر.")
+    number = _validate_reception_number(str(body.get("number", "")))
+    department = _clean_department(body.get("department", "نمونه‌گیری"))
 
     conn = _get_connection()
     try:
@@ -884,10 +944,8 @@ async def upload_slide(request: Request, file: UploadFile = File(...)):
 
 @router.put("/calls/slides/{slide_id}/toggle")
 async def toggle_slide(request: Request, slide_id: int):
-    """Toggle active/inactive status of a slide."""
-    username = request.session.get("username")
-    if not username:
-        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
+    """Toggle active/inactive status of a slide (administrators only)."""
+    _require_admin(request)
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -903,10 +961,8 @@ async def toggle_slide(request: Request, slide_id: int):
 
 @router.delete("/calls/slides/{slide_id}")
 async def delete_slide(request: Request, slide_id: int):
-    """Delete a slide from database and disk."""
-    username = request.session.get("username")
-    if not username:
-        return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
+    """Delete a slide from database and disk (administrators only)."""
+    _require_admin(request)
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -938,21 +994,41 @@ async def delete_slide(request: Request, slide_id: int):
 
 @router.websocket("/ws/call-display")
 async def call_display_ws(websocket: WebSocket):
-    """WebSocket endpoint for TV display pages — no authentication required.
+    """WebSocket endpoint for TV display pages.
 
-    The first message after connect may be a JSON `{"tag": "preview"}` or
-    `{"tag": "display"}`.  If omitted the connection is treated as a real
-    TV display.
+    The displays are unauthenticated by design (a TV has no user session), so
+    the security boundary is the LAN plus the browser origin:
+
+    * the handshake is rejected when the ``Origin`` header is present and does
+      not match the ``Host`` — a random web page on an employee workstation can
+      no longer subscribe to the display feed or trigger broadcasts;
+    * at most :data:`MAX_WS_CONNECTIONS` sockets are accepted at once, so an
+      unauthenticated client cannot exhaust server resources;
+    * inbound frames are size and rate limited and only the documented
+      ``audio_activated`` message type is re-broadcast.
     """
+    if not _ws_origin_allowed(websocket):
+        logger.warning("websocket handshake rejected: cross-site origin %s", websocket.headers.get("origin"))
+        await websocket.close(code=1008)
+        return
+
+    if display_manager.count >= MAX_WS_CONNECTIONS:
+        logger.warning("websocket handshake rejected: connection limit reached")
+        await websocket.close(code=1013)
+        return
+
     tag = 'display'          # default: real TV display
     await display_manager.connect(websocket, tag=tag)
     try:
         # Check if the first message declares a tag
         first = await websocket.receive_text()
+        if len(first) > MAX_WS_FRAME_CHARS:
+            await websocket.close(code=1009)
+            return
         try:
             msg = json.loads(first)
             if isinstance(msg, dict) and 'tag' in msg:
-                tag = msg['tag']
+                tag = msg['tag'] if msg['tag'] in ('display', 'preview') else 'display'
                 with display_manager._lock:
                     display_manager._tags[id(websocket)] = tag
                 logger.info("display tag updated to: %s", tag)
@@ -966,6 +1042,9 @@ async def call_display_ws(websocket: WebSocket):
 
         while True:
             data = await websocket.receive_text()
+            if len(data) > MAX_WS_FRAME_CHARS:
+                await websocket.close(code=1009)
+                break
             if data == "ping":
                 await websocket.send_text(json.dumps({"type": "pong"}))
             else:
@@ -980,6 +1059,24 @@ async def call_display_ws(websocket: WebSocket):
         display_manager.disconnect(websocket)
     except Exception:
         display_manager.disconnect(websocket)
+
+
+def _ws_origin_allowed(websocket: WebSocket) -> bool:
+    """Reject cross-site WebSocket handshakes (CSWSH)."""
+    origin = websocket.headers.get("origin")
+    if not origin:
+        # Non-browser client (the TV display uses a browser, but scripts and
+        # health checks may not send Origin).
+        return True
+    if origin == "null":
+        return False
+    host = websocket.headers.get("host") or ""
+    try:
+        from urllib.parse import urlparse
+
+        return urlparse(origin).netloc.split(":")[0].lower() == host.split(":")[0].lower()
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------

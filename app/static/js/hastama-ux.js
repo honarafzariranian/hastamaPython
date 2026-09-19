@@ -323,6 +323,9 @@
        CSRF TOKEN HELPER
        ────────────────────────────────────────────────────────────────────── */
     ux.getCsrfToken = function () {
+        if (window.HastamaCSRF && typeof window.HastamaCSRF.getToken === 'function') {
+            return window.HastamaCSRF.getToken();
+        }
         var match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
         return match ? decodeURIComponent(match[1]) : '';
     };
@@ -337,7 +340,7 @@
        Wraps native fetch to inject X-CSRF-Token on state-changing methods
        for ALL fetch calls site-wide (not just HastamaUX.fetch).
        ────────────────────────────────────────────────────────────────────── */
-    if (typeof window.fetch === 'function') {
+    if (typeof window.fetch === 'function' && !window.HastamaCSRF) {
         var _origFetch = window.fetch;
         window.fetch = function (input, init) {
             init = init || {};

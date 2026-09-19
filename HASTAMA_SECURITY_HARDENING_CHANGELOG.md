@@ -1,5 +1,65 @@
 # Hastama Security Hardening Changelog
 
+## Stage 4 — Independent Re-audit and Remediation (2026-09-18 → 2026-09-19)
+
+Independent verification pass over the whole repository (findings F-01 … F-19 and
+the residual risks RR-01 … RR-18 are defined in
+`HASTAMA_SECURITY_FINAL_VERIFICATION.md`). Every entry below was verified by
+executing the code, not by inspection alone.
+
+### CRITICAL / HIGH
+
+| Issue | File(s) | Change | Verification |
+|-------|---------|--------|--------------|
+| F-01 plaintext password export committed | `exported_data.sql` | Quarantined outside the repository (SHA-256 recorded), `.gitignore` extended with `exported_data.sql`, `*.dump`, `*.sql.gz` | hash + `git ls-files` empty |
+| F-03 anonymous employee reports | `app/main.py` `/get_hourly_pass_report`, `/get_overtime_report` | `_require_admin` before parsing the body (they accepted `username="all_users"`) | 4 new tests + anonymous probe (401/403) |
+| F-14 no backup capability | — | Not fixable in code; documented as a blocking condition | deployment checklist 3.3/3.4, DBA D-8 |
+| F-08 pdfkit CVE-2025-26240 (no upstream fix) | `app/main.py::download_pdf` | `from_string` replaced by a temp file + `from_file`, stylesheet inlined, JavaScript and local file access disabled, temp file deleted, missing template → 503 | 4 new tests + stubbed-pdfkit end-to-end run |
+
+### MEDIUM
+
+| Issue | File(s) | Change | Verification |
+|-------|---------|--------|--------------|
+| F-05 night-shift attendance state machine | `app/main.py` check-in/check-out | Open check-in is searched across days; a second check-in is refused; check-out closes the open record | 4 previously failing tests now pass (19/19 attendance tests) |
+| F-04 stored XSS in report renderers | `app/static/js/final-report-script.js`, `leave-`, `hourlypass-`, `overtime-report-script.js`, new `dom-escape.js`, 4 templates | DB values escaped at every render site | static assertions + Node harness |
+| F-06 recovery-answer enumeration | `app/services/audit.py::verify_recovery_code` | Reason-specific answers now require a matching code | 2 new tests |
+| F-07 internal error helper raised `NameError` | `app/main.py` | Module logger defined; generic message returned | 2 new tests |
+| F-10 CSRF broke the bridge agent and captcha refresh | `app/main.py` `CSRF_EXEMPT_PREFIXES` | Exemptions for `/api/araz/`, `/captcha/`, `/public/`, each Origin-checked | 10 new tests |
+| F-09 API docs exposed | `app/main.py` | `/docs`, `/redoc`, `/openapi.json` gated behind `HASTAMA_ENABLE_DOCS`/`DEBUG` | probe → 404 |
+| F-18 session middlewares failed open | `app/core/session_cookie.py` | Dual signer (installed Starlette first, legacy fallback) | pinned by test against the installed version |
+| F-19 WebSocket accepted any origin | `app/api/routes/call_system.py` | Same-site Origin required, size limit, connection cap | baseline failing test now passes |
+| F-13 empty bridge secret in shipped config | `tools/bridge_config.json`, `.env.example` | Documented; runtime fails closed (503) | `TestBridgeSync` |
+
+### LOW / defence in depth
+
+| Issue | File(s) | Change |
+|-------|---------|--------|
+| F-11 table name interpolated into SQL | `app/main.py` | Allow-list `_NOTIFY_STATUS_TABLES`, refusal logged |
+| F-12 `tempexport.py` hard-coded DSN + f-string SQL + `SELECT *` | `app/tempexport.py` | Documented as a must-not-ship script (produced F-01) |
+| F-15 missing PDF template | `app/main.py` | Explicit 503 with a log message instead of an exception |
+| Markup in employee free text | `app/core/validation.py`, `/submit_leave`, `/submit_overtime` | `reject_markup` (rejects `<`, `>`, NUL) |
+| Committed secrets scan | whole repo | Pattern scan performed: no live credentials in tracked text files |
+
+### Infrastructure / documentation
+
+| Item | File(s) | Change |
+|------|---------|--------|
+| Reverse proxy hardening | `Caddyfile` | Rewritten: internal TLS, 12 MB body cap, header stripping, HSTS, JSON access log, commented rate-limit block |
+| Secret inventory | `.env.example` | Every required secret with a generation command and fail-closed notes |
+| Container guidance | `docker-compose.yml` | Loopback binding, `--proxy-headers`, `TRUSTED_PROXY_IPS` notes |
+| Profile image upload | `app/main.py` | Username sanitised (`[A-Za-z0-9_.-]`, 64 chars) + abspath containment |
+| Deliverables | `HASTAMA_SECURITY_FINAL_VERIFICATION.md`, `docs/security/*` | 10 documents (verification report, matrices, threat model, checklists, evidence, compliance) |
+| Test suite | `tests/test_security_hardening.py` | 112 → 137 behavioural security tests |
+
+### Deliberately NOT done
+
+* No test was deleted, skipped or weakened to make the suite green; the 12
+  remaining failures are pre-existing and are classified in
+  `docs/security/TEST_EVIDENCE_SUMMARY.md`.
+* No control was disabled to "fix" an integration, and no severity was lowered
+  to improve the verdict.
+
+
 ## Stage 3 — Final Hardening (2026-09-14)
 
 ### CRITICAL Fixes
