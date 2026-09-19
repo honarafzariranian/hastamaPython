@@ -1888,43 +1888,32 @@
 
             <div id="hozoor-report-tab" class="attendance-tab-content active" role="tabpanel">
 
-                <!-- کارت فرم گزارش -->
+                <!-- پارامترهای گزارش -->
                 <div class="hozoor-report-card">
-                    <form id="gozareshHozoor" class="hozoor-report-form">
-                        <div class="hozoor-report-form__field">
-                            <label class="hozoor-report-form__label" for="usernameGozareshHozoor">انتخاب کاربر</label>
-                            <div class="hozoor-report-form__select-wrap">
-                                <svg class="hozoor-report-form__select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <select id="usernameGozareshHozoor" name="usernameGozareshHozoor" required class="hozoor-report-form__select">
-                                    <option value="" disabled selected>انتخاب کنید</option>
-                                    <option value="all_users">همه کاربران</option>
-                                    {% for user in users if (user.is_active or 'active') == 'active' %}
-                                    <option value="{{ user.username }}">{{ user.username }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                    <div class="hozoor-config-title">پارامترهای گزارش</div>
+                    <div class="hozoor-config-grid">
+                        <div class="hozoor-config-item">
+                            <span>انتخاب کاربر</span>
+                            <select id="usernameGozareshHozoor" name="usernameGozareshHozoor" required>
+                                <option value="" disabled selected>انتخاب کنید</option>
+                                <option value="all_users">همه کاربران</option>
+                                {% for user in users if (user.is_active or 'active') == 'active' %}
+                                <option value="{{ user.username }}">{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <div class="hozoor-report-form__field">
-                            <label class="hozoor-report-form__label" for="start_date_hozoor">از تاریخ</label>
-                            <div class="hozoor-report-form__date-wrap">
-                                <svg class="hozoor-report-form__date-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-                                <input type="text" id="start_date_hozoor" name="start_date" required class="hozoor-report-form__input" placeholder="۱۴۰۵/۰۱/۰۱" autocomplete="off">
-                            </div>
+                        <div class="hozoor-config-item">
+                            <span>از تاریخ</span>
+                            <input type="text" id="start_date_hozoor" name="start_date" required placeholder="۱۴۰۵/۰۱/۰۱" autocomplete="off">
                         </div>
-                        <div class="hozoor-report-form__field">
-                            <label class="hozoor-report-form__label" for="end_date_hozoor">تا تاریخ</label>
-                            <div class="hozoor-report-form__date-wrap">
-                                <svg class="hozoor-report-form__date-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-                                <input type="text" id="end_date_hozoor" name="end_date" required class="hozoor-report-form__input" placeholder="۱۴۰۵/۰۱/۰۱" autocomplete="off">
-                            </div>
+                        <div class="hozoor-config-item">
+                            <span>تا تاریخ</span>
+                            <input type="text" id="end_date_hozoor" name="end_date" required placeholder="۱۴۰۵/۰۱/۰۱" autocomplete="off">
                         </div>
-                        <div class="hozoor-report-form__field hozoor-report-form__field--btn">
-                            <button type="button" id="extractButton" class="hozoor-report-form__submit">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
-                                <span>تهیه گزارش</span>
-                            </button>
+                        <div class="hozoor-config-item hozoor-config-actions">
+                            <button type="button" id="extractButton">تهیه گزارش</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 <!-- جدول نتایج -->
@@ -2755,7 +2744,7 @@
             fetch('/registration/admin/requests/' + requestId)
                 .then(function(r) { return r.json(); })
                 .then(function(res) {
-                    if (!res.success) { closeRegDetailModal(); alert(res.message || 'خطا'); return; }
+                    if (!res.success) { closeRegDetailModal(); showSystemError(res.message || 'خطا'); return; }
                     var d = res.data;
                     var dateStr = d.created_at ? new Date(d.created_at).toLocaleString('fa-IR') : '—';
                     var statusMap = { pending: 'انتظار بررسی', approved: 'تأیید شده', rejected: 'رد شده' };

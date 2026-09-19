@@ -356,6 +356,10 @@
         }
         .reg-section { padding: 14px; }
     }
+    @keyframes toastIn {
+        from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
     </style>
 </head>
 
@@ -519,6 +523,18 @@
     <script>
     (function() {
         'use strict';
+
+        // ── Simple toast notification ──────────────────────
+        function showRegError(msg) {
+            var existing = document.getElementById('regToast');
+            if (existing) existing.remove();
+            var toast = document.createElement('div');
+            toast.id = 'regToast';
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;font-family:Vazir,sans-serif;z-index:99999;box-shadow:0 8px 24px rgba(239,68,68,0.3);animation:toastIn 0.3s ease;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;';
+            document.body.appendChild(toast);
+            setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(function(){ toast.remove(); }, 300); }, 4000);
+        }
 
         var API = '/registration';
         var usernameTimer = null;
@@ -698,7 +714,7 @@
             if (data.password !== pw2Input.value) errors.push('رمز عبور و تکرار آن مطابقت ندارند.');
             if (!data.department) errors.push('بخش فعالیت الزامی است.');
 
-            if (errors.length) { alert(errors.join('\n')); return; }
+            if (errors.length) { showRegError(errors.join(' | ')); return; }
 
             var submitBtn = document.getElementById('regSubmit');
             submitBtn.disabled = true;
@@ -716,13 +732,13 @@
                     document.getElementById('regSuccess').style.display = 'block';
                     document.getElementById('regRequestId').textContent = res.request_id;
                 } else {
-                    alert((res.errors || []).join('\n') || res.message || 'خطا در ثبت درخواست.');
+                    showRegError((res.errors || []).join(' | ') || res.message || 'خطا در ثبت درخواست.');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'ثبت درخواست';
                 }
             })
             .catch(function() {
-                alert('خطا در اتصال به سرور.');
+                showRegError('خطا در اتصال به سرور.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'ثبت درخواست';
             });

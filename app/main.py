@@ -970,9 +970,9 @@ async def user_panel(request: Request):
                 SELECT jalali_year, jalali_month, start_day, end_day,
                        shanbeh, yekshanbeh, doshanbeh, seshanbeh, chaharshanbeh, panjshanbeh, jomeh
                 FROM shiftha
-                WHERE username = ?
+                WHERE REPLACE(REPLACE(LTRIM(RTRIM(username)), N'ي', N'ی'), N'ك', N'ک') = ?
                 ORDER BY jalali_year, jalali_month, start_day
-            """, (username,))
+            """, (_normalize_fa_username(username),))
             shift_rows = [{
                 'jalali_year': r[0], 'jalali_month': r[1], 'start_day': r[2], 'end_day': r[3],
                 'shanbeh': r[4], 'yekshanbeh': r[5], 'doshanbeh': r[6], 'seshanbeh': r[7],
@@ -2767,6 +2767,25 @@ SHIFT_DAY_COLUMNS = {
 }
 
 
+def _normalize_fa_username(value) -> str:
+    """Normalize Persian/Arabic look-alike letters and padding in usernames.
+
+    Users type ی/ک (Persian) while some inputs/DB rows carry ي/ك (Arabic).
+    Shifts are matched by username, so both sides must be normalized or
+    'آی تی' never equals stored 'آي تي'.
+    """
+    s = str(value or "")
+    s = s.replace("\u064a", "\u06cc")  # Arabic Yeh ي -> Persian Yeh ی
+    s = s.replace("\u0643", "\u06a9")  # Arabic Kaf ك -> Persian Kaf ک
+    s = s.replace("\u200c", " ")       # ZWNJ -> space
+    return " ".join(s.split())
+
+
+# SQL fragment that normalizes a username column/parameter the same way.
+# Used in WHERE clauses so legacy rows with Arabic letters still match.
+_FA_USERNAME_SQL = "REPLACE(REPLACE(LTRIM(RTRIM({expr})), N'ي', N'ی'), N'ك', N'ک')"
+
+
 @app.get("/get_shifts/{username}/{year}/{month}")
 async def get_shifts(request: Request, username: str, year: int, month: int):
     auth_err = _require_admin(request)
@@ -2776,11 +2795,14 @@ async def get_shifts(request: Request, username: str, year: int, month: int):
         conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
+        username = _normalize_fa_username(username)
+
         cursor.execute("""
             SELECT id, start_day, end_day, shanbeh, yekshanbeh, doshanbeh, seshanbeh,
                    chaharshanbeh, panjshanbeh, jomeh, title
             FROM shiftha
-            WHERE username = ? AND jalali_year = ? AND jalali_month = ?
+            WHERE REPLACE(REPLACE(LTRIM(RTRIM(username)), N'ي', N'ی'), N'ك', N'ک') = ?
+              AND jalali_year = ? AND jalali_month = ?
             ORDER BY start_day
         """, (username, year, month))
         rows = cursor.fetchall()
@@ -2824,6 +2846,7 @@ async def add_shift(request: Request):
             return JSONResponse(content={'success': False, 'message': 'اطلاعات ارسالی نامعتبر است'})
 
         days = {col: (data.get(col) or None) for col in SHIFT_DAY_COLUMNS.values()}
+        username = _normalize_fa_username(username)
 
         conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
@@ -2831,7 +2854,8 @@ async def add_shift(request: Request):
         # جلوگیری از همپوشانی بازه‌ها برای همین کاربر و همین ماه شمسی
         cursor.execute("""
             SELECT COUNT(*) FROM shiftha
-            WHERE username = ? AND jalali_year = ? AND jalali_month = ?
+            WHERE REPLACE(REPLACE(LTRIM(RTRIM(username)), N'ي', N'ی'), N'ك', N'ک') = ?
+              AND jalali_year = ? AND jalali_month = ?
               AND start_day <= ? AND end_day >= ?
         """, (username, year, month, end_day, start_day))
         if cursor.fetchone()[0] > 0:
@@ -2888,7 +2912,8 @@ async def update_shift(request: Request):
 
         cursor.execute("""
             SELECT COUNT(*) FROM shiftha
-            WHERE username = ? AND jalali_year = ? AND jalali_month = ?
+            WHERE REPLACE(REPLACE(LTRIM(RTRIM(username)), N'ي', N'ی'), N'ك', N'ک') = ?
+              AND jalali_year = ? AND jalali_month = ?
               AND id <> ? AND start_day <= ? AND end_day >= ?
         """, (username, year, month, shift_id, end_day, start_day))
         if cursor.fetchone()[0] > 0:
@@ -2956,7 +2981,7 @@ async def get_active_shifts(request: Request):
         conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, start_day, end_day, title,
+            SELECT id, username, jalali_year, jalali_month, start_day, end_day, title,
                    shanbeh, yekshanbeh, doshanbeh, seshanbeh,
                    chaharshanbeh, panjshanbeh, jomeh
             FROM shiftha
@@ -2967,11 +2992,12 @@ async def get_active_shifts(request: Request):
         rows = cursor.fetchall()
 
         shifts = [{
-            'id': r[0], 'username': r[1], 'start_day': r[2], 'end_day': r[3],
-            'title': r[4] or '',
-            'shanbeh': r[5] or '', 'yekshanbeh': r[6] or '', 'doshanbeh': r[7] or '',
-            'seshanbeh': r[8] or '', 'chaharshanbeh': r[9] or '',
-            'panjshanbeh': r[10] or '', 'jomeh': r[11] or ''
+            'id': r[0], 'username': r[1], 'jalali_year': r[2], 'jalali_month': r[3],
+            'start_day': r[4], 'end_day': r[5],
+            'title': r[6] or '',
+            'shanbeh': r[7] or '', 'yekshanbeh': r[8] or '', 'doshanbeh': r[9] or '',
+            'seshanbeh': r[10] or '', 'chaharshanbeh': r[11] or '',
+            'panjshanbeh': r[12] or '', 'jomeh': r[13] or ''
         } for r in rows]
 
         return JSONResponse(content={'success': True, 'shifts': shifts, 'today': str(day), 'year': year, 'month': month})
@@ -4066,9 +4092,9 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             SELECT jalali_year, jalali_month, start_day, end_day,
                    shanbeh, yekshanbeh, doshanbeh, seshanbeh, chaharshanbeh, panjshanbeh, jomeh
             FROM shiftha
-            WHERE username = ?
+            WHERE REPLACE(REPLACE(LTRIM(RTRIM(username)), N'ي', N'ی'), N'ك', N'ک') = ?
             ORDER BY jalali_year, jalali_month, start_day
-        """, (username,))
+        """, (_normalize_fa_username(username),))
         shift_rows = [{
             'jalali_year': r[0], 'jalali_month': r[1], 'start_day': r[2], 'end_day': r[3],
             'shanbeh': r[4], 'yekshanbeh': r[5], 'doshanbeh': r[6], 'seshanbeh': r[7],

@@ -5267,7 +5267,8 @@ function loadShifts() {
 
     resetShiftForm();
 
-    fetch(`/get_shifts/${encodeURIComponent(username)}/${year}/${month}`)
+    const url = `/get_shifts/${encodeURIComponent(username)}/${year}/${month}`;
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
@@ -5401,8 +5402,14 @@ function saveShift() {
         });
 }
 
-function deleteShift(shiftId) {
-    if (!confirm('آیا از حذف این بازه‌ی شیفت مطمئن هستید؟')) return;
+async function deleteShift(shiftId) {
+    var confirmed = await HastamaUX.confirm({
+        title: 'حذف شیفت',
+        message: 'آیا از حذف این بازه‌ی شیفت مطمئن هستید؟',
+        confirmText: 'حذف',
+        danger: true
+    });
+    if (!confirmed) return;
 
     fetch(`/delete_shift/${shiftId}`, { method: 'POST' })
         .then(response => response.json())

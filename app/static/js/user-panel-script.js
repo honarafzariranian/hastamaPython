@@ -2499,8 +2499,14 @@ document.addEventListener("DOMContentLoaded", function () {
 // پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل
 // پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل// پیام هشدار برای حذف پروفایل
 
-function confirmDelete() {
-    if (confirm("آیا از حذف عکس مطمئن هستید؟")) {
+async function confirmDelete() {
+    var confirmed = await HastamaUX.confirm({
+        title: 'حذف عکس پروفایل',
+        message: 'آیا از حذف عکس مطمئن هستید؟',
+        confirmText: 'حذف',
+        danger: true
+    });
+    if (confirmed) {
         document.getElementById("deleteForm").submit();
     }
 }

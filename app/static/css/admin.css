@@ -5060,8 +5060,9 @@ form button:active {
 }
 
 .shift-tab-content.active {
-    display: block;
-    contain: layout style;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
 /* ── تب ۲: کارت‌های شیفت فعال ───────────────────────────────── */
@@ -5858,7 +5859,7 @@ form button:active {
     .shift-tabs { flex-wrap: wrap; gap: 2px; padding: 6px 8px 0; }
     .shift-tab-btn { padding: 10px 14px; font-size: 12px; }
     .shift-tab-btn svg { width: 14px; height: 14px; }
-    .shift-tab-content { padding: 14px 12px 12px; }
+    .shift-tab-content { padding: 14px 12px 12px; gap: 14px; }
     .shift-active-cards { grid-template-columns: 1fr; }
     .shift-active-card { padding: 12px 14px; }
 
@@ -11191,208 +11192,82 @@ body.reg-modal-open {
         grid-column: span 1;
     }
 }/* ═══════════════════════════════════════════════════════════════
-   گزارش ورود و خروج — طراحی مدرن
+   گزارش ورود و خروج — هماهنگ با vacation-config
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── کارت فرم ── */
 .hozoor-report-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    overflow: visible;
-    box-shadow: 0 4px 20px rgba(15,23,42,0.04);
-    margin-bottom: 20px;
-    animation: hozoorCardFadeIn 0.4s ease both;
-    position: relative;
-    z-index: 1;
-    direction: rtl;
-    text-align: right;
+    border: 1.5px solid #E6ECF2;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
 }
 
-@keyframes hozoorCardFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.hozoor-report-card__head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 24px 14px;
-    background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
-    border-bottom: 1px solid #e2e8f0;
-    border-radius: 18px 18px 0 0;
-    direction: rtl;
-}
-
-.hozoor-report-card__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-}
-
-.hozoor-report-card__icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.hozoor-report-card__title {
-    margin: 0;
-    font-size: 0.95rem;
+.hozoor-config-title {
+    font-size: 15px;
     font-weight: 800;
-    color: #0f172a;
+    color: #0B2A3B;
+    margin-bottom: 12px;
 }
 
-.hozoor-report-card__sub {
-    margin: 2px 0 0;
-    font-size: 0.75rem;
-    color: #64748b;
-}
-
-/* ── فرم ── */
-.hozoor-report-form {
+.hozoor-config-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    grid-template-columns: repeat(3, 1fr) auto;
     gap: 14px;
-    padding: 18px 24px 20px;
     align-items: end;
-    direction: rtl;
-    text-align: right;
 }
 
-.hozoor-report-form__field {
+.hozoor-config-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.hozoor-report-form__field--btn {
-    justify-content: flex-end;
-}
-
-.hozoor-report-form__label {
-    font-size: 0.72rem;
+.hozoor-config-item span {
+    font-size: 12.5px;
     font-weight: 700;
-    color: #475569;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #5C7285;
 }
 
-.hozoor-report-form__select-wrap,
-.hozoor-report-form__date-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-/* در حالت RTL آیکون سمت چپ قرار می‌گیرد */
-.hozoor-report-form__date-wrap .date-input-shell {
-    position: relative;
+.hozoor-config-item input,
+.hozoor-config-item select {
     width: 100%;
-}
-
-.hozoor-report-form__date-wrap .leave-date-picker {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 1200;
-}
-
-.hozoor-report-form__select-icon {
-    position: absolute;
-    right: 12px;
-    width: 16px;
-    height: 16px;
-    color: #94a3b8;
-    pointer-events: none;
-    transition: color 0.2s;
-}
-
-.hozoor-report-form__date-icon {
-    position: absolute;
-    left: 12px;
-    z-index: 1;
-    width: 16px;
-    height: 16px;
-    color: #94a3b8;
-    pointer-events: none;
-    transition: color 0.2s;
-}
-
-.hozoor-report-form__select {
-    width: 100%;
-    padding: 10px 36px 10px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.82rem;
+    padding: 9px 12px;
+    border: 1.5px solid #D8E1EA;
+    border-radius: 10px;
+    font: 700 14px 'Vazir', sans-serif;
+    color: #0B2A3B;
     background: #fff;
-    color: #334155;
-    cursor: pointer;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: left 12px center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.hozoor-report-form__select:focus,
-.hozoor-report-form__input:focus {
+.hozoor-config-item input:focus,
+.hozoor-config-item select:focus {
     border-color: #0ea5e9;
-    box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
 }
 
-.hozoor-report-form__input {
+.hozoor-config-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+.hozoor-config-actions button {
     width: 100%;
-    padding: 10px 36px 10px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.82rem;
-    background: #fff;
-    color: #334155;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    direction: rtl;
-    text-align: right;
-}
-
-.hozoor-report-form__submit {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 24px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
     color: #fff;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
+    font: 700 14px 'Vazir', sans-serif;
     cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.15s ease;
     white-space: nowrap;
-    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.hozoor-report-form__submit svg {
-    width: 16px;
-    height: 16px;
-}
-
-.hozoor-report-form__submit:hover {
+.hozoor-config-actions button:hover {
+    opacity: .9;
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(14,165,233,0.3);
-}
-
-.hozoor-report-form__submit:active {
-    transform: scale(0.97);
 }
 
 /* ── جدول ── */
@@ -11639,10 +11514,10 @@ body.reg-modal-open {
 
 /* ── ریسپانسیو ── */
 @media (max-width: 900px) {
-    .hozoor-report-form {
+    .hozoor-config-grid {
         grid-template-columns: 1fr 1fr;
     }
-    .hozoor-report-form__field--btn {
+    .hozoor-config-actions {
         grid-column: span 2;
     }
     .hozoor-table-wrap {
@@ -11655,17 +11530,11 @@ body.reg-modal-open {
 }
 
 @media (max-width: 600px) {
-    .hozoor-report-form {
+    .hozoor-config-grid {
         grid-template-columns: 1fr;
     }
-    .hozoor-report-form__field--btn {
+    .hozoor-config-actions {
         grid-column: span 1;
-    }
-    .hozoor-report-card__head {
-        padding: 14px 16px 12px;
-    }
-    .hozoor-report-form {
-        padding: 14px 16px 16px;
     }
 
     /* ── پنل پروفایل مدرن — موبایل ── */

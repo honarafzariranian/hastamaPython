@@ -97,7 +97,8 @@
     }
     async function openConversation(id) { state.active = id; try { renderConversation(await api(`/api/automation/${id}`)); await loadList(); } catch (error) { const pane = $('#internalAutomationConversation'); if (pane) pane.innerHTML = `<div class="internal-automation-error">${escapeHtml(localizedError(error))}</div>`; } }
     async function deleteConversation(id) {
-        if (!id || !window.confirm('آیا از حذف کامل این گفتگو و پیام‌های آن مطمئن هستید؟')) return;
+        if (!id) return;
+        if (!await HastamaUX.confirm({ title: 'حذف گفتگو', message: 'آیا از حذف کامل این گفتگو و پیام‌های آن مطمئن هستید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف', danger: true })) return;
         try {
             await api(`/api/automation/${id}`, { method: 'DELETE' });
             state.active = null;
@@ -169,7 +170,11 @@
         if (action === 'delete-internal-conversation') deleteConversation(event.target.closest('[data-conversation-id]')?.dataset.conversationId);
         if (action === 'complete-internal-conversation') {
             const id = event.target.closest('[data-conversation-id]')?.dataset.conversationId;
-            if (id && window.confirm('آیا می‌خواهید این گفتگو را به پایان برسانید؟ پیام‌ها حفظ خواهند شد.')) conversationAction('complete', id);
+            if (id) {
+                HastamaUX.confirm({ title: 'اتمام گفتگو', message: 'آیا می‌خواهید این گفتگو را به پایان برسانید؟ پیام‌ها حفظ خواهند شد.', confirmText: 'اتمام' }).then(confirmed => {
+                    if (confirmed) conversationAction('complete', id);
+                });
+            }
         }
         if (action === 'request-internal-reopen') conversationAction('reopen-request', event.target.closest('[data-conversation-id]')?.dataset.conversationId);
         if (action === 'approve-internal-reopen') conversationAction(`reopen-request/${event.target.closest('[data-request-id]')?.dataset.requestId}/approve`, event.target.closest('[data-conversation-id]')?.dataset.conversationId);

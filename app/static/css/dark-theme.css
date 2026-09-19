@@ -3375,51 +3375,19 @@ body.dark-mode .apply-all-group .apply-all-input {
 body.dark-mode .hozoor-report-card {
     background: var(--dk-surface);
     border-color: var(--dk-border);
-    box-shadow: var(--dk-shadow-sm);
 }
 
-body.dark-mode .hozoor-report-card__head {
+body.dark-mode .hozoor-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-config-item span {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .hozoor-config-item input,
+body.dark-mode .hozoor-config-item select {
     background: var(--dk-surface-2);
-    border-bottom-color: var(--dk-border);
-}
-
-body.dark-mode .hozoor-report-card__title {
-    color: var(--dk-text);
-}
-
-body.dark-mode .hozoor-report-card__sub {
-    color: var(--dk-muted);
-}body.dark-mode .hozoor-report-card {
-    background: var(--dk-surface);
-    border-color: var(--dk-border);
-    box-shadow: var(--dk-shadow-sm);
-}
-
-body.dark-mode .hozoor-report-card__head {
-    background: var(--dk-surface-2);
-    border-bottom-color: var(--dk-border);
-}
-
-body.dark-mode .hozoor-report-card__title {
-    color: var(--dk-text);
-}
-
-body.dark-mode .hozoor-report-card__sub {
-    color: var(--dk-muted);
-}
-
-body.dark-mode .hozoor-report-form__label {
-    color: var(--dk-muted);
-}
-
-body.dark-mode .hozoor-report-form__select {
-    background-color: var(--dk-surface);
-    border-color: var(--dk-border);
-    color: var(--dk-text);
-}
-
-body.dark-mode .hozoor-report-form__input {
-    background: var(--dk-surface);
     border-color: var(--dk-border);
     color: var(--dk-text);
 }

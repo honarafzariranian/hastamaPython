@@ -193,7 +193,7 @@
             await loadOpenConversations();
             await load();
         } catch (error) {
-            window.alert(error.message || 'اتمام گفتگو ناموفق بود.');
+            showSystemError(error.message || 'اتمام گفتگو ناموفق بود.');
         }
     }
     async function deleteConversation(id) {
@@ -208,7 +208,7 @@
             await loadOpenConversations();
             await load();
         } catch (error) {
-            window.alert(error.message || 'حذف گفتگو ناموفق بود.');
+            showSystemError(error.message || 'حذف گفتگو ناموفق بود.');
         }
     }
     function confirmAction(title, message, confirmLabel, danger = false) {

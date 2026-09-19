@@ -485,20 +485,132 @@
 
     if (document.readyState === 'complete') scheduleBuild();
 
+    /* ── نوتیفیکیشن داخلی ─────────────────────────────────────────── */
+    function showReportToast(message, type) {
+        var existing = document.querySelector('.report-toast');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.className = 'report-toast report-toast--' + (type || 'error');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+        setTimeout(function () {
+            toast.classList.remove('is-visible');
+            setTimeout(function () { toast.remove(); }, 400);
+        }, 4000);
+    }
+
     /* ── دکمه‌های چاپ و دریافت PDF ───────────────────────────────────
-       دادهٔ گزارش در localStorage مرورگر است، پس فایل PDF هم باید سمت
-       کلاینت ساخته شود؛ هر دو دکمه همان فرم چاپ را باز می‌کنند و کاربر
-       در گفت‌وگوی چاپ گزینهٔ Save as PDF را انتخاب می‌کند. */
+       دکمه چاپ: فرم چاپ مرورگر را باز می‌کند.
+       دکمه دریافت PDF: html2pdf روی محتوای VISIBLE صفحه اجرا می‌شود. */
     function initPrintButtons() {
-        ['printReportBtn', 'savePdfReportBtn'].forEach(function (id) {
-            var btn = document.getElementById(id);
-            if (!btn || btn.dataset.prWired === '1') return;
-            btn.dataset.prWired = '1';
-            btn.addEventListener('click', function () {
+        // دکمه چاپ — همان رفتار قبلی
+        var printBtn = document.getElementById('printReportBtn');
+        if (printBtn && printBtn.dataset.prWired !== '1') {
+            printBtn.dataset.prWired = '1';
+            printBtn.addEventListener('click', function () {
                 buildPrintReport();
                 window.print();
             });
-        });
+        }
+
+        // دکمه دریافت PDF — نمایش موقت #printReport + html2pdf
+        var pdfBtn = document.getElementById('savePdfReportBtn');
+        if (pdfBtn && pdfBtn.dataset.prWired !== '1') {
+            pdfBtn.dataset.prWired = '1';
+            pdfBtn.addEventListener('click', function () {
+                if (typeof html2pdf === 'undefined') {
+                    showReportToast('کتابخانه PDF بارگذاری نشده است.', 'error');
+                    return;
+                }
+                var originalText = pdfBtn.textContent;
+                pdfBtn.disabled = true;
+
+                // ── لودر مدرن ──────────────────────────────
+                var loader = document.createElement('div');
+                loader.className = 'pdf-loader-overlay';
+                loader.innerHTML = '<div class="pdf-loader-box">' +
+                    '<div class="pdf-loader-spinner"></div>' +
+                    '<div class="pdf-loader-text">در حال ساخت گزارش PDF</div>' +
+                    '<div class="pdf-loader-sub">لطفاً صبر کنید...</div>' +
+                    '<div class="pdf-loader-bar"><div class="pdf-loader-bar-fill"></div></div>' +
+                    '</div>';
+                document.body.appendChild(loader);
+                requestAnimationFrame(function () { loader.classList.add('is-active'); });
+
+                // ۱) ساخت فرم چاپ — محتوای HTML رو توی #printReport می‌ریزه
+                buildPrintReport();
+                var el = document.getElementById('printReport');
+                if (!el || !el.innerHTML.trim()) {
+                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                    pdfBtn.disabled = false;
+                    pdfBtn.textContent = originalText;
+                    showReportToast('داده‌ای برای ساخت PDF وجود ندارد.', 'error');
+                    return;
+                }
+
+                // ۲) مخفی کردن همه فرزندان body به جز #printReport
+                var siblings = [];
+                for (var i = 0; i < document.body.children.length; i++) {
+                    var child = document.body.children[i];
+                    if (child !== el && child !== loader) {
+                        siblings.push({ el: child, prev: child.style.cssText });
+                        child.style.cssText = 'display:none!important;';
+                    }
+                }
+                // نمایش #printReport در حالت عادی
+                el.style.cssText = 'display:block!important;background:#fff!important;';
+                document.body.style.background = '#fff';
+                document.body.style.overflow = 'visible';
+
+                // ۳) ساخت نام فایل
+                var titleEl = document.querySelector('.titleBox');
+                var fileName = (titleEl ? titleEl.textContent.trim() : 'گزارش') + '.pdf';
+                fileName = fileName.replace(/[\\/:*?"<>|]/g, '_');
+
+                // ۴) اجرای html2pdf روی #printReport
+                var opt = {
+                    margin:       [6, 6, 6, 6],
+                    filename:     fileName,
+                    image:        { type: 'jpeg', quality: 0.95 },
+                    html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // تابع بازگرداندن صفحه به حالت اصلی
+                function restorePage() {
+                    el.removeAttribute('style');
+                    document.body.style.background = '';
+                    document.body.style.overflow = '';
+                    siblings.forEach(function (s) { s.el.style.cssText = s.prev; });
+                }
+                function hideLoader() {
+                    if (loader && loader.parentNode) {
+                        loader.classList.remove('is-active');
+                        setTimeout(function () {
+                            if (loader.parentNode) loader.parentNode.removeChild(loader);
+                        }, 400);
+                    }
+                }
+
+                // ۵) تأخیر ۳ ثانیه‌ای برای اطمینان از render کامل
+                setTimeout(function () {
+                    html2pdf().set(opt).from(el).save().then(function () {
+                        restorePage();
+                        hideLoader();
+                        pdfBtn.disabled = false;
+                        pdfBtn.textContent = originalText;
+                    }).catch(function (err) {
+                        console.error('PDF generation error:', err);
+                        restorePage();
+                        hideLoader();
+                        pdfBtn.disabled = false;
+                        pdfBtn.textContent = originalText;
+                        showReportToast('خطا در ساخت فایل PDF.', 'error');
+                    });
+                }, 3000);
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
