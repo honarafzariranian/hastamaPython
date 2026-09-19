@@ -137,7 +137,7 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | GET | `/get_ticket_details_payam/{ticket_id}` | `get_ticket_details_payam` | authenticated | _ticket_actor | n/a |  |
 | GET | `/get_ticket_requests` | `get_ticket_requests` | authenticated | _ticket_actor | 410 |  |
 | GET | `/get_ticket_requests_admin` | `get_ticket_requests_admin` | authenticated | _ticket_actor | 410 |  |
-| GET | `/get_user_info` | `get_user_info` | authenticated | session.get('username') | 200 |  |
+| GET | `/get_user_info` | `get_user_info` | authenticated | session.get('username') | 200 |  | 200 with a failure payload when there is no session (returns no data); candidate to normalise to 401 |
 | GET | `/get_user_info_report` | `get_user_info_report` | authenticated | _require_auth | 422 |  |
 | GET | `/get_users` | `get_users` | authenticated | _ticket_actor | 403 |  |
 | GET | `/logout` | `logout` | authenticated | session.get("username") | 307 |  |
@@ -174,8 +174,8 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | POST | `/api/araz/bridge-sync` | `bridge_sync` | bridge-secret | BRIDGE_SECRET | n/a |  |
 | GET | `/api/csrf-token` | `csrf_token_bootstrap` | public-by-design | - | 200 |  |
 | GET | `/api/date` | `get_date` | public-by-design | - | 200 |  |
-| GET | `/api/system-config` | `public_system_config` | public-by-design | - | 200 |  |
-| GET | `/api/training/search` | `training_search` | public-by-design | - | 200 |  |
+| GET | `/api/system-config` | `public_system_config` | public-by-design | - | 200 |  | returns three public UI settings (captcha/idle-timeout flags) only |
+| GET | `/api/training/search` | `training_search` | public-by-design | - | 200 |  | training catalogue, no personal data |
 | GET | `/call-display` | `call_display` | public-by-design | - | 200 |  |
 | GET | `/call-management` | `call_management` | public-by-design | - | 200 |  |
 | GET | `/api/calls/audio-status` | `audio_status` | public-by-design | - | 200 |  |
@@ -186,14 +186,14 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | GET | `/captcha` | `get_captcha` | public-by-design | - | 200 |  |
 | POST | `/captcha/refresh` | `refresh_captcha` | public-by-design | - | n/a |  |
 | GET | `/captcha/status` | `captcha_status` | public-by-design | - | 200 |  |
-| GET | `/registration/check-national-id` | `check_national_id` | public-by-design | - | 200 | registration availability check (see registration enumeration note) |
-| GET | `/registration/check-username` | `check_username` | public-by-design | - | 200 | registration availability check (see registration enumeration note) |
+| GET | `/registration/check-national-id` | `check_national_id` | public-by-design | - | 200 | registration availability check (see registration enumeration note) | answers whether a national id is registered — see RR-11 (product requirement, rate-limited) |
+| GET | `/registration/check-username` | `check_username` | public-by-design | - | 200 | registration availability check (see registration enumeration note) | answers whether a username is free — see RR-11 (product requirement, rate-limited) |
 | GET | `/registration/departments` | `get_departments` | public-by-design | - | 200 | department list for the registration form |
 | POST | `/forgot_password` | `forgot_password` | public-by-design | - | n/a |  |
 | GET | `/get_today_date` | `get_today_date` | public-by-design | - | 200 |  |
 | GET | `/health` | `health` | public-by-design | - | 200 |  |
 | GET | `/health` | `health` | public-by-design | - | 200 |  |
-| GET | `/health/database` | `health_database` | public-by-design | - | 200 |  |
+| GET | `/health/database` | `health_database` | public-by-design | - | 200 |  | returns only status, never connection details |
 | GET | `/login` | `home` | public-by-design | - | 200 |  |
 | POST | `/login_user` | `login` | public-by-design | password+captcha | n/a | pre-authentication endpoint; rate limited 15 failures/10 min per IP |
 | POST | `/predict` | `predict` | public-by-design | - | n/a | ML predictor shipped with the repo; no data access, must be reviewed before LAN exposure |
