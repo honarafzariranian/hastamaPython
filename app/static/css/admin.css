@@ -5906,6 +5906,7 @@ form button:active {
 .page-shell.sidebar-expanded #overtimeBox,
 .page-shell.sidebar-expanded #hourlyPassBox,
 .page-shell.sidebar-expanded #ticketBox,
+.page-shell.sidebar-expanded #internalAutomationAdminBox,
 .page-shell.sidebar-expanded #hozoorbox,
 .page-shell.sidebar-expanded #payrollBox,
 .page-shell.sidebar-expanded #shiftBox {
@@ -6697,6 +6698,7 @@ form button:active {
     body:has(#overtimeBox.is-visible) #overtimeBox,
     body:has(#hourlyPassBox.is-visible) #hourlyPassBox,
     body:has(#ticketBox.is-visible) #ticketBox,
+    body:has(#internalAutomationAdminBox.is-visible) #internalAutomationAdminBox,
     body:has(#hozoorbox.is-visible) #hozoorbox,
     body:has(#payrollBox.is-visible) #payrollBox {
         position: fixed !important;
@@ -6720,6 +6722,7 @@ form button:active {
     body:has(.page-shell.sidebar-expanded):has(#overtimeBox.is-visible) #overtimeBox,
     body:has(.page-shell.sidebar-expanded):has(#hourlyPassBox.is-visible) #hourlyPassBox,
     body:has(.page-shell.sidebar-expanded):has(#ticketBox.is-visible) #ticketBox,
+    body:has(.page-shell.sidebar-expanded):has(#internalAutomationAdminBox.is-visible) #internalAutomationAdminBox,
     body:has(.page-shell.sidebar-expanded):has(#hozoorbox.is-visible) #hozoorbox,
     body:has(.page-shell.sidebar-expanded):has(#payrollBox.is-visible) #payrollBox {
         right: calc(clamp(260px, 19.5vw, 120px) + 0%) !important;
@@ -7862,6 +7865,7 @@ form button:active {
     #overtimeBox,
     #hourlyPassBox,
     #ticketBox,
+    #internalAutomationAdminBox,
     #hozoorbox,
     #coworkerBox,
     #natigehHozoor,
@@ -9853,6 +9857,7 @@ form button:active {
 .rightSidebar .icon-container[data-accent="overtime"]   { --tile-from:#A855F7; --tile-to:#EC4899; --acc:#A855F7; --tint:rgba(168,85,247,.12);  --glow:rgba(168,85,247,.45); }
 .rightSidebar .icon-container[data-accent="pass"]       { --tile-from:#06B6D4; --tile-to:#3B82F6; --acc:#0EA5E9; --tint:rgba(14,165,233,.12);  --glow:rgba(14,165,233,.45); }
 .rightSidebar .icon-container[data-accent="ticket"]     { --tile-from:#F43F5E; --tile-to:#EC4899; --acc:#F43F5E; --tint:rgba(244,63,94,.10);   --glow:rgba(244,63,94,.42); }
+.rightSidebar .icon-container[data-accent="automation"] { --tile-from:#087F72; --tile-to:#1686B5; --acc:#087F72; --tint:rgba(8,127,114,.12); --glow:rgba(8,127,114,.45); }
 .rightSidebar .icon-container[data-accent="shift"]      { --tile-from:#6366F1; --tile-to:#0EA5E9; --acc:#6366F1; --tint:rgba(99,102,241,.12);  --glow:rgba(99,102,241,.45); }
 .rightSidebar .icon-container[data-accent="attendance"] { --tile-from:#22C55E; --tile-to:#84CC16; --acc:#22C55E; --tint:rgba(34,197,94,.12);  --glow:rgba(34,197,94,.42); }
 .rightSidebar .icon-container[data-accent="payroll"]    { --tile-from:#D97706; --tile-to:#F59E0B; --acc:#D97706; --tint:rgba(217,119,6,.14);   --glow:rgba(217,119,6,.45); }
@@ -10127,7 +10132,7 @@ form button:active {
 }
 
 /* ═══════════════════════════════════════════
-   تقویم شمسی (Persian Date Picker)
+   تقویم شمسی — طراحی کاملاً جدید ۲۰۲۶
    ═══════════════════════════════════════════ */
 
 .date-input-shell {
@@ -10139,99 +10144,177 @@ form button:active {
     box-sizing: border-box;
 }
 
+/* ── کانتینر اصلی تقویم — position:fixed برای فرار از clip والدین ── */
 .leave-date-picker {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 1100;
-    width: min(100%, 320px);
-    max-height: min(70vh, 420px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
-    padding: 12px;
+    position: fixed;
+    z-index: 99999;
+    width: 320px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: none;
+    border-radius: 24px;
+    box-shadow:
+        0 25px 50px -12px rgba(15, 23, 42, 0.25),
+        0 0 0 1px rgba(15, 23, 42, 0.05);
+    padding: 20px;
+    transform: translateY(0);
+    animation: dpFloatIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dpFloatIn {
+    from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .leave-date-picker[hidden] {
     display: none;
 }
 
+/* ── هدر ── */
 .leave-date-picker-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
+    direction: ltr;
+    flex-wrap: nowrap;
+    width: 100%;
+    box-sizing: border-box;
 }
 
+/* ── دکمه‌های ناوبری ماه ── */
+.leave-date-picker-nav {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.leave-date-picker-nav:hover {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
+}
+
+.leave-date-picker-nav:active {
+    transform: scale(0.92);
+}
+
+/* ── انتخابگرهای ماه و سال ── */
 .leave-date-picker-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
 }
 
 .leave-date-picker-controls select {
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 6px 8px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 140px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 28px 8px 12px;
     font-family: 'Vazir', sans-serif;
     font-size: 13px;
-    background: #fff;
-}
-
-.leave-date-picker-nav {
-    border: none;
-    background: #eff6ff;
-    color: #2563eb;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
+    font-weight: 600;
+    background: #f8fafc;
+    color: #0f172a;
     cursor: pointer;
-    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    direction: rtl;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 10px center;
 }
 
+.leave-date-picker-controls select:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* ── خط جداکننده زیر هدر ── */
+.leave-date-picker-header + .leave-date-picker-weekdays {
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* ── روزهای هفته ── */
 .leave-date-picker-weekdays,
 .leave-date-picker-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 2px;
     direction: rtl;
 }
 
 .leave-date-picker-weekdays {
-    margin-bottom: 6px;
-}
-
-.leave-date-picker-weekday,
-.leave-date-picker-day {
-    text-align: center;
-    font-size: 12px;
-    padding: 6px 0;
-    border-radius: 8px;
+    margin-bottom: 4px;
 }
 
 .leave-date-picker-weekday {
-    color: #64748b;
+    text-align: center;
+    font-size: 11px;
     font-weight: 700;
+    padding: 6px 0;
+    color: #94a3b8;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
+/* ── روزهای ماه ── */
 .leave-date-picker-day {
-    background: #f8fafc;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 0;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
     cursor: pointer;
-    color: #0f172a;
+    color: #1e293b;
+    transition: all 0.15s ease;
+    font-family: 'Vazir', sans-serif;
 }
 
 .leave-date-picker-day:hover {
-    background: #dcfce7;
-    color: #16a34a;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.leave-date-picker-day:active {
+    transform: scale(0.9);
 }
 
 .leave-date-picker-day.is-selected {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: #0ea5e9;
     color: #fff;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+}
+
+.leave-date-picker-day.is-selected:hover {
+    background: #0284c7;
+    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.5);
 }
 
 .leave-date-picker-day.is-empty {
@@ -11107,9 +11190,7 @@ body.reg-modal-open {
     .reg-detail-field--full {
         grid-column: span 1;
     }
-}
-
-/* ═══════════════════════════════════════════════════════════════
+}/* ═══════════════════════════════════════════════════════════════
    گزارش ورود و خروج — طراحی مدرن
    ═══════════════════════════════════════════════════════════════ */
 
@@ -11130,7 +11211,7 @@ body.reg-modal-open {
 
 @keyframes hozoorCardFadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .hozoor-report-card__head {
@@ -11610,5 +11691,32 @@ body.reg-modal-open {
     .profile-panel-card {
         padding: 14px;
         border-radius: 14px;
+    }
+
+    /* ── تقویم شمسی — موبایل ── */
+    .leave-date-picker {
+        width: min(calc(100vw - 32px), 320px);
+        border-radius: 20px;
+        padding: 16px;
+    }
+    .leave-date-picker-nav {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        border-radius: 10px;
+    }
+    .leave-date-picker-controls select {
+        max-width: 110px;
+        padding: 6px 24px 6px 10px;
+        font-size: 12px;
+    }
+    .leave-date-picker-day {
+        padding: 9px 0;
+        font-size: 12px;
+        border-radius: 10px;
+    }
+    .leave-date-picker-weekday {
+        font-size: 10px;
+        padding: 5px 0;
     }
 }

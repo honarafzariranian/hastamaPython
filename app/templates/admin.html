@@ -245,9 +245,15 @@
                     <span class="icon-label">مدیریت تیکت ها</span>
                 </div>
 
-                <div class="icon-container" data-accent="automation" onclick="navTo('internalAutomationAdminBox', this, '/admin/internal-automation')">
+                <div class="icon-container" data-accent="automation" title="مدیریت اتوماسیون داخلی" onclick="navTo('internalAutomationAdminBox', this, '/admin/internal-automation')">
                     <span class="sidebar-icon-tile" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h8M8 11.5h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" fill="#fff" opacity=".14"/>
+                            <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M8 8h8M8 11.5h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="17.4" cy="17.4" r="3.2" fill="#fff"/>
+                            <path d="M17.4 15.8v3.2M15.8 17.4h3.2" stroke="#087F72" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
                     </span>
                     <span class="icon-label">اتوماسیون داخلی</span>
                 </div>
@@ -1753,15 +1759,6 @@
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" fill="#fff" opacity=".14"/><path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" stroke="#fff" stroke-width="1.9"/><path d="M14.2 7.5v9" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 2.4"/><path d="M7.2 10.2h3.4M7.2 13.8h3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>
                 </div>
 
-                <div id="internalAutomationAdminBox" class="management-box internal-automation-admin-panel" style="display:none;">
-                    <header class="section-hero" style="--hero-accent:#087f72;--hero-accent-2:#1686b5;">
-                        <div class="section-hero__text"><h2>نظارت بر اتوماسیون داخلی</h2><p>فهرست ارتباطات سازمانی بدون نمایش محتوای پیام‌ها</p></div>
-                    </header>
-                    <div class="internal-automation-admin-content">
-                        <div class="internal-automation-admin-note">برای حفظ حریم خصوصی، مدیر مجموعه فقط اعضا، تعداد پیام‌ها و زمان فعالیت را می‌بیند. محتوای پیام و فایل‌ها فقط برای اعضای گفتگو و مدیر اصلی قابل مشاهده است.</div>
-                        <div id="internalAutomationAdminList" class="internal-automation-admin-list"><div class="ticket-loading-state">در حال دریافت گفتگوها…</div></div>
-                    </div>
-                </div>
                 <div class="section-hero__text">
                     <h2>مدیریت تیکت‌ها</h2>
                     <p>مدیریت تیکت‌های پشتیبانی و پیگیری درخواست‌ها</p>
@@ -1795,6 +1792,51 @@
                 <aside id="adminTicketContext" class="helpdesk-context" aria-label="جزئیات تیکت"><div class="ticket-context-empty"><span>←</span><strong>یک تیکت را انتخاب کنید</strong><p>مکالمه و مشخصات آن در این بخش نمایش داده می‌شود.</p></div>                </aside>
             </div>
             </div>
+
+        <!-- مرکز نظارت بر اتوماسیون داخلی -->
+        <div id="internalAutomationAdminBox" class="management-box internal-automation-admin-panel" style="display:none;">
+            <header class="section-hero" style="--hero-accent:#087f72;--hero-accent-2:#1686b5;">
+                <div class="section-hero__icon" aria-hidden="true">✦</div>
+                <div class="section-hero__text">
+                    <h2>نظارت بر اتوماسیون داخلی</h2>
+                    <p>فهرست ارتباطات سازمانی بدون نمایش محتوای پیام‌ها</p>
+                </div>
+                <div class="section-hero__glow" aria-hidden="true"></div>
+            </header>
+            <div class="internal-automation-admin-content">
+                <div class="internal-automation-admin-tabs" role="tablist" aria-label="بخش‌های اتوماسیون داخلی">
+                    <button type="button" class="internal-automation-admin-tab active" role="tab" aria-selected="true" aria-controls="internalAutomationMonitorTab" onclick="switchInternalAutomationAdminTab('internalAutomationMonitorTab', this)">نظارت بر گفتگوها</button>
+                    <button type="button" class="internal-automation-admin-tab" role="tab" aria-selected="false" aria-controls="internalAutomationCreateTab" onclick="switchInternalAutomationAdminTab('internalAutomationCreateTab', this)">ایجاد گفت‌وگو</button>
+                </div>
+                <section id="internalAutomationMonitorTab" class="internal-automation-admin-tab-content active" role="tabpanel">
+                    <div class="internal-automation-admin-note">برای حفظ حریم خصوصی، مدیر مجموعه فقط اعضا، تعداد پیام‌ها و زمان فعالیت را می‌بیند. محتوای پیام و فایل‌ها فقط برای اعضای گفتگو و مدیر اصلی قابل مشاهده است.</div>
+                    <div id="internalAutomationAdminList" class="internal-automation-admin-list"><div class="ticket-loading-state">در حال دریافت گفتگوها…</div></div>
+                </section>
+                <section id="internalAutomationCreateTab" class="internal-automation-admin-tab-content" role="tabpanel" hidden>
+                    <form id="internalAutomationAdminCreateForm" class="internal-automation-admin-create-form">
+                        <div class="internal-automation-admin-form-heading">
+                            <span class="ticket-panel-kicker">ارتباط بین سازمانی</span>
+                            <h3>شروع گفت‌وگوی جدید</h3>
+                            <p>یک کاربر را انتخاب کنید و اولین پیام را برای او ارسال کنید.</p>
+                        </div>
+                        <label>موضوع گفتگو<input name="subject" type="text" maxlength="180" required placeholder="موضوع گفتگو را وارد کنید"></label>
+                        <label>کاربر مقابل<select name="participant" required><option value="">در حال دریافت کاربران…</option></select></label>
+                        <label>پیام آغازین<textarea name="body" maxlength="4000" rows="5" required placeholder="پیام خود را بنویسید…"></textarea></label>
+                        <div class="internal-automation-admin-form-footer"><button type="submit" class="internal-automation-admin-primary">ایجاد گفتگو و ارسال پیام</button><span class="internal-automation-admin-form-status" role="status"></span></div>
+                    </form>
+                    <aside class="internal-automation-admin-open-pane">
+                        <header class="internal-automation-admin-open-heading">
+                            <div><span class="ticket-panel-kicker">گفت‌وگوها</span><h3>ادامهٔ گفتگوها</h3></div>
+                            <span id="internalAutomationAdminOpenCount">۰</span>
+                        </header>
+                        <div id="internalAutomationAdminOpenList" class="internal-automation-admin-open-list">
+                            <div class="internal-automation-admin-detail-empty">در حال دریافت گفتگوهای باز…</div>
+                        </div>
+                        <section id="internalAutomationAdminCreatedConversation" class="internal-automation-admin-created-conversation" hidden aria-live="polite"></section>
+                    </aside>
+                </section>
+            </div>
+        </div>
 
         <!-- پنجره مدال تایید حذف تیکت -->
         <div id="confirmDeleteModalHazf" class="modal-hazf">

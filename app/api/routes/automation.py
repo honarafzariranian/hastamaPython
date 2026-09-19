@@ -58,7 +58,6 @@ def approve_reopen(conversation_id:int, request_id:int, request:Request):
 @router.post('', status_code=201)
 def create_conversation(payload: ConversationCreate, request: Request):
     actor, admin, master = _actor(request)
-    if admin and not master: raise HTTPException(403, 'دسترسی ایجاد گفتگو ندارید.')
     service=_service()
     try:
         result = service.create(actor,payload.subject,payload.participants,payload.body)

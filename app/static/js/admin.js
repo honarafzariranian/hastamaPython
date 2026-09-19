@@ -181,6 +181,7 @@ var SECTION_URLS = {
     'overtimeBox':   '/admin/overtime',
     'hourlyPassBox': '/admin/hourly-pass',
     'ticketBox':     '/admin/tickets',
+    'internalAutomationAdminBox': '/admin/internal-automation',
     'shiftBox':      '/admin/shifts',
     'hozoorbox':     '/admin/attendance',
     'payrollBox':    '/admin/payroll',
@@ -275,6 +276,10 @@ function toggleBox(boxId, iconContainer) {
             ticketBox.style.display = 'flex';
             // مرکز جدید تیکت‌ها فقط از API نرمال‌شده استفاده می‌کند.
             if (window.TicketingWorkspace) window.TicketingWorkspace.loadAdmin(1);
+        }
+
+        if (boxId === 'internalAutomationAdminBox' && window.InternalAutomationAdmin) {
+            window.InternalAutomationAdmin.load();
         }
     }
 
@@ -5641,6 +5646,30 @@ function adminRenderDatePicker(picker, state) {
     });
 }
 
+function adminPositionDatePicker(input, picker) {
+    var rect = input.getBoundingClientRect();
+    var pickerWidth = 320;
+    picker.style.transform = '';
+
+    // محاسبه فضا بالا و پایین ورودی
+    var spaceBelow = window.innerHeight - rect.bottom;
+    var spaceAbove = rect.top;
+    var showBelow = spaceBelow >= 360 || spaceBelow > spaceAbove;
+
+    if (showBelow) {
+        picker.style.top = (rect.bottom + 6) + 'px';
+    } else {
+        picker.style.top = (rect.top - 6) + 'px';
+        picker.style.transform = 'translateY(-100%)';
+    }
+
+    // راست‌چین: لبه راست تقویم با لبه راست ورودی
+    var leftPos = rect.right - pickerWidth;
+    if (leftPos < 8) leftPos = 8;
+    if (leftPos + pickerWidth > window.innerWidth - 8) leftPos = window.innerWidth - pickerWidth - 8;
+    picker.style.left = leftPos + 'px';
+}
+
 function adminOpenDatePicker(input, picker) {
     var parsed = adminParsePersianDateValue(input.value);
     var today = adminGetCurrentPersianDate();
@@ -5652,27 +5681,22 @@ function adminOpenDatePicker(input, picker) {
     picker.dataset.inputId = input.id;
     picker.hidden = false;
     adminRenderDatePicker(picker, state);
+    adminPositionDatePicker(input, picker);
 }
 
 function adminAttachDatePickerToInput(input) {
     if (!input || input.dataset.datePickerBound === 'true') return;
 
-    var shell = input.closest('.date-input-shell');
-    if (!shell) {
-        shell = document.createElement('div');
-        shell.className = 'date-input-shell';
-        input.parentNode.insertBefore(shell, input);
-        shell.appendChild(input);
-    }
-
-    var picker = shell.querySelector('.leave-date-picker');
+    // ایجاد تقویم به‌صورت مستقیم در body برای فرار از clip والدین
+    var picker = document.querySelector('.leave-date-picker[data-input-id="' + input.id + '"]');
     if (!picker) {
         picker = document.createElement('div');
         picker.className = 'leave-date-picker';
         picker.hidden = true;
         picker.setAttribute('role', 'dialog');
         picker.setAttribute('aria-label', 'انتخاب تاریخ');
-        shell.appendChild(picker);
+        picker.dataset.inputId = input.id;
+        document.body.appendChild(picker);
     }
 
     input.addEventListener('focus', function (event) {
@@ -5706,14 +5730,20 @@ function initAdminDatePickers() {
 
     // بستن تقویم با کلیک خارج
     document.addEventListener('click', function (event) {
-        document.querySelectorAll('.date-input-shell').forEach(function (shell) {
-            var picker = shell.querySelector('.leave-date-picker');
-            if (!picker) return;
-            if (!shell.contains(event.target)) {
-                picker.hidden = true;
-            }
+        var target = event.target;
+        // اگر روی خود تقویم یا ورودی تاریخ کلیک شده، کاری نکن
+        if (target.closest('.leave-date-picker') || target.closest('[data-date-picker-bound]')) return;
+        document.querySelectorAll('.leave-date-picker').forEach(function (picker) {
+            picker.hidden = true;
         });
     });
+
+    // بستن تقویم با اسکرول صفحه
+    window.addEventListener('scroll', function () {
+        document.querySelectorAll('.leave-date-picker').forEach(function (picker) {
+            picker.hidden = true;
+        });
+    }, { passive: true });
 }
 
 document.addEventListener('DOMContentLoaded', initAdminDatePickers);

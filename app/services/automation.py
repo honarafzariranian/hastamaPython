@@ -52,7 +52,14 @@ class AutomationService:
           (SELECT COUNT(*) FROM automation_participants p WHERE p.conversation_id=c.id) participant_count,
           (SELECT COUNT(*) FROM automation_messages m WHERE m.conversation_id=c.id) message_count
           FROM automation_conversations c WHERE {where} ORDER BY c.updated_at DESC,c.id DESC''', params)
-        return self._serialized(_rows(self.cursor))
+        conversations = self._serialized(_rows(self.cursor))
+        for conversation in conversations:
+            self.cursor.execute(
+                'SELECT username FROM automation_participants WHERE conversation_id=? ORDER BY username',
+                (conversation['id'],),
+            )
+            conversation['participants'] = [str(row[0]).strip() for row in self.cursor.fetchall()]
+        return conversations
     def create(self, username, subject, participants, body):
         names = list(dict.fromkeys([username] + [str(x).strip() for x in participants if str(x).strip()]))
         if not subject.strip() or not body.strip() or len(subject.strip()) > 180 or len(body.strip()) > 4000: raise ValueError('موضوع و متن معتبر نیست.')
@@ -84,9 +91,12 @@ class AutomationService:
         self.cursor.execute('SELECT id,subject,created_by,created_at,updated_at,status FROM automation_conversations WHERE id=?', (cid,)); row=self.cursor.fetchone()
         if not row: return None
         result=dict(zip([c[0] for c in self.cursor.description],row)); result.update(created_at=_iso(result['created_at']),updated_at=_iso(result['updated_at']))
+        self.cursor.execute('SELECT username FROM automation_participants WHERE conversation_id=? ORDER BY username', (cid,))
+        result['participants'] = [str(item[0]).strip() for item in self.cursor.fetchall()]
         self.cursor.execute('SELECT id,requester,status,created_at FROM automation_reopen_requests WHERE conversation_id=? AND status=? ORDER BY id DESC', (cid, 'pending'))
         result['reopen_requests'] = self._serialized(_rows(self.cursor))
-        if is_admin and not is_master: return result
+        if is_admin and not is_master and not self._participant(cid, username):
+            return result
         self.cursor.execute('SELECT id,author_username,body,created_at FROM automation_messages WHERE conversation_id=? ORDER BY created_at,id', (cid,)); result['messages']=self._serialized(_rows(self.cursor))
         self.cursor.execute('SELECT id,message_id,uploaded_by,original_name,content_type,size_bytes,created_at FROM automation_attachments WHERE conversation_id=? ORDER BY created_at,id', (cid,)); result['attachments']=self._serialized(_rows(self.cursor))
         return result

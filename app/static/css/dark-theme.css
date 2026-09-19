@@ -1626,32 +1626,56 @@ body.dark-mode .confirm-delete-popup {
     border-color: var(--dk-border);
     color: var(--dk-text);
     box-shadow: var(--dk-shadow);
+}body.dark-mode .leave-date-picker {
+    background: #1e293b;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 body.dark-mode .leave-date-picker-controls select,
 body.dark-mode .leave-date-picker-controls select option {
-    background-color: var(--dk-surface);
-    border-color: var(--dk-border);
-    color: var(--dk-text);
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
 }
 
 body.dark-mode .leave-date-picker-nav {
-    background: var(--dk-surface-2, #1e293b);
-    color: var(--dk-accent, #93c5fd);
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .leave-date-picker-nav:hover {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
 }
 
 body.dark-mode .leave-date-picker-day {
-    background: var(--dk-surface-2, #1e293b);
-    color: var(--dk-text);
+    background: transparent;
+    color: #e2e8f0;
 }
 
 body.dark-mode .leave-date-picker-day:hover {
-    background: var(--dk-accent-bg, #1e3a5f);
-    color: var(--dk-accent, #93c5fd);
+    background: #1e3a5f;
+    color: #38bdf8;
+}
+
+body.dark-mode .leave-date-picker-day.is-selected {
+    background: #0ea5e9;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+}
+
+body.dark-mode .leave-date-picker-day.is-selected:hover {
+    background: #0284c7;
 }
 
 body.dark-mode .leave-date-picker-weekday {
-    color: var(--dk-muted, #94a3b8);
+    color: #64748b;
+}
+
+body.dark-mode .leave-date-picker-header + .leave-date-picker-weekdays {
+    border-top-color: #334155;
 }
 
 body.dark-mode .date-input-shell {
@@ -3349,6 +3373,23 @@ body.dark-mode .apply-all-group .apply-all-input {
    ═══════════════════════════════════════════════════════════ */
 
 body.dark-mode .hozoor-report-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .hozoor-report-card__head {
+    background: var(--dk-surface-2);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .hozoor-report-card__title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-report-card__sub {
+    color: var(--dk-muted);
+}body.dark-mode .hozoor-report-card {
     background: var(--dk-surface);
     border-color: var(--dk-border);
     box-shadow: var(--dk-shadow-sm);
