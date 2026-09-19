@@ -2036,8 +2036,22 @@ body.dark-mode .shift-active-card {
     border-color: var(--dk-border);
 }
 
-body.dark-mode .shift-active-card:hover {
-    box-shadow: 0 6px 18px rgba(56, 189, 248, 0.10);
+body.dark-mode .shift-active-card:hover,
+body.dark-mode .shift-active-card:focus-visible {
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.18);
+    border-color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card__edit-btn {
+    background: rgba(56, 189, 248, 0.14);
+    color: var(--dk-accent);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+body.dark-mode .shift-active-card__edit-btn:hover {
+    background: var(--dk-accent);
+    color: #0f172a;
+    border-color: var(--dk-accent);
 }
 
 body.dark-mode .shift-active-card__user {
@@ -2069,6 +2083,46 @@ body.dark-mode .shift-active-card__time {
 
 body.dark-mode .shift-active-card__empty {
     color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card__footer {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .shift-active-card__edit-hint {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card:hover .shift-active-card__edit-hint {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-popup-meta {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.25);
+}
+
+body.dark-mode .shift-popup-meta__label {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-popup-meta__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-popup-meta__icon svg {
+    color: var(--dk-accent);
+}
+
+body.dark-mode #shiftBox .shift-delete-btn {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+body.dark-mode #shiftBox .shift-delete-btn:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
 }
 
 body.dark-mode .time-btn {

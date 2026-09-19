@@ -1322,15 +1322,36 @@
                             </div>
                             <div class="shift-popup-head__text">
                                 <h2 id="shiftFormTitle">افزودن بازه‌ی شیفت جدید</h2>
-                                <p>بازه‌ی روزها را مشخص و ساعت شیفت هر روز هفته را وارد کنید</p>
+                                <p id="shiftFormSubtitle">بازه‌ی روزها را مشخص و ساعت شیفت هر روز هفته را وارد کنید</p>
                             </div>
                             <button type="button" class="close-shift-popup" aria-label="بستن" onclick="closeShiftPopup()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
                             </button>
                         </header>
 
-                        <form id="shiftForm" class="form-krbrjadid shift-details-form">
+                        <!-- نشانگر پرسنل و تاریخ برای شیفت در حال ویرایش -->
+                        <div id="shiftPopupMeta" class="shift-popup-meta" style="display:none;">
+                            <div class="shift-popup-meta__item">
+                                <span class="shift-popup-meta__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </span>
+                                <span class="shift-popup-meta__label">پرسنل:</span>
+                                <strong class="shift-popup-meta__value" id="shiftPopupMetaUser">-</strong>
+                            </div>
+                            <div class="shift-popup-meta__item">
+                                <span class="shift-popup-meta__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </span>
+                                <span class="shift-popup-meta__label">ماه و سال:</span>
+                                <strong class="shift-popup-meta__value" id="shiftPopupMetaDate">-</strong>
+                            </div>
+                        </div>
+
+                        <form id="shiftForm" class="form-krbrjadid shift-details-form" onsubmit="event.preventDefault(); saveShift();">
                             <input type="hidden" id="shiftId" name="shiftId" value="">
+                            <input type="hidden" id="shiftModalUsername" name="shiftModalUsername" value="">
+                            <input type="hidden" id="shiftModalYear" name="shiftModalYear" value="">
+                            <input type="hidden" id="shiftModalMonth" name="shiftModalMonth" value="">
 
                             <div class="form-row-krbrjadid shift-details-form__title-row">
                                 <label for="shiftTitle">عنوان شیفت (اختیاری)</label>
@@ -1376,7 +1397,11 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5 10 18 19.5 7"/></svg>
                                 <span>ذخیره بازه‌ی شیفت</span>
                             </button>
-                            <button type="button" class="save-btn-krbrjad shift-cancel-btn" id="cancelShiftEditBtn" style="display:none;" onclick="resetShiftForm()">انصراف از ویرایش</button>
+                            <button type="button" class="save-btn-krbrjad shift-delete-btn" id="deleteShiftModalBtn" style="display:none;" onclick="deleteShift()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                <span>حذف این شیفت</span>
+                            </button>
+                            <button type="button" class="save-btn-krbrjad shift-cancel-btn" id="cancelShiftEditBtn" onclick="closeShiftPopup()">انصراف</button>
                         </div>
                     </div>
                 </div>
