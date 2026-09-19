@@ -140,10 +140,10 @@
     /* سلول‌های جدول مرخصی: 0 جانشین، 1 تعداد روز، 2 تا تاریخ، 3 از تاریخ، 4 ردیف */
     var LEAVE_COLUMNS = [
         { title: 'ردیف', w: '9.5%', src: 4 },
-        { title: 'از تاریخ', w: '20.5%', src: 3 },
-        { title: 'تا تاریخ', w: '20.5%', src: 2 },
-        { title: 'تعداد روز', w: '13%', src: 1, bold: true },
-        { title: 'جانشین', w: '36.5%', src: 0 }
+        { title: 'از تاریخ', w: '23.5%', src: 3 },
+        { title: 'تا تاریخ', w: '23.5%', src: 2 },
+        { title: 'تعداد روز', w: '16%', src: 1, bold: true },
+        { title: 'جانشین', w: '27.5%', src: 0 }
     ];
 
     /* سلول‌های پاس ساعتی: 0 مدت، 1 نوع پاس، 2 تاریخ، 3 ردیف */
@@ -286,56 +286,46 @@
         }
         var band = bandHeight(maxSide, sideRowH);
 
-        var fixedOnLast =
-            GEO.headerH + GEO.footerH +
-            GEO.summaryH + band + GEO.signH +
-            GEO.sectTitleH + GEO.attHeadH +
-            GEO.gap * 4;
-
-        var roomForRows = GEO.pageH - fixedOnLast;
-        var lastPageCap = roomForRows <= 0
+        var firstPageFixed =
+            GEO.headerH + GEO.footerH + GEO.summaryH +
+            GEO.sectTitleH + GEO.attHeadH + GEO.gap * 3;
+        var firstPageRoom = GEO.pageH - firstPageFixed;
+        var firstPageCap = firstPageRoom <= 0
             ? 0
-            : Math.min(MAX_ROWS_PER_PAGE, Math.floor(roomForRows / GEO.minRowH));
-        lastPageCap = Math.max(lastPageCap, 0);
+            : Math.min(MAX_ROWS_PER_PAGE, Math.floor(firstPageRoom / GEO.minRowH));
+        firstPageCap = Math.max(firstPageCap, 1);
 
         /* تقسیم رکوردها: صفحه‌های وسط همیشه ۳۱ ردیف می‌گیرند و صفحهٔ آخر
            (که خلاصه/جداول جانبی/امضا روی آن است) هرگز بیشتر از ظرفیت
            محاسبه‌شده ردیف نمی‌گیرد. */
         var chunks = [];
         var index = 0;
+        var firstSize = Math.min(totalRows, firstPageCap);
+        if (firstSize > 0) {
+            chunks.push({ start: 0, size: firstSize });
+            index = firstSize;
+        }
         while (index < totalRows) {
-            var remaining = totalRows - index;
-            var size;
-            if (remaining <= lastPageCap) {
-                size = remaining;
-            } else if (remaining <= MAX_ROWS_PER_PAGE) {
-                /* همهٔ ردیف‌های باقی‌مانده در یک برگ ۳۱تایی جا می‌شوند، اما آن
-                   برگ «برگ آخر» است و ظرفیت کمتری دارد؛ پس بخشی از ردیف‌ها را
-                   نگه می‌داریم تا برگ آخر سرریز نکند. */
-                size = Math.max(1, remaining - lastPageCap);
-            } else {
-                size = MAX_ROWS_PER_PAGE;
-            }
-            size = Math.max(1, Math.min(size, remaining));
+            var size = Math.min(MAX_ROWS_PER_PAGE, totalRows - index);
             chunks.push({ start: index, size: size });
             index += size;
         }
 
-        /* آخرین برگ همیشه برگِ خلاصه/امضا است؛ اگر ظرفیتی برای ردیف نداشت،
-           یک برگ خالیِ خلاصه اضافه می‌کنیم. */
-        if (!chunks.length || chunks[chunks.length - 1].size > lastPageCap) {
-            chunks.push({ start: totalRows, size: 0 });
-        }
+        /* برگ مستقل بعدی، جداول جانبی و امضاها را در خود جای می‌دهد. */
+        chunks.push({ start: totalRows, size: 0 });
 
         /* ارتفاع ردیف هر برگ طوری انتخاب می‌شود که برگ را پر کند. */
         chunks.forEach(function (chunk, i) {
             var isLast = i === chunks.length - 1;
+            var isFirst = i === 0;
             var available;
             if (isLast) {
                 available = GEO.pageH - (
                     GEO.headerH + GEO.footerH + GEO.summaryH + band + GEO.signH +
                     GEO.sectTitleH + GEO.attHeadH + GEO.gap * 4
                 );
+            } else if (isFirst) {
+                available = firstPageRoom;
             } else {
                 available = GEO.pageH - (
                     GEO.headerH + GEO.footerH + GEO.sectTitleH + GEO.attHeadH + GEO.gap * 2
@@ -401,6 +391,25 @@
 
         var sideRows = Math.max(ctx.overtime.length, ctx.leave.length, ctx.passes.length);
         var plan = computePlan(ctx.attendance.length, sideRows);
+
+        /*
+         * The summary, side tables and signatures are deliberately kept on
+         * their own sheet. This prevents the final attendance rows from
+         * sharing a page with the administrative summary block.
+         */
+        plan.chunks = plan.chunks.filter(function (chunk) {
+            return chunk.size > 0;
+        });
+        plan.chunks.forEach(function (chunk) {
+            chunk.isLast = false;
+        });
+        plan.chunks.push({
+            start: ctx.attendance.length,
+            size: 0,
+            rowH: 0,
+            isLast: true,
+            flow: false
+        });
         var pageCount = plan.chunks.length;
 
         var html = plan.chunks.map(function (chunk, i) {
@@ -409,11 +418,6 @@
 
             var parts = [renderHead(ctx, pageNo, pageCount)];
             parts.push('<div class="pr-gap"></div>');
-
-            if (chunk.isLast) {
-                parts.push(renderSummary(ctx));
-                parts.push('<div class="pr-gap"></div>');
-            }
 
             if (chunk.size > 0) {
                 parts.push(
@@ -428,6 +432,11 @@
                         '</div>' +
                     '</section>'
                 );
+            }
+
+            if (i === 0) {
+                parts.push('<div class="pr-gap"></div>');
+                parts.push(renderSummary(ctx));
             }
 
             if (chunk.isLast) {

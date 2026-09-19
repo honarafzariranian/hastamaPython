@@ -8,10 +8,10 @@
    final-report-modern.css، responsive-tables.css و dark-theme.css)
    اولویت داشته باشد.
 
-   ایدهٔ اصلی: آنچه روی نمایشگر دیده می‌شود (کارت‌های رنگی، تب‌ها،
-   سایه‌ها، گرادیان‌ها و اسکرول افقی) به‌هیچ‌وجه چاپ نمی‌شود.
-   به‌جای آن، اسکریپت final-report-print.js یک DOM کاملاً مجزا به نام
-   #printReport می‌سازد که یک «فرم اداری» سیاه‌وسفید روی A4 است:
+   ایدهٔ اصلی: چیدمان چاپ از نمایشگر جداست، اما هویت بصری سامانه
+   (رنگ‌های سبز/فیروزه‌ای، آبی و رنگ‌های وضعیت) در خروجی A4 حفظ می‌شود.
+   اسکریپت final-report-print.js یک DOM کاملاً مجزا به نام #printReport
+   می‌سازد که یک «فرم اداری» رنگی و خوانا روی A4 است:
 
        ┌ سربرگ (عنوان / نام / بخش / شمارهٔ صفحه) ┐
        ├ خلاصهٔ عملکرد (۱۰ شاخص)                  ┤
@@ -26,13 +26,25 @@
    ===================================================================== */
 
 :root {
-    --pr-ink: #10171c;
-    --pr-muted: #4c5a63;
-    --pr-line: #37424a;
-    --pr-line-soft: #9aa5ad;
-    --pr-head-bg: #dde4e8;
-    --pr-zebra: #f4f6f7;
-    --pr-holiday: #ececec;
+    --pr-ink: #123747;
+    --pr-muted: #53717b;
+    --pr-line: #087f72;
+    --pr-line-soft: #b8d9d8;
+    --pr-head-bg: #d9f1ee;
+    --pr-zebra: #f3faf9;
+    --pr-holiday: #fff3d6;
+    --pr-brand: #087f72;
+    --pr-brand-dark: #073e52;
+    --pr-blue-bg: #e4f2fa;
+    --pr-blue-line: #1686b5;
+    --pr-green-bg: #e3f6ef;
+    --pr-green-line: #0b9278;
+    --pr-amber-bg: #fff2d8;
+    --pr-amber-line: #c78318;
+    --pr-red-bg: #fbe7e9;
+    --pr-red-line: #c95762;
+    --pr-radius-sm: 1.8mm;
+    --pr-radius-md: 2.6mm;
     --pr-sheet-w: 196mm;
     --pr-sheet-h: 279mm;
 }
@@ -105,6 +117,7 @@
         padding: 0;
         overflow: hidden;
         background: #fff;
+        border-radius: var(--pr-radius-md);
         page-break-after: always;
         break-after: page;
     }
@@ -133,8 +146,11 @@
         display: flex;
         align-items: stretch;
         flex: 0 0 auto;
-        border: 0.35mm solid var(--pr-line);
+        border: 0.35mm solid var(--pr-brand-dark);
         border-bottom: 0;
+        background: var(--pr-brand);
+        color: #fff;
+        border-radius: var(--pr-radius-md) var(--pr-radius-md) 0 0;
     }
 
     #printReport .pr-head__cell {
@@ -147,7 +163,7 @@
     #printReport .pr-head__brand {
         flex: 0 0 42mm;
         gap: 0.6mm;
-        border-left: 0.35mm solid var(--pr-line);
+        border-left: 0.35mm solid rgba(255, 255, 255, .45);
     }
 
     #printReport .pr-head__org {
@@ -157,7 +173,7 @@
 
     #printReport .pr-head__sys {
         font-size: 6.4pt;
-        color: var(--pr-muted);
+        color: #d9f1ee;
     }
 
     #printReport .pr-head__main {
@@ -176,14 +192,14 @@
     #printReport .pr-head__sub {
         margin: 0.4mm 0 0;
         font-size: 7pt;
-        color: var(--pr-muted);
+        color: #d9f1ee;
     }
 
     #printReport .pr-head__meta {
         flex: 0 0 34mm;
         align-items: flex-start;
         gap: 0.5mm;
-        border-right: 0.35mm solid var(--pr-line);
+        border-right: 0.35mm solid rgba(255, 255, 255, .45);
         font-size: 6.8pt;
     }
 
@@ -194,8 +210,10 @@
     #printReport .pr-idstrip {
         display: flex;
         flex: 0 0 auto;
-        border: 0.35mm solid var(--pr-line);
+        border: 0.35mm solid var(--pr-brand-dark);
         border-top: 0;
+        background: #eef9f7;
+        border-radius: 0 0 var(--pr-radius-sm) var(--pr-radius-sm);
         font-size: 7.2pt;
     }
 
@@ -230,8 +248,10 @@
         border: 0.35mm solid var(--pr-line);
         border-bottom: 0;
         background: var(--pr-head-bg);
+        color: var(--pr-brand-dark);
         font-size: 7.6pt;
         font-weight: 700;
+        border-radius: var(--pr-radius-sm) var(--pr-radius-sm) 0 0;
     }
 
     #printReport .pr-sect__title small {
@@ -241,12 +261,34 @@
         color: var(--pr-muted);
     }
 
+    #printReport .pr-details > .pr-sect:nth-child(1) .pr-sect__title {
+        background: var(--pr-green-bg);
+        border-color: var(--pr-green-line);
+    }
+
+    #printReport .pr-details > .pr-sect:nth-child(2) .pr-sect__title {
+        background: var(--pr-amber-bg);
+        border-color: var(--pr-amber-line);
+    }
+
+    #printReport .pr-details > .pr-sect:nth-child(3) .pr-sect__title {
+        background: var(--pr-blue-bg);
+        border-color: var(--pr-blue-line);
+    }
+
+    #printReport .pr-sect--summary .pr-sect__title {
+        background: var(--pr-green-bg);
+        border-color: var(--pr-green-line);
+    }
+
     /* ── جدول‌ها ──────────────────────────────────────────────────── */
     #printReport .pr-table {
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
         font-size: 8pt;
+        border-radius: 0 0 var(--pr-radius-sm) var(--pr-radius-sm);
+        overflow: hidden;
     }
 
     #printReport .pr-table th,
@@ -321,6 +363,13 @@
         font-size: 7.2pt;
     }
 
+    #printReport .pr-sect--leave .pr-side-table th:last-child,
+    #printReport .pr-sect--leave .pr-side-table td:last-child {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+    }
+
     #printReport .pr-side-table thead th {
         font-size: 6.6pt;
     }
@@ -334,8 +383,10 @@
     #printReport .pr-summary {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        border: 0.35mm solid var(--pr-line);
+        border: 0.35mm solid var(--pr-brand);
         border-top: 0;
+        border-radius: 0 0 var(--pr-radius-sm) var(--pr-radius-sm);
+        overflow: hidden;
     }
 
     #printReport .pr-stat {
@@ -348,6 +399,7 @@
         padding: 1.2mm 1.5mm;
         border-left: 0.3mm solid var(--pr-line-soft);
         border-bottom: 0.3mm solid var(--pr-line-soft);
+        background: #f8fcfc;
     }
 
     #printReport .pr-stat:nth-child(5n) {
@@ -369,6 +421,27 @@
         font-size: 10.5pt;
         font-weight: 700;
         letter-spacing: 0.2px;
+        color: var(--pr-brand-dark);
+    }
+
+    #printReport .pr-stat:nth-child(5n + 1) {
+        background: var(--pr-green-bg);
+    }
+
+    #printReport .pr-stat:nth-child(5n + 2) {
+        background: var(--pr-blue-bg);
+    }
+
+    #printReport .pr-stat:nth-child(5n + 3) {
+        background: var(--pr-amber-bg);
+    }
+
+    #printReport .pr-stat:nth-child(5n + 4) {
+        background: #eeeafb;
+    }
+
+    #printReport .pr-stat:nth-child(5n) {
+        background: var(--pr-red-bg);
     }
 
     #printReport .pr-stat--fill {
@@ -407,12 +480,15 @@
         justify-content: space-between;
         min-width: 0;
         padding: 1.4mm 3mm 2mm;
-        border: 0.35mm solid var(--pr-line);
+        border: 0.35mm solid var(--pr-brand);
+        background: #f5fbfa;
+        border-radius: var(--pr-radius-sm);
     }
 
     #printReport .pr-sign__label {
         font-size: 7.6pt;
         font-weight: 700;
+        color: var(--pr-brand-dark);
     }
 
     #printReport .pr-sign__line {

@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // به‌روزرسانی عنوان گزارش
     let titleBox = document.querySelector(".titleBox");
     if (titleBox) {
-        titleBox.textContent = `گزارش ${monthName} ماه ${esc(convertToPersianNumbers(year))}} حضور و غیاب`;
+        titleBox.textContent = `گزارش ${monthName} ماه ${esc(convertToPersianNumbers(year))} حضور و غیاب`;
     }
 
     // ساخت جدول
@@ -106,21 +106,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         row.innerHTML = `
-            <td>${esc(convertToPersianNumbers(index + 1))}}</td>
-            <td>${esc(convertToPersianNumbers(item.date || ""))}}</td>
+            <td>${esc(convertToPersianNumbers(index + 1))}</td>
+            <td>${esc(convertToPersianNumbers(item.date || ""))}</td>
             <td>${esc(item.weekday || "")}</td>
 
-            <td>${esc(convertToPersianNumbers(item.entryTime || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.exitTime || ""))}}</td>
+            <td>${esc(convertToPersianNumbers(item.entryTime || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.exitTime || ""))}</td>
 
-            <td>${esc(convertToPersianNumbers(item.entryTime2 || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.exitTime2 || ""))}}</td>
+            <td>${esc(convertToPersianNumbers(item.entryTime2 || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.exitTime2 || ""))}</td>
 
-            <td>${esc(convertToPersianNumbers(item.delay || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.earlyStart || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.earlyExit || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.overtime || ""))}}</td>
-            <td>${esc(convertToPersianNumbers(item.calculatedTime || ""))}}</td>
+            <td>${esc(convertToPersianNumbers(item.delay || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.earlyStart || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.earlyExit || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.overtime || ""))}</td>
+            <td>${esc(convertToPersianNumbers(item.calculatedTime || ""))}</td>
         `;
         tableBody.appendChild(row);
     });
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // تعداد رکوردها
     let countSpan = document.querySelector("#hozoornumBoxID span");
     if (countSpan) {
-        countSpan.textContent = ` ${esc(convertToPersianNumbers(tableData.length.toString()))}} `;
+        countSpan.textContent = ` ${esc(convertToPersianNumbers(tableData.length.toString()))} `;
     }
 
     // نمایش زمان‌ها در باکس‌ها با چک وجود المنت‌ها
@@ -213,7 +213,7 @@ window.addEventListener('load', function() {
                 <td>${esc(data.to_time)}</td>
                 <td>${esc(data.from_time)}</td>
                 <td>${esc(data.overtime_date)}</td>
-                <td>${esc(convertToPersianNumbers(String(index + 1)))}}</td>
+                <td>${esc(convertToPersianNumbers(String(index + 1)))}</td>
             `;
 
             tbody.appendChild(row);
@@ -255,10 +255,10 @@ window.addEventListener('load', function() {
 
             row.innerHTML = `
                 <td>${esc(data.substitute || '-')}</td>
-                <td>${esc(convertToPersianNumbers(data.days))}}</td>
-                <td>${esc(convertToPersianNumbers(data.end_date))}}</td>
-                <td>${esc(convertToPersianNumbers(data.start_date))}}</td>
-                <td>${esc(convertToPersianNumbers(String(index + 1)))}}</td>
+                <td>${esc(convertToPersianNumbers(data.days))}</td>
+                <td>${esc(convertToPersianNumbers(data.end_date))}</td>
+                <td>${esc(convertToPersianNumbers(data.start_date))}</td>
+                <td>${esc(convertToPersianNumbers(String(index + 1)))}</td>
             `;
 
             tbody.appendChild(row);
@@ -289,10 +289,10 @@ if (hourlyPassData) {
         let row = document.createElement("tr");
 
         row.innerHTML = `
-            <td>${esc(convertToPersianNumbers(data.pass_duration))}}</td>
-            <td>${esc(convertToPersianNumbers(data.pass_title))}}</td>
-            <td>${esc(convertToPersianNumbers(data.request_date))}}</td>
-            <td>${esc(convertToPersianNumbers(String(index + 1)))}}</td>
+            <td>${esc(convertToPersianNumbers(data.pass_duration))}</td>
+            <td>${esc(convertToPersianNumbers(data.pass_title))}</td>
+            <td>${esc(convertToPersianNumbers(data.request_date))}</td>
+            <td>${esc(convertToPersianNumbers(String(index + 1)))}</td>
         `;
 
         tbody.appendChild(row);
@@ -301,7 +301,7 @@ if (hourlyPassData) {
     // تبدیل دقیقه‌ها به فرمت HH:MM
     let totalHours = Math.floor(totalMinutes / 60);
     let remainingMinutes = totalMinutes % 60;
-    let formattedTotalTime = `${esc(convertToPersianNumbers(String(totalHours).padStart(2, '0')))}}:${esc(convertToPersianNumbers(String(remainingMinutes).padStart(2, '0')))}}`;
+    let formattedTotalTime = `${esc(convertToPersianNumbers(String(totalHours).padStart(2, '0')))}:${esc(convertToPersianNumbers(String(remainingMinutes).padStart(2, '0')))}`;
 
     // نمایش مجموع مدت زمان در داخل div
     let passNumBox = document.querySelector("#passNumBoxID");
