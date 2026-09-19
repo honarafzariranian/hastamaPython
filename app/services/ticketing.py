@@ -373,6 +373,13 @@ class TicketService:
         priority: str = "normal",
         category_id: Optional[int] = None,
     ) -> dict:
+        master_usernames = {
+            item.strip().casefold()
+            for item in os.getenv("MASTER_ADMIN_USERNAMES", "ali").split(",")
+            if item.strip()
+        }
+        if recipient_username.strip().casefold() not in master_usernames:
+            raise PermissionError("تیکت‌های پشتیبانی فقط برای مدیر اصلی سامانه ارسال می‌شوند.")
         recipient = _verify_user(self.cursor, recipient_username)
         if recipient.casefold() == actor.casefold():
             raise ValueError("ارسال تیکت برای خودتان مجاز نیست.")

@@ -1,6 +1,7 @@
 (() => {
     'use strict';
     const state = { active: null, users: null };
+    const currentUsername = document.body.dataset.notificationActor || '';
     const $ = (s, r = document) => r.querySelector(s);
     const text = value => String(value ?? '').trim();
     const fa = new Intl.NumberFormat('fa-IR');
@@ -70,9 +71,20 @@
     function renderConversation(data) {
         const pane = $('#internalAutomationConversation'); if (!pane) return;
         const messages = data.messages || [];
-        pane.innerHTML = `<header class="internal-automation-conversation-head"><div><span>گفت‌وگوی سازمانی</span><h3>${escapeHtml(data.subject)}</h3></div><small>${fa.format(messages.length)} پیام</small></header><div class="internal-automation-messages">${messages.map(message => `<article class="internal-automation-message"><div><strong>${escapeHtml(message.author_username)}</strong><time>${formatDate(message.created_at)}</time></div><p>${escapeHtml(message.body)}</p>${(data.attachments || []).filter(file => Number(file.message_id) === Number(message.id)).map(file => `<a class="internal-automation-file" target="_blank" rel="noopener" href="/api/automation/${data.id}/attachments/${file.id}">📎 ${escapeHtml(file.original_name)}</a>`).join('')}</article>`).join('') || '<div class="internal-automation-list-empty">هنوز پیامی ثبت نشده است.</div>'}</div><form class="internal-automation-composer"><textarea name="body" maxlength="4000" required placeholder="پیام خود را بنویسید…"></textarea><div><label class="internal-automation-file-picker">📎 فایل<input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx,.xls,.xlsx"></label><button type="submit">ارسال پیام</button><span class="internal-automation-status"></span></div></form>`;
+        const completed = data.status === 'completed';
+        const ownPending = (data.reopen_requests || []).find(item => item.status === 'pending' && String(item.requester).trim() === String(currentUsername).trim());
+        const pending = (data.reopen_requests || []).find(item => item.status === 'pending' && String(item.requester).trim() !== String(currentUsername).trim());
+        const controls = completed
+            ? (pending ? `<button type="button" class="internal-automation-reopen" data-action="approve-internal-reopen" data-conversation-id="${data.id}" data-request-id="${pending.id}">تأیید شروع مجدد</button>` : `<button type="button" class="internal-automation-reopen" data-action="request-internal-reopen" data-conversation-id="${data.id}"${ownPending ? ' disabled' : ''}>${ownPending ? 'در انتظار تأیید طرف مقابل' : 'درخواست شروع مجدد'}</button>`)
+            : `<button type="button" class="internal-automation-complete" data-action="complete-internal-conversation" data-conversation-id="${data.id}">اتمام گفتگو</button>`;
+        pane.innerHTML = `<header class="internal-automation-conversation-head"><div><span>${completed ? 'گفت‌وگو پایان یافته' : 'گفت‌وگوی سازمانی'}</span><h3>${escapeHtml(data.subject)}</h3></div><div class="internal-automation-conversation-tools"><small>${fa.format(messages.length)} پیام</small>${controls}<button type="button" class="internal-automation-delete" data-action="delete-internal-conversation" data-conversation-id="${data.id}" title="حذف گفتگو">حذف گفتگو</button></div></header><div class="internal-automation-messages">${messages.map(message => {
+            const own = String(message.author_username || '').trim() === String(currentUsername).trim();
+            return `<article class="internal-automation-message${own ? ' is-own' : ' is-other'}"><div><strong>${escapeHtml(message.author_username)}</strong><time>${formatDate(message.created_at)}</time></div><p>${escapeHtml(message.body)}</p>${(data.attachments || []).filter(file => Number(file.message_id) === Number(message.id)).map(file => `<a class="internal-automation-file" target="_blank" rel="noopener" href="/api/automation/${data.id}/attachments/${file.id}">📎 ${escapeHtml(file.original_name)}</a>`).join('')}</article>`;
+        }).join('') || '<div class="internal-automation-list-empty">هنوز پیامی ثبت نشده است.</div>'}</div>${completed ? '<div class="internal-automation-completed-note">این گفتگو به پایان رسیده و برای ارسال پیام باید دوباره فعال شود.</div>' : '<form class="internal-automation-composer"><textarea name="body" maxlength="4000" required placeholder="پیام خود را بنویسید…"></textarea><div><label class="internal-automation-file-picker">📎 فایل<input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx,.xls,.xlsx"></label><button type="submit">ارسال پیام</button><span class="internal-automation-status"></span></div></form>'}`;
         const messagesBox = $('.internal-automation-messages', pane); messagesBox.scrollTop = messagesBox.scrollHeight;
-        $('.internal-automation-composer', pane).addEventListener('submit', async event => {
+        const composer = $('.internal-automation-composer', pane);
+        if (!composer) return;
+        composer.addEventListener('submit', async event => {
             event.preventDefault(); const form = event.currentTarget; const body = form.body.value.trim(); const submit = form.querySelector('button[type=submit]'); const status = $('.internal-automation-status', form);
             if (!body || submit.disabled) return; submit.disabled = true; status.textContent = 'در حال ارسال…';
             try {
@@ -84,6 +96,23 @@
         });
     }
     async function openConversation(id) { state.active = id; try { renderConversation(await api(`/api/automation/${id}`)); await loadList(); } catch (error) { const pane = $('#internalAutomationConversation'); if (pane) pane.innerHTML = `<div class="internal-automation-error">${escapeHtml(localizedError(error))}</div>`; } }
+    async function deleteConversation(id) {
+        if (!id || !window.confirm('آیا از حذف کامل این گفتگو و پیام‌های آن مطمئن هستید؟')) return;
+        try {
+            await api(`/api/automation/${id}`, { method: 'DELETE' });
+            state.active = null;
+            const pane = $('#internalAutomationConversation');
+            if (pane) pane.innerHTML = '<div class="internal-automation-empty"><span>✦</span><h3>گفتگو حذف شد</h3><p>می‌توانید یک گفت‌وگوی جدید ایجاد کنید.</p></div>';
+            await loadList();
+        } catch (error) {
+            const pane = $('#internalAutomationConversation');
+            if (pane) pane.insertAdjacentHTML('afterbegin', `<div class="internal-automation-error">${escapeHtml(localizedError(error))}</div>`);
+        }
+        async function conversationAction(url, id, successText) {
+            try { await api(`/api/automation/${id}/${url}`, { method: 'POST' }); await openConversation(id); }
+            catch (error) { const pane = $('#internalAutomationConversation'); if (pane) pane.insertAdjacentHTML('afterbegin', `<div class="internal-automation-error">${escapeHtml(localizedError(error))}</div>`); }
+        }
+    }
     async function openCreateModal() {
         const modal = $('#internalAutomationCreateModal');
         const select = $('select[name="participant"]', modal);
@@ -137,6 +166,13 @@
         if (action === 'refresh-internal-automation') loadList();
         if (action === 'new-internal-conversation') openCreateModal();
         if (action === 'close-internal-automation-create') closeCreateModal();
+        if (action === 'delete-internal-conversation') deleteConversation(event.target.closest('[data-conversation-id]')?.dataset.conversationId);
+        if (action === 'complete-internal-conversation') {
+            const id = event.target.closest('[data-conversation-id]')?.dataset.conversationId;
+            if (id && window.confirm('آیا می‌خواهید این گفتگو را به پایان برسانید؟ پیام‌ها حفظ خواهند شد.')) conversationAction('complete', id);
+        }
+        if (action === 'request-internal-reopen') conversationAction('reopen-request', event.target.closest('[data-conversation-id]')?.dataset.conversationId);
+        if (action === 'approve-internal-reopen') conversationAction(`reopen-request/${event.target.closest('[data-request-id]')?.dataset.requestId}/approve`, event.target.closest('[data-conversation-id]')?.dataset.conversationId);
     });
     document.getElementById('internalAutomationCreateForm')?.addEventListener('submit', submitCreate);
     window.InternalAutomation = { open: openCenter, close: closeCenter, load: loadList };

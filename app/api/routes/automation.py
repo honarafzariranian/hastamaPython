@@ -37,6 +37,24 @@ def list_conversations(request: Request):
     finally:
         if service is not None:
             service.close()
+@router.post('/{conversation_id}/complete', status_code=204)
+def complete_conversation(conversation_id:int, request:Request):
+    actor,admin,master=_actor(request); service=_service()
+    try: service.complete(conversation_id,actor,admin,master)
+    except Exception as exc: raise _error(exc) from exc
+    finally: service.close()
+@router.post('/{conversation_id}/reopen-request', status_code=204)
+def request_reopen(conversation_id:int, request:Request):
+    actor,admin,master=_actor(request); service=_service()
+    try: service.request_reopen(conversation_id,actor,admin,master)
+    except Exception as exc: raise _error(exc) from exc
+    finally: service.close()
+@router.post('/{conversation_id}/reopen-request/{request_id}/approve', status_code=204)
+def approve_reopen(conversation_id:int, request_id:int, request:Request):
+    actor,admin,master=_actor(request); service=_service()
+    try: service.approve_reopen(conversation_id,request_id,actor,admin,master)
+    except Exception as exc: raise _error(exc) from exc
+    finally: service.close()
 @router.post('', status_code=201)
 def create_conversation(payload: ConversationCreate, request: Request):
     actor, admin, master = _actor(request)
@@ -56,6 +74,14 @@ def get_conversation(conversation_id:int, request:Request):
         result=service.get(conversation_id,actor,admin,master)
         if result is None: raise HTTPException(404,'گفتگو پیدا نشد.')
         return result
+    finally: service.close()
+@router.delete('/{conversation_id}', status_code=204)
+def delete_conversation(conversation_id:int, request:Request):
+    actor,admin,master=_actor(request); service=_service()
+    try:
+        service.delete(conversation_id, actor, admin, master)
+    except Exception as exc:
+        raise _error(exc) from exc
     finally: service.close()
 @router.post('/{conversation_id}/messages')
 def add_message(conversation_id:int,payload:MessageCreate,request:Request):

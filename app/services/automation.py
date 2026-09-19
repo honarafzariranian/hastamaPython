@@ -48,7 +48,7 @@ class AutomationService:
             where, params = '1=1', ()
         else:
             where, params = 'EXISTS (SELECT 1 FROM automation_participants p WHERE p.conversation_id=c.id AND p.username=?)', (username,)
-        self.cursor.execute(f'''SELECT c.id,c.subject,c.created_by,c.created_at,c.updated_at,
+        self.cursor.execute(f'''SELECT c.id,c.subject,c.created_by,c.created_at,c.updated_at,c.status,
           (SELECT COUNT(*) FROM automation_participants p WHERE p.conversation_id=c.id) participant_count,
           (SELECT COUNT(*) FROM automation_messages m WHERE m.conversation_id=c.id) message_count
           FROM automation_conversations c WHERE {where} ORDER BY c.updated_at DESC,c.id DESC''', params)
@@ -60,11 +60,32 @@ class AutomationService:
         for name in names: self.cursor.execute('INSERT INTO automation_participants(conversation_id,username) VALUES(?,?)', (cid,name))
         self.cursor.execute('INSERT INTO automation_messages(conversation_id,author_username,body) OUTPUT INSERTED.id VALUES(?,?,?)', (cid,username,body.strip()))
         self.conn.commit(); return self.get(cid, username, False, False)
+    def delete(self, cid, username, is_admin, is_master):
+        self.cursor.execute('SELECT created_by FROM automation_conversations WHERE id=?', (cid,))
+        row = self.cursor.fetchone()
+        if not row:
+            raise LookupError('گفتگو پیدا نشد.')
+        if not is_master and (is_admin or str(row[0]).strip() != username):
+            raise PermissionError('فقط ایجادکنندهٔ گفتگو می‌تواند آن را حذف کند.')
+        self.cursor.execute('SELECT storage_name FROM automation_attachments WHERE conversation_id=?', (cid,))
+        storage_names = [str(item[0]) for item in self.cursor.fetchall()]
+        self.cursor.execute('DELETE FROM automation_conversations WHERE id=?', (cid,))
+        self.conn.commit()
+        root = os.path.abspath(os.getenv('TICKETING_PRIVATE_DIR', 'app/private_uploads/tickets'))
+        for storage_name in storage_names:
+            path = os.path.abspath(os.path.join(root, storage_name))
+            if os.path.commonpath((root, path)) == root:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
     def get(self, cid, username, is_admin, is_master):
         if not self._allowed(cid, username, is_admin, is_master): return None
-        self.cursor.execute('SELECT id,subject,created_by,created_at,updated_at FROM automation_conversations WHERE id=?', (cid,)); row=self.cursor.fetchone()
+        self.cursor.execute('SELECT id,subject,created_by,created_at,updated_at,status FROM automation_conversations WHERE id=?', (cid,)); row=self.cursor.fetchone()
         if not row: return None
         result=dict(zip([c[0] for c in self.cursor.description],row)); result.update(created_at=_iso(result['created_at']),updated_at=_iso(result['updated_at']))
+        self.cursor.execute('SELECT id,requester,status,created_at FROM automation_reopen_requests WHERE conversation_id=? AND status=? ORDER BY id DESC', (cid, 'pending'))
+        result['reopen_requests'] = self._serialized(_rows(self.cursor))
         if is_admin and not is_master: return result
         self.cursor.execute('SELECT id,author_username,body,created_at FROM automation_messages WHERE conversation_id=? ORDER BY created_at,id', (cid,)); result['messages']=self._serialized(_rows(self.cursor))
         self.cursor.execute('SELECT id,message_id,uploaded_by,original_name,content_type,size_bytes,created_at FROM automation_attachments WHERE conversation_id=? ORDER BY created_at,id', (cid,)); result['attachments']=self._serialized(_rows(self.cursor))
@@ -72,8 +93,35 @@ class AutomationService:
     def add_message(self,cid,username,body,is_admin,is_master):
         if is_admin and not is_master: raise PermissionError('دسترسی ارسال پیام ندارید.')
         if not self._allowed(cid,username,is_admin,is_master): raise PermissionError('دسترسی به گفتگو ندارید.')
+        self.cursor.execute('SELECT status FROM automation_conversations WHERE id=?', (cid,))
+        if self.cursor.fetchone()[0] != 'open': raise PermissionError('این گفتگو به پایان رسیده است.')
         if not body.strip() or len(body.strip())>4000: raise ValueError('متن پیام معتبر نیست.')
         self.cursor.execute('INSERT INTO automation_messages(conversation_id,author_username,body) VALUES(?,?,?)', (cid,username,body.strip())); self.cursor.execute('UPDATE automation_conversations SET updated_at=SYSUTCDATETIME() WHERE id=?',(cid,)); self.conn.commit(); return self.get(cid,username,is_admin,is_master)
+    def complete(self, cid, username, is_admin, is_master):
+        if not self._allowed(cid, username, is_admin, is_master): raise PermissionError('دسترسی به گفتگو ندارید.')
+        self.cursor.execute('UPDATE automation_conversations SET status=?,updated_at=SYSUTCDATETIME() WHERE id=?', ('completed', cid))
+        self.conn.commit()
+    def request_reopen(self, cid, username, is_admin, is_master):
+        if not self._allowed(cid, username, is_admin, is_master): raise PermissionError('دسترسی به گفتگو ندارید.')
+        self.cursor.execute('SELECT status FROM automation_conversations WHERE id=?', (cid,))
+        if not self.cursor.fetchone(): raise LookupError('گفتگو پیدا نشد.')
+        self.cursor.execute('SELECT COUNT(*) FROM automation_participants WHERE conversation_id=? AND username<>?', (cid, username))
+        if not self.cursor.fetchone()[0]: raise ValueError('برای بازگشایی گفتگو، طرف مقابل وجود ندارد.')
+        self.cursor.execute('SELECT id FROM automation_reopen_requests WHERE conversation_id=? AND requester=? AND status=?', (cid, username, 'pending'))
+        if self.cursor.fetchone(): raise ValueError('درخواست بازگشایی قبلاً ارسال شده است.')
+        self.cursor.execute('INSERT INTO automation_reopen_requests(conversation_id,requester) VALUES(?,?)', (cid, username))
+        self.cursor.execute('INSERT INTO automation_messages(conversation_id,author_username,body) VALUES(?,?,?)', (cid, username, 'درخواست بازگشایی این گفتگو ارسال شد و منتظر تأیید طرف مقابل است.'))
+        self.conn.commit()
+    def approve_reopen(self, cid, request_id, username, is_admin, is_master):
+        if not self._allowed(cid, username, is_admin, is_master): raise PermissionError('دسترسی به گفتگو ندارید.')
+        self.cursor.execute('SELECT requester FROM automation_reopen_requests WHERE id=? AND conversation_id=? AND status=?', (request_id, cid, 'pending'))
+        row = self.cursor.fetchone()
+        if not row: raise LookupError('درخواست بازگشایی پیدا نشد.')
+        if str(row[0]).strip() == username and not is_master: raise PermissionError('درخواست بازگشایی باید توسط طرف مقابل تأیید شود.')
+        self.cursor.execute('UPDATE automation_reopen_requests SET status=?,resolved_at=SYSUTCDATETIME() WHERE id=?', ('approved', request_id))
+        self.cursor.execute('UPDATE automation_conversations SET status=?,updated_at=SYSUTCDATETIME() WHERE id=?', ('open', cid))
+        self.cursor.execute('INSERT INTO automation_messages(conversation_id,author_username,body) VALUES(?,?,?)', (cid, username, 'درخواست بازگشایی گفتگو تأیید شد؛ گفتگو دوباره فعال است.'))
+        self.conn.commit()
     def add_attachment(self,cid,username,metadata,is_admin,is_master):
         if is_admin and not is_master: raise PermissionError('دسترسی ارسال فایل ندارید.')
         if not self._allowed(cid,username,is_admin,is_master): raise PermissionError('دسترسی به گفتگو ندارید.')

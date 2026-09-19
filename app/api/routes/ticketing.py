@@ -20,6 +20,11 @@ from app.services.ticketing import (
 router = APIRouter(prefix="/api/tickets", tags=["ticketing"])
 
 
+def _master_admin_usernames() -> set[str]:
+    raw = os.getenv("MASTER_ADMIN_USERNAMES", "ali")
+    return {item.strip().casefold() for item in raw.split(",") if item.strip()}
+
+
 class TicketCreate(BaseModel):
     recipient_username: str = Field(min_length=1, max_length=255)
     subject: str = Field(min_length=2, max_length=180)
@@ -112,9 +117,10 @@ def ticket_users(request: Request):
                FROM user_table ORDER BY name, username"""
         )
         users = []
+        master_usernames = _master_admin_usernames()
         for row in service.cursor.fetchall():
             username = str(row[0] or "").strip()
-            if username.casefold() == actor.casefold():
+            if username.casefold() == actor.casefold() or username.casefold() not in master_usernames:
                 continue
             users.append(
                 {
@@ -151,6 +157,8 @@ def list_tickets(
 def create_ticket(payload: TicketCreate, request: Request):
     _assert_same_origin(request)
     actor, is_admin, is_master_admin = _actor(request)
+    if payload.recipient_username.casefold() not in _master_admin_usernames():
+        raise HTTPException(status_code=403, detail="تیکت‌های پشتیبانی فقط برای مدیر اصلی سامانه ارسال می‌شوند.")
     if payload.priority not in TICKET_PRIORITIES:
         raise HTTPException(status_code=422, detail="اولویت تیکت معتبر نیست.")
     service = _service()

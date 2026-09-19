@@ -1340,13 +1340,22 @@ async def get_receivers(request: Request):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        master_usernames = {
+            item.strip().casefold()
+            for item in os.getenv("MASTER_ADMIN_USERNAMES", "ali").split(",")
+            if item.strip()
+        }
         cursor.execute("""
             SELECT LTRIM(RTRIM(username))
             FROM user_table
             WHERE LTRIM(RTRIM(username)) <> ?
             ORDER BY LTRIM(RTRIM(username))
         """, (actor,))
-        receiver_list = [str(row[0]).strip() for row in cursor.fetchall() if row[0]]
+        receiver_list = [
+            str(row[0]).strip()
+            for row in cursor.fetchall()
+            if row[0] and str(row[0]).strip().casefold() in master_usernames
+        ]
         return JSONResponse(content=receiver_list)
     except Exception:
         return JSONResponse(content={"success": False, "message": "خطا در دریافت کاربران."}, status_code=500)
