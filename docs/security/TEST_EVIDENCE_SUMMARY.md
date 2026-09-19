@@ -2,8 +2,23 @@
 
 All commands were run from the repository root on the working branch
 `arena/01a0b5ec-hastama-lab`. Environment: Python 3.11.2, virtualenv at
-`.venv` (git-ignored), SQL Server replaced by the fake `pyodbc` installed by
-`tests/conftest.py`.
+`.venv` (git-ignored, so it is not part of the repository), SQL Server replaced by
+the fake `pyodbc` installed by `tests/conftest.py`.
+
+**Recreating the environment** (the virtualenv is not stored in the repository):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install fastapi uvicorn "pydantic>=2" jinja2 jdatetime \
+    itsdangerous python-multipart bcrypt pyodbc httpx pytest persiantools \
+    loguru requests "apscheduler>=3.10.4,<4" websockets pdfkit joblib \
+    scikit-learn pillow cvss
+# optional static analysis used in this report:
+.venv/bin/pip install bandit pip-audit ruff
+```
+
+The tests themselves need no database: `tests/conftest.py` installs an in-memory
+stand-in for `pyodbc` before the application is imported.
 
 ## 1. Commands and results
 

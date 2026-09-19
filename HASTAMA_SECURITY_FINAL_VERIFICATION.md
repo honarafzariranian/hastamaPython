@@ -677,7 +677,7 @@ verdict:
 | ID | Risk | Severity | Acceptance |
 |---|---|---|---|
 | RR-01 | No backup/restore (F-14) | High | required |
-| RR-02 | Historic personal data in git (F-01/F-02/F-17) | High | required |
+| RR-02 | Historic personal data in git (F-01/F-02/RR-17) | High | required |
 | RR-03 | No MFA for administrative accounts | High | required |
 | RR-04 | CSP `'unsafe-inline'` retained | Medium | required (time-boxed migration) |
 | RR-14 | Legacy credential formats may persist (F-16) | Medium | required |
