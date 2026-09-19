@@ -28,12 +28,39 @@
 .user-ticket-create.is-open .user-ticket-create-backdrop { background: rgba(7, 29, 42, .64); backdrop-filter: blur(7px); }
 .user-ticket-create.is-closing .user-ticket-create-backdrop { background: rgba(7, 29, 42, 0); backdrop-filter: blur(0px); }
 .user-support-dialog { position: relative; display: flex; flex-direction: column; width: min(1320px, 100%); height: min(900px, calc(100dvh - 36px)); overflow: hidden; border: 1px solid rgba(56,182,255,.2); border-radius: 26px; background: #f7fbfd; box-shadow: 0 28px 90px rgba(7,29,42,.3); color: #0d3b4e; }
-.user-support-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; border-bottom: 1px solid rgba(13,59,78,.1); background: #fff; }
-.user-support-heading { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+.user-support-header {
+        display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(13, 59, 78, .1);
+    background: #fff;
+    flex-direction: row-reverse;
+}
+
+.user-support-heading {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    text-align: end;
+}
+
 .user-support-heading h2 { margin: 0; font-size: clamp(1.1rem, 2vw, 1.45rem); }
 .user-support-heading p { margin: 4px 0 0; color: #4d6b7a; font-size: .75rem; }
 .user-support-back { display: none; }
-.user-support-header-actions { display: flex; align-items: center; gap: 7px; }
+
+.user-support-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-direction: row-reverse;
+}
+
 .user-support-refresh, .user-support-close { width: 38px; height: 38px; border: 1px solid rgba(13,59,78,.12); border-radius: 11px; background: #fff; color: #0d3b4e; cursor: pointer; font-size: 1.2rem; }
 .user-support-new, .user-support-send, .user-support-empty-action { min-height: 38px; padding: 8px 13px; border: 0; border-radius: 10px; background: #0d3b4e; color: #fff; cursor: pointer; font: 700 .74rem 'Vazir', sans-serif; }
 .user-support-new:hover, .user-support-send:hover, .user-support-empty-action:hover { background: #07556e; }
@@ -104,7 +131,19 @@
 .user-support-file-button { display: grid; place-items: center; min-height: 38px; padding: 5px 7px; border: 1px solid rgba(13,59,78,.13); border-radius: 9px; color: #0876a9; cursor: pointer; font-size: .62rem; white-space: nowrap; }
 .user-support-file-button input { display: none; }
 .user-support-upload-status { grid-column: 1 / -1; min-height: 14px; color: #4d6b7a; font-size: .59rem; }
-.user-support-activity { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 0 24px 14px; padding: 10px 14px; border: 1px solid rgba(0,184,148,.15); border-radius: 12px; background: #f2fbf9; }
+
+.user-support-activity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 0 24px 14px;
+    padding: 10px 14px;
+    border: 1px solid rgba(0,184,148,.15);
+    border-radius: 12px;
+    background: #f2fbf9;
+}
+
 .user-support-activity p { margin: 0; color: #4d6b7a; font-size: .65rem; }
 .user-support-empty-list { display: grid; place-items: center; align-content: center; min-height: 220px; padding: 24px 15px; text-align: center; }
 .user-support-empty-list .user-support-empty-icon { margin-bottom: 8px; }

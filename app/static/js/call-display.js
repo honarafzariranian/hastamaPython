@@ -49,11 +49,6 @@
 
     var AUDIO_BASE = '/static/audio/sample_call/fa-IR-DilaraNeural/';
 
-    /* ── Persian digits ── */
-    var FA = '\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9';
-    function toFA(n) {
-        return String(n).replace(/[0-9]/g, function (d) { return FA[+d]; });
-    }
 
     /* ── Status ── */
     function setStatus(state) {
@@ -164,7 +159,7 @@
 
     function showAudioError(number) {
         if (!heroMessage) return;
-        heroMessage.textContent = '\u0641\u0627\u06cc\u0644 \u0635\u0648\u062a\u06cc \u0634\u0645\u0627\u0631\u0647 ' + toFA(String(number)) + ' \u0645\u0648\u062c\u0648\u062f \u0646\u06cc\u0633\u062a.';
+        heroMessage.textContent = '\u0641\u0627\u06cc\u0644 \u0635\u0648\u062a\u06cc \u0634\u0645\u0627\u0631\u0647 ' + window.hastamaToFA(String(number)) + ' \u0645\u0648\u062c\u0648\u062f \u0646\u06cc\u0633\u062a.';
         setTimeout(function () { if (heroMessage) heroMessage.textContent = ''; }, 5000);
     }
 

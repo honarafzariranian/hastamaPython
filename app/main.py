@@ -16,7 +16,6 @@ from io import BytesIO
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.api.routes.api import router as api_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.notifications import (
     router as notifications_router,
@@ -32,21 +31,19 @@ from app.api.routes.registration import router as registration_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
-from core.config import API_PREFIX, DEBUG, MEMOIZATION_FLAG, PROJECT_NAME, VERSION, SECRET_KEY, config
+from core.config import DEBUG, SECRET_KEY, config
 from app.core.database import connection_string as _db_connection_string
-from core.events import create_start_app_handler
 from core.number_format import convert_to_persian_numbers
 from core.password_utils import (
     get_user_table_columns, hash_password, insert_user_with_optional_hash,
     validate_username_input,
 )
 
-from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Path, Body, UploadFile, File
+from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Body, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from jinja2 import Template
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 
@@ -83,7 +80,6 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 import secrets as _secrets
 
 from app.core.db_context import RequestConnectionMiddleware, connection_proxy, cursor_proxy
-from app.core.net import client_ip as _client_ip_trusted, is_https as _request_is_https
 from app.core.session_cookie import parse_session_cookie, expire_cookie_header
 from app.core import sessions as _session_registry
 
@@ -4866,4 +4862,3 @@ async def destroy_session(request: Request):
         _session_registry.revoke_session(sid, str(request.session.get("username") or "self"))
     request.session.clear()
     return JSONResponse(content={"success": True})
-
