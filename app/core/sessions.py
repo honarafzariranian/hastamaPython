@@ -27,6 +27,7 @@ import os
 import secrets
 import threading
 import time
+from datetime import timezone
 from typing import Optional
 
 logger = logging.getLogger("hastama.sessions")
@@ -207,6 +208,8 @@ def validate_session(sid: str, username: str) -> bool:
             if valid and last_activity is not None:
                 idle_limit = idle_timeout_seconds()
                 try:
+                    if hasattr(last_activity, "tzinfo") and last_activity.tzinfo is None:
+                        last_activity = last_activity.replace(tzinfo=timezone.utc)
                     age = (time.time() - last_activity.timestamp()) if hasattr(last_activity, "timestamp") else 0.0
                 except Exception:
                     age = 0.0

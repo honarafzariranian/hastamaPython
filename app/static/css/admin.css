@@ -5999,6 +5999,8 @@ form button:active {
 .attendance-tab-content.active {
     display: block;
     contain: layout style;
+    padding: 22px 20px 16px !important;
+    padding-bottom: 4px !important;
 }
 
 @keyframes attendanceFadeIn {
@@ -11389,6 +11391,134 @@ body.reg-modal-open {
 /* حالت خالی */
 .hozoor-table-empty td {
     padding: 0 !important;
+}
+
+/* ثبت دستی: سطح داخلی هماهنگ با قاب والد، بدون کارتِ شناورِ تو در تو */
+#sabtdst.attendance-panel {
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, rgba(13, 59, 78, .12));
+    border-radius: 16px;
+    box-shadow: none;
+}
+
+#sabtdst .attendance-panel__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 72px;
+    padding: 14px 18px;
+    border-radius: 15px 15px 0 0;
+    border-bottom: 1px solid var(--border, rgba(13, 59, 78, .1));
+    background: var(--surface-strong, #f7fafc);
+}
+
+#sabtdst .attendance-panel__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(14, 165, 233, .12);
+    color: #087fbd;
+}
+
+#sabtdst .attendance-panel__icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+#sabtdst .attendance-panel__title {
+    font-size: .98rem;
+    line-height: 1.5;
+}
+
+#sabtdst .attendance-panel__subtitle {
+    margin-top: 1px;
+    font-size: .73rem;
+}
+
+#sabtdst .attendance-form-wrap {
+    gap: 14px;
+    padding: 18px;
+    border-radius: 0 0 15px 15px;
+}
+
+#sabtdst .attendance-form {
+    gap: 13px !important;
+}
+
+#sabtdst .attendance-form__row {
+    gap: 5px;
+}
+
+#sabtdst .attendance-form__label {
+    font-size: .76rem;
+    font-weight: 800;
+}
+
+#sabtdst .attendance-form__select,
+#sabtdst .attendance-form__input {
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--surface-soft, #fbfdff);
+    font-size: .84rem;
+}
+
+#sabtdst .attendance-form__select:focus,
+#sabtdst .attendance-form__input:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, .1);
+}
+
+#sabtdst .attendance-form__times {
+    gap: 10px;
+}
+
+#sabtdst .attendance-form__submit {
+    min-height: 44px;
+    margin-top: 2px !important;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, .16);
+    font-size: .86rem;
+}
+
+#sabtdst .attendance-form__submit svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* هم‌راستا با محتوای فعال پنل اضافه‌کاری: بدون قاب و فاصلهٔ تو در تو */
+#attendancePanelsRow > #sabtdst.attendance-panel {
+    flex: 1 1 0;
+    width: auto !important;
+    min-width: 320px;
+    margin: 0 !important;
+    
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#attendancePanelsRow > #sabtdst .attendance-form-wrap {
+    gap: 0;
+    padding: 22px 20px 16px;
+    border: 1px solid #e6ecf2;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+}
+
+#attendancePanelsRow > #sabtdst .attendance-form {
+    gap: 16px !important;
+}
+
+#attendancePanelsRow > #sabtdst .attendance-form__select,
+#attendancePanelsRow > #sabtdst .attendance-form__input {
+    border-radius: 8px;
+}
+
+#attendancePanelsRow > #sabtdst .attendance-form__submit {
+    margin-top: 16px !important;
+    border-radius: 8px;
 }
 
 .hozoor-table-empty__state {

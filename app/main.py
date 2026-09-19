@@ -512,7 +512,14 @@ class _SecurityHeadersMiddleware:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
                 existing = {k for k, _ in headers}
-                extra = list(self._HEADERS)
+                # Browsers ignore COOP on an untrusted HTTP origin (for
+                # example an internal IP address). Emit it only when the
+                # response is delivered over HTTPS, where it is effective.
+                extra = [
+                    (key, value)
+                    for key, value in self._HEADERS
+                    if key != b"cross-origin-opener-policy" or https
+                ]
                 if https:
                     extra.append(self._HSTS)
                 for k, v in extra:
@@ -4859,5 +4866,4 @@ async def destroy_session(request: Request):
         _session_registry.revoke_session(sid, str(request.session.get("username") or "self"))
     request.session.clear()
     return JSONResponse(content={"success": True})
-
 

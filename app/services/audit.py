@@ -20,6 +20,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
 from app.core.database import connect as db_connect
+from app.core.config import config as app_config
 
 logger = logging.getLogger(__name__)
 
@@ -268,7 +269,7 @@ import hashlib as _hashlib
 # caller by ``/forgot_password``.  The password recovery flow therefore fails
 # closed when no secret is configured (see ``recovery_codes_available``), rather
 # than silently issuing codes with no integrity key.
-_HMAC_SECRET = os.environ.get("HASTAMA_HMAC_SECRET", "").strip().encode()
+_HMAC_SECRET = app_config("HASTAMA_HMAC_SECRET", default="").strip().encode()
 _HMAC_SECRET_PER_PROCESS: Optional[bytes] = None
 
 
@@ -291,7 +292,7 @@ def _recovery_secret() -> bytes:
     raise RuntimeError("HASTAMA_HMAC_SECRET is not configured")
 
 
-DEBUG_MODE = os.environ.get("DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+DEBUG_MODE = app_config("DEBUG", cast=bool, default=False)
 if not _HMAC_SECRET and not DEBUG_MODE:
     logger.error(
         "HASTAMA_HMAC_SECRET is not set — password recovery is disabled until it is configured"
