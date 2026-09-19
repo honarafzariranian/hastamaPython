@@ -39,10 +39,10 @@ document.addEventListener("DOMContentLoaded", function () {
     reportData.forEach((row) => {
         const newRow = document.createElement("tr");
         newRow.innerHTML = `
-            <td>${convertToPersianNumbers(row.passDuration)}</td>
-            <td>${convertToPersianNumbers(row.passTitle)}</td>
-            <td>${convertToPersianNumbers(row.requestDate)}</td>
-            <td>${convertToPersianNumbers(row.index)}</td>
+            <td>${esc(convertToPersianNumbers(row.passDuration))}}</td>
+            <td>${esc(convertToPersianNumbers(row.passTitle))}}</td>
+            <td>${esc(convertToPersianNumbers(row.requestDate))}}</td>
+            <td>${esc(convertToPersianNumbers(row.index))}}</td>
         `;
         tableBody.appendChild(newRow);
     });

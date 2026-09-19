@@ -260,15 +260,47 @@ def terminate_session(
 import hmac as _hmac
 import hashlib as _hashlib
 
-# Server-side secret for HMAC. In production, load from environment variable.
-_HMAC_SECRET = os.environ.get("HASTAMA_HMAC_SECRET", "").encode()
-if not _HMAC_SECRET:
-    import logging as _logging
-    _logging.getLogger(__name__).warning("HASTAMA_HMAC_SECRET not set — recovery codes are insecure")
+# ── Recovery-code integrity key ───────────────────────────────
+#
+# Recovery codes are stored as HMAC-SHA256 digests.  Without a server secret the
+# digest would be a plain hash of an 8 character code, i.e. offline computable
+# by anybody who learns a request id — and a request id is returned to the
+# caller by ``/forgot_password``.  The password recovery flow therefore fails
+# closed when no secret is configured (see ``recovery_codes_available``), rather
+# than silently issuing codes with no integrity key.
+_HMAC_SECRET = os.environ.get("HASTAMA_HMAC_SECRET", "").strip().encode()
+_HMAC_SECRET_PER_PROCESS: Optional[bytes] = None
+
+
+def recovery_codes_available() -> bool:
+    """Whether the recovery-code HMAC key is configured."""
+    return bool(_HMAC_SECRET)
+
+
+def _recovery_secret() -> bytes:
+    global _HMAC_SECRET_PER_PROCESS
+    if _HMAC_SECRET:
+        return _HMAC_SECRET
+    if DEBUG_MODE:
+        # Development convenience only (DEBUG=true): use an ephemeral key so a
+        # local checkout still works. Codes do not survive a restart.
+        if _HMAC_SECRET_PER_PROCESS is None:
+            _HMAC_SECRET_PER_PROCESS = secrets.token_bytes(32)
+            logger.warning("HASTAMA_HMAC_SECRET not set — using an ephemeral development key")
+        return _HMAC_SECRET_PER_PROCESS
+    raise RuntimeError("HASTAMA_HMAC_SECRET is not configured")
+
+
+DEBUG_MODE = os.environ.get("DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+if not _HMAC_SECRET and not DEBUG_MODE:
+    logger.error(
+        "HASTAMA_HMAC_SECRET is not set — password recovery is disabled until it is configured"
+    )
+
 
 def _hash_code(code: str) -> str:
-    """Hash recovery code using HMAC-SHA256 with server secret."""
-    return _hmac.new(_HMAC_SECRET, code.encode(), _hashlib.sha256).hexdigest()
+    """Hash recovery code using HMAC-SHA256 with the server secret."""
+    return _hmac.new(_recovery_secret(), code.encode(), _hashlib.sha256).hexdigest()
 
 
 def create_password_reset_request(
@@ -310,7 +342,15 @@ def approve_password_reset(
     conn=None,
 ) -> dict:
     """Approve a reset request and generate a one-time recovery code."""
-    code = secrets.token_uppercase(8)
+    if not recovery_codes_available() and not DEBUG_MODE:
+        return {
+            "success": False,
+            "message": "کلید HASTAMA_HMAC_SECRET تنظیم نشده است؛ بازیابی رمز عبور غیرفعال است.",
+            "code_unavailable": True,
+        }
+    # ``secrets`` has no ``token_uppercase``; the previous implementation raised
+    # AttributeError, so approving a reset request always failed.
+    code = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     code_hash = _hash_code(code)
     _close = False
     if conn is None:
@@ -364,8 +404,15 @@ def reject_password_reset(request_id: str, admin_username: str, conn=None) -> bo
             conn.close()
 
 
+# Single rejection message for every recovery failure that must not be
+# distinguishable to an unauthenticated caller.
+CODE_REJECTED_MESSAGE = "کد بازیابی نامعتبر است."
+
+
 def verify_recovery_code(request_id: str, code: str, conn=None) -> dict:
     """Verify a one-time recovery code.  Returns success + new password info."""
+    if not recovery_codes_available() and not DEBUG_MODE:
+        return {"success": False, "message": "بازیابی رمز عبور در این نصب غیرفعال است."}
     _close = False
     if conn is None:
         conn = db_connect()
@@ -379,13 +426,47 @@ def verify_recovery_code(request_id: str, code: str, conn=None) -> dict:
         )
         row = cur.fetchone()
         if not row:
-            return {"success": False, "message": "درخواست یافت نشد."}
+            # Deliberately identical to the wrong-code answer below: /forgot_password
+            # returns a (decoy) request id even for unknown accounts, so a
+            # distinguishable message here would turn this endpoint into a
+            # username enumeration oracle.
+            return {"success": False, "message": CODE_REJECTED_MESSAGE}
 
         stored_hash, expires, attempts, max_attempts, status, username = row
 
-        if status != "approved":
-            return {"success": False, "message": "این درخواست قبلاً پردازش شده است."}
+        # ── Ordering matters for anti-enumeration ────────────────────────────
+        # /forgot_password answers with a decoy request id for accounts that do
+        # not exist, so *nothing* an unauthenticated caller can observe may
+        # differ between a decoy id and a real id.  The reason-specific answers
+        # ("expired", "already processed") are therefore only produced once the
+        # caller has proven possession of the code — an attacker who does not
+        # hold the code can never reach them and always sees the one generic
+        # rejection message, exactly as for an unknown request id.
+        if attempts >= max_attempts:
+            # Hard cap reached: no further code is accepted.  The state change is
+            # kept internal so the caller cannot tell it apart from a wrong code.
+            cur.execute(
+                "UPDATE dbo.password_reset_requests SET status='expired', updated_at=SYSUTCDATETIME() WHERE request_id=?",
+                (request_id,),
+            )
+            if _close:
+                conn.commit()
+            return {"success": False, "message": CODE_REJECTED_MESSAGE}
 
+        code_matches = _hmac.compare_digest(
+            str(stored_hash or ""), _hash_code(code.strip())
+        )
+        if not code_matches:
+            cur.execute(
+                "UPDATE dbo.password_reset_requests SET code_attempts = code_attempts + 1, updated_at=SYSUTCDATETIME() WHERE request_id=?",
+                (request_id,),
+            )
+            if _close:
+                conn.commit()
+            return {"success": False, "message": CODE_REJECTED_MESSAGE}
+
+        # The caller proved possession of the code; the remaining answers are
+        # operational feedback, not an oracle.
         if expires and expires.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
             cur.execute(
                 "UPDATE dbo.password_reset_requests SET status='expired', updated_at=SYSUTCDATETIME() WHERE request_id=?",
@@ -395,23 +476,8 @@ def verify_recovery_code(request_id: str, code: str, conn=None) -> dict:
                 conn.commit()
             return {"success": False, "message": "کد بازیابی منقضی شده است."}
 
-        if attempts >= max_attempts:
-            cur.execute(
-                "UPDATE dbo.password_reset_requests SET status='expired', updated_at=SYSUTCDATETIME() WHERE request_id=?",
-                (request_id,),
-            )
-            if _close:
-                conn.commit()
-            return {"success": False, "message": "تعداد تلاش‌ها تمام شده است."}
-
-        if stored_hash != _hash_code(code.strip()):
-            cur.execute(
-                "UPDATE dbo.password_reset_requests SET code_attempts = code_attempts + 1, updated_at=SYSUTCDATETIME() WHERE request_id=?",
-                (request_id,),
-            )
-            if _close:
-                conn.commit()
-            return {"success": False, "message": "کد واردشده صحیح نیست."}
+        if status != "approved":
+            return {"success": False, "message": "این درخواست قبلاً پردازش شده است."}
 
         # Success — mark completed
         cur.execute(

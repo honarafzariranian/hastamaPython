@@ -1,3 +1,26 @@
+/* ── Output escaping helpers (security hardening) ──────────────────────────
+   Values rendered into innerHTML come from the database: usernames, names,
+   departments, ticket subjects, leave reasons.  Registration and profile input
+   already rejects markup server-side, but legacy rows and defence-in-depth
+   require escaping at the sink as well.
+     esc(v)   — HTML text/attribute context
+     jsStr(v) — value placed inside a JavaScript string inside an HTML attribute
+                (e.g. onclick="fn('...')"); JSON encoding + HTML escaping keeps
+                quotes and backslashes inert instead of terminating the string.
+   ------------------------------------------------------------------------- */
+function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;')
+        .replace(/=/g, '&#61;');
+}
+function jsStr(v) {
+    return esc(JSON.stringify(String(v === null || v === undefined ? '' : v)).slice(1, -1));
+}
 // سازنده‌ی کوچک عناصر برای کارت‌های موبایل و پیام‌های پویا.
 function el(tag, className, text) {
     var element = document.createElement(tag);
@@ -2239,11 +2262,11 @@ function loadLeaveRequests() {
                     const row = document.createElement('tr');
                     row.id = `row_${request.id}`; // اضافه کردن ID برای ردیف جهت حذف بعدی
                     row.innerHTML = `
-                        <td>${convertToPersianNumbers(request.username)}</td>
+                        <td>${esc(convertToPersianNumbers(request.username))}</td>
                         <td>${convertToPersianNumbers(formatDate(request.start_date))}</td>
                         <td>${convertToPersianNumbers(formatDate(request.end_date))}</td>
                         <td>${convertToPersianNumbers(request.days)}</td>
-                        <td>${convertToPersianNumbers(request.substitute)}</td>
+                        <td>${esc(convertToPersianNumbers(request.substitute))}</td>
                         <td>
                             <div class="status-container">
                                 <div class="status-navbar" id="statusNavbar_${request.id}" onclick="toggleDropdown(${request.id})">
@@ -2543,11 +2566,11 @@ document.getElementById('generategozareshmrkReportBtn').addEventListener('click'
                             </div>
                         </div>
                     </td>
-                    <td>${convertToFarsiNumbers(report.substitute || 'ندارد')}</td>
+                    <td>${esc(convertToFarsiNumbers(report.substitute || 'ندارد'))}</td>
                     <td>${convertToFarsiNumbers(report.days)}</td>
                     <td>${convertToFarsiNumbers(report.end_date)}</td>
                     <td>${convertToFarsiNumbers(report.start_date)}</td>
-                    <td>${report.username ? report.username : 'همه کاربران'}</td>
+                    <td>${esc(report.username ? report.username : 'همه کاربران')}</td>
                     <td>${convertToFarsiNumbers(rowIndex)}</td>
                 `;
                 tableBody.appendChild(row);
@@ -2869,10 +2892,10 @@ function loadOvertimeRequests() {
                 }
 
                 row.innerHTML = `
-                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td>${esc(convertToPersianNumbers(request.username))}</td>
                     <td>${convertToPersianNumbers(request.overtime_date)}</td>
                     <td>${convertToPersianNumbers(request.daily_overtime)}</td>
-                    <td>${convertToPersianNumbers(request.description)}</td>
+                    <td>${esc(convertToPersianNumbers(request.description))}</td>
                     <td>
                         <div class="status-container">
                             <div class="status-navbar ${statusClass}" id="statusNavbar_${rowId}" onclick="toggleRequestDropdown(${rowId})">
@@ -3033,10 +3056,10 @@ document.getElementById("submitReport").addEventListener("click", function() {
                             </div>
                         </div>
                     </td>
-                    <td>${convertToPersianNumbers(row.description)}</td>
+                    <td>${esc(convertToPersianNumbers(row.description))}</td>
                     <td>${convertToPersianNumbers(row.daily_overtime)}</td>
                     <td>${convertToPersianNumbers(row.overtime_date)}</td>
-                    <td>${convertToPersianNumbers(row.username)}</td>
+                    <td>${esc(convertToPersianNumbers(row.username))}</td>
                     <td>${convertToPersianNumbers(rowNumber)}</td>
                 `;
                 filteredData.push(row);
@@ -3195,9 +3218,9 @@ function loadHourlyPassRequests() {
                 let statusClass = getHourlyStatusClass(request.status);
 
                 row.innerHTML = `
-                    <td>${convertToPersianNumbers(request.username)}</td>
+                    <td>${esc(convertToPersianNumbers(request.username))}</td>
                     <td>${convertToPersianNumbers(request.request_date)}</td>
-                    <td>${convertToPersianNumbers(request.pass_title)}</td>
+                    <td>${esc(convertToPersianNumbers(request.pass_title))}</td>
                     <td>${convertToPersianNumbers(formatTimeToHourMinute(request.pass_duration))}</td>
                     <td>
                         <div class="status-container">
@@ -3430,9 +3453,9 @@ document.getElementById("submitHourlyPassReport").addEventListener("click", func
                 </div>
             </td>
             <td>${convertToPersianNumbers(row.pass_duration)}</td>
-            <td>${convertToPersianNumbers(row.pass_title)}</td>
+            <td>${esc(convertToPersianNumbers(row.pass_title))}</td>
             <td>${convertToPersianNumbers(row.request_date)}</td>
-            <td>${convertToPersianNumbers(row.username)}</td>
+            <td>${esc(convertToPersianNumbers(row.username))}</td>
         `;
     });
 })
@@ -5292,7 +5315,7 @@ function renderShiftsTable(shifts) {
                     <img src="/static/images/trash.png" alt="حذف">
                 </button>
             </td>
-            <td>${shift.title ? convertToPersianNumbers(shift.title) : '-'}</td>
+            <td>${esc(shift.title ? convertToPersianNumbers(shift.title) : '-')}</td>
             <td>${shift.jomeh ? convertToPersianNumbers(shift.jomeh) : 'تعطیل/پیش‌فرض'}</td>
             <td>${shift.panjshanbeh ? convertToPersianNumbers(shift.panjshanbeh) : 'پیش‌فرض'}</td>
             <td>${shift.chaharshanbeh ? convertToPersianNumbers(shift.chaharshanbeh) : 'پیش‌فرض'}</td>

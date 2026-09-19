@@ -52,6 +52,9 @@
 
   // ── API Helper ───────────────────────────────────────────
   function _getCsrfToken() {
+    if (window.HastamaCSRF && typeof window.HastamaCSRF.getToken === 'function') {
+      return window.HastamaCSRF.getToken();
+    }
     var match = document.cookie.match(/(^|;\s*)csrf_token=([^;]*)/);
     return match ? decodeURIComponent(match[2]) : '';
   }
@@ -78,6 +81,23 @@
   }
 
   // ── Pagination State ─────────────────────────────────────
+  /* ── HTML escaping ─────────────────────────────────────────
+     Every value that originates from the database or an HTTP header is
+     untrusted: names come from the registration form, IP addresses from the
+     X-Forwarded-For header, ticket subjects from users.  All of it is rendered
+     through esc() before being placed in an innerHTML template. */
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/`/g, '&#96;')
+      .replace(/=/g, '&#61;');
+  }
+  window.__maEsc = esc;
+
   const state = { page: 1, perPage: 25, filters: {} };
 
   function renderPagination(container, total, pages, onPage) {
@@ -105,13 +125,14 @@
       return;
     }
     let html = '<div class="ma-table__scroll"><table class="ma-table"><thead><tr>';
-    columns.forEach(c => html += `<th>${c.label}</th>`);
+    columns.forEach(c => html += `<th>${esc(c.label)}</th>`);
     html += '</tr></thead><tbody>';
     rows.forEach(r => {
       html += '<tr>';
       columns.forEach(c => {
         let val = r[c.key] ?? '—';
         if (c.render) val = c.render(val, r);
+        else val = esc(val);
         html += `<td>${val}</td>`;
       });
       html += '</tr>';
@@ -163,7 +184,7 @@
 
   function badge(val) {
     const s = STATUS_MAP[String(val).toLowerCase()] || { label: val, cls: 'neutral' };
-    return `<span class="ma-badge ma-badge--${s.cls}">${s.label}</span>`;
+    return `<span class="ma-badge ma-badge--${s.cls}">${esc(s.label)}</span>`;
   }
 
   function dot(val) {
@@ -237,7 +258,7 @@
           activityRes.data.forEach(e => {
             const dotCls = e.status === 'failure' ? 'danger' : e.status === 'error' ? 'danger' : e.severity === 'high' || e.severity === 'critical' ? 'warning' : 'success';
             const time = e.created_at ? new Date(e.created_at).toLocaleTimeString('fa-IR') : '';
-            html += `<div class="ma-timeline__item"><div class="ma-timeline__dot ma-timeline__dot--${dotCls}"></div><div class="ma-timeline__time">${time}</div><div class="ma-timeline__text">${dot(e.status)} <strong>${e.username || '—'}</strong> ${e.action} ${e.module ? 'در ' + e.module : ''}</div><div class="ma-timeline__meta">${e.event_id} · ${e.ip_address || '—'}</div></div>`;
+            html += `<div class="ma-timeline__item"><div class="ma-timeline__dot ma-timeline__dot--${dotCls}"></div><div class="ma-timeline__time">${esc(time)}</div><div class="ma-timeline__text">${esc(e.status)} <strong>${esc(e.username || '—')}</strong> ${esc(e.action)} ${e.module ? 'در ' + esc(e.module) : ''}</div><div class="ma-timeline__meta">${esc(e.event_id)} · ${esc(e.ip_address || '—')}</div></div>`;
           });
           html += '</div>';
           actEl.innerHTML = html;
@@ -256,7 +277,7 @@
     try {
       const res = await api(`/audit-logs?${params}`);
       const cols = [
-        { key: 'event_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${v}</code>` },
+        { key: 'event_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${esc(v)}</code>` },
         { key: 'created_at', label: 'زمان', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'event_type', label: 'نوع', render: v => badge(v) },
         { key: 'action', label: 'عملیات' },
@@ -283,12 +304,12 @@
       const cols = [
         { key: 'id', label: 'ID' },
         { key: 'username', label: 'نام کاربری' },
-        { key: 'name', label: 'نام', render: (v, r) => `${v || ''} ${r.last_name || ''}` },
+        { key: 'name', label: 'نام', render: (v, r) => esc(`${v || ''} ${r.last_name || ''}`.trim()) },
         { key: 'department', label: 'بخش' },
         { key: 'role', label: 'نقش', render: v => badge(v) },
         { key: 'is_active', label: 'وضعیت', render: v => badge(v || 'active') },
         { key: 'last_login', label: 'آخرین ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
-        { key: 'username', label: 'عملیات', render: v => `<a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" data-ma-action="viewUser" data-ma-id="${encodeURIComponent(v.trim())}">مشاهده</a>` },
+        { key: 'username', label: 'عملیات', render: v => `<a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" data-ma-action="viewUser" data-ma-id="${esc(encodeURIComponent(String(v || '').trim()))}">مشاهده</a>` },
       ];
       renderTable(container, cols, res.data, 'کاربری یافت نشد');
       renderPagination(pagEl, res.total, res.pages, loadUsers);
@@ -309,7 +330,7 @@
         { key: 'login_at', label: 'زمان ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'last_activity', label: 'آخرین فعالیت', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'is_active', label: 'وضعیت', render: v => v ? badge('active') : badge('disabled') },
-        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="terminateSession" data-ma-id="${v}">خاتمه</button>` },
+        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="terminateSession" data-ma-id="${esc(v)}">خاتمه</button>` },
       ];
       renderTable(container, cols, res.data, 'نشست فعالی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSessions);
@@ -326,13 +347,13 @@
     try {
       const res = await api(`/password-resets?${params}`);
       const cols = [
-        { key: 'request_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${v}</code>` },
+        { key: 'request_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${esc(v)}</code>` },
         { key: 'username', label: 'کاربر' },
         { key: 'created_at', label: 'زمان', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'ip_address', label: 'IP' },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
         { key: 'code_attempts', label: 'تلاش‌ها' },
-        { key: 'request_id', label: 'عملیات', render: (v, r) => r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="approveReset" data-ma-id="${v}">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="rejectReset" data-ma-id="${v}">رد</button>` : '—' },
+        { key: 'request_id', label: 'عملیات', render: (v, r) => r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="approveReset" data-ma-id="${esc(v)}">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="rejectReset" data-ma-id="${esc(v)}">رد</button>` : '—' },
       ];
       renderTable(container, cols, res.data, 'درخواست بازیابی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadPasswordResets);
@@ -357,7 +378,7 @@
         { key: 'username', label: 'کاربر' },
         { key: 'description', label: 'توضیحات', render: v => (v || '').substring(0, 80) },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
-        { key: 'event_id', label: 'عملیات', render: (v, r) => r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="resolveSecurity" data-ma-id="${v}">بررسی شد</button>` : '—' },
+        { key: 'event_id', label: 'عملیات', render: (v, r) => r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="resolveSecurity" data-ma-id="${esc(v)}">بررسی شد</button>` : '—' },
       ];
       renderTable(container, cols, res.data, 'رویداد امنیتی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSecurity);
@@ -375,7 +396,7 @@
     try {
       const res = await api(`/errors?${params}`);
       const cols = [
-        { key: 'error_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${v}</code>` },
+        { key: 'error_id', label: 'شناسه', render: v => `<code style="font-size:.75rem">${esc(v)}</code>` },
         { key: 'first_seen', label: 'زمان', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'error_type', label: 'نوع', render: v => badge(v) },
         { key: 'severity', label: 'اولویت', render: v => badge(v) },
@@ -413,7 +434,7 @@
       container.innerHTML = `
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <a href="/master-admin/users" class="ma-btn ma-btn--ghost" style="font-size:0.82rem">← بازگشت به کاربران</a>
-          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${u.username} — ${u.name || ''} ${u.last_name || ''}</h2>
+          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${esc(u.username)} — ${esc(u.name || '')} ${esc(u.last_name || '')}</h2>
           ${badge(u.role)} ${badge(u.is_active || 'active')}
         </div>
         <div class="ma-grid-2" style="margin-bottom:20px">
@@ -421,10 +442,10 @@
             <div class="ma-panel-card__header"><div class="ma-panel-card__title">📋 اطلاعات حساب</div></div>
             <div class="ma-panel-card__body">
               <table style="width:100%;font-size:0.82rem;border-collapse:collapse">
-                <tr><td style="padding:6px 0;color:#64748b;width:140px">نام کاربری</td><td style="padding:6px 0;font-weight:600">${u.username}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">نام</td><td style="padding:6px 0">${u.name || '—'} ${u.last_name || ''}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">بخش</td><td style="padding:6px 0">${u.department || '—'}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">ساعت کاری</td><td style="padding:6px 0">${u.work_hours || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b;width:140px">نام کاربری</td><td style="padding:6px 0;font-weight:600">${esc(u.username)}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">نام</td><td style="padding:6px 0">${esc(u.name || '—')} ${esc(u.last_name || '')}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">بخش</td><td style="padding:6px 0">${esc(u.department || '—')}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">ساعت کاری</td><td style="padding:6px 0">${esc(u.work_hours || '—')}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">آخرین ورود</td><td style="padding:6px 0">${u.last_login ? new Date(u.last_login).toLocaleString('fa-IR') : '—'}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">تلاش ناموفق ورود</td><td style="padding:6px 0">${u.failed_login_count || 0}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">آخرین تغییر رمز</td><td style="padding:6px 0">${u.password_changed_at ? new Date(u.password_changed_at).toLocaleString('fa-IR') : '—'}</td></tr>
@@ -437,7 +458,7 @@
               ${sessions.length ? sessions.map(s => `
                 <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:0.82rem">
                   <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span>${s.ip_address || '—'}</span>
+                    <span>${esc(s.ip_address || '—')}</span>
                     ${s.is_active ? badge('active') : badge('disabled')}
                   </div>
                   <div style="color:#64748b;font-size:0.75rem;margin-top:2px">${s.login_at ? new Date(s.login_at).toLocaleString('fa-IR') : '—'}</div>
@@ -456,11 +477,11 @@
                   ${auditRows.length ? auditRows.map(e => `
                     <tr>
                       <td>${e.created_at ? new Date(e.created_at).toLocaleString('fa-IR') : '—'}</td>
-                      <td>${e.action}</td>
-                      <td>${e.module || '—'}</td>
+                      <td>${esc(e.action)}</td>
+                      <td>${esc(e.module || '—')}</td>
                       <td>${badge(e.status)}</td>
                       <td>${badge(e.severity)}</td>
-                      <td>${e.ip_address || '—'}</td>
+                      <td>${esc(e.ip_address || '—')}</td>
                     </tr>
                   `).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8">رویدادی ثبت نشده</td></tr>'}
                 </tbody>
@@ -478,10 +499,10 @@
                 <tbody>
                   ${resets.map(r => `
                     <tr>
-                      <td><code style="font-size:.75rem">${r.request_id}</code></td>
+                      <td><code style="font-size:.75rem">${esc(r.request_id)}</code></td>
                       <td>${r.created_at ? new Date(r.created_at).toLocaleString('fa-IR') : '—'}</td>
                       <td>${badge(r.status)}</td>
-                      <td>${r.ip_address || '—'}</td>
+                      <td>${esc(r.ip_address || '—')}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -641,7 +662,7 @@
 
   function ticketBadge(val, map) {
     const s = map[String(val).toLowerCase()] || { label: val, cls: 'neutral' };
-    return `<span class="ma-badge ma-badge--${s.cls}">${s.label}</span>`;
+    return `<span class="ma-badge ma-badge--${s.cls}">${esc(s.label)}</span>`;
   }
 
   async function loadTicketStats() {
@@ -689,13 +710,13 @@
       items.forEach(t => {
         const time = t.created_at ? new Date(t.created_at).toLocaleDateString('fa-IR') : '—';
         html += `<tr>
-          <td><code style="font-size:.75rem">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')}</code></td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(t.subject||'').replace(/"/g,'&quot;')}">${t.subject || '—'}</td>
-          <td>${t.requester_username || '—'}</td>
-          <td>${t.recipient_username || '—'}</td>
+          <td><code style="font-size:.75rem">${esc(t.ticket_number || 'HT-' + String(t.id).padStart(8,'0'))}</code></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.subject || '')}">${esc(t.subject || '—')}</td>
+          <td>${esc(t.requester_username || '—')}</td>
+          <td>${esc(t.recipient_username || '—')}</td>
           <td>${ticketBadge(t.status, TICKET_STATUS_MAP)}</td>
           <td>${ticketBadge(t.priority, TICKET_PRIORITY_MAP)}</td>
-          <td style="font-size:.75rem">${time}</td>
+          <td style="font-size:.75rem">${esc(time)}</td>
           <td>
             <a href="#" class="ma-btn ma-btn--ghost ma-btn--sm" data-ma-action="viewTicket" data-ma-id="${t.id}">مشاهده</a>
             <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteTicket" data-ma-id="${t.id}">حذف</button>
@@ -757,13 +778,13 @@
 
       const statusOpts = Object.entries(TICKET_STATUS_MAP).map(([k,v]) => `<option value="${k}" ${t.status===k?'selected':''}>${v.label}</option>`).join('');
       const priorityOpts = Object.entries(TICKET_PRIORITY_MAP).map(([k,v]) => `<option value="${k}" ${t.priority===k?'selected':''}>${v.label}</option>`).join('');
-      const assigneeOpts = `<option value="">بدون واگذاری</option>` + users.map(u => `<option value="${u.username}" ${t.assigned_to===u.username?'selected':''}>${u.name || u.username} — ${u.department || ''}</option>`).join('');
-      const catOpts = `<option value="">بدون دسته</option>` + categories.map(c => `<option value="${c.id}" ${t.category_id==c.id?'selected':''}>${c.name}</option>`).join('');
+      const assigneeOpts = `<option value="">بدون واگذاری</option>` + users.map(u => `<option value="${esc(u.username)}" ${t.assigned_to===u.username?'selected':''}>${esc(u.name || u.username)} — ${esc(u.department || '')}</option>`).join('');
+      const catOpts = `<option value="">بدون دسته</option>` + categories.map(c => `<option value="${esc(c.id)}" ${t.category_id==c.id?'selected':''}>${esc(c.name)}</option>`).join('');
 
       let html = `
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <a href="/master-admin/tickets" class="ma-btn ma-btn--ghost" style="font-size:0.82rem">← بازگشت به تیکت‌ها</a>
-          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')} — ${t.subject}</h2>
+          <h2 style="margin:0;font-size:1.1rem;font-weight:800;color:#0f172a">${esc(t.ticket_number || 'HT-' + String(t.id).padStart(8,'0'))} — ${esc(t.subject)}</h2>
           ${ticketBadge(t.status, TICKET_STATUS_MAP)} ${ticketBadge(t.priority, TICKET_PRIORITY_MAP)}
         </div>
         <div class="ma-grid-2" style="margin-bottom:20px">
@@ -772,11 +793,11 @@
             <div class="ma-panel-card__body">
               <table style="width:100%;font-size:0.82rem;border-collapse:collapse">
                 <tr><td style="padding:6px 0;color:#64748b;width:140px">شماره</td><td style="padding:6px 0;font-weight:600">${t.ticket_number || 'HT-' + String(t.id).padStart(8,'0')}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">موضوع</td><td style="padding:6px 0">${t.subject}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">درخواست‌کننده</td><td style="padding:6px 0">${t.requester_username}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">گیرنده</td><td style="padding:6px 0">${t.recipient_username}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">واگذار شده به</td><td style="padding:6px 0">${t.assigned_to || '—'}</td></tr>
-                <tr><td style="padding:6px 0;color:#64748b">دسته‌بندی</td><td style="padding:6px 0">${t.category_name || '—'}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">موضوع</td><td style="padding:6px 0">${esc(t.subject)}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">درخواست‌کننده</td><td style="padding:6px 0">${esc(t.requester_username)}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">گیرنده</td><td style="padding:6px 0">${esc(t.recipient_username)}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">واگذار شده به</td><td style="padding:6px 0">${esc(t.assigned_to || '—')}</td></tr>
+                <tr><td style="padding:6px 0;color:#64748b">دسته‌بندی</td><td style="padding:6px 0">${esc(t.category_name || '—')}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">تاریخ ایجاد</td><td style="padding:6px 0">${t.created_at ? new Date(t.created_at).toLocaleString('fa-IR') : '—'}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">آخرین به‌روزرسانی</td><td style="padding:6px 0">${t.updated_at ? new Date(t.updated_at).toLocaleString('fa-IR') : '—'}</td></tr>
                 <tr><td style="padding:6px 0;color:#64748b">آخرین پیام</td><td style="padding:6px 0">${t.last_message_at ? new Date(t.last_message_at).toLocaleString('fa-IR') : '—'}</td></tr>
@@ -817,12 +838,12 @@
           html += `<div style="padding:12px;margin-bottom:10px;border-radius:10px;border:1px solid #e4e7ec;${borderStyle}">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
               <div>
-                <strong style="font-size:.85rem">${m.author_username}</strong>
+                <strong style="font-size:.85rem">${esc(m.author_username)}</strong>
                 ${isInternal ? '<span class="ma-badge ma-badge--warning" style="margin-right:6px;font-size:.65rem">یادداشت داخلی</span>' : ''}
               </div>
-              <span style="font-size:.72rem;color:#94a3b8">${time}</span>
+              <span style="font-size:.72rem;color:#94a3b8">${esc(time)}</span>
             </div>
-            <div style="font-size:.85rem;color:#334155;line-height:1.7;white-space:pre-wrap">${m.body}</div>
+            <div style="font-size:.85rem;color:#334155;line-height:1.7;white-space:pre-wrap">${esc(m.body)}</div>
           </div>`;
         });
       } else {
@@ -855,13 +876,13 @@
           const time = e.created_at ? new Date(e.created_at).toLocaleString('fa-IR') : '';
           let meta = '';
           if (e.metadata && typeof e.metadata === 'object') {
-            meta = Object.entries(e.metadata).map(([k,v]) => `${k}: ${v}`).join(', ');
+            meta = Object.entries(e.metadata).map(([k,v]) => `${esc(k)}: ${esc(v)}`).join(', ');
           }
           html += `<div class="ma-timeline__item">
             <div class="ma-timeline__dot ma-timeline__dot--success"></div>
-            <div class="ma-timeline__time">${time}</div>
-            <div class="ma-timeline__text"><strong>${e.actor_username}</strong> ${e.event_type}</div>
-            <div class="ma-timeline__meta">${meta}</div>
+            <div class="ma-timeline__time">${esc(time)}</div>
+            <div class="ma-timeline__text"><strong>${esc(e.actor_username)}</strong> ${esc(e.event_type)}</div>
+            <div class="ma-timeline__meta">${esc(meta)}</div>
           </div>`;
         });
         html += `</div></div></div>`;
@@ -981,7 +1002,7 @@
           if (!res.results.length) {
             searchResults.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:.85rem">نتیجه‌ای یافت نشد</div>';
           } else {
-            searchResults.innerHTML = res.results.map(r => `<a href="${r.link}" class="ma-topbar__search-item"><span>${r.title}</span><span style="font-size:.75rem;color:#94a3b8">${r.subtitle}</span></a>`).join('');
+            searchResults.innerHTML = res.results.map(r => `<a href="${esc(r.link)}" class="ma-topbar__search-item"><span>${esc(r.title)}</span><span style="font-size:.75rem;color:#94a3b8">${esc(r.subtitle)}</span></a>`).join('');
           }
           searchResults.classList.add('is-open');
         } catch (e) { searchResults.classList.remove('is-open'); }

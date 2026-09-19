@@ -1,5 +1,43 @@
+# Hastama — production reverse proxy (internal HTTPS for the LAN)
+#
+# Topology (see docs/HASTAMA_PRODUCTION_DEPLOYMENT.md):
+#   browser ──HTTPS──▶ Caddy (hastama.local, internal CA) ──HTTP──▶ uvicorn 127.0.0.1:8000
+#
+# Security notes:
+#   * The application must be bound to loopback (127.0.0.1) so that Caddy is the
+#     only ingress.  Application level IP controls trust forwarding headers only
+#     from TRUSTED_PROXY_IPS (default 127.0.0.1, ::1).
+#   * Application level rate limiting covers login, password recovery,
+#     registration, the Araz bridge and the kiosk call endpoints.  Proxy level
+#     rate limiting is defence in depth: it needs the caddy-ratelimit plugin
+#     (offline install from the vendor's binary), see the block at the bottom.
+
 hastama.local {
 	tls internal
+
+	# Small responses only — file uploads are capped in the application too
+	# (5 MB profile images, 10 MB ticket attachments).
+	request_body {
+		max_size 12MB
+	}
+
+	# Do not advertise the software stack.
+	header -Server
+	header -X-Powered-By
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+	}
+
+	# Access log for incident response (rotate outside Caddy; contains client
+	# IPs — treat as personal data, see the retention note in the report).
+	log {
+		output file /var/log/caddy/hastama-access.log {
+			roll_size 20MiB
+			roll_keep 10
+		}
+		format json
+	}
 
 	reverse_proxy 127.0.0.1:8000 {
 		flush_interval -1
@@ -9,7 +47,22 @@ hastama.local {
 			response_header_timeout 300s
 		}
 	}
-
-	# TODO: Add rate limiting middleware (e.g. via Caddy rate_limit plugin)
-	# to protect against brute-force and DDoS attacks.
 }
+
+# ── Optional: proxy level rate limiting ──────────────────────────────────────
+# The standard Caddy build has no rate_limit directive.  Build/obtain a Caddy
+# binary with github.com/mholt/caddy-ratelimit (offline: copy the binary to the
+# server) and add the zone below.  Keep the application limits enabled as well:
+# the application limits are per account/IP and survive proxy misconfiguration.
+#
+# hastama.local {
+#     rate_limit {
+#         zone login {
+#             key {remote_host}
+#             events 20
+#             window 10m
+#         }
+#     }
+#     @login path /login_user /forgot_password /reset_password /registration/*
+#     rate_limit @login zone login
+# }

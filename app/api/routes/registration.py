@@ -14,21 +14,46 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from app.core.database import connect as db_connect
+from app.core.net import client_ip as _trusted_client_ip
+from app.core.net import user_agent as _safe_user_agent
+from app.core.rate_limit import limiter
+from app.core.validation import clean_display_text
 from app.services.audit import log_event, log_admin_action, generate_event_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/registration", tags=["registration"])
 
+# Public registration endpoints are unauthenticated; these limits keep the
+# bcrypt hashing on the submit path from becoming a CPU exhaustion vector and
+# make request-id guessing on `/status/{id}` impractical.
+REGISTRATION_SUBMIT_LIMIT = 5        # per IP / 10 minutes
+REGISTRATION_SUBMIT_WINDOW = 600
+REGISTRATION_PROBE_LIMIT = 30        # per IP / 10 minutes
+REGISTRATION_PROBE_WINDOW = 600
+REGISTRATION_LOOKUP_LIMIT = 20       # per IP / 10 minutes (check-username / check-national-id)
+
+
+def _rate_limited(request: Request, *, limit: int, window: int, bucket: str) -> bool:
+    """Return ``True`` when the caller exceeded the limit for *bucket*."""
+    key = f"{bucket}:{_client_ip(request)}"
+    return not limiter.allow(key, limit=limit, window_seconds=window)
+
+
+def _too_many_requests() -> JSONResponse:
+    return JSONResponse(
+        {"success": False, "message": "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً تلاش کنید."},
+        status_code=429,
+    )
+
 
 # ── Helpers ───────────────────────────────────────────────────
 def _client_ip(request: Request) -> str:
-    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
-        request.client.host if request.client else "unknown"
-    )
+    """Trustworthy client address (validated ``X-Forwarded-For``)."""
+    return _trusted_client_ip(request)
 
 def _user_agent(request: Request) -> str:
-    return request.headers.get("user-agent", "")[:500]
+    return _safe_user_agent(request)
 
 def _dict_rows(cursor) -> list[dict]:
     columns = [c[0] for c in cursor.description]
@@ -78,16 +103,27 @@ def _normalize_mobile(mobile: str) -> str:
     return mobile
 
 def _validate_username(username: str) -> bool:
-    """Username: 3-30 chars, alphanumeric + underscore, no spaces."""
+    """Username: 3-30 chars, alphanumeric + underscore, no spaces (case-insensitive)."""
     return bool(re.match(r'^[a-zA-Z0-9_]{3,30}$', username))
+
+
+MAX_USERNAME_LENGTH = 50
+MAX_PASSWORD_LENGTH = 128
 
 
 # ══════════════════════════════════════════════════════════════
 # PUBLIC — Check username availability
 # ══════════════════════════════════════════════════════════════
 @router.get("/check-username")
-async def check_username(q: str = Query("")):
-    username = q.strip()
+async def check_username(request: Request, q: str = Query("")):
+    if _rate_limited(
+        request,
+        limit=REGISTRATION_LOOKUP_LIMIT,
+        window=REGISTRATION_PROBE_WINDOW,
+        bucket="registration-username-probe",
+    ):
+        return _too_many_requests()
+    username = q.strip()[:MAX_USERNAME_LENGTH]
     if not username or len(username) < 3:
         return JSONResponse(content={"available": False, "message": "نام کاربری باید حداقل ۳ کاراکتر باشد."})
 
@@ -118,8 +154,15 @@ async def check_username(q: str = Query("")):
 # PUBLIC — Check national ID availability
 # ══════════════════════════════════════════════════════════════
 @router.get("/check-national-id")
-async def check_national_id(q: str = Query("")):
-    nid = q.strip().replace(" ", "")
+async def check_national_id(request: Request, q: str = Query("")):
+    if _rate_limited(
+        request,
+        limit=REGISTRATION_LOOKUP_LIMIT,
+        window=REGISTRATION_PROBE_WINDOW,
+        bucket="registration-nid-probe",
+    ):
+        return _too_many_requests()
+    nid = q.strip().replace(" ", "")[:10]
     if not nid:
         return JSONResponse(content={"available": True})
 
@@ -144,19 +187,41 @@ async def check_national_id(q: str = Query("")):
 # ══════════════════════════════════════════════════════════════
 @router.post("/submit")
 async def submit_registration(request: Request):
-    data = await request.json()
+    if _rate_limited(
+        request,
+        limit=REGISTRATION_SUBMIT_LIMIT,
+        window=REGISTRATION_SUBMIT_WINDOW,
+        bucket="registration-submit",
+    ):
+        log_event(
+            event_type="SECURITY", action="registration_rate_limited",
+            module="registration", status="failure", severity="medium",
+            ip_address=_client_ip(request), user_agent=_user_agent(request),
+        )
+        return _too_many_requests()
 
-    # Extract fields
-    first_name = str(data.get("first_name") or "").strip()
-    last_name = str(data.get("last_name") or "").strip()
-    father_name = str(data.get("father_name") or "").strip()
-    national_id = str(data.get("national_id") or "").strip().replace(" ", "")
-    mobile = str(data.get("mobile") or "").strip()
-    username = str(data.get("username") or "").strip()
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(content={"success": False, "errors": ["درخواست نامعتبر است."]}, status_code=400)
+    if not isinstance(data, dict):
+        return JSONResponse(content={"success": False, "errors": ["درخواست نامعتبر است."]}, status_code=400)
+
+    # Extract fields (bounded + markup rejected — see app/core/validation.py)
+    try:
+        first_name = clean_display_text(data.get("first_name"), max_length=100, field="نام")
+        last_name = clean_display_text(data.get("last_name"), max_length=100, field="نام خانوادگی")
+        father_name = clean_display_text(data.get("father_name"), max_length=100, field="نام پدر")
+        department = clean_display_text(data.get("department"), max_length=100, field="بخش")
+        substitute = clean_display_text(data.get("substitute"), max_length=100, field="جانشین")
+        work_hours = clean_display_text(data.get("work_hours"), max_length=50, field="ساعت کاری")
+    except ValueError as exc:
+        return JSONResponse(content={"success": False, "errors": [str(exc)]}, status_code=400)
+
+    national_id = str(data.get("national_id") or "").strip().replace(" ", "")[:20]
+    mobile = str(data.get("mobile") or "").strip()[:20]
+    username = str(data.get("username") or "").strip()[:MAX_USERNAME_LENGTH]
     password = str(data.get("password") or "")
-    department = str(data.get("department") or "").strip()
-    work_hours = str(data.get("work_hours") or "").strip()
-    substitute = str(data.get("substitute") or "").strip()
 
     # ── Validate required fields ──
     errors = []
@@ -172,6 +237,8 @@ async def submit_registration(request: Request):
         errors.append("رمز عبور الزامی است.")
     elif len(password) < 8:
         errors.append("رمز عبور باید حداقل ۸ کاراکتر باشد.")
+    elif len(password) > MAX_PASSWORD_LENGTH:
+        errors.append("رمز عبور نباید بیش از ۱۲۸ کاراکتر باشد.")
     if national_id and not _validate_national_id(national_id):
         errors.append("شماره ملی معتبر نیست.")
     if mobile and not _validate_mobile(mobile):
@@ -260,7 +327,19 @@ async def submit_registration(request: Request):
 # PUBLIC — Check request status
 # ══════════════════════════════════════════════════════════════
 @router.get("/status/{request_id}")
-async def check_request_status(request_id: str):
+async def check_request_status(request_id: str, request: Request):
+    # Unauthenticated lookup: rate limit so the 32-bit request id cannot be
+    # enumerated, and reject ids that are not in the documented format.
+    if _rate_limited(
+        request,
+        limit=REGISTRATION_PROBE_LIMIT,
+        window=REGISTRATION_PROBE_WINDOW,
+        bucket="registration-status",
+    ):
+        return _too_many_requests()
+    if not re.fullmatch(r"HST-\d{8}-[0-9A-Fa-f]{8}", (request_id or "").strip()):
+        return JSONResponse(content={"found": False, "message": "درخواست یافت نشد."})
+
     conn = db_connect()
     try:
         cur = conn.cursor()
@@ -321,10 +400,15 @@ async def list_registration_requests(
         cur.execute(f"SELECT COUNT(*) FROM user_registration_requests WHERE {where_sql}", params)
         total = cur.fetchone()[0]
 
-        # Fetch page
+        # Fetch page — explicit columns; ``password_hash`` must never leave the
+        # server, not even to an administrator.
         offset = (page - 1) * per_page
         cur.execute(
-            f"SELECT * FROM user_registration_requests WHERE {where_sql} ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            f"""SELECT request_id, first_name, last_name, father_name, national_id, mobile,
+                       username, department, work_hours, substitute, status, rejection_reason,
+                       reviewed_by, reviewed_at, created_ip, created_user_agent, created_at, updated_at
+                FROM user_registration_requests WHERE {where_sql}
+                ORDER BY created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY""",
             params + [offset, per_page],
         )
         rows = _dict_rows(cur)
@@ -359,12 +443,16 @@ async def get_registration_request(request: Request, request_id: str):
     conn = db_connect()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM user_registration_requests WHERE request_id = ?", (request_id.strip(),))
+        cur.execute(
+            """SELECT request_id, first_name, last_name, father_name, national_id, mobile,
+                      username, department, work_hours, substitute, status, rejection_reason,
+                      reviewed_by, reviewed_at, created_ip, created_user_agent, created_at, updated_at
+               FROM user_registration_requests WHERE request_id = ?""",
+            (request_id.strip(),),
+        )
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="درخواست یافت نشد.")
-        data = _serialize(_dict_rows(cur)[0]) if cur.description else {}
-        # Re-fetch properly
         columns = [c[0] for c in cur.description]
         data = _serialize(dict(zip(columns, row)))
         return JSONResponse(content={"success": True, "data": data})
@@ -392,7 +480,14 @@ async def approve_registration(request: Request, request_id: str):
         cur = conn.cursor()
 
         # Fetch request
-        cur.execute("SELECT * FROM user_registration_requests WHERE request_id = ? AND status = 'pending'", (request_id.strip(),))
+        # Explicit columns: the response never needs the submitted password
+        # hash and an accidental ``SELECT *`` would leak it into the dict below.
+        cur.execute(
+            """SELECT request_id, first_name, last_name, father_name, national_id, mobile,
+                      username, password_hash, department, work_hours, substitute, status
+               FROM user_registration_requests WHERE request_id = ? AND status = 'pending'""",
+            (request_id.strip(),),
+        )
         row = cur.fetchone()
         if not row:
             return JSONResponse(content={"success": False, "message": "درخواست یافت نشد یا قبلاً پردازش شده."}, status_code=404)

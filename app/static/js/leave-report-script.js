@@ -33,11 +33,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const substitute = report.substitute ? report.substitute : 'ندارد';
 
             row.innerHTML = `
-                <td>${convertToFarsiNumbers(substitute)}</td> <!-- جانشین -->
-                <td>${convertToFarsiNumbers(report.days)}</td>
-                <td>${convertToFarsiNumbers(report.end_date)}</td>
-                <td>${convertToFarsiNumbers(report.start_date)}</td>
-                <td>${convertToFarsiNumbers(index + 1)}</td> <!-- شماره ردیف -->
+                <td>${esc(convertToFarsiNumbers(substitute))}}</td> <!-- جانشین -->
+                <td>${esc(convertToFarsiNumbers(report.days))}}</td>
+                <td>${esc(convertToFarsiNumbers(report.end_date))}}</td>
+                <td>${esc(convertToFarsiNumbers(report.start_date))}}</td>
+                <td>${esc(convertToFarsiNumbers(index + 1))}}</td> <!-- شماره ردیف -->
             `;
             tableBody.appendChild(row);
         });

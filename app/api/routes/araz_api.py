@@ -13,6 +13,7 @@ Base URL: /api/araz/
 from __future__ import annotations
 
 import asyncio
+import hmac
 import logging
 from datetime import datetime, timedelta
 import os
@@ -22,6 +23,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from app.core.net import user_agent
 from app.services.araz_connector import (
     ArazDevice,
     DEFAULT_IP,
@@ -29,9 +31,13 @@ from app.services.araz_connector import (
     DEFAULT_DEVICE_NUMBER,
     ArazProtocol,
 )
+from app.services.audit import log_event
 
-# Bridge auth token — set via env or config in production
+# Bridge auth token — mandatory in production; the endpoint fails closed when unset.
 BRIDGE_SECRET = os.environ.get("ARAZ_BRIDGE_SECRET", "")
+
+# Upper bound for one batch (the bridge pushes one day of records per call).
+MAX_BRIDGE_RECORDS = 5000
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +46,10 @@ router = APIRouter(prefix="/api/araz", tags=["araz-device"])
 
 def _require_admin(request: Request):
     """Check that the request comes from an authenticated admin session."""
-    username = request.session.get("username")
-    is_admin = request.session.get("is_admin")
-    if not username or not is_admin:
+    username = str(request.session.get("username") or "").strip()
+    if not username:
+        return JSONResponse(status_code=401, content={"success": False, "error": "ورود لازم است."})
+    if request.session.get("is_admin") is not True:
         return JSONResponse(status_code=403, content={"success": False, "error": "دسترسی مدیریتی ندارید."})
     return None
 
@@ -399,7 +406,7 @@ class BridgeSyncResponse(BaseModel):
 
 
 @router.post("/bridge-sync", response_model=BridgeSyncResponse)
-async def bridge_sync(req: BridgeSyncRequest):
+async def bridge_sync(req: BridgeSyncRequest, request: Request):
     """
     Receive attendance records from the Araz bridge agent.
 
@@ -419,10 +426,28 @@ async def bridge_sync(req: BridgeSyncRequest):
         "secret": "..."
     }
     """
-    # Auth check
+    # ── Authentication: fail closed, constant-time, rate limited ──
     if not BRIDGE_SECRET:
-        return JSONResponse(status_code=500, content={"success": False, "error": "ARAZ_BRIDGE_SECRET not configured"})
-    if req.secret != BRIDGE_SECRET:
+        # Refuse to sync at all when no secret is configured (fail closed).
+        logger.error("bridge-sync rejected: ARAZ_BRIDGE_SECRET is not configured")
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "ARAZ_BRIDGE_SECRET not configured"},
+        )
+
+    from app.core.net import client_ip as _client_ip
+    from app.core.rate_limit import limiter
+
+    if not limiter.allow(f"bridge-sync:{_client_ip(request)}", limit=60, window_seconds=60):
+        raise HTTPException(status_code=429, detail="Too many bridge-sync requests")
+
+    if not hmac.compare_digest(str(req.secret or ""), BRIDGE_SECRET):
+        log_event(
+            event_type="SECURITY", action="bridge_sync_rejected",
+            module="araz", status="failure", severity="high",
+            ip_address=_client_ip(request), user_agent=user_agent(request),
+            metadata={"reason": "invalid_secret"},
+        )
         raise HTTPException(status_code=401, detail="Invalid bridge secret")
 
     if not req.records:
@@ -431,20 +456,47 @@ async def bridge_sync(req: BridgeSyncRequest):
             message="No records provided",
         )
 
+    if len(req.records) > MAX_BRIDGE_RECORDS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Too many records in one batch (max {MAX_BRIDGE_RECORDS})",
+        )
+
     synced = 0
     skipped = 0
     failed = 0
     errors = []
+    conn = None
 
     try:
-        import jdatetime as _jdt
         from persiantools.jdatetime import JalaliDate
 
-        # Get DB connection — reuse the one from main.py
-        from app.main import conn, cursor
+        # The bridge previously borrowed the process-wide ``app.main.cursor``
+        # connection: pyodbc connections are not thread safe, so concurrent
+        # usage could interleave statements and commit the wrong transaction.
+        from app.core.database import connect as db_connect
+
+        conn = db_connect()
+        cursor = conn.cursor()
+
+        # Only known employees may be written to the attendance table.
+        cursor.execute(
+            "SELECT LTRIM(RTRIM(username)) FROM user_table WHERE ISNULL(is_active,'active') = 'active'"
+        )
+        known_users = {str(row[0] or "").strip().lower() for row in cursor.fetchall()}
 
         for rec in req.records:
             try:
+                username = str(rec.username or "").strip()
+                if not username or len(username) > 50:
+                    failed += 1
+                    errors.append(f"invalid username: {rec.username!r}")
+                    continue
+                if username.lower() not in known_users:
+                    failed += 1
+                    errors.append(f"unknown user: {username}")
+                    continue
+
                 # Parse Jalali date
                 parts = rec.tarikh.replace("\u200f", "").split("/")
                 if len(parts) != 3:
@@ -456,6 +508,12 @@ async def bridge_sync(req: BridgeSyncRequest):
                 gregorian = JalaliDate(y, m, d).to_gregorian()
                 tarikh_obj = gregorian
 
+                # Reject implausible dates instead of writing them to hozoor.
+                if not (2015 <= tarikh_obj.year <= 2100):
+                    failed += 1
+                    errors.append(f"date out of range: {rec.tarikh}")
+                    continue
+
                 # Parse times
                 vorood_obj = datetime.strptime(rec.vorood.strip(), "%H:%M").time()
                 khorooj_obj = datetime.strptime(rec.khorooj.strip(), "%H:%M").time()
@@ -463,7 +521,7 @@ async def bridge_sync(req: BridgeSyncRequest):
                 # Check for existing record
                 cursor.execute(
                     "SELECT id FROM hozoor WHERE username = ? AND [date] = ?",
-                    (rec.username, tarikh_obj),
+                    (username, tarikh_obj),
                 )
                 existing = cursor.fetchone()
 
@@ -492,28 +550,47 @@ async def bridge_sync(req: BridgeSyncRequest):
                     cursor.execute(
                         """INSERT INTO hozoor (username, [date], vrood, khoroj)
                            VALUES (?, ?, ?, ?)""",
-                        (rec.username, tarikh_obj, vorood_obj, khorooj_obj),
+                        (username, tarikh_obj, vorood_obj, khorooj_obj),
                     )
                     synced += 1
 
             except Exception as exc:
                 failed += 1
-                errors.append(f"{rec.username}@{rec.tarikh}: {exc}")
-                logger.warning("Bridge sync record error: %s", exc)
+                errors.append(f"{rec.username}@{rec.tarikh}: {type(exc).__name__}")
+                logger.warning("Bridge sync record error: %s: %s", type(exc).__name__, exc)
 
         conn.commit()
 
     except Exception as exc:
-        logger.error("Bridge sync failed: %s", exc)
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        logger.error("Bridge sync failed: %s: %s", type(exc).__name__, exc)
+        # Never return raw driver/database error text to the caller.
         return BridgeSyncResponse(
             success=False, synced=synced, skipped=skipped,
-            failed=failed, message=f"Database error: {exc}",
+            failed=failed, message="Database error while applying bridge records",
         )
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     msg = f"Synced: {synced}, Skipped: {skipped}, Failed: {failed}"
     if errors:
         msg += f" Errors: {'; '.join(errors[:5])}"
 
+    log_event(
+        event_type="INTEGRATION", action="bridge_sync",
+        module="araz", status="success" if failed == 0 else "partial",
+        severity="low" if failed == 0 else "medium",
+        ip_address=_client_ip(request),
+        metadata={"synced": synced, "skipped": skipped, "failed": failed},
+    )
     logger.info("Bridge sync: %s", msg)
     return BridgeSyncResponse(
         success=failed == 0,

@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import pyodbc
 import jdatetime
 import random
@@ -32,9 +33,13 @@ from app.services.background_tasks import start_background_tasks, stop_backgroun
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
 from core.config import API_PREFIX, DEBUG, MEMOIZATION_FLAG, PROJECT_NAME, VERSION, SECRET_KEY, config
+from app.core.database import connection_string as _db_connection_string
 from core.events import create_start_app_handler
 from core.number_format import convert_to_persian_numbers
-from core.password_utils import get_user_table_columns, hash_password, insert_user_with_optional_hash
+from core.password_utils import (
+    get_user_table_columns, hash_password, insert_user_with_optional_hash,
+    validate_username_input,
+)
 
 from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Path, Body, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
@@ -45,8 +50,25 @@ from jinja2 import Template
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 
+import logging
+
+# Application logger.  ``_safe_error_message`` and several security helpers
+# report failures through it; without the definition the handler raised
+# NameError while trying to build its error response.
+logger = logging.getLogger("hastama.main")
+
 # ایجاد اپلیکیشن FastAPI
-app = FastAPI(debug=DEBUG)
+# Interactive API documentation enumerates every route and schema, which is
+# useful on a developer machine and an unnecessary disclosure on the LAN.
+# It is therefore opt-in: set HASTAMA_ENABLE_DOCS=true (or DEBUG=true) to
+# expose /docs, /redoc and /openapi.json.
+_ENABLE_DOCS = DEBUG or os.getenv("HASTAMA_ENABLE_DOCS", "").strip().lower() in {"1", "true", "yes", "on"}
+app = FastAPI(
+    debug=DEBUG,
+    docs_url="/docs" if _ENABLE_DOCS else None,
+    redoc_url="/redoc" if _ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if _ENABLE_DOCS else None,
+)
 
 # Production requires an explicitly configured stable signing key.
 _session_secret = os.getenv("SESSION_SECRET_KEY") or str(SECRET_KEY or "")
@@ -54,23 +76,123 @@ if not _session_secret and not DEBUG:
     raise RuntimeError("SESSION_SECRET_KEY or SECRET_KEY must be configured when DEBUG=false")
 if not _session_secret:
     _session_secret = os.urandom(32).hex()
-app.add_middleware(SessionMiddleware, secret_key=_session_secret, same_site="lax", max_age=28800)
+
+SESSION_MAX_AGE_SECONDS = int(os.getenv("SESSION_MAX_AGE_SECONDS", "28800") or 28800)
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 import secrets as _secrets
 
+from app.core.db_context import RequestConnectionMiddleware, connection_proxy, cursor_proxy
+from app.core.net import client_ip as _client_ip_trusted, is_https as _request_is_https
+from app.core.session_cookie import parse_session_cookie, expire_cookie_header
+from app.core import sessions as _session_registry
+
+
+def _request_cookies(scope: Scope) -> dict:
+    headers = dict(scope.get("headers", []))
+    raw_cookie = headers.get(b"cookie", b"").decode("latin-1", errors="ignore")
+    cookies = {}
+    for part in raw_cookie.split(";"):
+        part = part.strip()
+        if "=" in part:
+            k, v = part.split("=", 1)
+            cookies[k.strip()] = v.strip()
+    return cookies
+
+
+# CSRF exemptions cover two groups, both enforced with an Origin/Referer
+# same-site check instead of the session bound token (see
+# _CSRFMiddleware._origin_allowed):
+#
+#   1. kiosk-style call endpoints that are intentionally usable without a login
+#      (the reception desk has no session);
+#   2. pre-authentication state changes (login, password reset, registration).
+#      These requests have no signed session yet, so a session-bound token
+#      cannot exist; without the exemption a correct login could never pass.
+CSRF_EXEMPT_PREFIXES = (
+    "/api/calls",
+    "/api/call-display",
+    "/api/display-queue",
+    "/api/waiting-queue",
+    "/api/slides",
+    "/api/ws/",
+    "/login_user",
+    "/forgot_password",
+    "/reset_password",
+    "/verify_recovery_code",
+    "/registration/",
+    "/captcha/",
+    # Machine-to-machine device bridge: authenticated with the shared
+    # ARAZ_BRIDGE_SECRET (constant-time compare), never with a session cookie.
+    # The bridge agent runs as a service and sends no Origin header.
+    "/api/araz/",
+    # Public pre-authentication support form; same-origin is still enforced.
+    "/public/",
+)
+
+CSRF_TOKEN_SESSION_KEY = "csrf_token"
+CSRF_TOKEN_COOKIE = "csrf_token"
+
+# Endpoints that must never gain a CSRF cookie (nothing to protect, avoids
+# useless Set-Cookie churn on health checks and static files).
+_CSRF_NO_COOKIE_PATHS = ("/static/", "/health", "/favicon.ico")
+
 
 class _CSRFMiddleware:
-    """Double-submit CSRF protection.
-    Generates a per-session token, sets it as a cookie, and validates
-    X-CSRF-Token header on state-changing requests (POST/PUT/DELETE/PATCH).
-    GET/HEAD/OPTIONS are safe and skipped.
+    """Session-bound double-submit CSRF protection.
+
+    The client sends the token twice: in the readable ``csrf_token`` cookie and
+    in the ``X-CSRF-Token`` header.  Both must match **and** must equal the token
+    stored inside the signed session, which binds the token to the authenticated
+    session instead of merely to a cookie an attacker might be able to set.
+
+    Requests that change state and are not covered by the kiosk exemptions must
+    present a matching token; failures are audited.
     """
 
     _STATE_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+    COOKIE_NAME = "csrf_token"
+    HEADER_NAME = b"x-csrf-token"
+    COOKIE_MAX_AGE = SESSION_MAX_AGE_SECONDS
 
-    def __init__(self, app: ASGIApp) -> None:
+    def __init__(self, app: ASGIApp, secret: str = "", session_max_age: int = 0) -> None:
         self.app = app
+        self._secret = secret
+        self._session_max_age = session_max_age
+
+    def _session_token(self, scope: Scope) -> str:
+        cookies = _request_cookies(scope)
+        session = parse_session_cookie(
+            cookies.get("session"), self._secret, self._session_max_age
+        )
+        return str(session.get("csrf_token") or "")
+
+    @staticmethod
+    def _exempt(path: str) -> bool:
+        return any(path.startswith(prefix) for prefix in CSRF_EXEMPT_PREFIXES)
+
+    @staticmethod
+    def _origin_allowed(scope: Scope) -> bool:
+        """Origin check used for the CSRF-exempt kiosk endpoints.
+
+        Browsers always send ``Origin`` on cross-site POST/PUT/DELETE.  Requests
+        without an ``Origin`` header (scripts, the bridge agent, curl) are
+        allowed, which keeps the documented LAN integrations working.
+        """
+        headers = dict(scope.get("headers", []))
+        origin = headers.get(b"origin", b"").decode("latin-1", errors="ignore")
+        if not origin:
+            return True
+        if origin == "null":
+            return False
+        host = headers.get(b"host", b"").decode("latin-1", errors="ignore")
+        try:
+            from urllib.parse import urlparse
+
+            netloc = urlparse(origin).netloc or urlparse(origin).path
+        except Exception:
+            return False
+        return netloc.split(":")[0].lower() == host.split(":")[0].lower()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -79,55 +201,283 @@ class _CSRFMiddleware:
 
         method = scope.get("method", "GET").upper()
         headers = dict(scope.get("headers", []))
-        # Cookie header is bytes: b"cookie"
-        raw_cookie = headers.get(b"cookie", b"").decode("latin-1", errors="ignore")
-        cookies = {}
-        for part in raw_cookie.split(";"):
-            part = part.strip()
-            if "=" in part:
-                k, v = part.split("=", 1)
-                cookies[k.strip()] = v.strip()
-
-        # Read or generate CSRF token from session cookie (session_data is signed)
-        # We store the token in a separate cookie to avoid session parsing complexity
-        csrf_token = cookies.get("csrf_token", "")
+        path = scope.get("path", "")
+        cookies = _request_cookies(scope)
+        csrf_token = cookies.get(self.COOKIE_NAME, "")
+        session_token = self._session_token(scope)
 
         if method in self._STATE_METHODS:
-            # مسیرهای سیستم تماس نیاز به CSRF ندارند (بدون احراز هویت کار می‌کنند)
-            path = scope.get("path", "")
-            csrf_exempt_paths = ("/api/calls", "/api/call-display", "/api/display-queue", "/api/waiting-queue", "/api/slides")
-            if not any(path.startswith(p) for p in csrf_exempt_paths):
-                # Validate: X-CSRF-Token header must match the cookie value
-                header_token = headers.get(b"x-csrf-token", b"").decode("latin-1", errors="ignore")
-                if not csrf_token or not header_token or csrf_token != header_token:
-                    from starlette.responses import JSONResponse
-                    response = JSONResponse(
-                        status_code=403,
-                        content={"success": False, "error": "CSRF token mismatch."},
-                    )
-                    await response(scope, receive, send)
+            if self._exempt(path):
+                if not self._origin_allowed(scope):
+                    await self._reject(scope, receive, send, path, "origin")
+                    return
+            else:
+                header_token = headers.get(self.HEADER_NAME, b"").decode("latin-1", errors="ignore")
+                if not self._token_valid(cookie_token=csrf_token, header_token=header_token, session_token=session_token):
+                    await self._reject(scope, receive, send, path, "token")
                     return
 
-        # Generate new CSRF token if missing
-        if not csrf_token:
-            csrf_token = _secrets.token_hex(32)
+        # Decide which cookie value this response must carry.
+        #
+        #  * authenticated session with a token  -> the cookie must equal the
+        #    session token (re-synchronise if the browser lost the cookie).
+        #  * anonymous visitor without a cookie  -> mint a fresh random token
+        #    (it becomes the session token when the user logs in).
+        #  * anonymous visitor with a cookie     -> leave it alone: the token is
+        #    bound to the session at login time.
+        def _cookie_needed(resp_headers) -> str:
+            """Decide the readable cookie value for this response.
 
-        # Pass through and set csrf_token cookie on response
+            The session may have *changed* while handling the request (login
+            mints ``session["csrf_token"]``), so the outgoing signed cookie —
+            written by the inner SessionMiddleware — is authoritative:
+            whatever token ends up in the session is the token the browser must
+            send back.  Reading it here keeps the two copies in sync even
+            though this middleware runs outside the session layer.
+            """
+            if any(k.lower() == b"set-cookie" and v.startswith(b"csrf_token=")
+                   for k, v in resp_headers):
+                return ""  # the endpoint published its own cookie already
+            new_session_token = ""
+            for key, value in resp_headers:
+                if key.lower() == b"set-cookie" and value.startswith(b"session="):
+                    raw = value.split(b";", 1)[0][len(b"session="):].decode("latin-1")
+                    new_session_token = str(
+                        parse_session_cookie(
+                            raw if raw != "null" else "", self._secret, self._session_max_age
+                        ).get(CSRF_TOKEN_SESSION_KEY) or ""
+                    )
+                    break
+            effective = new_session_token or session_token
+            if effective:
+                return "" if csrf_token == effective else effective
+            if csrf_token or path.startswith(_CSRF_NO_COOKIE_PATHS):
+                return ""  # anonymous visitor already holds a token
+            return _secrets.token_hex(32)
+
         async def _send(message):
             try:
                 if message["type"] == "http.response.start":
                     resp_headers = list(message.get("headers", []))
-                    cookie_val = f"csrf_token={csrf_token}; Path=/; SameSite=Lax; Max-Age=3600"
-                    resp_headers.append((b"set-cookie", cookie_val.encode("latin-1")))
-                    message["headers"] = resp_headers
+                    value = _cookie_needed(resp_headers)
+                    if value:
+                        flags = f"Path=/; SameSite=Lax; Max-Age={self.COOKIE_MAX_AGE}"
+                        if _request_is_https_scope(scope):
+                            flags += "; Secure"
+                        resp_headers.append(
+                            (b"set-cookie",
+                             f"{self.COOKIE_NAME}={value}; {flags}".encode("latin-1"))
+                        )
+                        message["headers"] = resp_headers
             except Exception:
                 pass
             await send(message)
 
         await self.app(scope, receive, _send)
 
+    @staticmethod
+    def _token_valid(*, cookie_token: str, header_token: str, session_token: str) -> bool:
+        if not cookie_token or not header_token or not session_token:
+            return False
+        # Constant-time comparison (tokens are equal-length hex strings).
+        return _secrets.compare_digest(cookie_token, header_token) and _secrets.compare_digest(
+            cookie_token, session_token
+        )
 
-app.add_middleware(_CSRFMiddleware)
+    async def _reject(self, scope, receive, send, path: str, reason: str) -> None:
+        _audit_csrf_failure(scope, path, reason)
+        from starlette.responses import JSONResponse
+
+        response = JSONResponse(
+            status_code=403,
+            content={"success": False, "error": "CSRF token mismatch."},
+        )
+        await response(scope, receive, send)
+
+
+def _scope_peer(scope: Scope) -> str:
+    client = scope.get("client") or ()
+    try:
+        return str(client[0]) if client else ""
+    except Exception:  # pragma: no cover - defensive
+        return ""
+
+
+def _scope_peer_trusted(scope: Scope) -> bool:
+    """Whether forwarding headers from this peer may be believed."""
+    from app.core.net import _parse_ip, trusted_proxies
+
+    peer = _parse_ip(_scope_peer(scope))
+    return bool(peer) and peer in trusted_proxies()
+
+
+def _request_is_https_scope(scope: Scope) -> bool:
+    """HTTPS detection that cannot be forced by an untrusted client.
+
+    ``X-Forwarded-Proto`` decides cookie ``Secure`` flags, HSTS and several
+    audit fields, so it is only honored when the immediate peer is a configured
+    trusted proxy (Caddy on loopback by default).
+    """
+    if _scope_peer_trusted(scope):
+        headers = dict(scope.get("headers", []))
+        proto = headers.get(b"x-forwarded-proto", b"").decode("latin-1", errors="ignore")
+        if proto:
+            return proto.split(",")[-1].strip().lower() == "https"
+    return str(scope.get("scheme", "")).lower() == "https"
+
+
+def _audit_csrf_failure(scope: Scope, path: str, reason: str) -> None:
+    """Record CSRF/Origin rejections so abuse is visible in the audit log."""
+    try:
+        from app.services.audit import log_event
+
+        headers = dict(scope.get("headers", []))
+        cookies = _request_cookies(scope)
+        session = parse_session_cookie(
+            cookies.get("session"), _session_secret, SESSION_MAX_AGE_SECONDS
+        )
+        log_event(
+            event_type="SECURITY",
+            action="csrf_rejected" if reason == "token" else "origin_rejected",
+            username=str(session.get("username") or "") or None,
+            module="csrf",
+            resource_type="endpoint",
+            resource_id=path[:200],
+            ip_address=_scope_client_ip(scope),
+            user_agent=headers.get(b"user-agent", b"").decode("latin-1", errors="ignore")[:500],
+            status="failure",
+            severity="medium",
+        )
+    except Exception:
+        pass
+
+
+def _scope_client_ip(scope: Scope) -> str:
+    """IP extraction for middleware (no Request object available).
+
+    Forwarding headers are only read from a trusted proxy — see
+    ``app.core.net``.  The result is always a valid IP literal or ``unknown``.
+    """
+    from app.core.net import _parse_ip  # local import: private helper reuse
+
+    if _scope_peer_trusted(scope):
+        headers = dict(scope.get("headers", []))
+        xff = headers.get(b"x-forwarded-for", b"").decode("latin-1", errors="ignore")
+        if xff and len(xff) <= 512:
+            for part in reversed(xff.split(",")[-20:]):
+                parsed = _parse_ip(part)
+                if parsed:
+                    return parsed
+    return _parse_ip(_scope_peer(scope)) or "unknown"
+
+
+class _SessionRegistryMiddleware:
+    """Enforce server-side session validity (revocation + idle timeout).
+
+    A signed cookie cannot be revoked, so password resets, account disabling,
+    role changes and administrator "terminate session" actions were ineffective.
+    Every authenticated request must now correspond to an active
+    ``user_sessions`` row; failures clear the cookie and answer with a redirect
+    (HTML) or ``401`` (API/JSON).
+    """
+
+    _API_PREFIXES = ("/api/", "/master-admin/api/", "/registration/", "/ticketing/", "/notifications")
+
+    def __init__(self, app: ASGIApp, secret: str = "", session_max_age: int = 0) -> None:
+        self.app = app
+        self._secret = secret
+        self._session_max_age = session_max_age
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if path.startswith("/static/"):
+            await self.app(scope, receive, send)
+            return
+
+        cookies = _request_cookies(scope)
+        session = parse_session_cookie(
+            cookies.get("session"), self._secret, self._session_max_age
+        )
+        username = str(session.get("username") or "").strip()
+        if not username:
+            await self.app(scope, receive, send)
+            return
+
+        sid = str(session.get(_session_registry.SESSION_TOKEN_KEY) or "").strip()
+        if sid and _session_registry.validate_session(sid, username):
+            await self.app(scope, receive, send)
+            return
+
+        # Session is not (or no longer) valid — drop the cookie and reject.
+        _audit_session_rejected(scope, path, username, bool(sid))
+        headers = dict(scope.get("headers", []))
+        accept = headers.get(b"accept", b"").decode("latin-1", errors="ignore").lower()
+        wants_json = (
+            path.startswith(self._API_PREFIXES)
+            or "application/json" in accept
+            or headers.get(b"x-requested-with", b"").lower() == b"xmlhttprequest"
+        )
+        secure = _request_is_https_scope(scope)
+
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                resp_headers = list(message.get("headers", []))
+                resp_headers.append((b"set-cookie", expire_cookie_header(secure=secure)))
+                message["headers"] = resp_headers
+            await send(message)
+
+        if wants_json:
+            from starlette.responses import JSONResponse
+
+            response = JSONResponse(
+                status_code=401,
+                content={"success": False, "error": "نشست شما منقضی یا باطل شده است. دوباره وارد شوید."},
+            )
+            await response(scope, receive, _send)
+        else:
+            from starlette.responses import RedirectResponse
+
+            response = RedirectResponse(url="/login", status_code=303)
+            await response(scope, receive, _send)
+
+
+def _audit_session_rejected(scope: Scope, path: str, username: str, had_token: bool) -> None:
+    try:
+        from app.services.audit import log_event
+
+        log_event(
+            event_type="SECURITY",
+            action="session_rejected",
+            username=username or None,
+            module="session",
+            resource_type="endpoint",
+            resource_id=path[:200],
+            ip_address=_scope_client_ip(scope),
+            status="failure",
+            severity="medium",
+            metadata={"reason": "revoked_or_unknown" if had_token else "legacy_session_without_token"},
+        )
+    except Exception:
+        pass
+
+
+app.add_middleware(RequestConnectionMiddleware)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=_session_secret,
+    same_site="lax",
+    max_age=SESSION_MAX_AGE_SECONDS,
+)
+app.add_middleware(
+    _CSRFMiddleware, secret=_session_secret, session_max_age=SESSION_MAX_AGE_SECONDS
+)
+app.add_middleware(
+    _SessionRegistryMiddleware, secret=_session_secret, session_max_age=SESSION_MAX_AGE_SECONDS
+)
 
 
 class _SecurityHeadersMiddleware:
@@ -139,9 +489,13 @@ class _SecurityHeadersMiddleware:
         (b"x-frame-options", b"SAMEORIGIN"),
         (b"referrer-policy", b"strict-origin-when-cross-origin"),
         (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
+        (b"cross-origin-opener-policy", b"same-origin"),
+        (b"cross-origin-resource-policy", b"same-origin"),
+        (b"x-permitted-cross-domain-policies", b"none"),
         (b"content-security-policy",
          b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
     ]
+    _HSTS = (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -152,17 +506,34 @@ class _SecurityHeadersMiddleware:
             await self.app(scope, receive, send)
             return
 
+        https = _request_is_https_scope(scope)
+
         async def _send(message):
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
                 existing = {k for k, _ in headers}
-                for k, v in self._HEADERS:
+                extra = list(self._HEADERS)
+                if https:
+                    extra.append(self._HSTS)
+                for k, v in extra:
                     if k not in existing:
                         headers.append((k, v))
+                if https:
+                    headers = _harden_cookies(headers)
                 message["headers"] = headers
             await send(message)
 
         await self.app(scope, receive, _send)
+
+
+def _harden_cookies(headers: list) -> list:
+    """Add ``Secure`` to every ``Set-Cookie`` on an HTTPS response."""
+    hardened = []
+    for key, value in headers:
+        if key.lower() == b"set-cookie" and b"secure" not in value.lower():
+            value = value + b"; Secure"
+        hardened.append((key, value))
+    return hardened
 
 
 app.add_middleware(_SecurityHeadersMiddleware)
@@ -203,11 +574,13 @@ def format_pass_title(value):
     return PASS_TITLE_LABELS.get(normalized, value or "پاس ساعتی")
 
 # اتصال به دیتابیس SQL Server
-conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                      r'SERVER=localhost\SQLEXPRESS;'
-                      'DATABASE=userDB;'
-                      'Trusted_Connection=yes;')
-cursor = conn.cursor()
+#
+# `conn` / `cursor` are proxies (app/core/db_context.py).  Each HTTP request is
+# bound to its own connection, so concurrent requests can no longer interleave
+# statements on one shared pyodbc cursor (which allowed one request to read
+# another request's result set).  Existing call sites are unchanged.
+conn = connection_proxy()
+cursor = cursor_proxy()
 
 # تبدیل اعداد به اعداد فارسی
 # این تابع در فایل core/number_format.py تعریف شده و در این ماژول استفاده می‌شود.
@@ -742,10 +1115,7 @@ async def get_users(request: Request):
     cursor = None
     try:
         # اتصال به دیتابیس SQL Server
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # بازیابی اطلاعات کاربران
@@ -788,10 +1158,7 @@ async def get_user_info(request: Request):
 
     try:
         # اتصال به دیتابیس SQL Server
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # جلب اطلاعات فردی از جدول user_table
@@ -841,10 +1208,7 @@ async def get_user_info_report(request: Request, username: str = Query(...)):
 
     try:
         # اتصال به دیتابیس SQL Server
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # جلب اطلاعات فردی از جدول user_table
@@ -891,10 +1255,7 @@ async def get_leave_info(request: Request):
 
     try:
         # اتصال به دیتابیس SQL Server
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # جلب اطلاعات مرخصی‌های کاربر از جدول mrkhc_table
@@ -1019,7 +1380,16 @@ def _notify_admins_new_request(kind, username, details):
     )
 
 
+# Tables this helper is allowed to look up.  The table name is part of the SQL
+# text (identifiers cannot be parameterised), so it is restricted to a fixed
+# allow-list instead of being interpolated blindly.
+_NOTIFY_STATUS_TABLES = frozenset({"mrkhc_table", "totalpass_table", "ezafe_table"})
+
+
 def _notify_requester_status(table, request_id, new_status, label):
+    if table not in _NOTIFY_STATUS_TABLES:
+        logger.error("refusing to look up request owner in unexpected table %r", table)
+        return
     notification_cursor = conn.cursor()
     notification_cursor.execute(
         f'SELECT TOP 1 LTRIM(RTRIM(username)) FROM {table} WHERE id = ?',
@@ -1062,6 +1432,14 @@ async def submit_leave(
     username = session.get("username")
     if not username:
         return JSONResponse(content={"success": False, "message": "User not logged in"})
+
+    # The substitute name is shown in the leave reports, so markup is refused at
+    # the source as well as escaped at the render layer.  Validated before the
+    # generic handler below so the operator sees the real reason.
+    try:
+        substitute = _reject_markup_field(substitute, max_length=100, field="جانشین")
+    except ValueError as exc:
+        return JSONResponse(content={"success": False, "message": str(exc)})
 
     try:
         if startDate:
@@ -1109,6 +1487,15 @@ async def submit_overtime(
     username = session.get("username")
     if not username:
         return JSONResponse(content={"success": False, "message": "User not logged in"})
+
+    # These three fields are typed by the employee and later rendered in the
+    # overtime / final reports, so they must not carry markup.
+    try:
+        description = _reject_markup_field(description, max_length=500, field="شرح اضافه‌کاری", required=True)
+        fromTime = _reject_markup_field(fromTime, max_length=20, field="ساعت شروع", required=True)
+        toTime = _reject_markup_field(toTime, max_length=20, field="ساعت پایان", required=True)
+    except ValueError as exc:
+        return JSONResponse(content={"success": False, "message": str(exc)})
 
     try:
         shamsi_parts = overtimeDate.split('/')
@@ -1516,11 +1903,17 @@ async def upload_profile_image(request: Request, file: UploadFile = File(...)):
     if detected_ext is None or detected_ext != file_ext:
         return RedirectResponse(url="/user_panel", status_code=303)
 
-    # Server-generated filename — never use user-supplied name
-    safe_filename = f"{username}{file_ext}"
+    # Server-generated filename — never use the user supplied name.  The
+    # username is part of the name, so it is reduced to a conservative charset
+    # (legacy rows may contain characters the current validators reject) and the
+    # final path is verified to stay inside the upload directory.
+    safe_username = re.sub(r"[^A-Za-z0-9_.-]", "_", str(username))[:64] or "user"
+    safe_filename = f"{safe_username}{file_ext}"
     upload_folder = os.path.join("app", "static", "uploads")
     os.makedirs(upload_folder, exist_ok=True)
-    file_path = os.path.join(upload_folder, safe_filename)
+    file_path = os.path.abspath(os.path.join(upload_folder, safe_filename))
+    if os.path.dirname(file_path) != os.path.abspath(upload_folder):
+        return RedirectResponse(url="/user_panel", status_code=303)
 
     with open(file_path, "wb") as buffer:
         buffer.write(contents)
@@ -1598,13 +1991,16 @@ class OvertimeData:
 
 # اتصال به دیتابیس
 def get_db_connection():
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        r'SERVER=localhost\SQLEXPRESS;'
-        'DATABASE=userDB;'
-        'Trusted_Connection=yes;'
-    )
-    return conn
+    """New database connection using the centralised connection string.
+
+    The ODBC string is configurable through ``DATABASE_URL``
+    (``app.core.database.connection_string``); the legacy
+    ``localhost\\SQLEXPRESS``/``userDB``/``Trusted_Connection=yes`` default is
+    kept so existing installations keep working unchanged.
+    """
+    from app.core.database import connect as _db_connect
+
+    return _db_connect()
 
 # Admin access is resolved from the signed session created by /login_user.
 def get_user_from_session(request: Request):
@@ -2116,13 +2512,35 @@ async def add_user(
     auth_err = _require_admin(request)
     if auth_err:
         return auth_err
-    try:
-        user_id = random.randint(100, 999)
 
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+    # Validate the free-text fields before they reach the database: names and
+    # departments are rendered by the admin UI, and markup must not be stored.
+    try:
+        name = _clean_display_field(name, max_length=100, field="نام")
+        last_name = _clean_display_field(last_name, max_length=100, field="نام خانوادگی")
+        department = _clean_display_field(department, max_length=100, field="بخش")
+        substitute = _clean_display_field(substitute, max_length=100, field="جانشین")
+        work_hours = _clean_display_field(work_hours, max_length=50, field="ساعت کاری")
+        hozoorNum = _clean_display_field(hozoorNum, max_length=50, field="شماره حضور")
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"success": False, "error": str(exc)})
+
+    username_check = validate_username_input(username)
+    if not username_check["valid"]:
+        return JSONResponse(status_code=400, content={"success": False, "error": username_check["error"]})
+    if role not in ("user", "admin"):
+        return JSONResponse(status_code=400, content={"success": False, "error": "نقش معتبر نیست."})
+    if not str(password or ""):
+        return JSONResponse(status_code=400, content={"success": False, "error": "رمز عبور الزامی است."})
+
+    try:
+        # IDs come from a CSPRNG and are checked for collisions — the previous
+        # `random.randint(100, 999)` could silently clash with an existing id.
+        user_id = _next_available_user_id()
+        if user_id is None:
+            return JSONResponse(status_code=500, content={"success": False, "error": "خطا در تخصیص شناسه کاربر."})
+
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
         ensure_employment_status_column(cursor)
         ensure_is_active_column(cursor)
@@ -2169,6 +2587,57 @@ async def add_user(
         return {"error": "خطا در ذخیره کاربر"}
 
 
+def _clean_display_field(value, *, max_length: int, field: str) -> str:
+    """Validate a human readable field (see app/core/validation.py)."""
+    from app.core.validation import clean_display_text
+
+    return clean_display_text(value, max_length=max_length, field=field)
+
+
+def _reject_markup_field(value, *, max_length: int, field: str, required: bool = False) -> str:
+    """Reject markup in free text stored from employee forms (see validation.py)."""
+    from app.core.validation import reject_markup
+
+    return reject_markup(value, max_length=max_length, field=field, required=required)
+
+
+def _next_available_user_id(attempts: int = 20):
+    """Allocate an unused numeric user id.
+
+    ``random.randint`` (the previous implementation) is not a CSPRNG and could
+    produce an id that already exists.  Ids are now drawn from :mod:`secrets`
+    and verified against the table.
+    """
+    import secrets as _secrets
+
+    conn = None
+    cursor = None
+    try:
+        conn = pyodbc.connect(_db_connection_string())
+        cursor = conn.cursor()
+        for _ in range(attempts):
+            candidate = _secrets.randbelow(900) + 100
+            cursor.execute("SELECT 1 FROM user_table WHERE id = ?", (candidate,))
+            if cursor.fetchone() is None:
+                return candidate
+        cursor.execute("SELECT ISNULL(MAX(id), 0) + 1 FROM user_table")
+        row = cursor.fetchone()
+        return int(row[0]) if row else None
+    except Exception:
+        return None
+    finally:
+        if cursor is not None:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 # تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر
 # تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر
 # تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر# تابع بروزرسانی اطلاعات کاربر
@@ -2186,9 +2655,14 @@ async def update_user(request: Request):
         current_username = str(data.get("current_username") or data.get("username") or "").strip()
         username = str(data.get("username") or "").strip()
         password = data.get("password")
-        substitute = data.get("substitute")
-        work_hours = data.get("work_hours")
-        department = data.get("department")
+        # Free-text fields are validated before they are stored: they are
+        # rendered by the admin UI and must not carry markup.
+        try:
+            substitute = _clean_display_field(data.get("substitute"), max_length=100, field="جانشین")
+            work_hours = _clean_display_field(data.get("work_hours"), max_length=50, field="ساعت ساعت کاری")
+            department = _clean_display_field(data.get("department"), max_length=100, field="بخش")
+        except ValueError as exc:
+            return JSONResponse(status_code=400, content={"success": False, "error": str(exc)})
         employment_status = str(data.get("employment_status") or "").strip().lower()
         is_active = str(data.get("is_active") or "active").strip().lower()
         if is_active not in ('active', 'inactive'):
@@ -2196,6 +2670,9 @@ async def update_user(request: Request):
 
         if not current_username or not username:
             return {"success": False, "error": "نام کاربری الزامی است."}
+        username_check = validate_username_input(username)
+        if not username_check["valid"]:
+            return JSONResponse(status_code=400, content={"success": False, "error": username_check["error"]})
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -2235,7 +2712,15 @@ async def update_user(request: Request):
         )
 
         conn.commit()
-        return {"success": True}
+
+        # Credential / privilege / account-status changes invalidate existing
+        # sessions (a signed cookie cannot be revoked otherwise).
+        revoked = 0
+        from app.core.sessions import revoke_user_sessions
+
+        if password_value or is_active != "active" or username != current_username:
+            revoked = revoke_user_sessions(current_username, "user_update")
+        return {"success": True, "sessions_revoked": revoked}
 
     except Exception as e:
         if conn is not None:
@@ -2274,10 +2759,7 @@ async def get_shifts(request: Request, username: str, year: int, month: int):
     if auth_err:
         return auth_err
     try:
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -2329,10 +2811,7 @@ async def add_shift(request: Request):
 
         days = {col: (data.get(col) or None) for col in SHIFT_DAY_COLUMNS.values()}
 
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # جلوگیری از همپوشانی بازه‌ها برای همین کاربر و همین ماه شمسی
@@ -2384,10 +2863,7 @@ async def update_shift(request: Request):
 
         days = {col: (data.get(col) or None) for col in SHIFT_DAY_COLUMNS.values()}
 
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         cursor.execute("SELECT username, jalali_year, jalali_month FROM shiftha WHERE id = ?", (shift_id,))
@@ -2432,10 +2908,7 @@ async def delete_shift(shift_id: int, request: Request):
     if admin_err:
         return admin_err
     try:
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
         cursor.execute("DELETE FROM shiftha WHERE id = ?", (shift_id,))
         conn.commit()
@@ -2466,10 +2939,7 @@ async def get_active_shifts(request: Request):
         month = today.month
         day = today.day
 
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, start_day, end_day, title,
@@ -2511,7 +2981,7 @@ async def get_leave_requests(request: Request):
     if admin_err:
         return admin_err
     try:
-        conn = pyodbc.connect('DRIVER={SQL Server};SERVER=localhost\\SQLEXPRESS;DATABASE=userDB;Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
         cursor.execute("SELECT id, start_date, end_date, days, substitute, username, status FROM mrkhc_table")
         requests = cursor.fetchall()
@@ -2697,10 +3167,7 @@ async def get_hourly_pass_requests(request: Request):
         return admin_err
     try:
         # اتصال به دیتابیس
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # فقط درخواست‌های "در انتظار تایید"
@@ -2781,6 +3248,12 @@ async def hourly_pass_report_page(request: Request):
 
 @app.post("/get_hourly_pass_report")
 async def get_hourly_pass_report(request: Request):
+    # The report screen is part of the admin panel and accepts
+    # ``username = "all_users"``, so it must never be reachable anonymously
+    # (it exposed every employee's pass records to the LAN).
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     try:
         data = await request.json()
         username = data.get('username')
@@ -2867,10 +3340,7 @@ async def get_overtime_requests(request: Request):
         return admin_err
     try:
         # اتصال به دیتابیس
-        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
-                              r'SERVER=localhost\SQLEXPRESS;'
-                              'DATABASE=userDB;'
-                              'Trusted_Connection=yes;')
+        conn = pyodbc.connect(_db_connection_string())
         cursor = conn.cursor()
 
         # دریافت اطلاعات اضافه‌کاری
@@ -3021,7 +3491,12 @@ async def overtime_report(request: Request):
         return templates.TemplateResponse(request, "overtime_report.html", {"request": request, "reports": []})
 
 @app.post("/get_overtime_report")
-async def get_overtime_report(data: dict):
+async def get_overtime_report(data: dict, request: Request):
+    # See /get_hourly_pass_report: unauthenticated callers could request
+    # ``all_users`` and read every employee's overtime record.
+    auth_err = _require_admin(request)
+    if auth_err:
+        return auth_err
     username = data.get('username')
     start_date_str = convert_farsi_to_english(str(data.get('start_date', '')))
     end_date_str = convert_farsi_to_english(str(data.get('end_date', '')))
@@ -3554,10 +4029,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
         return JSONResponse(status_code=400, content={"error": "تاریخ شروع نباید بعد از تاریخ پایان باشد."})
 
     # اتصال به SQL Server و گرفتن اطلاعات کاربر.
-    conn = pyodbc.connect(r'DRIVER={ODBC Driver 17 for SQL Server};'
-                          r'SERVER=localhost\SQLEXPRESS;'
-                          r'DATABASE=userDB;'
-                          r'Trusted_Connection=yes;')
+    conn = pyodbc.connect(_db_connection_string())
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -3946,7 +4418,21 @@ async def sabt_hozoor_checkin(request: Request):
         if cursor.fetchone() is None:
             return JSONResponse(status_code=404, content={"success": False, "message": "کاربر مورد نظر یافت نشد."})
 
-        # قفل برای جلوگیری از ثبت هم‌زمان؛ تصمیم فقط بر اساس رکورد امروز است.
+        # قفل برای جلوگیری از ثبت هم‌زمان.  ابتدا ورودِ فعال (بدون خروج) را
+        # در همهٔ روزها می‌جوییم: شیفت شب ممکن است دیروز وارد شده باشد و تا
+        # زمان ثبت خروج نباید ورود تازه‌ای برای او ثبت شود.
+        cursor.execute(
+            "SELECT TOP 1 [date], vrood FROM hozoor WITH (UPDLOCK, HOLDLOCK) "
+            "WHERE username = ? AND vrood IS NOT NULL AND khoroj IS NULL "
+            "ORDER BY [date] DESC",
+            (username,),
+        )
+        active = cursor.fetchone()
+        if active is not None and active[0] != today:
+            return JSONResponse(status_code=409, content={"success": False, "message": "ورود فعالی از روز قبل بدون ثبت خروج مانده است؛ ابتدا خروج را ثبت کنید."})
+        if active is not None:
+            return JSONResponse(status_code=409, content={"success": False, "message": "ورود امروز قبلاً ثبت شده است."})
+
         cursor.execute(
             "SELECT vrood, khoroj FROM hozoor WITH (UPDLOCK, HOLDLOCK) "
             "WHERE username = ? AND [date] = ?",
@@ -4034,10 +4520,10 @@ async def sabt_hozoor_checkout(request: Request):
 
         # یافتن ورودِ فعال (بدون خروج) — برای شیفت شب ممکن است متعلق به روز قبل باشد
         cursor.execute(
-            "SELECT [date], vrood FROM hozoor WITH (UPDLOCK, HOLDLOCK) "
-            "WHERE username = ? AND [date] = ? "
-            "AND vrood IS NOT NULL AND khoroj IS NULL",
-            (username, today),
+            "SELECT TOP 1 [date], vrood FROM hozoor WITH (UPDLOCK, HOLDLOCK) "
+            "WHERE username = ? AND vrood IS NOT NULL AND khoroj IS NULL "
+            "ORDER BY [date] DESC",
+            (username,),
         )
         active = cursor.fetchone()
 
@@ -4264,9 +4750,16 @@ async def get_today_date():
 
 @app.get("/logout")
 async def logout(request: Request, response: Response):
-    # Clear entire session on logout to remove all auth flags
+    sid = str(request.session.get(_session_registry.SESSION_TOKEN_KEY) or "")
+    legacy_user = "" if sid else str(request.session.get("username") or "")
     request.session.clear()
-    
+    # Also terminate the server-side session record, so a captured cookie
+    # cannot be replayed after logout.
+    if sid:
+        _session_registry.revoke_session(sid, "self")
+    elif legacy_user:
+        _session_registry.revoke_user_sessions(legacy_user, "logout")
+
     # ریدایرکت به صفحه اصلی
     return RedirectResponse(url="/login")
 
@@ -4292,6 +4785,9 @@ async def public_system_config():
 @app.post("/api/session/destroy")
 async def destroy_session(request: Request):
     """Destroy the session when the browser/tab is closed."""
+    sid = str(request.session.get(_session_registry.SESSION_TOKEN_KEY) or "")
+    if sid:
+        _session_registry.revoke_session(sid, str(request.session.get("username") or "self"))
     request.session.clear()
     return JSONResponse(content={"success": True})
 
