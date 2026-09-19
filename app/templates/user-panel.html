@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/tables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/ticketing.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/user-ticketing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/internal-automation.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/notification-system.css') }}">
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
@@ -193,6 +194,13 @@
                             </span>
                         </div>
 
+                        <div class="sidebar-nav-item" id="internalAutomationNav" data-action="open-internal-automation" role="button" tabindex="0">
+                            <span class="sidebar-item-content">
+                                <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5A2.5 2.5 0 0 1 5 5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h8M8 11.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                                <span class="sidebar-label">اتوماسیون داخلی</span>
+                            </span>
+                        </div>
+
                         <div class="sidebar-nav-item" data-action="open-notification-center" role="button" tabindex="0">
                             <span class="sidebar-item-content">
                                 <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="currentColor" stroke-width="1.8"/></svg></span>
@@ -208,7 +216,7 @@
                         </div>
                     </nav>
 
-                    <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+                    <div class="settings-panel" id="settingsPanel" aria-hidden="true" inert>
                         <div class="settings-panel-backdrop" id="settingsPanelBackdrop"></div>
                         <div class="settings-panel-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsPanelTitle">
                             <div class="settings-panel-header">
@@ -679,6 +687,7 @@
                             </button>
                         </section>
 
+
                     </section>
 
                     <!-- عناصر مخفی برای سازگاری با اسکریپت اصلی -->
@@ -689,6 +698,52 @@
                         <p>ساعت‌های کاری : <span id="userWorkHours"></span></p>
                         <p>جانشین : <span id="userSubstitute"></span></p>
                         <img class="profileLogo" src="{{ user_image_url or '/static/images/user.png' }}" alt="پروفایل کاربر" width="100">
+                    </div>
+
+                    <div id="internalAutomationCenter" class="internal-automation-center" hidden aria-hidden="true">
+                        <div class="internal-automation-backdrop" data-action="close-internal-automation"></div>
+                        <section class="internal-automation-dialog" role="dialog" aria-modal="true" aria-labelledby="internalAutomationTitle">
+                            <header class="internal-automation-header">
+                                <div>
+                                    <span class="ticket-panel-kicker">ارتباطات سازمانی</span>
+                                    <h2 id="internalAutomationTitle">اتوماسیون داخلی</h2>
+                                    <p>گفت‌وگوهای کاری شما با همکاران، جدا از تیکتینگ فنی سامانه</p>
+                                </div>
+                                <div class="internal-automation-actions">
+                                    <button type="button" class="internal-automation-new" data-action="new-internal-conversation">+ گفت‌وگوی جدید</button>
+                                    <button type="button" class="internal-automation-close" data-action="close-internal-automation" aria-label="بستن">×</button>
+                                </div>
+                            </header>
+                            <div class="internal-automation-layout">
+                                <aside class="internal-automation-list-pane">
+                                    <div class="internal-automation-list-head"><strong>گفت‌وگوهای من</strong><button type="button" data-action="refresh-internal-automation" aria-label="تازه‌سازی">↻</button></div>
+                                    <div id="internalAutomationList" class="internal-automation-list" aria-live="polite"></div>
+                                </aside>
+                                <section id="internalAutomationConversation" class="internal-automation-conversation">
+                                    <div class="internal-automation-empty"><span>✦</span><h3>یک گفتگو را انتخاب کنید</h3><p>برای شروع، گفت‌وگوی جدیدی با همکاران خود بسازید.</p></div>
+                                </section>
+                            </div>
+                        </section>
+                    </div>
+                    <div id="internalAutomationCreateModal" class="internal-automation-create-modal" hidden aria-hidden="true">
+                        <div class="internal-automation-create-backdrop" data-action="close-internal-automation-create"></div>
+                        <section class="internal-automation-create-dialog" role="dialog" aria-modal="true" aria-labelledby="internalAutomationCreateTitle">
+                            <header>
+                                <div>
+                                    <span class="ticket-panel-kicker">ارتباطات سازمانی</span>
+                                    <h2 id="internalAutomationCreateTitle">شروع گفت‌وگوی جدید</h2>
+                                    <p>همکاران و پیام آغازین گفتگو را مشخص کنید.</p>
+                                </div>
+                                <button type="button" class="internal-automation-close" data-action="close-internal-automation-create" aria-label="بستن">×</button>
+                            </header>
+                            <form id="internalAutomationCreateForm">
+                                <label>موضوع گفتگو<input type="text" name="subject" maxlength="180" required placeholder="مثلاً هماهنگی برنامه کاری"></label>
+                                <label>انتخاب همکار<select name="participant" required><option value="">در حال دریافت کاربران…</option></select></label>
+                                <label>پیام آغازین<textarea name="body" maxlength="4000" rows="5" required placeholder="پیام خود را بنویسید…"></textarea></label>
+                                <p class="internal-automation-create-error" role="alert"></p>
+                                <footer><button type="button" class="internal-automation-secondary" data-action="close-internal-automation-create">انصراف</button><button type="submit" class="internal-automation-primary">ایجاد گفتگو</button></footer>
+                            </form>
+                        </section>
                     </div>
                 </main>
             </div>
@@ -1261,6 +1316,7 @@
         <script>window.__modernTicketing = true;</script>
         <script src="{{ url_for('static', path='js/user-panel-script.js') }}"></script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
+<script src="{{ url_for('static', path='js/internal-automation.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}"></script>
 
     <script>

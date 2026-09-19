@@ -23,6 +23,7 @@ from app.api.routes.notifications import (
     publish_system_notification_to_admins,
 )
 from app.api.routes.ticketing import router as ticketing_router
+from app.api.routes.automation import router as automation_router
 from app.api.routes.health import router as health_router
 from app.api.routes.call_system import router as call_system_router
 from app.api.routes.araz_api import router as araz_router
@@ -547,6 +548,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(auth_router)
 app.include_router(notifications_router)
 app.include_router(ticketing_router)
+app.include_router(automation_router)
 app.include_router(health_router)
 app.include_router(call_system_router)
 app.include_router(araz_router)

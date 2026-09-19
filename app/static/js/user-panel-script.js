@@ -234,16 +234,27 @@ window.addEventListener('load', function() {convertPlaceholdersToPersian();});
 function toggleSettingsPanel() {
     var panel = document.getElementById('settingsPanel');
     if (!panel) return;
-    panel.classList.toggle('is-open');
-    document.body.classList.toggle('settings-panel-open', panel.classList.contains('is-open'));
-    panel.setAttribute('aria-hidden', panel.classList.contains('is-open') ? 'false' : 'true');
+    if (panel.classList.contains('is-open')) {
+        closeSettingsPanel();
+        return;
+    }
+    panel.classList.add('is-open');
+    panel.removeAttribute('inert');
+    document.body.classList.add('settings-panel-open');
+    panel.setAttribute('aria-hidden', 'false');
 }
 
 function closeSettingsPanel() {
     var panel = document.getElementById('settingsPanel');
     if (!panel) return;
+    var active = document.activeElement;
+    if (active && panel.contains(active)) {
+        var trigger = document.getElementById('showMorepopuphourbox');
+        if (trigger) trigger.focus();
+    }
     panel.classList.remove('is-open');
     document.body.classList.remove('settings-panel-open');
+    panel.setAttribute('inert', '');
     panel.setAttribute('aria-hidden', 'true');
 }
 

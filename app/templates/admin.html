@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/responsive-tables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/tables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/ticketing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/internal-automation.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/notification-system.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
@@ -242,6 +243,13 @@
                         </svg>
                     </span>
                     <span class="icon-label">مدیریت تیکت ها</span>
+                </div>
+
+                <div class="icon-container" data-accent="automation" onclick="navTo('internalAutomationAdminBox', this, '/admin/internal-automation')">
+                    <span class="sidebar-icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h8M8 11.5h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="icon-label">اتوماسیون داخلی</span>
                 </div>
 
                 <!-- مدیریت شیفت‌ها -->
@@ -1744,6 +1752,16 @@
                 <div class="section-hero__icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" fill="#fff" opacity=".14"/><path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" stroke="#fff" stroke-width="1.9"/><path d="M14.2 7.5v9" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 2.4"/><path d="M7.2 10.2h3.4M7.2 13.8h3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>
                 </div>
+
+                <div id="internalAutomationAdminBox" class="management-box internal-automation-admin-panel" style="display:none;">
+                    <header class="section-hero" style="--hero-accent:#087f72;--hero-accent-2:#1686b5;">
+                        <div class="section-hero__text"><h2>نظارت بر اتوماسیون داخلی</h2><p>فهرست ارتباطات سازمانی بدون نمایش محتوای پیام‌ها</p></div>
+                    </header>
+                    <div class="internal-automation-admin-content">
+                        <div class="internal-automation-admin-note">برای حفظ حریم خصوصی، مدیر مجموعه فقط اعضا، تعداد پیام‌ها و زمان فعالیت را می‌بیند. محتوای پیام و فایل‌ها فقط برای اعضای گفتگو و مدیر اصلی قابل مشاهده است.</div>
+                        <div id="internalAutomationAdminList" class="internal-automation-admin-list"><div class="ticket-loading-state">در حال دریافت گفتگوها…</div></div>
+                    </div>
+                </div>
                 <div class="section-hero__text">
                     <h2>مدیریت تیکت‌ها</h2>
                     <p>مدیریت تیکت‌های پشتیبانی و پیگیری درخواست‌ها</p>
@@ -2549,6 +2567,7 @@
 <script src="{{ url_for('static', path='js/admin.js') }}?v=2"></script>
 <script>window.__notificationToastReady = true;</script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
+<script src="{{ url_for('static', path='js/internal-automation-admin.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}?v=16"></script>
     <script src="{{ url_for('static', path='vendor/persian-date/persian-date.min.js') }}"></script>
 
