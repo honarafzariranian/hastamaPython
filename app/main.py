@@ -4723,17 +4723,86 @@ async def final_report(request: Request):
 
 @app.get("/download_pdf")
 async def download_pdf(request: Request):
+    """گزارش نهایی را به PDF تبدیل می‌کند (مقاوم‌سازی‌شده در برابر CVE-2025-26240)."""
     auth_err = _require_auth(request)
     if auth_err:
         return auth_err
-    # مسیر فایل CSS برای استایل‌دهی PDF
-    css_path = os.path.join("static", 'finalReportUserPrint.css')
 
-    # رندر کردن صفحه HTML
-    html_content = templates.get_template('finalReportUser.html').render(request=request)
+    # Security note (CVE-2025-26240 / GHSA-9g3x-6x24-vf9f, pdfkit <= 1.0.0):
+    # ``pdfkit.from_string`` parses ``<meta name="pdfkit-...">`` tags out of the
+    # HTML it is given and turns their content into wkhtmltopdf command line
+    # options — including ``--post-file`` (local file disclosure) and ``--script``
+    # (JavaScript/SSRF).  There is no patched pdfkit release, so the call site is
+    # hardened instead: the HTML is rendered from a repository template
+    # (autoescaped) and written to a private temporary file, then converted with
+    # ``from_file``, which does not parse meta tags at all; the stylesheet is
+    # inlined so no ``--user-style-sheet`` path is passed; and JavaScript and
+    # local file access are explicitly disabled for wkhtmltopdf, which also
+    # neutralises the option-override bypass described in the advisory.
 
-    # تبدیل HTML به PDF همراه با CSS
-    pdf_file = pdfkit.from_string(html_content, False, css=css_path)
+    tmp_path = None
+    try:
+        # رندر کردن صفحه HTML
+        try:
+            template = templates.get_template('finalReportUser.html')
+        except Exception:
+            logger.error("final report PDF template is missing in this installation")
+            return JSONResponse(
+                status_code=503,
+                content={"success": False, "message": "قالب گزارش نهایی در این نصب موجود نیست."},
+            )
+        html_content = template.render(request=request)
+
+        # CSS را داخل HTML تزریق می‌کنیم (بدون دسترسی wkhtmltopdf به فایل‌های محلی)
+        css_candidates = [
+            os.path.join("app", "static", "css", "finalReportUserPrint.css"),
+            os.path.join("static", "finalReportUserPrint.css"),
+        ]
+        for css_path in css_candidates:
+            try:
+                if os.path.isfile(css_path):
+                    with open(css_path, encoding="utf-8") as handle:
+                        css_text = handle.read()
+                    if "</head>" in html_content:
+                        html_content = html_content.replace(
+                            "</head>", f"<style>{css_text}</style></head>", 1
+                        )
+                    break
+            except OSError:
+                continue
+
+        # نوشتن در فایل موقت با نام تصادفی (خارج از دسترس مرورگر)
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".html", encoding="utf-8", delete=False, dir=tempfile.gettempdir()
+        ) as handle:
+            handle.write(html_content)
+            tmp_path = handle.name
+
+        pdf_file = pdfkit.from_file(
+            tmp_path,
+            False,
+            options={
+                "encoding": "utf-8",
+                "disable-local-file-access": None,
+                "disable-javascript": None,
+                # بدون این گزینه‌ها wkhtmltopdf می‌تواند فایل‌های سرور را بخواند
+                "enable-local-file-access": False,
+            },
+        )
+    except Exception as exc:
+        logger.error("PDF generation failed: %s", type(exc).__name__)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "خطا در تولید فایل PDF."},
+        )
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
     # ارسال PDF به عنوان دانلود
     pdf_io = BytesIO(pdf_file)

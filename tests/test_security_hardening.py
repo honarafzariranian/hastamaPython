@@ -1442,3 +1442,39 @@ class TestStoredXssRendering:
         assert "_reject_markup_field(substitute, max_length=100" in source
         assert "_reject_markup_field(description, max_length=500" in source
         assert "_reject_markup_field(fromTime" in source and "_reject_markup_field(toTime" in source
+
+
+class TestPdfGenerationHardening:
+    """pdfkit <= 1.0.0 (CVE-2025-26240, GHSA-9g3x-6x24-vf9f, CVSS v3.1 8.4)
+    interprets ``<meta name="pdfkit-*">`` tags in the HTML handed to
+    ``from_string`` as wkhtmltopdf options, which allows local file disclosure
+    (``--post-file``) and JavaScript/SSRF (``--script``).  No patched release
+    exists, so the call site must not use ``from_string`` at all.
+    """
+
+    SOURCE = "app/main.py"
+
+    def test_download_pdf_never_uses_from_string(self):
+        source = open(self.SOURCE, encoding="utf-8").read()
+        assert "pdfkit.from_string(" not in source, "pdfkit.from_string is vulnerable to CVE-2025-26240"
+
+    def test_download_pdf_uses_a_file_and_disables_local_access_and_js(self):
+        source = open(self.SOURCE, encoding="utf-8").read()
+        assert "pdfkit.from_file(" in source
+        assert '"disable-local-file-access"' in source
+        assert '"disable-javascript"' in source
+        assert '"enable-local-file-access": False' in source
+
+    def test_rendered_html_goes_through_a_temporary_file(self):
+        source = open(self.SOURCE, encoding="utf-8").read()
+        assert "NamedTemporaryFile" in source
+        assert "os.unlink(tmp_path)" in source, "the temporary HTML must be deleted"
+
+    def test_missing_template_is_reported_instead_of_crashing(self, monkeypatch):
+        class Req:
+            session = {"username": "alice"}
+
+        monkeypatch.setattr(main, "_require_auth", lambda request: None)
+        resp = asyncio.run(main.download_pdf(Req()))
+        assert resp.status_code == 503
+        assert b"final_report" not in resp.body  # no paths leaked
