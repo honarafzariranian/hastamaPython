@@ -5100,18 +5100,25 @@ form button:active {
     border-radius: 14px;
     padding: 16px 18px;
     background: #F7FAFC;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-.shift-active-card:hover {
-    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.10);
+.shift-active-card:hover,
+.shift-active-card:focus-visible {
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.16);
     transform: translateY(-2px);
+    border-color: #0ea5e9;
+    outline: none;
 }
 
 .shift-active-card__header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 12px;
     flex-wrap: wrap;
 }
@@ -5130,12 +5137,38 @@ form button:active {
 }
 
 .shift-active-card__range {
-    margin-right: auto;
     font: 500 12px 'Vazir', sans-serif;
     color: #6B8091;
     background: #EFF4F8;
     padding: 3px 10px;
     border-radius: 6px;
+}
+
+.shift-active-card__edit-btn {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font: 600 12px 'Vazir', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-active-card__edit-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.shift-active-card__edit-btn:hover {
+    background: #0ea5e9;
+    color: #fff;
+    border-color: #0ea5e9;
+    transform: scale(1.04);
 }
 
 .shift-active-card__schedule {
@@ -5170,6 +5203,33 @@ form button:active {
     color: #94A3B8;
     text-align: center;
     padding: 8px 0;
+}
+
+.shift-active-card__footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.shift-active-card__edit-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 500 11px 'Vazir', sans-serif;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.shift-active-card__edit-hint svg {
+    width: 12px;
+    height: 12px;
+}
+
+.shift-active-card:hover .shift-active-card__edit-hint {
+    color: #0ea5e9;
 }
 
 /* ── نوار فیلتر (پرسنل / ماه / سال) ───────────────────────────── */
@@ -5826,6 +5886,55 @@ form button:active {
     background: #e8eef5 !important;
     transform: translateY(-1px);
     box-shadow: none !important;
+}
+
+#shiftBox .shift-delete-btn {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    box-shadow: none !important;
+    border: 1px solid #fecaca !important;
+}
+
+#shiftBox .shift-delete-btn:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px -8px rgba(239, 68, 68, 0.45) !important;
+}
+
+.shift-popup-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    padding: 10px 16px;
+    border-radius: 12px;
+}
+
+.shift-popup-meta__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 13px 'Vazir', sans-serif;
+}
+
+.shift-popup-meta__icon svg {
+    width: 16px;
+    height: 16px;
+    color: #0284c7;
+    display: block;
+}
+
+.shift-popup-meta__label {
+    color: #0369A1;
+    font-weight: 600;
+}
+
+.shift-popup-meta__value {
+    color: #0B2A3B;
+    font-weight: 700;
 }
 
 /* احترام به تنظیمات کاربر */
