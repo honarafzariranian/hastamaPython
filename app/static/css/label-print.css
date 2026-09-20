@@ -1,0 +1,433 @@
+/* ═══════════════════════════════════════════════════════════════
+   HASTAMA — Queue ticket / appointment label
+   ─────────────────────────────────────────────────────────────
+   Single source of truth for the label presentation layer.
+   Loaded by:
+     1. the master-admin "label printer" page (browser preview)
+     2. the dedicated print window (thermal / A5 label printing)
+   The design is print-first: hierarchy is carried by weight,
+   borders and spacing so the ticket stays readable in pure
+   grayscale on thermal printers. No CDN, no external assets.
+   ═══════════════════════════════════════════════════════════════ */
+
+.lbl {
+    /* ── Design tokens ─────────────────────────────────────── */
+    --lbl-ink:        #101828;  /* primary text            */
+    --lbl-ink-2:      #344054;  /* secondary text          */
+    --lbl-ink-3:      #667085;  /* field labels / faint    */
+    --lbl-line:       #dbe4ee;  /* hairline separators     */
+    --lbl-line-2:     #98a6b8;  /* stronger separators     */
+    --lbl-brand:      #0e7490;  /* medical cyan (primary)  */
+    --lbl-brand-deep: #155e75;  /* brand text / accents    */
+    --lbl-brand-tint: #ecfeff;  /* brand soft background   */
+    --lbl-panel:      #f8fafc;  /* neutral soft background */
+
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+    direction: rtl;
+    background: #fff;
+    color: var(--lbl-ink);
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    font-size: 0; /* kill inline whitespace gaps inside flex rows */
+    text-align: right;
+    -webkit-font-smoothing: antialiased;
+}
+.lbl *,
+.lbl *::before,
+.lbl *::after { box-sizing: border-box; }
+.lbl [hidden] { display: none !important; }
+
+/* ── Top brand accent strip ─────────────────────────────────── */
+.lbl__accent {
+    position: absolute;
+    top: 0; right: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(270deg, var(--lbl-brand-deep) 0%, var(--lbl-brand) 55%, #22b8cf 100%);
+    z-index: 2;
+}
+
+/* ── Content column ─────────────────────────────────────────── */
+.lbl__content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 7px 8px 5px 8px;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* ═══ 1 · Header — laboratory identity + date/time ═══════════ */
+.lbl__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 3px 6px;
+    padding-bottom: 2.5px;
+    border-bottom: 1px solid var(--lbl-line-2);
+    position: relative;
+}
+/* short brand segment on the divider */
+.lbl__header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+    width: 38%;
+    height: 2px;
+    background: var(--lbl-brand);
+    border-radius: 1px;
+}
+.lbl__identity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.lbl__logo {
+    height: 14px;
+    width: auto;
+    max-width: 46px;
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+.lbl__identity-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.lbl__lab-name {
+    margin: 0;
+    font-size: 6.8px;
+    line-height: 1.25;
+    font-weight: 800;
+    color: var(--lbl-ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.lbl__slogan {
+    margin: 1px 0 0;
+    font-size: 5px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--lbl-ink-3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* date/time pill */
+.lbl__datetime {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 2.5px;
+    padding: 1.5px 5px;
+    border: 1px solid var(--lbl-line-2);
+    border-radius: 99px;
+    background: var(--lbl-panel);
+    color: var(--lbl-ink-2);
+    font-size: 5.2px;
+    line-height: 1.2;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.lbl__datetime svg { flex: 0 0 auto; display: block; }
+.lbl__datetime-value {
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══ 2 · Queue number — the dominant element ════════════════ */
+.lbl__queue {
+    display: flex;
+    align-items: stretch;
+    gap: 5px;
+}
+.lbl__number-box {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 2.5px 10px 3.5px 10px;
+    border: 2px solid var(--lbl-ink);
+    border-radius: 9px;
+    background: var(--lbl-brand-tint);
+}
+.lbl__queue-label {
+    font-size: 5.4px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--lbl-ink-3);
+}
+.lbl__queue-number {
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 900;
+    color: var(--lbl-ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
+    word-break: keep-all;
+}
+/* service type chip — visually second only to the number */
+.lbl__service {
+    flex: 0 0 auto;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 9px;
+    border: 1.5px solid var(--lbl-brand-deep);
+    border-radius: 9px;
+    background: var(--lbl-brand-tint);
+    color: var(--lbl-brand-deep);
+    font-size: 6.5px;
+    line-height: 1;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* ═══ 3 · Patient + insurance records ════════════════════════ */
+.lbl__records {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 4px;
+    min-width: 0;
+}
+.lbl__record-group {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5px 6px;
+    border: 1px solid var(--lbl-line);
+    border-radius: 7px;
+    background: #fff;
+}
+.lbl__record-group--insurance { background: var(--lbl-panel); }
+.lbl__record {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px;
+    min-height: 9px;
+    padding: 0.5px 0;
+}
+.lbl__record + .lbl__record { border-top: 1px dashed var(--lbl-line); }
+.lbl__record-label {
+    flex: 0 0 auto;
+    max-width: 52%;
+    font-size: 4.6px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--lbl-ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5px;
+}
+.lbl__record-label svg { flex: 0 0 auto; display: block; }
+.lbl__record-value {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 5.8px;
+    line-height: 1.25;
+    font-weight: 700;
+    color: var(--lbl-ink);
+    text-align: left;
+    direction: rtl;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* keep numeric ids / phones as one unbreakable, correctly-ordered run */
+.lbl__record-value--num {
+    font-variant-numeric: tabular-nums;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+/* ═══ 4 · Motivational message ═══════════════════════════════ */
+.lbl__message {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 2.5px 8px;
+    border: 1px solid var(--lbl-line);
+    border-radius: 99px;
+    background: var(--lbl-brand-tint);
+    color: var(--lbl-ink-2);
+    font-size: 5px;
+    line-height: 1.35;
+    font-weight: 500;
+    text-align: center;
+}
+.lbl__message svg { flex: 0 0 auto; display: block; }
+.lbl__message-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ═══ 5 · Hastama footer — deliberately lighter than the lab ═ */
+.lbl__footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 1px;
+    padding-top: 4px;
+    border-top: 1px solid var(--lbl-line);
+}
+.lbl__brand-logo {
+    height: 10px;
+    width: auto;
+    max-width: 52px;
+    flex: 0 0 auto;
+    object-fit: contain;
+    opacity: .92;
+}
+.lbl__brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5px;
+    min-width: 0;
+}
+.lbl__brand-text strong {
+    font-size: 5.3px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: var(--lbl-ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lbl__brand-text span {
+    font-size: 4.5px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: var(--lbl-ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ═══ Compact template (less content, tighter spacing) ═══════ */
+.lbl[data-template='compact'] .lbl__slogan,
+.lbl[data-template='compact'] .lbl__message { display: none; }
+.lbl[data-template='compact'] .lbl__content { gap: 3px; padding-top: 6px; }
+.lbl[data-template='compact'] .lbl__queue-number { font-size: 30px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCREEN — browser preview (admin page + print window preview)
+   ═══════════════════════════════════════════════════════════════ */
+@media screen {
+    .lbl {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, .06),
+            0 14px 34px rgba(15, 23, 42, .12);
+        transition: width .2s ease, height .2s ease, border-radius .2s ease;
+    }
+    .lbl__brand-logo { filter: none; }
+}
+
+/* print document shell (only present in the dedicated print window) */
+.lbl-print-page {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+}
+
+/* exact physical size for the print window:
+   --lbl-mm-w / --lbl-mm-h are unitless millimetre numbers.
+   Grayscale by default: thermal output is monochrome, so the print window
+   always shows exactly what the thermal printer will produce. */
+.lbl--print {
+    width: calc(var(--lbl-mm-w, 55) * 3.7795px);
+    height: calc(var(--lbl-mm-h, 50) * 3.7795px);
+    margin: 0 auto;
+    filter: grayscale(1);
+    /* the print window must look exactly like the printed result */
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* optional on-screen "thermal preview" mode in the admin studio */
+.lbl.is-thermal {
+    filter: grayscale(1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT — thermal / label printer output
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+    @page { margin: 0; }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+    .lbl-print-page { display: block; }
+
+    .lbl,
+    .lbl * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .lbl--print {
+        width: calc(var(--lbl-mm-w, 55) * 3.7795px);
+        height: calc(var(--lbl-mm-h, 50) * 3.7795px);
+        margin: 0;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    /* the browser preview fit-scale must never leak into print */
+    .lbl__content { transform: none !important; }
+
+    /* no element may escape the label area */
+    .lbl { overflow: hidden; }
+    .lbl__footer { page-break-before: avoid; break-before: avoid; }
+    .lbl__queue,
+    .lbl__number-box { page-break-inside: avoid; break-inside: avoid; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME — the label is a print preview, it stays white
+   ═══════════════════════════════════════════════════════════════ */
+body.dark-theme .lbl {
+    border-color: rgba(148, 163, 184, .28);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, .4),
+        0 16px 40px rgba(0, 0, 0, .45);
+}
