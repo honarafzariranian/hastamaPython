@@ -999,12 +999,25 @@ async def take_queue_ticket(request: Request):
 
     # Read optional service from request body
     service_name = "پذیرش"
+    patient = {}
     try:
         body = await request.json()
-        if isinstance(body, dict) and body.get("service"):
-            service_name = str(body["service"]).strip() or "پذیرش"
+        if isinstance(body, dict):
+            if body.get("service"):
+                service_name = str(body["service"]).strip() or "پذیرش"
+            if isinstance(body.get("patient"), dict):
+                patient = body["patient"]
     except Exception:
         pass
+
+    patient_values = {
+        "name": str(patient.get("name") or "").strip()[:200],
+        "age": str(patient.get("age") or "").strip()[:3],
+        "national_id": str(patient.get("national_id") or "").strip()[:10],
+        "phone": str(patient.get("phone") or "").strip()[:11],
+        "insurance_base": str(patient.get("insurance_base") or "").strip()[:100],
+        "insurance_extra": str(patient.get("insurance_extra") or "").strip()[:100],
+    }
 
     conn = _get_connection()
     try:
@@ -1019,9 +1032,15 @@ async def take_queue_ticket(request: Request):
         )
         next_num = cursor.fetchone()[0]
         cursor.execute(
-            """INSERT INTO dbo.queue_tickets (ticket_number, ticket_date, status, service)
-               VALUES (?, ?, 'waiting', ?)""",
-            (next_num, today, service_name),
+            """INSERT INTO dbo.queue_tickets
+               (ticket_number, ticket_date, status, service, patient_name,
+                patient_age, patient_national_id, patient_phone,
+                insurance_base, insurance_extra)
+               VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)""",
+            (next_num, today, service_name, patient_values["name"],
+             patient_values["age"], patient_values["national_id"],
+             patient_values["phone"], patient_values["insurance_base"],
+             patient_values["insurance_extra"]),
         )
         new_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
         conn.commit()
@@ -1079,7 +1098,9 @@ async def list_queue_tickets(request: Request, status: str = "waiting"):
         cursor = conn.cursor()
         if status == "all":
             rows = cursor.execute(
-                """SELECT id, ticket_number, ticket_date, status, service, called_for,
+                """SELECT id, ticket_number, ticket_date, status, service,
+                       patient_name, patient_age, patient_national_id, patient_phone,
+                       insurance_base, insurance_extra, called_for,
                        called_at, completed_at, created_at
                    FROM dbo.queue_tickets
                    WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
@@ -1087,7 +1108,9 @@ async def list_queue_tickets(request: Request, status: str = "waiting"):
             ).fetchall()
         else:
             rows = cursor.execute(
-                """SELECT id, ticket_number, ticket_date, status, service, called_for,
+                """SELECT id, ticket_number, ticket_date, status, service,
+                       patient_name, patient_age, patient_national_id, patient_phone,
+                       insurance_base, insurance_extra, called_for,
                        called_at, completed_at, created_at
                    FROM dbo.queue_tickets
                    WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
@@ -1370,5 +1393,4 @@ def _ws_origin_allowed(websocket: WebSocket) -> bool:
 # ---------------------------------------------------------------------------
 # Pages -- Management and TV Display
 # ---------------------------------------------------------------------------
-
 

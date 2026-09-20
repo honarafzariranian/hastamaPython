@@ -41,7 +41,7 @@ from core.password_utils import (
 )
 
 from fastapi import FastAPI, HTTPException, Request, Form, Query, Response, Body, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -111,6 +111,7 @@ CSRF_EXEMPT_PREFIXES = (
     "/api/call-display",
     "/api/display-queue",
     "/api/waiting-queue",
+    "/api/queue/take",
     "/api/slides",
     "/api/ws/",
     "/login_user",
@@ -541,6 +542,12 @@ def _harden_cookies(headers: list) -> list:
 
 
 app.add_middleware(_SecurityHeadersMiddleware)
+
+# Browsers request this conventional root URL even when a page does not
+# declare an explicit favicon link.
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse("app/static/favicon.ico", media_type="image/x-icon")
 
 # ثبت مسیر استاتیک برای فایل‌های CSS و JavaScript
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

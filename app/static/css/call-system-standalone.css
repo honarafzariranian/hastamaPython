@@ -1018,6 +1018,21 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
     flex: 1;
 }
 
+.cs-ticket-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.cs-ticket-patient {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin-top: 3px;
+    color: var(--cs-text-muted);
+    font-size: 0.62rem;
+    line-height: 1.7;
+}
+
 .cs-waiting-time {
     font-size: 0.65rem;
     font-weight: var(--c-fw-semibold);

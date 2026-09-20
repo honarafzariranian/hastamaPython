@@ -1431,6 +1431,7 @@
         .k-kb-num {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
             max-width: 300px; margin: 0 auto;
+            direction: ltr;
         }
         .k-kb-num .k-kb-key { max-width: none; min-width: 0; height: 58px; font-size: 22px; font-weight: 700; }
         .k-kb-num .k-kb-key--0 { grid-column: 2; }
@@ -1584,10 +1585,10 @@
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
             </div>
-            <div class="k-modal-title">نوبت شما صادر شد</div>
+            <div class="k-modal-title">نوبت شما ثبت شد</div>
             <div class="k-modal-number" id="modalNumber">--</div>
-            <div class="k-modal-service" id="modalService">---</div>
-            <div class="k-modal-hint">لطفاً برگه نوبت خود را از دستگاه چاپ دریافت کنید</div>
+            <div class="k-modal-service" id="modalService">شماره نوبت: ---</div>
+            <div class="k-modal-hint">لطفاً منتظر بمانید تا پذیرش شماره شما را صدا بزند، سپس برای انجام کارهای خود مراجعه کنید.</div>
             <button class="k-modal-close" onclick="closeModal()">بستن</button>
         </div>
     </div>
@@ -2325,16 +2326,17 @@
                     body: JSON.stringify(payload)
                 });
                 var data = await resp.json();
-                if (!resp.ok) return;
+                if (!resp.ok) {
+                    throw new Error(data.detail || data.error || 'ثبت نوبت انجام نشد.');
+                }
                 var ticket = data.ticket || {};
                 document.getElementById('modalNumber').textContent = ticket.persian_number || ticket.number || '--';
                 var svcLabel = ticket.service || service;
                 if (patientData && patientData.admission_number) {
                     svcLabel += ' — پذیرش: ' + (patientData.admission_number_persian || patientData.admission_number);
                 }
-                document.getElementById('modalService').textContent = svcLabel + ' — شماره ' + (ticket.number || '');
+                document.getElementById('modalService').textContent = 'شماره نوبت: ' + (ticket.persian_number || ticket.number || '--');
                 document.getElementById('ticketModal').classList.add('visible');
-                printTicket(ticket, patientData);
                 refreshQueueCount();
             } catch (err) {
                 console.error(err);

@@ -992,6 +992,22 @@
             deptSpan.className = 'cs-waiting-dept';
             deptSpan.textContent = item.service || '';
 
+            var details = document.createElement('div');
+            details.className = 'cs-ticket-patient';
+            [
+                ['نام', item.patient_name],
+                ['سن', item.patient_age],
+                ['کد ملی', item.patient_national_id],
+                ['تلفن', item.patient_phone],
+                ['بیمه پایه', item.insurance_base],
+                ['بیمه تکمیلی', item.insurance_extra],
+            ].forEach(function (field) {
+                if (!field[1]) return;
+                var detail = document.createElement('span');
+                detail.textContent = field[0] + ': ' + field[1];
+                details.appendChild(detail);
+            });
+
             var timeSpan = document.createElement('span');
             timeSpan.className = 'cs-waiting-time';
             timeSpan.textContent = fmtTime(item.created_at);
@@ -1017,7 +1033,11 @@
             }
 
             el.appendChild(numSpan);
-            el.appendChild(deptSpan);
+            var info = document.createElement('div');
+            info.className = 'cs-ticket-info';
+            info.appendChild(deptSpan);
+            if (details.childNodes.length) info.appendChild(details);
+            el.appendChild(info);
             el.appendChild(timeSpan);
             el.appendChild(actionsDiv);
             ticketList.appendChild(el);
