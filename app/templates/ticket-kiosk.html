@@ -858,6 +858,8 @@
             flex-shrink: 0;
         }
         .k-patient-header-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2; }
+        .k-patient-header-text { flex: 1; min-width: 0; }
+        .k-patient-header .k-choice-close { width: 44px; height: 44px; }
         .k-patient-header-text h2 { font-size: 20px; font-weight: 800; color: var(--k-text); margin: 0; }
         .k-patient-header-text p { font-size: 13px; color: var(--k-text-dim); margin: 2px 0 0; }
 
@@ -1177,6 +1179,8 @@
         .k-kb-close svg { width: 18px; height: 18px; }
 
         .k-kb-row {
+            /* Key arrays are ordered left-to-right, independently of the RTL page. */
+            direction: ltr;
             display: flex; justify-content: center; gap: 6px;
             margin-bottom: 6px;
         }
@@ -1391,7 +1395,7 @@
                     <h2>نوع پذیرش</h2>
                     <p>لطفاً نوع درخواست خود را انتخاب کنید</p>
                 </div>
-                <button class="k-choice-close" onclick="closeChoice()">
+                <button type="button" class="k-choice-close" onclick="closeChoice()" aria-label="بستن و بازگشت به صفحه اول" title="بازگشت به صفحه اول">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
@@ -1448,6 +1452,11 @@
                     <h2>اطلاعات بیمار</h2>
                     <p id="stepLabel">مرحله ۱ از ۶</p>
                 </div>
+                <button type="button" class="k-choice-close" onclick="closePatientForm()" aria-label="بستن و بازگشت به صفحه اول" title="بازگشت به صفحه اول">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="k-progress" id="progressBar"></div>
@@ -1801,7 +1810,12 @@
 
             var inp = document.querySelector('.k-step.active .k-step-input');
             if (inp) {
-                setTimeout(function () { inp.focus(); }, 400);
+                setTimeout(function () {
+                    // Do not reopen the keyboard after the user closes the form.
+                    if (document.getElementById('patientOverlay').classList.contains('visible') && currentStep === idx) {
+                        inp.focus();
+                    }
+                }, 400);
             }
         }
 
