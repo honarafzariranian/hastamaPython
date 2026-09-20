@@ -196,6 +196,179 @@
     return `<span class="ma-dot ma-dot--${colors[val] || 'blue'}"></span>`;
   }
 
+  // ── Label Studio (طراحی و چاپ لیبل نوبت) ─────────────────────
+  let labelStudioReady = false;
+
+  function initLabelStudio() {
+    const preview = document.getElementById('maLabelPreview');
+    if (!preview) return;
+    if (labelStudioReady) return;
+    labelStudioReady = true;
+
+    const stage = preview.closest('.ma-label-preview-stage');
+    const width = document.getElementById('maLabelWidth');
+    const height = document.getElementById('maLabelHeight');
+    const readout = document.getElementById('maLabelSizeReadout');
+    const ratio = document.getElementById('maLabelRatio');
+    const template = document.getElementById('maLabelTemplate');
+    const timeEl = document.getElementById('maPreviewTime');
+    const nameRow = document.getElementById('maPreviewNameRow');
+    const hintEl = document.getElementById('maPreviewHint');
+
+    const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
+    [width, height, template].forEach(el => { if (el && stored[el.id] != null) el.value = stored[el.id]; });
+    if (!stored.maLabelLayoutVersion) {
+      width.value = 55;
+      height.value = 50;
+      stored.maLabelLayoutVersion = 2;
+      localStorage.setItem('hastama-label-settings', JSON.stringify(stored));
+    }
+    ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && stored[id] != null) el.checked = stored[id];
+    });
+
+    const fa = value => String(value).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    const clampMm = (value, min, max) => {
+      const n = Number(value);
+      return Math.min(max, Math.max(min, Number.isFinite(n) ? n : min));
+    };
+
+    function printedAt() {
+      const now = new Date();
+      return `${now.toLocaleDateString('fa-IR')} - ${now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // اگر محتوا از فضای پیش‌نمایش (عرض یا ارتفاع) تجاوز کند، کل لیبل را کوچک می‌کند (فقط مرورگر)
+    function fitLabelPreview() {
+      const content = preview.querySelector('.lbl__content');
+      if (!content) return;
+      content.style.transform = 'scale(1)';
+      const availableW = preview.clientWidth - 4;
+      const availableH = preview.clientHeight - 4;
+      const scale = Math.min(1, availableW / Math.max(1, content.scrollWidth), availableH / Math.max(1, content.scrollHeight));
+      content.style.transform = `scale(${Math.max(.58, scale)})`;
+    }
+
+    // اگر عرض جعبهٔ شماره کم باشد (لیبل باریک)، اندازهٔ رقم را کم می‌کند تا بریده نشود
+    function fitQueueNumber() {
+      const numEl = preview.querySelector('.lbl__queue-number');
+      const boxEl = preview.querySelector('.lbl__number-box');
+      if (!numEl || !boxEl) return;
+      numEl.style.fontSize = '';
+      const base = parseFloat(window.getComputedStyle(numEl).fontSize) || 26;
+      const natural = numEl.scrollWidth;
+      const available = boxEl.clientWidth - 24; // حاشیهٔ داخلی + کادر جعبه
+      if (natural > available) numEl.style.fontSize = `${Math.max(10, base * available / natural)}px`;
+    }
+
+    function refresh() {
+      const w = Math.round(clampMm(Number(width.value), 30, 150));
+      const h = Math.round(clampMm(Number(height.value), 20, 100));
+      const stageWidth = stage ? Math.max(180, stage.clientWidth - 48) : 420;
+      const stageHeight = stage ? Math.max(160, stage.clientHeight - 48) : 280;
+      const pxPerMm = Math.min(4, stageWidth / w, stageHeight / h);
+      preview.style.setProperty('width', `${Math.max(120, Math.round(w * pxPerMm))}px`, 'important');
+      preview.style.setProperty('height', `${Math.max(80, Math.round(h * pxPerMm))}px`, 'important');
+      preview.style.aspectRatio = `${w} / ${h}`;
+      preview.dataset.template = (template && template.value) || 'queue';
+      fitLabelPreview();
+      fitQueueNumber();
+      if (readout) readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر`;
+      if (ratio) ratio.textContent = `نسبت ${fa((w / h).toFixed(2)).replace('.', '٫')}`;
+      if (timeEl && timeEl.querySelector('.lbl__datetime-value')) timeEl.querySelector('.lbl__datetime-value').textContent = printedAt();
+      if (nameRow) nameRow.hidden = !document.getElementById('maShowName').checked;
+      if (timeEl) timeEl.hidden = !document.getElementById('maShowTime').checked;
+      if (hintEl) hintEl.hidden = !document.getElementById('maShowHint').checked;
+      preview.classList.toggle('is-thermal', document.getElementById('maThermalPreview').checked);
+      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: (template && template.value) || 'queue' };
+      ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].forEach(id => { settings[id] = document.getElementById(id).checked; });
+      localStorage.setItem('hastama-label-settings', JSON.stringify(settings));
+    }
+
+    [width, height, template, ...['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].map(id => document.getElementById(id))]
+      .filter(Boolean)
+      .forEach(el => {
+        el.addEventListener('input', refresh);
+        el.addEventListener('change', refresh);
+      });
+    refresh();
+    if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage || preview);
+
+    document.getElementById('maResetLabelBtn').addEventListener('click', function () {
+      width.value = 55; height.value = 50; template.value = 'queue';
+      ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { document.getElementById(id).checked = true; });
+      document.getElementById('maThermalPreview').checked = false;
+      refresh();
+      showToast('تنظیمات لیبل بازنشانی شد', 'success');
+    });
+
+    document.getElementById('maCheckPrinterBtn').addEventListener('click', async function () {
+      const status = document.getElementById('maPrinterStatus');
+      const text = status.querySelector('.ma-printer-status__text');
+      let connected = false;
+      try {
+        if (navigator.usb && navigator.usb.getDevices) connected = (await navigator.usb.getDevices()).length > 0;
+        if (!connected && navigator.serial && navigator.serial.getPorts) connected = (await navigator.serial.getPorts()).length > 0;
+      } catch (_) { connected = false; }
+      status.dataset.state = connected ? 'connected' : 'disconnected';
+      text.textContent = connected ? 'چاپگر متصل و آماده' : 'چاپگر قابل شناسایی نیست';
+      showToast(connected ? 'چاپگر آماده استفاده است' : 'چاپگر متصل شناسایی نشد', connected ? 'success' : 'error');
+    });
+
+    // چاپ: پنجرهٔ چاپ اختصاصی با ابعاد دقیق بر حسب میلی‌متر و شیووریت چاپ اختصاصی
+    function openPrintWindow() {
+      const w = Math.round(clampMm(Number(width.value), 30, 150));
+      const h = Math.round(clampMm(Number(height.value), 20, 100));
+      const contentEl = preview.querySelector('.lbl__content');
+      if (!contentEl) return;
+
+      // کلون بدون استایل درون‌خطی (مقیاس پیش‌نمایش به چاپ نشت نکند)
+      const clone = contentEl.cloneNode(true);
+      clone.removeAttribute('style');
+      const root = document.createElement('div');
+      root.className = 'lbl lbl--print';
+      root.setAttribute('data-template', preview.dataset.template || 'queue');
+      root.style.setProperty('--lbl-mm-w', String(w));
+      root.style.setProperty('--lbl-mm-h', String(h));
+      root.appendChild(clone);
+
+      const win = window.open('', '_blank', 'width=560,height=700');
+      if (!win) { showToast('پنجره چاپ توسط مرورگر مسدود شد', 'error'); return; }
+
+      const fitGuard = '(function(){try{var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
+        + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
+        + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||26;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
+        + 'var sx=(r.clientWidth-2)/c.scrollWidth;var sy=(r.clientHeight-2)/c.scrollHeight;var s=Math.min(1,sx,sy);'
+        + 'if(s<0.995){c.style.transformOrigin="top center";c.style.transform="scale("+Math.max(0.5,s).toFixed(3)+")";}}catch(e){}})();';
+      win.document.write([
+        '<!doctype html>',
+        '<html lang="fa" dir="rtl"><head><meta charset="utf-8">',
+        '<title>چاپ لیبل نوبت — ' + fa(w) + ' × ' + fa(h) + ' میلی‌متر</title>',
+        '<style>@page{size:' + w + 'mm ' + h + 'mm;margin:0}</style>',
+        '<link rel="stylesheet" href="/static/css/vazir.css">',
+        '<link rel="stylesheet" href="/static/css/label-print.css">',
+        '</head><body class="lbl-print-page">',
+        root.outerHTML,
+        '<script>' + fitGuard + '<\/script>',
+        '</body></html>'
+      ].join(''));
+      win.document.close();
+      win.focus();
+
+      // صبر برای آماده‌شدن فونت و لوگوها و سپس باز کردن دیالوگ چاپ
+      let printed = false;
+      const doPrint = () => { if (printed) return; printed = true; try { win.print(); } catch (e) {} };
+      const readyJobs = Array.prototype.slice.call(win.document.images)
+        .map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }));
+      if (win.document.fonts && win.document.fonts.ready) readyJobs.push(win.document.fonts.ready);
+      Promise.all(readyJobs).then(doPrint);
+      setTimeout(doPrint, 2500);
+    }
+
+    document.getElementById('maPrintLabelBtn').addEventListener('click', openPrintWindow);
+  }
+
   // ── Dashboard ────────────────────────────────────────────
   async function loadDashboard() {
     try {
@@ -210,97 +383,6 @@
         return String(n).replace(/[0-9]/g, d => fa[d]);
       }
 
-      function initLabelStudio() {
-        const preview = document.getElementById('maLabelPreview');
-        const stage = preview ? preview.closest('.ma-label-preview-stage') : null;
-        if (!preview) return;
-        const width = document.getElementById('maLabelWidth');
-        const height = document.getElementById('maLabelHeight');
-        const readout = document.getElementById('maLabelSizeReadout');
-        const ratio = document.getElementById('maLabelRatio');
-        const template = document.getElementById('maLabelTemplate');
-        const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
-        [width, height, template].forEach(el => { if (el && stored[el.id] != null) el.value = stored[el.id]; });
-        if (!stored.maLabelLayoutVersion) {
-          width.value = 55;
-          height.value = 50;
-          stored.maLabelLayoutVersion = 2;
-          localStorage.setItem('hastama-label-settings', JSON.stringify(stored));
-        }
-        ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el && stored[id] != null) el.checked = stored[id];
-        });
-        function fa(value) { return String(value).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); }
-        function printedAt() {
-          const now = new Date();
-          return `${now.toLocaleDateString('fa-IR')} - ${now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`;
-        }
-        function refresh() {
-          const w = Math.max(30, Number(width.value) || 70);
-          const h = Math.max(20, Number(height.value) || 50);
-          const stageWidth = stage ? Math.max(180, stage.clientWidth - 48) : 420;
-          const stageHeight = stage ? Math.max(160, stage.clientHeight - 48) : 280;
-          const pxPerMm = Math.min(4, stageWidth / w, stageHeight / h);
-          const previewWidth = `${Math.max(120, Math.round(w * pxPerMm))}px`;
-          const previewHeight = `${Math.max(80, Math.round(h * pxPerMm))}px`;
-          preview.style.setProperty('width', previewWidth, 'important');
-          preview.style.setProperty('height', previewHeight, 'important');
-          preview.style.aspectRatio = `${w} / ${h}`;
-          fitLabelPreview();
-          readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر`;
-          ratio.textContent = `نسبت ${fa((w / h).toFixed(2))}`;
-          document.getElementById('maPreviewPrintedAt').textContent = printedAt();
-          document.getElementById('maPreviewName').hidden = !document.getElementById('maShowName').checked;
-          document.getElementById('maPreviewTime').hidden = !document.getElementById('maShowTime').checked;
-          document.querySelector('.ma-label-preview__footer').hidden = !document.getElementById('maShowHint').checked;
-          const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: template.value };
-          ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { settings[id] = document.getElementById(id).checked; });
-          localStorage.setItem('hastama-label-settings', JSON.stringify(settings));
-        }
-        function fitLabelPreview() {
-          const content = preview.querySelector('.ma-label-preview__content');
-          if (!content) return;
-          content.style.transform = 'scale(1)';
-          const available = preview.clientHeight - 8;
-          const required = content.scrollHeight;
-          const scale = required > available ? Math.max(.58, available / required) : 1;
-          content.style.transform = `scale(${scale})`;
-        }
-        [width, height, template, ...['maShowName', 'maShowTime', 'maShowHint'].map(id => document.getElementById(id))]
-          .filter(Boolean).forEach(el => {
-            el.addEventListener('input', refresh);
-            el.addEventListener('change', refresh);
-          });
-        refresh();
-        if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage || preview);
-        document.getElementById('maResetLabelBtn').addEventListener('click', function () {
-          width.value = 55; height.value = 50; template.value = 'queue';
-          ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { document.getElementById(id).checked = true; });
-          refresh();
-          showToast('تنظیمات لیبل بازنشانی شد', 'success');
-        });
-
-        document.getElementById('maCheckPrinterBtn').addEventListener('click', async function () {
-          const status = document.getElementById('maPrinterStatus');
-          const text = status.querySelector('.ma-printer-status__text');
-          let connected = false;
-          try {
-            if (navigator.usb && navigator.usb.getDevices) connected = (await navigator.usb.getDevices()).length > 0;
-            if (!connected && navigator.serial && navigator.serial.getPorts) connected = (await navigator.serial.getPorts()).length > 0;
-          } catch (_) { connected = false; }
-          status.dataset.state = connected ? 'connected' : 'disconnected';
-          text.textContent = connected ? 'چاپگر متصل و آماده' : 'چاپگر قابل شناسایی نیست';
-          showToast(connected ? 'چاپگر آماده استفاده است' : 'چاپگر متصل شناسایی نشد', connected ? 'success' : 'error');
-        });
-        document.getElementById('maPrintLabelBtn').addEventListener('click', function () {
-          const content = preview.outerHTML;
-          const win = window.open('', '_blank', 'width=520,height=620');
-          if (!win) { showToast('پنجره چاپ توسط مرورگر مسدود شد', 'error'); return; }
-          win.document.write(`<html dir="rtl"><head><title>نمونه لیبل نوبت</title><style>@page{size:auto;margin:8mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start;font-family:Tahoma,Arial}.ma-label-preview{position:relative;overflow:hidden;isolation:isolate;margin:0;width:${Number(width.value) * 4}px;aspect-ratio:${width.value}/${height.value};padding:8px 9px 7px 13px;border:1px solid #111827;border-radius:0;background:#fff;color:#111827;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;filter:grayscale(1);box-shadow:none!important}.ma-label__topline{}.ma-label-preview__topline{position:relative;width:100%;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:2px 4px 3px;border:0;border-bottom:1px solid #111827;border-radius:0;background:transparent;color:#374151;font-size:6px}.ma-label-preview__topline img{width:27px;height:17px;object-fit:contain;filter:grayscale(1) contrast(1.35)}.ma-label-preview__lab-title{margin-top:3px;padding:2px 0 0;color:#111827;font-size:8px;font-weight:900}.ma-label-preview__lab-slogan{margin-top:1px;color:#4b5563;font-size:5.5px;font-weight:500}.ma-label-preview__divider{width:100%;height:1px;margin:3px 0;background:#111827}.ma-label-preview__service{font-size:6.5px;font-weight:900;color:#111827;padding:1px 10px;border:1px solid #111827;border-radius:2px;background:#fff}.ma-label-preview__number{position:relative;margin:2px 0 3px;font-size:27px;font-weight:900;color:#111827;line-height:1;border:2px solid #111827;border-radius:0;background:#fff;box-shadow:none!important;padding:2px 14px 3px}.ma-label-preview__meta{position:relative;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:1px 3px;padding:2px;border:1px solid #9ca3af;border-radius:0;background:#fff;color:#111827;font-size:5.5px;text-align:right}.ma-label-preview__meta span{padding:1px 2px;border-bottom:1px solid #d1d5db}.ma-label-preview__footer{max-width:90%;margin-top:3px;padding:2px 4px;border-top:1px solid #9ca3af;border-bottom:1px solid #9ca3af;color:#374151;font-size:5px;font-weight:600;line-height:1.3}.ma-label-preview__company{position:relative;width:96%;display:flex;align-items:center;justify-content:center;gap:3px;margin-top:2px;padding:2px 4px;border:0;border-top:1px solid #111827;border-radius:0;background:#fff;color:#111827;direction:rtl}.ma-label-preview__company img{width:14px;height:11px;flex:0 0 auto;object-fit:contain;filter:grayscale(1) contrast(1.3)}.ma-label-preview__company div{display:flex;align-items:center;gap:2px;white-space:nowrap}.ma-label-preview__company strong{color:#111827;font-size:4.5px;font-weight:800}.ma-label-preview__company span{color:#111827;font-size:4px}</style></head><body>${content}</body></html>`);
-          win.document.close(); win.focus(); setTimeout(() => win.print(), 250);
-        });
-      }
       const statsEl = document.getElementById('maStats');
       if (statsEl) {
         const cards = [
@@ -1074,6 +1156,7 @@
     tickets: loadTickets,
     'ticket-detail': loadTicketDetail,
     'system-settings': loadSystemSettings,
+    'label-printer': initLabelStudio,
   };
 
   // ── Expose filter setter for inline onclick handlers ─────
@@ -1081,7 +1164,6 @@
     Object.assign(state.filters, f);
     state.page = 1;
     if (loaders[SECTION]) loaders[SECTION]();
-    if (SECTION === 'label-printer') initLabelStudio();
   };
 
   // ── Global Search ────────────────────────────────────────

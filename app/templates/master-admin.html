@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/master-admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/label-print.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
@@ -505,33 +506,63 @@
                     </div>
                     <div class="ma-label-studio__grid">
                         <div class="ma-label-preview-panel">
-                            <div class="ma-label-preview-panel__top"><span>پیش‌نمایش چاپ</span><span class="ma-label-size-readout" id="maLabelSizeReadout">۷۰ × ۵۰ میلی‌متر</span></div>
-                            <div class="ma-label-preview-stage"><div class="ma-label-preview" id="maLabelPreview" aria-label="پیش‌نمایش لیبل">
-                                <div class="ma-label-preview__content">
-                                <div class="ma-label-preview__topline"><img src="/static/images/lab-logo.png" alt="لوگوی آزمایشگاه"><span id="maPreviewPrintedAt">۱۴۰۵/۰۶/۲۹ - ۱۸:۲۲</span></div>
-                                <div class="ma-label-preview__lab-title">آزمایشگاه تشخیص طبی دکتر امینی</div>
-                                <div class="ma-label-preview__lab-slogan">همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</div>
-                                <div class="ma-label-preview__divider"></div>
-                                <div class="ma-label-preview__service">پذیرش</div>
-                                <div class="ma-label-preview__number">۱۲</div>
-                                <div class="ma-label-preview__meta">
-                                    <span id="maPreviewName">نام و نام خانوادگی: تقیا</span><span id="maPreviewAge">سن: ۲۶</span>
-                                    <span id="maPreviewNationalId">شماره ملی: ۰۸۹۰۵۱۹۶۸۴</span><span id="maPreviewPhone">همراه: ۰۹۳۳۲۹۰۵۸۴۰</span>
-                                    <span id="maPreviewInsurance">کد پیگیری بیمه: ۱۲۳۴۵۶</span><span id="maPreviewBaseInsurance">بیمه پایه: تأمین اجتماعی</span>
-                                    <span id="maPreviewSupplementaryInsurance">بیمه تکمیلی: آسیا</span>
-                                </div>
-                                <div class="ma-label-preview__footer">هر روز فرصتی دوباره برای بهتر زندگی کردن است؛ آرام باشید، نوبت شما فرا می‌رسد.</div>
-                                <div class="ma-label-preview__company">
-                                    <img src="/static/images/newlogo.png" alt="هستما">
-                                    <div><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
-                                </div>
+                            <div class="ma-label-preview-panel__top"><span>پیش‌نمایش چاپ</span><span class="ma-label-size-readout" id="maLabelSizeReadout">۵۵ × ۵۰ میلی‌متر</span></div>
+                            <div class="ma-label-preview-stage"><div class="lbl" id="maLabelPreview" data-template="queue" aria-label="پیش‌نمایش لیبل نوبت">
+                                <span class="lbl__accent" aria-hidden="true"></span>
+                                <div class="lbl__content">
+                                <!-- سربرگ: هویت آزمایشگاه + تاریخ و ساعت -->
+                                <header class="lbl__header">
+                                    <div class="lbl__identity">
+                                        <img class="lbl__logo" src="/static/images/lab-logo.png" alt="لوگوی آزمایشگاه">
+                                        <div class="lbl__identity-text">
+                                            <h3 class="lbl__lab-name">آزمایشگاه تشخیص طبی دکتر امینی</h3>
+                                            <p class="lbl__slogan">همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</p>
+                                        </div>
+                                    </div>
+                                    <span class="lbl__datetime" id="maPreviewTime" title="تاریخ و ساعت ثبت نوبت">
+                                        <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span class="lbl__datetime-value">۱۴۰۵/۰۶/۲۹ - ۱۸:۲۲</span>
+                                    </span>
+                                </header>
+                                <!-- شماره نوبت: مهم‌ترین عنصر -->
+                                <section class="lbl__queue" aria-label="شماره نوبت">
+                                    <div class="lbl__number-box">
+                                        <span class="lbl__queue-label">نوبت شما</span>
+                                        <span class="lbl__queue-number" id="maPreviewNumber">۱۲</span>
+                                    </div>
+                                    <span class="lbl__service">پذیرش</span>
+                                </section>
+                                <!-- اطلاعات مراجعه‌کننده + بیمه -->
+                                <section class="lbl__records" aria-label="اطلاعات مراجعه‌کننده و بیمه">
+                                    <div class="lbl__record-group">
+                                        <div class="lbl__record" id="maPreviewNameRow"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value" id="maPreviewName" title="تقی">تقی</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label">سن</span><span class="lbl__record-value" id="maPreviewAge">۲۶</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num" id="maPreviewNationalId">۰۸۹۰۵۱۹۶۸۴</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num" id="maPreviewPhone">۰۹۳۳۲۹۰۵۸۴۰</span></div>
+                                    </div>
+                                    <div class="lbl__record-group lbl__record-group--insurance">
+                                        <div class="lbl__record"><span class="lbl__record-label"><svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num" id="maPreviewInsurance">۱۲۳۴۵۶</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value" id="maPreviewBaseInsurance">تأمین اجتماعی</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value" id="maPreviewSupplementaryInsurance">آسیا</span></div>
+                                    </div>
+                                </section>
+                                <!-- پیام انگیزشی -->
+                                <p class="lbl__message" id="maPreviewHint">
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3"></path><polyline points="8.5 12.5 11 12.5 12.5 10 14 15 15.5 12.5 17.5 12.5" stroke-width="1.8"></polyline></svg>
+                                    <span class="lbl__message-text">هر روز فرصتی دوباره برای بهتر زندگی کردن است؛ آرام باشید، نوبت شما فرا می‌رسد.</span>
+                                </p>
+                                <!-- برند هستما -->
+                                <footer class="lbl__footer">
+                                    <img class="lbl__brand-logo" src="/static/images/newlogo.png" alt="هستما">
+                                    <div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
+                                </footer>
                                 </div>
                             </div></div>
-                            <div class="ma-label-preview-panel__foot"><span><i class="ma-preview-dot ma-preview-dot--accent"></i>محتوای نمونه</span><span id="maLabelRatio">نسبت ۱٫۴</span></div>
+                            <div class="ma-label-preview-panel__foot"><span><i class="ma-preview-dot ma-preview-dot--accent"></i>محتوای نمونه</span><span id="maLabelRatio">نسبت ۱٫۱</span></div>
                         </div>
                         <div class="ma-label-controls">
                             <div class="ma-label-control-section"><h3>تنظیمات اندازه</h3><div class="ma-label-inputs"><label>عرض (mm)<input id="maLabelWidth" type="number" min="30" max="150" value="55"></label><label>ارتفاع (mm)<input id="maLabelHeight" type="number" min="20" max="100" value="50"></label></div><label class="ma-label-select">قالب لیبل<select id="maLabelTemplate"><option value="queue">لیبل نوبت استاندارد</option><option value="compact">لیبل کوچک و فشرده</option></select></label></div>
-                            <div class="ma-label-control-section"><h3>اطلاعات روی لیبل</h3><label class="ma-toggle-row"><span>نام مراجعه‌کننده</span><input id="maShowName" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>ساعت ثبت نوبت</span><input id="maShowTime" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>راهنمای انتظار</span><input id="maShowHint" type="checkbox" checked><i></i></label></div>
+                            <div class="ma-label-control-section"><h3>اطلاعات روی لیبل</h3><label class="ma-toggle-row"><span>نام مراجعه‌کننده</span><input id="maShowName" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>ساعت ثبت نوبت</span><input id="maShowTime" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>راهنمای انتظار</span><input id="maShowHint" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>پیش‌نمایش چاپ حرارتی (سیاه‌وسفید)</span><input id="maThermalPreview" type="checkbox"><i></i></label></div>
                             <div class="ma-label-actions"><button type="button" class="ma-btn ma-btn--primary" id="maPrintLabelBtn">چاپ نمونه لیبل</button><button type="button" class="ma-btn ma-btn--ghost" id="maCheckPrinterBtn">بررسی اتصال چاپگر</button><button type="button" class="ma-btn ma-btn--ghost" id="maResetLabelBtn">بازنشانی</button></div>
                             <p class="ma-printer-note">اتصال چاپگر فقط پس از اجازه کاربر توسط مرورگر قابل تشخیص است.</p>
                         </div>
