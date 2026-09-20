@@ -132,7 +132,6 @@
 .user-support-file-button input { display: none; }
 .user-support-upload-status { grid-column: 1 / -1; min-height: 14px; color: #4d6b7a; font-size: .59rem; }
 
-
 .user-support-activity {
     display: flex;
     align-items: center;
