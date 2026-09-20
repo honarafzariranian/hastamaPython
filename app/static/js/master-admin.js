@@ -212,6 +212,7 @@
 
       function initLabelStudio() {
         const preview = document.getElementById('maLabelPreview');
+        const stage = preview ? preview.closest('.ma-label-preview-stage') : null;
         if (!preview) return;
         const width = document.getElementById('maLabelWidth');
         const height = document.getElementById('maLabelHeight');
@@ -220,6 +221,12 @@
         const template = document.getElementById('maLabelTemplate');
         const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
         [width, height, template].forEach(el => { if (el && stored[el.id] != null) el.value = stored[el.id]; });
+        if (!stored.maLabelLayoutVersion) {
+          width.value = 55;
+          height.value = 50;
+          stored.maLabelLayoutVersion = 2;
+          localStorage.setItem('hastama-label-settings', JSON.stringify(stored));
+        }
         ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => {
           const el = document.getElementById(id);
           if (el && stored[id] != null) el.checked = stored[id];
@@ -232,7 +239,13 @@
         function refresh() {
           const w = Math.max(30, Number(width.value) || 70);
           const h = Math.max(20, Number(height.value) || 50);
-          preview.style.width = `${Math.min(420, Math.max(180, w * 4))}px`;
+          const stageWidth = stage ? Math.max(180, stage.clientWidth - 48) : 420;
+          const stageHeight = stage ? Math.max(160, stage.clientHeight - 48) : 280;
+          const pxPerMm = Math.min(4, stageWidth / w, stageHeight / h);
+          const previewWidth = `${Math.max(120, Math.round(w * pxPerMm))}px`;
+          const previewHeight = `${Math.max(80, Math.round(h * pxPerMm))}px`;
+          preview.style.setProperty('width', previewWidth, 'important');
+          preview.style.setProperty('height', previewHeight, 'important');
           preview.style.aspectRatio = `${w} / ${h}`;
           fitLabelPreview();
           readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر`;
@@ -255,11 +268,14 @@
           content.style.transform = `scale(${scale})`;
         }
         [width, height, template, ...['maShowName', 'maShowTime', 'maShowHint'].map(id => document.getElementById(id))]
-          .filter(Boolean).forEach(el => el.addEventListener('input', refresh));
+          .filter(Boolean).forEach(el => {
+            el.addEventListener('input', refresh);
+            el.addEventListener('change', refresh);
+          });
         refresh();
-        if (window.ResizeObserver) new ResizeObserver(fitLabelPreview).observe(preview);
+        if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage || preview);
         document.getElementById('maResetLabelBtn').addEventListener('click', function () {
-          width.value = 70; height.value = 50; template.value = 'queue';
+          width.value = 55; height.value = 50; template.value = 'queue';
           ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { document.getElementById(id).checked = true; });
           refresh();
           showToast('تنظیمات لیبل بازنشانی شد', 'success');
@@ -281,7 +297,7 @@
           const content = preview.outerHTML;
           const win = window.open('', '_blank', 'width=520,height=620');
           if (!win) { showToast('پنجره چاپ توسط مرورگر مسدود شد', 'error'); return; }
-          win.document.write(`<html dir="rtl"><head><title>نمونه لیبل نوبت</title><style>@page{size:auto;margin:8mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start;font-family:Tahoma,Arial}.ma-label-preview{position:relative;overflow:hidden;isolation:isolate;margin:0;width:${Number(width.value) * 4}px;aspect-ratio:${width.value}/${height.value};padding:8px 9px 7px 13px;border:1.5px solid #111827;border-radius:3px;background:radial-gradient(circle at 12% 88%,rgba(17,24,39,.08) 0 1px,transparent 1.5px) 0 0/6px 6px,#fff;color:#111827;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;filter:grayscale(1)}.ma-label-preview__topline{position:relative;width:100%;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:2px 4px 3px;border:1px solid #9ca3af;border-radius:4px;background:rgba(255,255,255,.88);color:#374151;font-size:6px}.ma-label-preview__topline img{width:27px;height:17px;object-fit:contain;filter:grayscale(1) contrast(1.35)}.ma-label-preview__lab-title{margin-top:3px;padding:1px 7px;border-right:2px solid #111827;border-left:2px solid #111827;color:#111827;font-size:8px;font-weight:900}.ma-label-preview__lab-slogan{margin-top:1px;color:#4b5563;font-size:5.5px;font-weight:600;font-style:italic}.ma-label-preview__divider{width:82%;height:1px;margin:3px 0;background:#111827}.ma-label-preview__service{font-size:6.5px;font-weight:900;color:#111827;padding:1px 8px;border:1px solid #6b7280;border-radius:99px;background:#fff}.ma-label-preview__number{position:relative;margin:2px 0 3px;font-size:27px;font-weight:900;color:#111827;line-height:1;border:1px solid #111827;border-radius:7px;background:#fff;box-shadow:2px 2px 0 #111827;padding:2px 12px 3px}.ma-label-preview__meta{position:relative;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:1px 3px;padding:2px;border:1px solid #d1d5db;border-radius:5px;background:rgba(255,255,255,.9);color:#111827;font-size:5.5px;text-align:right}.ma-label-preview__meta span{padding:1px 2px;border-bottom:1px solid #d1d5db}.ma-label-preview__footer{max-width:90%;margin-top:3px;padding:1px 5px;border-right:1px solid #6b7280;border-left:1px solid #6b7280;color:#374151;font-size:5px;font-weight:600;line-height:1.3}.ma-label-preview__company{position:relative;width:96%;display:flex;align-items:center;justify-content:center;gap:3px;margin-top:2px;padding:2px 4px;border:1px solid #9ca3af;border-radius:4px;background:#fff;color:#111827;direction:rtl}.ma-label-preview__company img{width:14px;height:11px;flex:0 0 auto;object-fit:contain;filter:grayscale(1) contrast(1.3)}.ma-label-preview__company div{display:flex;align-items:center;gap:2px;white-space:nowrap}.ma-label-preview__company strong{color:#111827;font-size:4.5px;font-weight:800}.ma-label-preview__company span{color:#111827;font-size:4px}</style></head><body>${content}</body></html>`);
+          win.document.write(`<html dir="rtl"><head><title>نمونه لیبل نوبت</title><style>@page{size:auto;margin:8mm}body{margin:0;display:flex;justify-content:center;align-items:flex-start;font-family:Tahoma,Arial}.ma-label-preview{position:relative;overflow:hidden;isolation:isolate;margin:0;width:${Number(width.value) * 4}px;aspect-ratio:${width.value}/${height.value};padding:8px 9px 7px 13px;border:1px solid #111827;border-radius:0;background:#fff;color:#111827;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;filter:grayscale(1);box-shadow:none!important}.ma-label__topline{}.ma-label-preview__topline{position:relative;width:100%;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:2px 4px 3px;border:0;border-bottom:1px solid #111827;border-radius:0;background:transparent;color:#374151;font-size:6px}.ma-label-preview__topline img{width:27px;height:17px;object-fit:contain;filter:grayscale(1) contrast(1.35)}.ma-label-preview__lab-title{margin-top:3px;padding:2px 0 0;color:#111827;font-size:8px;font-weight:900}.ma-label-preview__lab-slogan{margin-top:1px;color:#4b5563;font-size:5.5px;font-weight:500}.ma-label-preview__divider{width:100%;height:1px;margin:3px 0;background:#111827}.ma-label-preview__service{font-size:6.5px;font-weight:900;color:#111827;padding:1px 10px;border:1px solid #111827;border-radius:2px;background:#fff}.ma-label-preview__number{position:relative;margin:2px 0 3px;font-size:27px;font-weight:900;color:#111827;line-height:1;border:2px solid #111827;border-radius:0;background:#fff;box-shadow:none!important;padding:2px 14px 3px}.ma-label-preview__meta{position:relative;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:1px 3px;padding:2px;border:1px solid #9ca3af;border-radius:0;background:#fff;color:#111827;font-size:5.5px;text-align:right}.ma-label-preview__meta span{padding:1px 2px;border-bottom:1px solid #d1d5db}.ma-label-preview__footer{max-width:90%;margin-top:3px;padding:2px 4px;border-top:1px solid #9ca3af;border-bottom:1px solid #9ca3af;color:#374151;font-size:5px;font-weight:600;line-height:1.3}.ma-label-preview__company{position:relative;width:96%;display:flex;align-items:center;justify-content:center;gap:3px;margin-top:2px;padding:2px 4px;border:0;border-top:1px solid #111827;border-radius:0;background:#fff;color:#111827;direction:rtl}.ma-label-preview__company img{width:14px;height:11px;flex:0 0 auto;object-fit:contain;filter:grayscale(1) contrast(1.3)}.ma-label-preview__company div{display:flex;align-items:center;gap:2px;white-space:nowrap}.ma-label-preview__company strong{color:#111827;font-size:4.5px;font-weight:800}.ma-label-preview__company span{color:#111827;font-size:4px}</style></head><body>${content}</body></html>`);
           win.document.close(); win.focus(); setTimeout(() => win.print(), 250);
         });
       }
