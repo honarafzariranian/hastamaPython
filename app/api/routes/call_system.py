@@ -812,6 +812,28 @@ async def recent_calls(request: Request, limit: int = 20):
     return JSONResponse({"success": True, "calls": rows})
 
 
+@router.delete("/calls/recent")
+async def clear_recent_calls(request: Request):
+    """Delete the call history."""
+    _actor(request, admin=True, required=True)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM dbo.reception_calls")
+        deleted_count = max(0, int(cursor.rowcount))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return JSONResponse({
+        "success": True,
+        "deleted_count": deleted_count,
+        "message": "تاریخچه فراخوان‌ها پاک شد.",
+    })
+
+
 @router.get("/calls/status")
 async def display_status():
     """Return the number of active TV display connections.
@@ -1216,6 +1238,58 @@ async def call_queue_ticket(request: Request, ticket_id: int, department: str = 
     })
 
 
+@router.delete("/queue/{ticket_id}")
+async def delete_queue_ticket(request: Request, ticket_id: int):
+    """Remove one waiting ticket from today's queue."""
+    _actor(request, admin=True, required=True)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute(
+            """DELETE FROM dbo.queue_tickets
+               WHERE id = ?
+                 AND ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                 AND status = 'waiting'""",
+            (ticket_id,),
+        )
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="فقط نوبت‌های در انتظار را می‌توان حذف کرد.",
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "message": "نوبت از صف حذف شد."})
+
+
+@router.delete("/queue")
+async def delete_waiting_queue(request: Request):
+    """Remove all waiting tickets from today's queue."""
+    _actor(request, admin=True, required=True)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute(
+            """DELETE FROM dbo.queue_tickets
+               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                 AND status = 'waiting'"""
+        )
+        deleted_count = max(0, int(cursor.rowcount))
+        conn.commit()
+    finally:
+        conn.close()
+    return JSONResponse({
+        "success": True,
+        "deleted_count": deleted_count,
+        "message": f"{deleted_count} نوبت از صف حذف شد.",
+    })
+
+
 @router.post("/queue/complete/{ticket_id}")
 async def complete_queue_ticket(request: Request, ticket_id: int):
     """Mark a ticket as completed."""
@@ -1393,4 +1467,3 @@ def _ws_origin_allowed(websocket: WebSocket) -> bool:
 # ---------------------------------------------------------------------------
 # Pages -- Management and TV Display
 # ---------------------------------------------------------------------------
-

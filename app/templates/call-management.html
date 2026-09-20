@@ -136,7 +136,14 @@
 
                 <!-- Tabs -->
                 <div class="cs-tabs">
-                    <button type="button" class="cs-tab-btn cs-tab-btn--active" onclick="switchCsTab('cs-tab-queue', this)">
+                    <button type="button" class="cs-tab-btn cs-tab-btn--active" onclick="switchCsTab('cs-tab-tickets', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        </svg>
+                        نوبت‌ها
+                    </button>
+                    <button type="button" class="cs-tab-btn" onclick="switchCsTab('cs-tab-queue', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                             <circle cx="9" cy="7" r="4"/>
@@ -144,13 +151,6 @@
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                         </svg>
                         صف نمایش
-                    </button>
-                    <button type="button" class="cs-tab-btn" onclick="switchCsTab('cs-tab-tickets', this)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                            <rect x="9" y="3" width="6" height="4" rx="1"/>
-                        </svg>
-                        نوبت‌ها
                     </button>
                     <button type="button" class="cs-tab-btn" onclick="switchCsTab('cs-tab-slides', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
@@ -179,7 +179,7 @@
                 </div>
 
                 <!-- ── Tab 1: Queue ── -->
-                <div id="cs-tab-queue" class="cs-tab-content cs-tab-content--active">
+                <div id="cs-tab-queue" class="cs-tab-content">
 
                     <!-- Display Queue (what's on TV now) -->
                     <div class="cs-card cs-card--queue">
@@ -252,7 +252,7 @@
                 </div><!-- /cs-tab-queue -->
 
                 <!-- ── Tab: Queue Tickets (نوبت‌دهی) ── -->
-                <div id="cs-tab-tickets" class="cs-tab-content">
+                <div id="cs-tab-tickets" class="cs-tab-content cs-tab-content--active">
                     <div class="cs-card cs-card--tickets">
                         <div class="cs-card-header">
                             <div class="cs-card-icon cs-card-icon--display">
@@ -269,6 +269,9 @@
                                     <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
                                 </svg>
                                 بروزرسانی
+                            </button>
+                            <button type="button" class="cs-reset-btn cs-reset-btn--danger" onclick="deleteAllWaitingTickets()" title="حذف همه نوبت‌های در انتظار">
+                                حذف همه
                             </button>
                         </div>
 
@@ -287,11 +290,14 @@
                         </div>
 
                         <!-- Ticket status filter -->
-                        <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-                            <button type="button" class="cs-waiting-btn" onclick="loadQueueTickets('waiting')" style="font-size:12px; padding:4px 10px;">
+                        <div class="cs-ticket-filters" role="group" aria-label="فیلتر وضعیت نوبت‌ها">
+                            <span class="cs-ticket-filters__label">نمایش</span>
+                            <button type="button" class="cs-ticket-filter cs-ticket-filter--active" data-ticket-status="waiting" onclick="loadQueueTickets('waiting', this)">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>
                                 در انتظار
                             </button>
-                            <button type="button" class="cs-waiting-btn" onclick="loadQueueTickets('all')" style="font-size:12px; padding:4px 10px;">
+                            <button type="button" class="cs-ticket-filter" data-ticket-status="all" onclick="loadQueueTickets('all', this)">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
                                 همه
                             </button>
                         </div>
@@ -418,6 +424,14 @@
                                 </svg>
                             </div>
                             <h2 class="cs-card-title">تاریخچه فراخوان‌ها</h2>
+                            <button type="button" class="cs-reset-btn cs-reset-btn--danger" onclick="clearCallHistory()" title="پاک کردن تاریخچه فراخوان‌ها">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
+                                    <path d="M3 6h18"/>
+                                    <path d="M8 6V4h8v2"/>
+                                    <path d="M19 6l-1 14H6L5 6"/>
+                                </svg>
+                                پاک کردن تاریخچه
+                            </button>
                         </div>
                         <div class="cs-history-list" id="csRecentList">
                             <div class="cs-history-empty" id="csHistoryEmpty">هنوز فراخوانی ثبت نشده است</div>
@@ -479,6 +493,7 @@
     <div class="cs-toast" id="csToast"></div>
 
     <script src="/static/js/number-format.js"></script>
+    <script src="/static/js/csrf-bootstrap.js"></script>
     <script src="/static/js/call-system-standalone.js"></script>
 </body>
 </html>

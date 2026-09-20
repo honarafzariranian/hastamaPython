@@ -257,6 +257,21 @@
                     </span>
                     <span class="icon-label">نمایش فراخوان</span>
                 </a>
+
+                <!-- طراحی و چاپ لیبل نوبت -->
+                <a href="/master-admin/label-printer" class="icon-container {{ 'active' if active_section == 'label-printer' }}" data-accent="ma-label-printer" title="طراحی و چاپ لیبل نوبت" aria-label="طراحی و چاپ لیبل نوبت" style="text-decoration:none;color:inherit;">
+                    <span class="sidebar-icon-tile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 8V4.5h10V8" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5 8h14a3 3 0 013 3v3.5a2.5 2.5 0 01-2.5 2.5H4.5A2.5 2.5 0 012 14.5V11a3 3 0 013-3z" fill="#fff" opacity=".14"/>
+                            <path d="M5 8h14a3 3 0 013 3v3.5a2.5 2.5 0 01-2.5 2.5H4.5A2.5 2.5 0 012 14.5V11a3 3 0 013-3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M7 14h10v6H7z" fill="#fff" opacity=".2"/>
+                            <path d="M7 14h10v6H7zM9 16.5h6" stroke="#fff" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+                            <circle cx="17.5" cy="11.5" r="1" fill="#fff"/>
+                        </svg>
+                    </span>
+                    <span class="icon-label">طراحی لیبل</span>
+                </a>
             </aside>
         </div>
 
@@ -481,6 +496,47 @@
             {% elif active_section == 'admin-actions' %}
                 <div class="ma-panel-card"><div class="ma-panel-card__body--flush" id="maTableContainer"><div class="ma-skeleton" style="height:240px;margin:20px"></div></div></div>
                 <div id="maPagination" class="ma-pagination"></div>
+
+            {% elif active_section == 'label-printer' %}
+                <section class="ma-label-studio" aria-labelledby="maLabelStudioTitle">
+                    <div class="ma-label-studio__head">
+                        <div><span class="ma-eyebrow">PRINT CONTROL CENTER</span><h2 id="maLabelStudioTitle">استودیو طراحی لیبل نوبت‌دهی</h2><p>اندازه، محتوای لیبل و وضعیت اتصال چاپگر را قبل از چاپ بررسی کنید.</p></div>
+                        <div class="ma-printer-status" id="maPrinterStatus" data-state="unknown"><span class="ma-printer-status__dot"></span><span class="ma-printer-status__text">وضعیت چاپگر بررسی نشده</span></div>
+                    </div>
+                    <div class="ma-label-studio__grid">
+                        <div class="ma-label-preview-panel">
+                            <div class="ma-label-preview-panel__top"><span>پیش‌نمایش چاپ</span><span class="ma-label-size-readout" id="maLabelSizeReadout">۷۰ × ۵۰ میلی‌متر</span></div>
+                            <div class="ma-label-preview-stage"><div class="ma-label-preview" id="maLabelPreview" aria-label="پیش‌نمایش لیبل">
+                                <div class="ma-label-preview__content">
+                                <div class="ma-label-preview__topline"><img src="/static/images/lab-logo.png" alt="لوگوی آزمایشگاه"><span id="maPreviewPrintedAt">۱۴۰۵/۰۶/۲۹ - ۱۸:۲۲</span></div>
+                                <div class="ma-label-preview__lab-title">آزمایشگاه تشخیص طبی دکتر امینی</div>
+                                <div class="ma-label-preview__lab-slogan">همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</div>
+                                <div class="ma-label-preview__divider"></div>
+                                <div class="ma-label-preview__service">پذیرش</div>
+                                <div class="ma-label-preview__number">۱۲</div>
+                                <div class="ma-label-preview__meta">
+                                    <span id="maPreviewName">نام و نام خانوادگی: تقیا</span><span id="maPreviewAge">سن: ۲۶</span>
+                                    <span id="maPreviewNationalId">شماره ملی: ۰۸۹۰۵۱۹۶۸۴</span><span id="maPreviewPhone">همراه: ۰۹۳۳۲۹۰۵۸۴۰</span>
+                                    <span id="maPreviewInsurance">کد پیگیری بیمه: ۱۲۳۴۵۶</span><span id="maPreviewBaseInsurance">بیمه پایه: تأمین اجتماعی</span>
+                                    <span id="maPreviewSupplementaryInsurance">بیمه تکمیلی: آسیا</span>
+                                </div>
+                                <div class="ma-label-preview__footer">هر روز فرصتی دوباره برای بهتر زندگی کردن است؛ آرام باشید، نوبت شما فرا می‌رسد.</div>
+                                <div class="ma-label-preview__company">
+                                    <img src="/static/images/newlogo.png" alt="هستما">
+                                    <div><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
+                                </div>
+                                </div>
+                            </div></div>
+                            <div class="ma-label-preview-panel__foot"><span><i class="ma-preview-dot ma-preview-dot--accent"></i>محتوای نمونه</span><span id="maLabelRatio">نسبت ۱٫۴</span></div>
+                        </div>
+                        <div class="ma-label-controls">
+                            <div class="ma-label-control-section"><h3>تنظیمات اندازه</h3><div class="ma-label-inputs"><label>عرض (mm)<input id="maLabelWidth" type="number" min="30" max="150" value="70"></label><label>ارتفاع (mm)<input id="maLabelHeight" type="number" min="20" max="100" value="50"></label></div><label class="ma-label-select">قالب لیبل<select id="maLabelTemplate"><option value="queue">لیبل نوبت استاندارد</option><option value="compact">لیبل کوچک و فشرده</option></select></label></div>
+                            <div class="ma-label-control-section"><h3>اطلاعات روی لیبل</h3><label class="ma-toggle-row"><span>نام مراجعه‌کننده</span><input id="maShowName" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>ساعت ثبت نوبت</span><input id="maShowTime" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>راهنمای انتظار</span><input id="maShowHint" type="checkbox" checked><i></i></label></div>
+                            <div class="ma-label-actions"><button type="button" class="ma-btn ma-btn--primary" id="maPrintLabelBtn">چاپ نمونه لیبل</button><button type="button" class="ma-btn ma-btn--ghost" id="maCheckPrinterBtn">بررسی اتصال چاپگر</button><button type="button" class="ma-btn ma-btn--ghost" id="maResetLabelBtn">بازنشانی</button></div>
+                            <p class="ma-printer-note">اتصال چاپگر فقط پس از اجازه کاربر توسط مرورگر قابل تشخیص است.</p>
+                        </div>
+                    </div>
+                </section>
 
             {% elif active_section == 'system-settings' %}
                 <div class="ma-panel-card">

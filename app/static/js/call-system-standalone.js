@@ -419,6 +419,25 @@
         .catch(function () {});
     }
 
+    function clearCallHistory() {
+        if (!window.confirm('آیا از پاک کردن کامل تاریخچه فراخوان‌ها مطمئن هستید؟')) return;
+        fetch('/api/calls/recent', { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res.success) throw new Error(res.detail || res.error || 'پاک کردن تاریخچه انجام نشد.');
+                if (recentList) {
+                    recentList.querySelectorAll('.cs-history-item').forEach(function (item) {
+                        item.remove();
+                    });
+                }
+                if (historyEmpty) historyEmpty.style.display = '';
+                showToast(res.message || 'تاریخچه فراخوان‌ها پاک شد.', 'success');
+            })
+            .catch(function (err) {
+                showToast(err.message || 'خطا در پاک کردن تاریخچه.', 'error');
+            });
+    }
+
     /* ── Load status ── */
     function loadStatus() {
         fetch('/api/calls/status')
@@ -954,9 +973,15 @@
     var ticketEmpty = document.getElementById('csTicketEmpty');
     var ticketCountEl = document.getElementById('csTicketCount');
     var ticketData = [];
+    var ticketStatusFilter = 'waiting';
 
-    function loadQueueTickets(status) {
-        status = status || 'waiting';
+    function loadQueueTickets(status, button) {
+        status = status || ticketStatusFilter;
+        ticketStatusFilter = status;
+        document.querySelectorAll('.cs-ticket-filter').forEach(function (filter) {
+            filter.classList.toggle('cs-ticket-filter--active',
+                filter === button || (!button && filter.dataset.ticketStatus === status));
+        });
         fetch('/api/queue/list?status=' + status)
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -968,10 +993,8 @@
 
     function renderQueueTickets() {
         if (!ticketList) return;
-        var items = ticketList.querySelectorAll('.cs-waiting-item');
-        items.forEach(function (it) { it.remove(); });
-
         if (ticketData.length === 0) {
+            ticketList.querySelectorAll('.cs-waiting-item').forEach(function (it) { it.remove(); });
             if (ticketEmpty) ticketEmpty.style.display = '';
             if (ticketCountEl) ticketCountEl.textContent = '0';
             return;
@@ -979,12 +1002,45 @@
         if (ticketEmpty) ticketEmpty.style.display = 'none';
         if (ticketCountEl) ticketCountEl.textContent = String(ticketData.length);
 
+        var visibleIds = {};
         ticketData.forEach(function (item) {
-            var el = document.createElement('div');
-            el.className = 'cs-waiting-item';
-            el.setAttribute('data-id', item.id);
+            var id = String(item.id);
+            visibleIds[id] = true;
+            var el = ticketList.querySelector('.cs-waiting-item[data-id="' + id + '"]');
+            if (!el) {
+                el = createTicketElement(item);
+                ticketList.appendChild(el);
+            } else {
+                updateTicketElement(el, item);
+            }
+        });
 
-            var numSpan = document.createElement('span');
+        ticketList.querySelectorAll('.cs-waiting-item').forEach(function (el) {
+            if (!visibleIds[el.getAttribute('data-id')]) el.remove();
+        });
+    }
+
+    function createTicketElement(item) {
+        var el = document.createElement('div');
+        el.className = 'cs-waiting-item';
+        el.setAttribute('data-id', item.id);
+        el.setAttribute('aria-expanded', 'false');
+        updateTicketElement(el, item);
+        return el;
+    }
+
+    function updateTicketElement(el, item) {
+        var signature = [
+            item.ticket_number, item.status, item.service, item.called_for,
+            item.created_at, item.patient_name, item.patient_age,
+            item.patient_national_id, item.patient_phone,
+            item.insurance_base, item.insurance_extra
+        ].map(function (value) { return value || ''; }).join('|');
+        if (el.getAttribute('data-signature') === signature) return;
+        el.setAttribute('data-signature', signature);
+        el.replaceChildren();
+        el.setAttribute('data-id', item.id);
+        var numSpan = document.createElement('span');
             numSpan.className = 'cs-waiting-num';
             numSpan.textContent = item.persian_number || item.ticket_number;
 
@@ -1004,9 +1060,33 @@
             ].forEach(function (field) {
                 if (!field[1]) return;
                 var detail = document.createElement('span');
-                detail.textContent = field[0] + ': ' + field[1];
+                detail.className = 'cs-ticket-patient__field';
+                var label = document.createElement('small');
+                label.textContent = field[0];
+                var value = document.createElement('strong');
+                value.textContent = field[1];
+                detail.appendChild(label);
+                detail.appendChild(value);
                 details.appendChild(detail);
             });
+            var detailsToggle = document.createElement('span');
+            detailsToggle.className = 'cs-ticket-details-toggle';
+            detailsToggle.textContent = details.childNodes.length ? 'مشاهده جزئیات' : '';
+            if (details.childNodes.length) {
+                detailsToggle.setAttribute('role', 'button');
+                detailsToggle.setAttribute('tabindex', '0');
+                detailsToggle.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    var expanded = el.classList.toggle('is-expanded');
+                    el.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    detailsToggle.textContent = expanded ? 'بستن جزئیات' : 'مشاهده جزئیات';
+                });
+                detailsToggle.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    detailsToggle.click();
+                });
+            }
 
             var timeSpan = document.createElement('span');
             timeSpan.className = 'cs-waiting-time';
@@ -1026,6 +1106,16 @@
                     callQueueTicket(item.id);
                 });
                 actionsDiv.appendChild(callBtnEl);
+                var deleteBtnEl = document.createElement('button');
+                deleteBtnEl.className = 'cs-waiting-btn cs-waiting-btn--remove';
+                deleteBtnEl.title = 'حذف نوبت';
+                deleteBtnEl.setAttribute('aria-label', 'حذف نوبت');
+                deleteBtnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>';
+                deleteBtnEl.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    deleteQueueTicket(item.id, item.persian_number || item.ticket_number);
+                });
+                actionsDiv.appendChild(deleteBtnEl);
             } else if (item.status === 'called') {
                 deptSpan.textContent = (item.called_for || item.service || '') + ' — فراخوان شده';
             } else if (item.status === 'completed') {
@@ -1037,11 +1127,13 @@
             info.className = 'cs-ticket-info';
             info.appendChild(deptSpan);
             if (details.childNodes.length) info.appendChild(details);
+            if (details.childNodes.length) info.appendChild(detailsToggle);
+            var side = document.createElement('div');
+            side.className = 'cs-ticket-side';
+            side.appendChild(timeSpan);
+            side.appendChild(actionsDiv);
             el.appendChild(info);
-            el.appendChild(timeSpan);
-            el.appendChild(actionsDiv);
-            ticketList.appendChild(el);
-        });
+            el.appendChild(side);
     }
 
     function callQueueTicket(id) {
@@ -1057,8 +1149,33 @@
             } else {
                 showToast(res.detail || 'خطا', 'error');
             }
+
         })
         .catch(function () { showToast('خطا در اتصال به سرور', 'error'); });
+    }
+
+    function deleteQueueTicket(id, number) {
+        if (!window.confirm('آیا از حذف نوبت ' + number + ' از صف مطمئن هستید؟')) return;
+        fetch('/api/queue/' + encodeURIComponent(id), { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res.success) throw new Error(res.detail || res.error || 'حذف نوبت انجام نشد.');
+                showToast(res.message || 'نوبت حذف شد.', 'success');
+                loadQueueTickets();
+            })
+            .catch(function (err) { showToast(err.message || 'خطا در حذف نوبت.', 'error'); });
+    }
+
+    function deleteAllWaitingTickets() {
+        if (!window.confirm('آیا از حذف همه نوبت‌های در انتظار مطمئن هستید؟')) return;
+        fetch('/api/queue', { method: 'DELETE' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res.success) throw new Error(res.detail || res.error || 'حذف نوبت‌ها انجام نشد.');
+                showToast(res.message || 'نوبت‌ها حذف شدند.', 'success');
+                loadQueueTickets();
+            })
+            .catch(function (err) { showToast(err.message || 'خطا در حذف نوبت‌ها.', 'error'); });
     }
 
     function callNextTicket() {
@@ -1077,6 +1194,11 @@
         })
         .catch(function () { showToast('خطا در اتصال به سرور', 'error'); });
     }
+
+    window.loadQueueTickets = loadQueueTickets;
+    window.callNextTicket = callNextTicket;
+    window.deleteAllWaitingTickets = deleteAllWaitingTickets;
+    window.clearCallHistory = clearCallHistory;
 
     /* ── Live Preview: overlay کنترل‌شده توسط وضعیت اتصال ── */
     /* (overlay توسط updateDisplayStatusCard نمایش/مخفی می‌شود) */
