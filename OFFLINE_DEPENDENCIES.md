@@ -19,7 +19,9 @@ Internet access.
 
 ## 1. Python Runtime Dependencies (from `pyproject.toml` → `uv.lock`)
 
-All are installed into the local `.venv`/system via `uv sync` during installation.
+All are installed into the local `.venv`/system. A Windows x64 / CPython 3.11
+wheelhouse is shipped in `offline/wheels/`; see `offline/README.md` and
+`offline/install-offline.ps1` for the no-index installation procedure.
 **None of them perform outbound network calls at runtime.**
 
 | Package | Version (lock) | Purpose | Runtime offline |
@@ -45,7 +47,18 @@ Verified by audit (no `requests.get/post/...`, `urllib`, `httpx`, `aiohttp`, `sm
 
 ---
 
-## 2. Database
+## 2. Offline installation bundle
+
+The repository includes `offline/requirements.txt`,
+`offline/requirements-runtime.txt`, the Windows x64 / CPython 3.11 wheels in
+`offline/wheels/`, and an installer that uses `pip --no-index`.
+
+The bundle is platform-specific. Regenerate it for Linux, another Python minor
+version, or another CPU architecture. Do not run `uv sync` or an unrestricted
+`pip install` on the offline server, because those commands may contact a package
+index.
+
+## 3. Database
 
 - **SQL Server (local)** via ODBC Driver 17, `localhost\SQLEXPRESS`, database `userDB`.
 - Also reads a local MS Access file `E:\Hastama\database\Arazdb.mdb` for attendance entry lookup.
@@ -53,7 +66,7 @@ Verified by audit (no `requests.get/post/...`, `urllib`, `httpx`, `aiohttp`, `sm
 
 ---
 
-## 3. Frontend Assets (all local under `app/static/`)
+## 4. Frontend Assets (all local under `app/static/`)
 
 | Asset | Local file | Notes |
 |---|---|---|
@@ -66,7 +79,7 @@ Verified by audit (no `requests.get/post/...`, `urllib`, `httpx`, `aiohttp`, `sm
 
 ---
 
-## 4. Vendored Third-Party Libraries (local)
+## 5. Vendored Third-Party Libraries (local)
 
 | Library | Version | Purpose | Local file | Runtime offline |
 |---|---|---|---|---|
@@ -79,7 +92,7 @@ Verified by audit (no `requests.get/post/...`, `urllib`, `httpx`, `aiohttp`, `sm
 
 ---
 
-## 5. Removed External Dependencies
+## 6. Removed External Dependencies
 
 | Library | Previous CDN | Why removed |
 |---|---|---|
@@ -91,7 +104,7 @@ scripts were dead references.
 
 ---
 
-## 6. Notifications
+## 7. Notifications
 
 Internal notification centre (admin + user) implemented in `js/notification-system.js` with a
 comment header: **"No third-party dependency."**
@@ -100,14 +113,14 @@ comment header: **"No third-party dependency."**
 
 ---
 
-## 7. Charts
+## 8. Charts
 
 Dashboards use **CSS/JS bar charts** (e.g. `.dashboard-chart .bar-value`) rendered by `admin.js`.
 No Chart.js / ApexCharts / ECharts / remote chart library. **Offline: Yes.**
 
 ---
 
-## 8. Authentication
+## 9. Authentication
 
 - Login (`/login_user`) verifies credentials against the **local SQL Server** (`user-table`).
 - Session handled by Starlette `SessionMiddleware` with a local `SESSION_SECRET_KEY`.
@@ -115,15 +128,21 @@ No Chart.js / ApexCharts / ECharts / remote chart library. **Offline: Yes.**
 
 ---
 
-## 9. Optional External Integrations
+## 10. Private-LAN Integrations
 
-**None detected.** The application has no SMS, email, payment, map, CAPTCHA, analytics,
-telemetry, or third-party API integration in either frontend or backend. There is nothing to
-isolate as optional — the entire system runs locally.
+The application has no public SMS, email, payment, map, CAPTCHA, analytics, telemetry,
+or third-party API integration. It does have deployment-local integrations:
+
+- SQL Server through ODBC.
+- The local Araz Access database and configured Araz TCP device.
+- The optional bridge agent configured in `tools/bridge_config.json`.
+
+These are private-LAN/local dependencies, not Internet dependencies. They must remain
+reachable for the associated features, or those features must be disabled.
 
 ---
 
-## 10. Build / Dev Dependencies (not needed at runtime)
+## 11. Build / Dev Dependencies (not needed at runtime)
 
 | Item | Purpose | Runtime offline |
 |---|---|---|
