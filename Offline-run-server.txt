@@ -1,0 +1,2 @@
+py -3.11 -m venv .venv
+.\offline\install-offline.ps1 -Python .\.venv\Scripts\python.exe

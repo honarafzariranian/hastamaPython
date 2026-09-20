@@ -243,10 +243,18 @@
     function fitLabelPreview() {
       const content = preview.querySelector('.lbl__content');
       if (!content) return;
+      const previousHeight = content.style.height;
       content.style.transform = 'scale(1)';
+      content.style.height = 'auto';
+      content.style.flex = 'none';
+      const naturalW = content.scrollWidth;
+      const naturalH = content.scrollHeight;
       const availableW = preview.clientWidth - 4;
       const availableH = preview.clientHeight - 4;
-      const scale = Math.min(1, availableW / Math.max(1, content.scrollWidth), availableH / Math.max(1, content.scrollHeight));
+      const scale = Math.min(1, availableW / Math.max(1, naturalW), availableH / Math.max(1, naturalH));
+      content.style.height = previousHeight || '100%';
+      content.style.flex = '';
+      content.style.transformOrigin = 'top center';
       content.style.transform = `scale(${Math.max(.58, scale)})`;
     }
 
@@ -339,7 +347,8 @@
       const fitGuard = '(function(){try{var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
         + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
         + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||26;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
-        + 'var sx=(r.clientWidth-2)/c.scrollWidth;var sy=(r.clientHeight-2)/c.scrollHeight;var s=Math.min(1,sx,sy);'
+        + 'var h=c.style.height;c.style.height="auto";c.style.flex="none";var cw=c.scrollWidth,ch=c.scrollHeight;c.style.height=h||"100%";c.style.flex="";'
+        + 'var sx=(r.clientWidth-4)/Math.max(1,cw);var sy=(r.clientHeight-4)/Math.max(1,ch);var s=Math.min(1,sx,sy);'
         + 'if(s<0.995){c.style.transformOrigin="top center";c.style.transform="scale("+Math.max(0.5,s).toFixed(3)+")";}}catch(e){}})();';
       win.document.write([
         '<!doctype html>',
