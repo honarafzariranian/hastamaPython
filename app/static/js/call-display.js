@@ -466,6 +466,35 @@
         .catch(function () {});
     }
 
+    /* ── Queue tickets (نوبت‌دهی) ── */
+    var cdQueueGrid = document.getElementById('cdQueueGrid');
+    var cdQueueCount = document.getElementById('cdQueueCount');
+    var cdQueueTickets = document.getElementById('cdQueueTickets');
+
+    function loadQueueTickets() {
+        fetch('/api/queue/list?status=waiting')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var tickets = data.tickets || [];
+            if (!tickets.length) {
+                if (cdQueueGrid) cdQueueGrid.innerHTML = '<div class="cd-queue-empty">هنوز نوبتی صادر نشده است</div>';
+                if (cdQueueCount) cdQueueCount.textContent = '0 نفر در صف';
+                return;
+            }
+            if (cdQueueCount) cdQueueCount.textContent = tickets.length + ' نفر در صف';
+            if (!cdQueueGrid) return;
+            cdQueueGrid.innerHTML = '';
+            tickets.forEach(function (t) {
+                var div = document.createElement('div');
+                div.className = 'cd-queue-item';
+                div.innerHTML = '<span class="cd-queue-item-num">' + t.number + '</span>' +
+                    '<span class="cd-queue-item-service">' + (t.service || '') + '</span>';
+                cdQueueGrid.appendChild(div);
+            });
+        })
+        .catch(function () {});
+    }
+
     function init() {
         var isPreview = (window.location !== window.parent.location);
         var autoResume = false;
@@ -492,8 +521,10 @@
         }
 
         loadDisplayQueue();
+        loadQueueTickets();
         loadActiveSlides();
         connect();
+        setInterval(loadQueueTickets, 5000);
 
         document.addEventListener('dblclick', function () {
             if (!document.fullscreenElement) {

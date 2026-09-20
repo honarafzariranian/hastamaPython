@@ -145,6 +145,13 @@
                         </svg>
                         صف نمایش
                     </button>
+                    <button type="button" class="cs-tab-btn" onclick="switchCsTab('cs-tab-tickets', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        </svg>
+                        نوبت‌ها
+                    </button>
                     <button type="button" class="cs-tab-btn" onclick="switchCsTab('cs-tab-slides', this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
                             <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
@@ -243,6 +250,57 @@
                     </div>
 
                 </div><!-- /cs-tab-queue -->
+
+                <!-- ── Tab: Queue Tickets (نوبت‌دهی) ── -->
+                <div id="cs-tab-tickets" class="cs-tab-content">
+                    <div class="cs-card cs-card--tickets">
+                        <div class="cs-card-header">
+                            <div class="cs-card-icon cs-card-icon--display">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                                </svg>
+                            </div>
+                            <h2 class="cs-card-title">نوبت‌های صادر شده</h2>
+                            <span class="cs-queue-badge" id="csTicketCount">0</span>
+                            <button type="button" class="cs-reset-btn" onclick="loadQueueTickets()" title="بروزرسانی">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
+                                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                                </svg>
+                                بروزرسانی
+                            </button>
+                        </div>
+
+                        <!-- Call controls -->
+                        <div class="cs-waiting-add" style="margin-bottom: 12px;">
+                            <select id="csTicketDept" class="cs-waiting-select">
+                                <option value="پذیرش">پذیرش</option>
+                                <option value="نمونه‌گیری">نمونه‌گیری</option>
+                            </select>
+                            <button type="button" class="cs-waiting-add-btn" onclick="callNextTicket()" style="background: var(--cs-accent); color: #fff;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                </svg>
+                                فراخوان نفر بعدی
+                            </button>
+                        </div>
+
+                        <!-- Ticket status filter -->
+                        <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+                            <button type="button" class="cs-waiting-btn" onclick="loadQueueTickets('waiting')" style="font-size:12px; padding:4px 10px;">
+                                در انتظار
+                            </button>
+                            <button type="button" class="cs-waiting-btn" onclick="loadQueueTickets('all')" style="font-size:12px; padding:4px 10px;">
+                                همه
+                            </button>
+                        </div>
+
+                        <div class="cs-waiting-list" id="csTicketList">
+                            <div class="cs-waiting-empty" id="csTicketEmpty">هنوز نوبتی صادر نشده است</div>
+                        </div>
+                    </div>
+                </div><!-- /cs-tab-tickets -->
 
                 <!-- ── Tab 2: Live Preview ── -->
                 <div id="cs-tab-preview" class="cs-tab-content">

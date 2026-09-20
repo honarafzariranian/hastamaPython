@@ -902,6 +902,7 @@
 
         loadDisplayQueue();
         loadWaitingQueue();
+        loadQueueTickets();
         loadRecent();
         loadStatus();
         loadAudioStatus();
@@ -910,6 +911,9 @@
 
         /* Poll display status every 8 seconds */
         setInterval(loadStatus, 8000);
+
+        /* Poll queue tickets every 5 seconds */
+        setInterval(loadQueueTickets, 5000);
 
         /* ── Theme Toggle ── */
         var themeToggle = document.getElementById('csThemeToggle');
@@ -942,6 +946,117 @@
             connectWS();
         }
     });
+
+    /* ═══════════════════════════════════════════════════════════════════
+       Queue Tickets (سامانه نوبت‌دهی)
+       ═══════════════════════════════════════════════════════════════════ */
+    var ticketList = document.getElementById('csTicketList');
+    var ticketEmpty = document.getElementById('csTicketEmpty');
+    var ticketCountEl = document.getElementById('csTicketCount');
+    var ticketData = [];
+
+    function loadQueueTickets(status) {
+        status = status || 'waiting';
+        fetch('/api/queue/list?status=' + status)
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            ticketData = res.tickets || [];
+            renderQueueTickets();
+        })
+        .catch(function () {});
+    }
+
+    function renderQueueTickets() {
+        if (!ticketList) return;
+        var items = ticketList.querySelectorAll('.cs-waiting-item');
+        items.forEach(function (it) { it.remove(); });
+
+        if (ticketData.length === 0) {
+            if (ticketEmpty) ticketEmpty.style.display = '';
+            if (ticketCountEl) ticketCountEl.textContent = '0';
+            return;
+        }
+        if (ticketEmpty) ticketEmpty.style.display = 'none';
+        if (ticketCountEl) ticketCountEl.textContent = String(ticketData.length);
+
+        ticketData.forEach(function (item) {
+            var el = document.createElement('div');
+            el.className = 'cs-waiting-item';
+            el.setAttribute('data-id', item.id);
+
+            var numSpan = document.createElement('span');
+            numSpan.className = 'cs-waiting-num';
+            numSpan.textContent = item.persian_number || item.ticket_number;
+
+            var deptSpan = document.createElement('span');
+            deptSpan.className = 'cs-waiting-dept';
+            deptSpan.textContent = item.service || '';
+
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'cs-waiting-time';
+            timeSpan.textContent = fmtTime(item.created_at);
+
+            var actionsDiv = document.createElement('div');
+            actionsDiv.className = 'cs-waiting-actions';
+
+            if (item.status === 'waiting') {
+                // Call button
+                var callBtnEl = document.createElement('button');
+                callBtnEl.className = 'cs-waiting-btn cs-waiting-btn--call';
+                callBtnEl.title = 'فراخوان';
+                callBtnEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+                callBtnEl.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    callQueueTicket(item.id);
+                });
+                actionsDiv.appendChild(callBtnEl);
+            } else if (item.status === 'called') {
+                deptSpan.textContent = (item.called_for || item.service || '') + ' — فراخوان شده';
+            } else if (item.status === 'completed') {
+                deptSpan.textContent = (item.called_for || item.service || '') + ' — انجام شده';
+            }
+
+            el.appendChild(numSpan);
+            el.appendChild(deptSpan);
+            el.appendChild(timeSpan);
+            el.appendChild(actionsDiv);
+            ticketList.appendChild(el);
+        });
+    }
+
+    function callQueueTicket(id) {
+        var dept = (document.getElementById('csTicketDept') || {}).value || 'پذیرش';
+        fetch('/api/queue/call/' + id + '?department=' + encodeURIComponent(dept), {
+            method: 'POST',
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                showToast(res.message || 'نوبت فراخوان شد.', 'success');
+                loadQueueTickets();
+            } else {
+                showToast(res.detail || 'خطا', 'error');
+            }
+        })
+        .catch(function () { showToast('خطا در اتصال به سرور', 'error'); });
+    }
+
+    function callNextTicket() {
+        var dept = (document.getElementById('csTicketDept') || {}).value || 'پذیرش';
+        fetch('/api/queue/call-next?department=' + encodeURIComponent(dept), {
+            method: 'POST',
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.success) {
+                showToast(res.message || 'نوبت بعدی فراخوان شد.', 'success');
+                loadQueueTickets();
+            } else {
+                showToast(res.detail || 'خطا', 'error');
+            }
+        })
+        .catch(function () { showToast('خطا در اتصال به سرور', 'error'); });
+    }
 
     /* ── Live Preview: overlay کنترل‌شده توسط وضعیت اتصال ── */
     /* (overlay توسط updateDisplayStatusCard نمایش/مخفی می‌شود) */

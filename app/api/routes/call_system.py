@@ -1,4 +1,4 @@
-"""Sample Collection Call System — Samaneh Farakhan Nemonegiri.
+"""Sample Collection Call System -- Samaneh Farakhan Nemonegiri.
 
 WebSocket-powered real-time call broadcasting for TV displays in the
 organization's internal LAN.  No Internet access required.
@@ -41,7 +41,7 @@ def _ensure_schema(conn) -> None:
             return
         db_dir = Path(__file__).resolve().parents[3] / "database"
         cursor = conn.cursor()
-        for sql_file in ["reception_calls.sql", "display_queue.sql", "waiting_queue.sql", "slides.sql"]:
+        for sql_file in ["reception_calls.sql", "display_queue.sql", "waiting_queue.sql", "slides.sql", "queue_tickets.sql"]:
             sql_path = db_dir / sql_file
             if sql_path.exists():
                 cursor.execute(sql_path.read_text(encoding="utf-8"))
@@ -51,7 +51,7 @@ def _ensure_schema(conn) -> None:
 
 
 # ---------------------------------------------------------------------------
-# WebSocket manager — in-memory broadcast to all connected TV displays
+# WebSocket manager -- in-memory broadcast to all connected TV displays
 # ---------------------------------------------------------------------------
 class DisplayManager:
     """Manages active TV display WebSocket connections.
@@ -71,14 +71,14 @@ class DisplayManager:
         with self._lock:
             self._connections.append(ws)
             self._tags[id(ws)] = tag
-        logger.info("display connected (tag=%s) — total: %d", tag, len(self._connections))
+        logger.info("display connected (tag=%s) -- total: %d", tag, len(self._connections))
 
     def disconnect(self, ws: WebSocket) -> None:
         with self._lock:
             if ws in self._connections:
                 self._connections.remove(ws)
             self._tags.pop(id(ws), None)
-        logger.info("display disconnected — total: %d", len(self._connections))
+        logger.info("display disconnected -- total: %d", len(self._connections))
 
     async def broadcast(self, message: dict) -> int:
         """Send *message* to every connected display.  Returns count sent."""
@@ -280,7 +280,7 @@ def to_persian_numbers(text) -> str:
     return s
 
 
-# Reception number validation — alphanumeric, max 50 chars, no HTML/script
+# Reception number validation -- alphanumeric, max 50 chars, no HTML/script
 _RECEPTION_RE = re.compile(r"^[\w\u0600-\u06FF\-\/\.\s]{1,50}$", re.UNICODE)
 
 
@@ -309,7 +309,7 @@ class CallInput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# REST API — Call Management
+# REST API -- Call Management
 # ---------------------------------------------------------------------------
 
 @router.post("/calls")
@@ -507,7 +507,7 @@ async def test_audio(request: Request, number: int = 1):
             "number": str(number),
             "persian_number": to_persian_numbers(str(number)),
             "department": department,
-            "message": "تست صدا — فراخوان شماره " + to_persian_numbers(str(number)),
+            "message": "تست صدا -- فراخوان شماره " + to_persian_numbers(str(number)),
             "voice": "شماره " + to_persian_numbers(str(number)) + "، لطفاً به بخش " + department + " مراجعه کنید.",
             "timestamp": now,
             "is_test": True,
@@ -742,7 +742,7 @@ async def refresh_display(request: Request):
 
     event = {"type": "refresh_display", "data": {}}
     sent = await display_manager.broadcast(event)
-    logger.info("display refresh broadcast — displays=%d", sent)
+    logger.info("display refresh broadcast -- displays=%d", sent)
     return JSONResponse({
         "success": True,
         "message": "دستور رفرش به نمایشگر ارسال شد.",
@@ -816,9 +816,9 @@ async def recent_calls(request: Request, limit: int = 20):
 async def display_status():
     """Return the number of active TV display connections.
 
-    ``connected_displays``  — total WebSocket connections
-    ``real_displays``       — real TV screens (excludes iframe previews)
-    ``preview_displays``    — management-page iframe previews
+    ``connected_displays``  -- total WebSocket connections
+    ``real_displays``       -- real TV screens (excludes iframe previews)
+    ``preview_displays``    -- management-page iframe previews
     """
     return JSONResponse({
         "success": True,
@@ -989,7 +989,295 @@ async def delete_slide(request: Request, slide_id: int):
 
 
 # ---------------------------------------------------------------------------
-# WebSocket endpoint — TV displays connect here
+# Queue Ticketing System (سامانه نوبتدهی)
+# ---------------------------------------------------------------------------
+
+@router.post("/queue/take")
+async def take_queue_ticket(request: Request):
+    """Visitor takes a new ticket from the kiosk touchscreen."""
+    _guard_kiosk_write(request, "queue-take")
+
+    # Read optional service from request body
+    service_name = "پذیرش"
+    try:
+        body = await request.json()
+        if isinstance(body, dict) and body.get("service"):
+            service_name = str(body["service"]).strip() or "پذیرش"
+    except Exception:
+        pass
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        # Get today's date and next ticket number
+        cursor.execute("SELECT CAST(SYSUTCDATETIME() AS DATE)")
+        today = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT ISNULL(MAX(ticket_number), 0) + 1 FROM dbo.queue_tickets WHERE ticket_date = ?",
+            (today,),
+        )
+        next_num = cursor.fetchone()[0]
+        cursor.execute(
+            """INSERT INTO dbo.queue_tickets (ticket_number, ticket_date, status, service)
+               VALUES (?, ?, 'waiting', ?)""",
+            (next_num, today, service_name),
+        )
+        new_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Count how many are waiting
+    waiting_count = 0
+    conn2 = _get_connection()
+    try:
+        _ensure_schema(conn2)
+        cursor2 = conn2.cursor()
+        cursor2.execute(
+            "SELECT COUNT(*) FROM dbo.queue_tickets WHERE ticket_date = ? AND status = 'waiting'",
+            (today,),
+        )
+        waiting_count = cursor2.fetchone()[0]
+    finally:
+        conn2.close()
+
+    # Broadcast to TV displays
+    event = {
+        "type": "queue_ticket_taken",
+        "data": {
+            "ticket_number": next_num,
+            "persian_number": to_persian_numbers(str(next_num)),
+            "service": service_name,
+            "waiting_count": waiting_count,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        },
+    }
+    await display_manager.broadcast(event)
+
+    return JSONResponse({
+        "success": True,
+        "message": "نوبت " + to_persian_numbers(str(next_num)) + " ثبت شد.",
+        "ticket": {
+            "id": int(new_id) if new_id else 0,
+            "number": next_num,
+            "persian_number": to_persian_numbers(str(next_num)),
+            "service": service_name,
+            "waiting_count": waiting_count,
+        },
+    })
+
+
+@router.get("/queue/list")
+async def list_queue_tickets(request: Request, status: str = "waiting"):
+    """List queue tickets. status can be: waiting, called, completed, all."""
+    _actor(request, admin=True, required=False)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        if status == "all":
+            rows = cursor.execute(
+                """SELECT id, ticket_number, ticket_date, status, service, called_for,
+                       called_at, completed_at, created_at
+                   FROM dbo.queue_tickets
+                   WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                   ORDER BY ticket_number ASC"""
+            ).fetchall()
+        else:
+            rows = cursor.execute(
+                """SELECT id, ticket_number, ticket_date, status, service, called_for,
+                       called_at, completed_at, created_at
+                   FROM dbo.queue_tickets
+                   WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                     AND status = ?
+                   ORDER BY ticket_number ASC""",
+                (status,),
+            ).fetchall()
+        columns = [d[0] for d in cursor.description]
+        result = []
+        for row in rows:
+            d = dict(zip(columns, row))
+            d["persian_number"] = to_persian_numbers(str(d["ticket_number"]))
+            d["created_at"] = _iso(d.pop("created_at", None))
+            d["called_at"] = _iso(d.pop("called_at", None))
+            d["completed_at"] = _iso(d.pop("completed_at", None))
+            d["ticket_date"] = str(d.pop("ticket_date", ""))
+            result.append(d)
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "tickets": result})
+
+
+@router.get("/queue/stats")
+async def queue_stats():
+    """Return today's queue statistics."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT
+                   COUNT(*) as total,
+                   SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
+                   SUM(CASE WHEN status = 'called' THEN 1 ELSE 0 END) as called,
+                   SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+               FROM dbo.queue_tickets
+               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)"""
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+    return JSONResponse({
+        "success": True,
+        "stats": {
+            "total": int(row[0] or 0),
+            "waiting": int(row[1] or 0),
+            "called": int(row[2] or 0),
+            "completed": int(row[3] or 0),
+        },
+    })
+
+
+@router.post("/queue/call/{ticket_id}")
+async def call_queue_ticket(request: Request, ticket_id: int, department: str = "پذیرش"):
+    """Call a ticket from the queue (for reception or sample collection)."""
+    _actor(request, admin=True, required=False)
+    department = _clean_department(department)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        row = cursor.execute(
+            """SELECT ticket_number FROM dbo.queue_tickets
+               WHERE id = ? AND status IN ('waiting', 'called')""",
+            (ticket_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="نوبت یافت نشد.")
+        number = str(row[0]).strip()
+
+        cursor.execute(
+            """UPDATE dbo.queue_tickets
+               SET status = 'called', called_for = ?, called_at = SYSUTCDATETIME()
+               WHERE id = ?""",
+            (department, ticket_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Broadcast via WebSocket
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    event = {
+        "type": "reception_call",
+        "data": {
+            "number": number,
+            "persian_number": to_persian_numbers(number),
+            "department": department,
+            "message": f"نوبت {to_persian_numbers(number)}، لطفاً به بخش {department} مراجعه کنید.",
+            "voice": f"نوبت {to_persian_numbers(number)}، لطفاً به بخش {department} مراجعه کنید.",
+            "timestamp": now,
+            "is_test": False,
+            "is_queue_ticket": True,
+        },
+    }
+    sent = await display_manager.broadcast(event)
+
+    return JSONResponse({
+        "success": True,
+        "message": "نوبت " + to_persian_numbers(number) + " فراخوان شد.",
+        "display_count": sent,
+    })
+
+
+@router.post("/queue/complete/{ticket_id}")
+async def complete_queue_ticket(request: Request, ticket_id: int):
+    """Mark a ticket as completed."""
+    _actor(request, admin=True, required=False)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        cursor.execute(
+            """UPDATE dbo.queue_tickets
+               SET status = 'completed', completed_at = SYSUTCDATETIME()
+               WHERE id = ? AND status = 'called'""",
+            (ticket_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return JSONResponse({"success": True, "message": "نوبت تکمیل شد."})
+
+
+@router.post("/queue/call-next")
+async def call_next_ticket(request: Request, department: str = "پذیرش"):
+    """Call the next waiting ticket in order."""
+    _actor(request, admin=True, required=False)
+    department = _clean_department(department)
+
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        row = cursor.execute(
+            """SELECT TOP 1 id, ticket_number FROM dbo.queue_tickets
+               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                 AND status = 'waiting'
+               ORDER BY ticket_number ASC"""
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="نوبتی در انتظار فراخوان نیست.")
+        ticket_id = int(row[0])
+        number = str(row[1]).strip()
+
+        cursor.execute(
+            """UPDATE dbo.queue_tickets
+               SET status = 'called', called_for = ?, called_at = SYSUTCDATETIME()
+               WHERE id = ?""",
+            (department, ticket_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Broadcast via WebSocket
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    event = {
+        "type": "reception_call",
+        "data": {
+            "number": number,
+            "persian_number": to_persian_numbers(number),
+            "department": department,
+            "message": f"نوبت {to_persian_numbers(number)}، لطفاً به بخش {department} مراجعه کنید.",
+            "voice": f"نوبت {to_persian_numbers(number)}، لطفاً به بخش {department} مراجعه کنید.",
+            "timestamp": now,
+            "is_test": False,
+            "is_queue_ticket": True,
+        },
+    }
+    sent = await display_manager.broadcast(event)
+
+    return JSONResponse({
+        "success": True,
+        "message": "نوبت " + to_persian_numbers(number) + " فراخوان شد.",
+        "ticket": {
+            "id": ticket_id,
+            "number": int(number),
+            "persian_number": to_persian_numbers(number),
+            "department": department,
+        },
+        "display_count": sent,
+    })
+
+
+# ---------------------------------------------------------------------------
+# WebSocket endpoint -- TV displays connect here
 # ---------------------------------------------------------------------------
 
 @router.websocket("/ws/call-display")
@@ -1000,7 +1288,7 @@ async def call_display_ws(websocket: WebSocket):
     the security boundary is the LAN plus the browser origin:
 
     * the handshake is rejected when the ``Origin`` header is present and does
-      not match the ``Host`` — a random web page on an employee workstation can
+      not match the ``Host`` -- a random web page on an employee workstation can
       no longer subscribe to the display feed or trigger broadcasts;
     * at most :data:`MAX_WS_CONNECTIONS` sockets are accepted at once, so an
       unauthenticated client cannot exhaust server resources;
@@ -1080,7 +1368,7 @@ def _ws_origin_allowed(websocket: WebSocket) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Pages — Management and TV Display
+# Pages -- Management and TV Display
 # ---------------------------------------------------------------------------
 
 

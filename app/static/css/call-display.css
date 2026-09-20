@@ -430,6 +430,74 @@ html, body {
     margin-top: 8px;
 }
 
+/* ── Queue tickets row ── */
+.cd-queue-tickets {
+    width: 100%; max-width: 1100px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.cd-queue-tickets[hidden] { display: none; }
+
+.cd-queue-header {
+    display: flex; align-items: center; gap: 12px;
+}
+.cd-queue-label {
+    font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+    font-weight: var(--c-fw-bold);
+    color: var(--cd-text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.cd-queue-count {
+    font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+    color: var(--cd-accent-light);
+    background: rgba(0,180,216,0.08);
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+.cd-queue-grid {
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(6px, 0.8vw, 10px);
+    width: 100%;
+}
+.cd-queue-empty {
+    font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+    color: var(--cd-text-muted);
+    padding: 8px 0;
+}
+.cd-queue-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: clamp(6px, 1vh, 12px) clamp(10px, 1.2vw, 18px);
+    background: var(--cd-bg-card);
+    border: 1px solid var(--cd-text-muted);
+    border-radius: 10px;
+    min-width: clamp(80px, 8vw, 110px);
+    justify-content: center;
+}
+.cd-queue-item-num {
+    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+    font-weight: 900;
+    color: var(--cd-text);
+    direction: ltr;
+}
+.cd-queue-item-service {
+    font-size: clamp(0.45rem, 0.6vw, 0.55rem);
+    color: var(--cd-text-dim);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+.cd-queue-item.called {
+    border-color: var(--cd-accent);
+    background: rgba(0,180,216,0.06);
+    animation: cd-queueFlash 0.6s ease;
+}
+@keyframes cd-queueFlash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
 /* ── Previous calls row ── */
 .cd-previous {
     width: 100%; max-width: 900px;

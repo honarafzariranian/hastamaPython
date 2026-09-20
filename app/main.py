@@ -781,6 +781,16 @@ async def call_management(request: Request):
     """Standalone call management page — no authentication required."""
     return templates.TemplateResponse(request, "call-management.html", {"request": request})
 
+@app.get("/ticket-kiosk", response_class=HTMLResponse)
+async def ticket_kiosk(request: Request):
+    """Touch-screen kiosk for visitors to take a ticket."""
+    return templates.TemplateResponse(request, "ticket-kiosk.html", {"request": request})
+
+@app.get("/ticket-print", response_class=HTMLResponse)
+async def ticket_print_page(request: Request):
+    """Page for label printing after ticket is issued."""
+    return templates.TemplateResponse(request, "ticket-print.html", {"request": request})
+
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری
 # روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری# روت مربوط به پنل کاربری

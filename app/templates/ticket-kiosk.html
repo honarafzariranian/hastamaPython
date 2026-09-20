@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>سیستم نوبت‌دهی</title>
+    <link rel="preload" href="/static/fonts/Vazir.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/call-tokens.css">
+    <style>
+        /* ══════════════════════════════════════════════════════════════════════
+           TICKET KIOSK — فونت و پالت هماهنگ با سامانه + دو تم روشن/تاریک
+           ══════════════════════════════════════════════════════════════════════ */
+
+        @font-face {
+            font-family: 'Vazir';
+            src: url('/static/fonts/Vazir.woff2') format('woff2'),
+                 url('/static/fonts/Vazir.woff') format('woff'),
+                 url('/static/fonts/Vazir.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* دکمه‌ها به‌صورت پیش‌فرض فونت مرورگر می‌گیرن — باید inherit بشن */
+        button, input, select, textarea { font-family: inherit; }
+
+        :root {
+            /* ── تم روشن (پیش‌فرض) ── */
+            --k-bg: #f1f5f9;
+            --k-bg-accent: #e2e8f0;
+            --k-card: rgba(255, 255, 255, 0.75);
+            --k-card-solid: #ffffff;
+            --k-border: rgba(15, 23, 42, 0.08);
+            --k-border-strong: rgba(15, 23, 42, 0.14);
+            --k-text: #0f172a;
+            --k-text-dim: #475569;
+            --k-text-muted: #94a3b8;
+            --k-accent: var(--c-primary);
+            --k-accent-light: var(--c-primary-light);
+            --k-gold: var(--c-gold);
+            --k-success: var(--c-success);
+            --k-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+            --k-shadow-md: 0 8px 32px rgba(15, 23, 42, 0.1);
+            --k-shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.14);
+            --k-glow: rgba(14, 165, 233, 0.25);
+            --k-orb1: rgba(14, 165, 233, 0.1);
+            --k-orb2: rgba(139, 92, 246, 0.08);
+            --k-orb3: rgba(240, 192, 64, 0.07);
+            --k-radius: 20px;
+            --k-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            --k-transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ── تم تاریک ── */
+        body.dark-mode {
+            --k-bg: #0b0f1a;
+            --k-bg-accent: #0f172a;
+            --k-card: rgba(17, 24, 39, 0.7);
+            --k-card-solid: #111827;
+            --k-border: rgba(255, 255, 255, 0.06);
+            --k-border-strong: rgba(255, 255, 255, 0.12);
+            --k-text: #f1f5f9;
+            --k-text-dim: #94a3b8;
+            --k-text-muted: #64748b;
+            --k-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --k-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --k-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+            --k-glow: rgba(14, 165, 233, 0.4);
+            --k-orb1: rgba(14, 165, 233, 0.12);
+            --k-orb2: rgba(139, 92, 246, 0.1);
+            --k-orb3: rgba(240, 192, 64, 0.06);
+        }
+
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            background: var(--k-bg);
+            color: var(--k-text);
+            direction: rtl;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
+            transition: background var(--k-transition), color var(--k-transition);
+        }
+
+        /* ── پس‌زمینه متحرک ── */
+        .k-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            overflow: hidden;
+        }
+        .k-bg::before {
+            content: '';
+            position: absolute;
+            width: 130%; height: 130%;
+            top: -15%; left: -15%;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 30%, var(--k-orb1) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 70%, var(--k-orb2) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 50% 90%, var(--k-orb3) 0%, transparent 50%);
+            animation: k-bgShift 22s ease-in-out infinite alternate;
+            transition: background var(--k-transition);
+        }
+        @keyframes k-bgShift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-3%, -2%) scale(1.05); }
+        }
+
+        .k-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(70px);
+            animation: k-orbFloat 16s ease-in-out infinite alternate;
+        }
+        .k-orb--1 { width: 320px; height: 320px; background: var(--k-orb1); top: 8%; right: -6%; animation-delay: 0s; }
+        .k-orb--2 { width: 220px; height: 220px; background: var(--k-orb2); bottom: 12%; left: -4%; animation-delay: -6s; }
+        .k-orb--3 { width: 160px; height: 160px; background: var(--k-orb3); top: 55%; right: 28%; animation-delay: -11s; }
+        @keyframes k-orbFloat {
+            0% { transform: translateY(0) translateX(0) scale(1); }
+            100% { transform: translateY(-36px) translateX(24px) scale(1.08); }
+        }
+
+        .k-particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .k-particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: var(--k-accent);
+            border-radius: 50%;
+            opacity: 0;
+            animation: k-particleFade 7s ease-in-out infinite;
+        }
+        @keyframes k-particleFade {
+            0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+            50% { opacity: 0.5; transform: translateY(-50px) scale(1); }
+        }
+
+        /* ── کانتینر اصلی ── */
+        .k-container {
+            position: relative; z-index: 1;
+            width: 100%; height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 26px;
+            padding: 32px;
+        }
+
+        /* ── نوار ابزار (تم + جهت) ── */
+        .k-toolbar {
+            position: fixed;
+            top: 18px; left: 18px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+        .k-tool-btn {
+            width: 46px; height: 46px;
+            border-radius: 14px;
+            border: 1px solid var(--k-border-strong);
+            background: var(--k-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: var(--k-text-dim);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--k-transition);
+            box-shadow: var(--k-shadow-sm);
+        }
+        .k-tool-btn:hover {
+            background: var(--k-card-solid);
+            border-color: var(--k-accent);
+            color: var(--k-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--k-glow);
+        }
+        .k-tool-btn:active { transform: scale(0.92); }
+        .k-tool-btn svg { width: 22px; height: 22px; }
+
+        /* ── ساعت ── */
+        .k-clock {
+            position: fixed;
+            top: 18px; right: 18px;
+            text-align: right;
+            z-index: 100;
+            padding: 10px 18px;
+            border-radius: 14px;
+            background: var(--k-card);
+            border: 1px solid var(--k-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: var(--k-shadow-sm);
+            animation: k-fadeSlideDown 0.7s var(--k-transition-spring) both;
+        }
+        .k-clock-time {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--k-text);
+            direction: ltr;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+        .k-clock-date {
+            font-size: 12px;
+            color: var(--k-text-dim);
+            margin-top: 2px;
+        }
+        @keyframes k-fadeSlideDown {
+            from { transform: translateY(-16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ── لوگو و عنوان ── */
+        .k-logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .k-logo {
+            width: 84px; height: 84px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--k-accent) 0%, var(--c-purple) 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.25);
+            animation: k-logoFloat 5s ease-in-out infinite, k-logoPulse 3.5s ease-in-out infinite;
+            position: relative;
+        }
+        .k-logo::after {
+            content: '';
+            position: absolute; inset: -3px;
+            border-radius: 27px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-purple));
+            filter: blur(14px);
+            opacity: 0.4;
+            z-index: -1;
+        }
+        .k-logo svg { width: 42px; height: 42px; stroke: #fff; stroke-width: 1.8; }
+        @keyframes k-logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes k-logoPulse {
+            0%, 100% { box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.25); }
+            50% { box-shadow: 0 8px 44px var(--k-glow), 0 0 0 10px rgba(14,165,233,0.06), inset 0 1px 0 rgba(255,255,255,0.25); }
+        }
+        .k-title {
+            font-size: 30px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--k-text) 20%, var(--k-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .k-subtitle {
+            font-size: 15px;
+            color: var(--k-text-dim);
+            font-weight: 400;
+            margin-top: -8px;
+        }
+
+        /* ── نشان وضعیت صف ── */
+        .k-queue-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            border-radius: 28px;
+            background: var(--k-card);
+            border: 1px solid var(--k-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            font-size: 15px;
+            color: var(--k-success);
+            font-weight: 600;
+            box-shadow: var(--k-shadow-sm);
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+        }
+        .k-queue-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: var(--k-success);
+            animation: k-dotPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(34,197,94,0.4);
+        }
+        @keyframes k-dotPulse {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+            50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+        }
+
+        /* ── انتخاب سرویس ── */
+        .k-services {
+            display: flex;
+            gap: 18px;
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+        }
+        .k-service-card {
+            position: relative;
+            width: 210px;
+            height: 128px;
+            border-radius: var(--k-radius);
+            border: 1.5px solid var(--k-border);
+            background: var(--k-card);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            overflow: hidden;
+            box-shadow: var(--k-shadow-sm);
+        }
+        .k-service-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            border-radius: var(--k-radius);
+            background: linear-gradient(135deg, rgba(14,165,233,0.08), transparent 60%);
+            opacity: 0;
+            transition: opacity var(--k-transition);
+        }
+        .k-service-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--k-accent), var(--c-purple));
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform var(--k-transition);
+        }
+        .k-service-card:hover::before,
+        .k-service-card.selected::before { opacity: 1; }
+        .k-service-card:hover {
+            border-color: var(--k-border-strong);
+            transform: translateY(-4px);
+            box-shadow: var(--k-shadow-md);
+        }
+        .k-service-card.selected {
+            border-color: var(--k-accent);
+            background: var(--k-card-solid);
+            box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .k-service-card.selected::after { transform: scaleX(1); }
+        .k-service-card:active { transform: scale(0.96); }
+
+        .k-service-check {
+            position: absolute;
+            top: 12px; left: 12px;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--k-accent);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0;
+            transform: scale(0.4);
+            transition: all var(--k-transition-spring);
+        }
+        .k-service-card.selected .k-service-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .k-service-check svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3; }
+
+        .k-service-icon {
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(14,165,233,0.1);
+            transition: all var(--k-transition-spring);
+        }
+        .k-service-card.selected .k-service-icon {
+            background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
+            box-shadow: 0 6px 20px var(--k-glow);
+            transform: scale(1.06);
+        }
+        .k-service-icon svg { width: 26px; height: 26px; stroke: var(--k-accent); stroke-width: 1.8; transition: stroke var(--k-transition); }
+        .k-service-card.selected .k-service-icon svg { stroke: #fff; }
+
+        .k-service-label {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--k-text-dim);
+            transition: color var(--k-transition);
+        }
+        .k-service-card.selected .k-service-label { color: var(--k-text); }
+
+        /* ── دکمه دریافت نوبت ── */
+        .k-take-btn {
+            position: relative;
+            width: 260px;
+            height: 86px;
+            border: none;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--k-accent) 0%, var(--c-primary-dark) 100%);
+            color: #fff;
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 21px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            overflow: hidden;
+            transition: all var(--k-transition);
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+            box-shadow: 0 8px 28px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        .k-take-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, transparent 35%, rgba(255,255,255,0.14) 100%);
+        }
+        .k-take-btn::after {
+            content: '';
+            position: absolute;
+            width: 220px; height: 220px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            transform: scale(0);
+            transition: transform 0.7s ease, opacity 0.7s ease;
+        }
+        .k-take-btn:active::after { transform: scale(3); opacity: 0; }
+        .k-take-btn:active { transform: scale(0.96); }
+        .k-take-btn:hover {
+            box-shadow: 0 12px 40px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+        .k-take-btn svg { width: 30px; height: 30px; position: relative; z-index: 1; }
+        .k-take-btn span { position: relative; z-index: 1; }
+
+        .k-hint {
+            font-size: 13px;
+            color: var(--k-text-muted);
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+        }
+
+        /* ── مودال نوبت ── */
+        .k-modal-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(8, 12, 24, 0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        .k-modal-overlay.visible { display: flex; }
+
+        .k-modal {
+            position: relative;
+            width: 400px;
+            max-width: 92vw;
+            border-radius: 26px;
+            border: 1px solid var(--k-border-strong);
+            background: var(--k-card-solid);
+            padding: 42px 34px 34px;
+            text-align: center;
+            box-shadow: var(--k-shadow-lg);
+            animation: k-modalIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes k-modalIn {
+            from { transform: scale(0.75) translateY(30px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .k-modal::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 20%; left: 20%;
+            height: 4px;
+            border-radius: 0 0 4px 4px;
+            background: linear-gradient(90deg, var(--k-accent), var(--c-purple), var(--k-gold));
+        }
+
+        .k-modal-icon {
+            width: 72px; height: 72px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--k-success), #16a34a);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 28px rgba(34,197,94,0.35);
+            animation: k-modalIconPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+        @keyframes k-modalIconPop {
+            from { transform: scale(0) rotate(-90deg); }
+            to { transform: scale(1) rotate(0); }
+        }
+        .k-modal-icon svg { width: 34px; height: 34px; stroke: #fff; stroke-width: 2.6; }
+
+        .k-modal-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--k-text);
+            margin-bottom: 10px;
+        }
+        .k-modal-number {
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--k-accent);
+            direction: ltr;
+            line-height: 1.1;
+            margin: 6px 0 4px;
+            text-shadow: 0 4px 24px var(--k-glow);
+            animation: k-numberIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+        }
+        @keyframes k-numberIn {
+            from { transform: scale(0.4); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .k-modal-service {
+            font-size: 15px;
+            color: var(--k-text-dim);
+            margin-bottom: 8px;
+        }
+        .k-modal-hint {
+            font-size: 13px;
+            color: var(--k-text-muted);
+            margin-bottom: 26px;
+            line-height: 1.7;
+        }
+        .k-modal-close {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
+            color: #fff;
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            box-shadow: 0 4px 16px var(--k-glow);
+        }
+        .k-modal-close:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--k-glow); }
+        .k-modal-close:active { transform: scale(0.97); }
+
+        /* ── انیمیشن‌های پایه ── */
+        @keyframes k-fadeSlideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           حالت افقی (LANDSCAPE)
+           ══════════════════════════════════════════════════════════════════════ */
+        body.landscape .k-container {
+            flex-direction: row;
+            gap: 56px;
+            padding: 24px 56px;
+        }
+        body.landscape .k-logo-section {
+            align-items: flex-start;
+            text-align: right;
+            min-width: 300px;
+        }
+        body.landscape .k-title { font-size: 32px; }
+        body.landscape .k-services {
+            flex-direction: row;
+            gap: 16px;
+        }
+        body.landscape .k-service-card { width: 180px; height: 118px; }
+        body.landscape .k-take-btn { width: auto; padding: 0 44px; }
+        body.landscape .k-clock { top: 18px; right: auto; left: 96px; }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           حالت عمودی (PORTRAIT — پیش‌فرض)
+           ══════════════════════════════════════════════════════════════════════ */
+        body.portrait .k-container {
+            flex-direction: column;
+            gap: 22px;
+        }
+        body.portrait .k-services {
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        body.portrait .k-service-card {
+            width: 280px;
+            height: 86px;
+            flex-direction: row;
+            justify-content: flex-start;
+            padding-right: 22px;
+            gap: 16px;
+        }
+        body.portrait .k-service-check { top: auto; bottom: 14px; left: 16px; }
+        body.portrait .k-service-icon { width: 48px; height: 48px; border-radius: 14px; }
+        body.portrait .k-service-icon svg { width: 24px; height: 24px; }
+        body.portrait .k-title { font-size: 24px; }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           موبایل
+           ══════════════════════════════════════════════════════════════════════ */
+        @media (max-width: 600px) {
+            .k-container { padding: 20px; gap: 16px; }
+            .k-logo { width: 60px; height: 60px; border-radius: 18px; }
+            .k-logo svg { width: 30px; height: 30px; }
+            .k-title { font-size: 20px; }
+            .k-service-card { width: 100% !important; }
+            .k-take-btn { width: 100%; font-size: 18px; }
+        }
+    </style>
+</head>
+<body class="portrait">
+
+    <!-- پس‌زمینه متحرک -->
+    <div class="k-bg">
+        <div class="k-orb k-orb--1"></div>
+        <div class="k-orb k-orb--2"></div>
+        <div class="k-orb k-orb--3"></div>
+    </div>
+
+    <!-- ذرات شناور -->
+    <div class="k-particles" id="kParticles"></div>
+
+    <!-- ساعت -->
+    <div class="k-clock">
+        <div class="k-clock-time" id="kClockTime">--:--</div>
+        <div class="k-clock-date" id="kClockDate">---</div>
+    </div>
+
+    <!-- دکمه تغییر تم روشن/تاریک -->
+    <div class="k-toolbar">
+        <button class="k-tool-btn" id="themeBtn" title="تغییر تم روشن/تاریک">
+            <svg class="k-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <svg class="k-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- کانتینر اصلی -->
+    <div class="k-container">
+
+        <!-- لوگو + عنوان -->
+        <div class="k-logo-section">
+            <div class="k-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                    <path d="M9 14l2 2 4-4"/>
+                </svg>
+            </div>
+            <div class="k-title">آزمایشگاه پاتوبیولوژی</div>
+            <div class="k-subtitle">سیستم نوبت‌دهی خودکار</div>
+        </div>
+
+        <!-- وضعیت صف -->
+        <div class="k-queue-badge">
+            <span class="k-queue-dot"></span>
+            <span><span id="queueCount">0</span> نفر در صف</span>
+        </div>
+
+        <!-- انتخاب سرویس -->
+        <div class="k-services">
+            <button class="k-service-card selected" data-service="پذیرش" onclick="selectService(this)">
+                <div class="k-service-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="k-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                </div>
+                <span class="k-service-label">پذیرش</span>
+            </button>
+            <button class="k-service-card" data-service="نمونه‌گیری" onclick="selectService(this)">
+                <div class="k-service-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="k-service-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 21h10"/>
+                        <rect x="10" y="9" width="4" height="12" rx="2"/>
+                        <path d="M12 9V5a2 2 0 00-2-2H8a2 2 0 00-2 2v4"/>
+                        <path d="M12 9V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
+                    </svg>
+                </div>
+                <span class="k-service-label">نمونه‌گیری</span>
+            </button>
+        </div>
+
+        <!-- دکمه دریافت نوبت -->
+        <button class="k-take-btn" onclick="takeTicket()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>نوبت بگیرید</span>
+        </button>
+
+        <div class="k-hint">روی دکمه بالا لمس کنید</div>
+    </div>
+
+    <!-- مودال: نوبت صادر شد -->
+    <div class="k-modal-overlay" id="ticketModal">
+        <div class="k-modal">
+            <div class="k-modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <div class="k-modal-title">نوبت شما صادر شد</div>
+            <div class="k-modal-number" id="modalNumber">--</div>
+            <div class="k-modal-service" id="modalService">---</div>
+            <div class="k-modal-hint">لطفاً برگه نوبت خود را از دستگاه چاپ دریافت کنید</div>
+            <button class="k-modal-close" onclick="closeModal()">بستن</button>
+        </div>
+    </div>
+
+    <script>
+        /* ── تم روشن/تاریک (هماهنگ با call-management) ── */
+        (function () {
+            var saved = localStorage.getItem('cs-theme');
+            if (saved === 'dark') document.body.classList.add('dark-mode');
+            updateThemeIcon();
+
+            var btn = document.getElementById('themeBtn');
+            btn.addEventListener('click', function () {
+                document.body.classList.toggle('dark-mode');
+                var isDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem('cs-theme', isDark ? 'dark' : 'light');
+                updateThemeIcon();
+            });
+
+            function updateThemeIcon() {
+                var isDark = document.body.classList.contains('dark-mode');
+                document.querySelector('.k-icon-moon').style.display = isDark ? 'none' : 'block';
+                document.querySelector('.k-icon-sun').style.display = isDark ? 'block' : 'none';
+            }
+        })();
+        /* ── تشخیص خودکار جهت نمایش (عمودی/افقی) بر اساس ابعاد صفحه ── */
+        (function () {
+            function applyOrientation() {
+                var isLandscape = window.innerWidth > window.innerHeight;
+                document.body.classList.toggle('landscape', isLandscape);
+                document.body.classList.toggle('portrait', !isLandscape);
+            }
+            applyOrientation();
+            window.addEventListener('resize', applyOrientation);
+            window.addEventListener('orientationchange', applyOrientation);
+        })();
+
+        /* ── ذرات شناور ── */
+        (function () {
+            var container = document.getElementById('kParticles');
+            for (var i = 0; i < 18; i++) {
+                var p = document.createElement('div');
+                p.className = 'k-particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDelay = (Math.random() * 7) + 's';
+                p.style.animationDuration = (5 + Math.random() * 4) + 's';
+                container.appendChild(p);
+            }
+        })();
+
+        /* ── ساعت زنده ── */
+        function updateClock() {
+            var now = new Date();
+            document.getElementById('kClockTime').textContent = now.toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'});
+            document.getElementById('kClockDate').textContent = now.toLocaleDateString('fa-IR', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        /* ── انتخاب سرویس ── */
+        var selectedService = 'پذیرش';
+        function selectService(el) {
+            document.querySelectorAll('.k-service-card').forEach(function (c) { c.classList.remove('selected'); });
+            el.classList.add('selected');
+            selectedService = el.dataset.service;
+        }
+
+        /* ── دریافت نوبت ── */
+        async function takeTicket() {
+            try {
+                var resp = await fetch('/api/queue/take', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service: selectedService })
+                });
+                var data = await resp.json();
+                if (!resp.ok) return;
+                var ticket = data.ticket || {};
+                document.getElementById('modalNumber').textContent = ticket.persian_number || ticket.number || '--';
+                document.getElementById('modalService').textContent = (ticket.service || selectedService) + ' — شماره ' + (ticket.number || '');
+                document.getElementById('ticketModal').classList.add('visible');
+
+                printTicket(ticket);
+                refreshQueueCount();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        /* ── چاپ لیبل نوبت ── */
+        function printTicket(ticket) {
+            var w = window.open('', '_blank', 'width=320,height=450');
+            w.document.write(
+                '<!DOCTYPE html><html><head><title>نوبت ' + (ticket.number || '') + '</title>' +
+                '<style>' +
+                '@page { size: 70mm 50mm; margin: 3mm; }' +
+                'body { font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: center; padding: 2mm; margin: 0; }' +
+                '.header { font-size: 8pt; font-weight: bold; margin-bottom: 2mm; border-bottom: 1px dashed #333; padding-bottom: 2mm; }' +
+                '.number { font-size: 28pt; font-weight: 900; margin: 2mm 0; }' +
+                '.service { font-size: 9pt; color: #555; margin-bottom: 1mm; }' +
+                '.date { font-size: 7pt; color: #888; margin-top: 2mm; border-top: 1px dashed #333; padding-top: 2mm; }' +
+                '</style></head><body>' +
+                '<div class="header">آزمایشگاه پاتوبیولوژی</div>' +
+                '<div class="service">' + (ticket.service || '') + '</div>' +
+                '<div class="number">' + (ticket.persian_number || ticket.number || '') + '</div>' +
+                '<div class="date">' + new Date().toLocaleDateString('fa-IR') + ' — ' + new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'}) + '</div>' +
+                '</body></html>'
+            );
+            w.document.close();
+            setTimeout(function () { w.print(); }, 400);
+        }
+
+        /* ── بستن مودال ── */
+        function closeModal() {
+            document.getElementById('ticketModal').classList.remove('visible');
+        }
+
+        /* ── شمارنده صف ── */
+        async function refreshQueueCount() {
+            try {
+                var resp = await fetch('/api/queue/list?status=waiting');
+                var data = await resp.json();
+                var tickets = data.tickets || [];
+                document.getElementById('queueCount').textContent = tickets.length;
+            } catch (err) {}
+        }
+        refreshQueueCount();
+        setInterval(refreshQueueCount, 5000);
+    </script>
+</body>
+</html>
