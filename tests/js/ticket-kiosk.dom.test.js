@@ -94,5 +94,26 @@ window.kbBackspace();
 assert.equal(doc.getElementById('pf-name').value, '');
 closeButton.click();
 
+// Service selection cards (Admission vs Sampling) have equal size styling
+const primaryCard = doc.querySelector('.k-service-card--primary');
+const samplingCard = doc.querySelector('.k-service-card--sampling');
+assert.ok(primaryCard, 'Primary card should exist');
+assert.ok(samplingCard, 'Sampling card should exist');
+const primaryStyle = window.getComputedStyle(primaryCard);
+const samplingStyle = window.getComputedStyle(samplingCard);
+assert.equal(primaryStyle.minHeight, samplingStyle.minHeight, 'Both service cards must have the same minHeight');
+assert.equal(primaryStyle.padding, samplingStyle.padding, 'Both service cards must have the same padding');
+assert.equal(primaryStyle.gap, samplingStyle.gap, 'Both service cards must have the same gap');
+assert.equal(primaryStyle.flex, samplingStyle.flex, 'Both service cards must have the same flex');
+
+const primaryIconStyle = window.getComputedStyle(primaryCard.querySelector('.k-service-icon'));
+const samplingIconStyle = window.getComputedStyle(samplingCard.querySelector('.k-service-icon'));
+assert.equal(primaryIconStyle.width, samplingIconStyle.width, 'Both service icons must have the same width');
+assert.equal(primaryIconStyle.height, samplingIconStyle.height, 'Both service icons must have the same height');
+
+const primaryLabelStyle = window.getComputedStyle(primaryCard.querySelector('.k-service-label'));
+const samplingLabelStyle = window.getComputedStyle(samplingCard.querySelector('.k-service-label'));
+assert.equal(primaryLabelStyle.fontSize, samplingLabelStyle.fontSize, 'Both service labels must have the same font size');
+
 dom.window.close();
-console.log('Ticket kiosk DOM tests passed: close flows, delayed focus, keyboard order and typing.');
+console.log('Ticket kiosk DOM tests passed: close flows, delayed focus, keyboard order and typing, equal service card sizes.');

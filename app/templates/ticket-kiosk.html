@@ -343,20 +343,23 @@
         /* ── انتخاب سرویس ── */
         .k-services {
             display: flex;
-            gap: 18px;
+            align-items: stretch;
+            gap: 16px;
         }
         .k-service-card {
             position: relative;
-            flex: 1;
-            height: 140px;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 175px;
             border-radius: 22px;
-            border: 1.5px solid var(--k-border);
+            border: 2px solid var(--k-border);
             background: var(--k-card-solid);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            padding: 16px 14px 14px;
+            gap: 6px;
             cursor: pointer;
             transition: all var(--k-transition);
             overflow: hidden;
@@ -384,7 +387,7 @@
         .k-service-card.selected::before { opacity: 1; }
         .k-service-card:hover {
             border-color: var(--k-border-strong);
-            transform: translateY(-3px);
+            transform: translateY(-4px);
             box-shadow: var(--k-shadow-md);
         }
         .k-service-card.selected {
@@ -394,43 +397,35 @@
         .k-service-card.selected::after { transform: scaleX(1); }
         .k-service-card:active { transform: scale(0.97); }
 
-        /* ── دکمه پذیرش (بزرگ‌تر و متمایز) ── */
+        /* ── دکمه پذیرش (آبی) ── */
         .k-service-card.k-service-card--primary {
-            height: 170px;
-            border: 2px solid rgba(14,165,233,0.2);
+            border: 2px solid rgba(14,165,233,0.22);
             background: linear-gradient(145deg, rgba(14,165,233,0.06), rgba(99,102,241,0.04));
-            box-shadow: 0 6px 24px rgba(14,165,233,0.1);
-            justify-content: center;
-            padding: 18px 16px 14px;
-            gap: 8px;
-            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(14,165,233,0.09);
         }
         .k-service-card.k-service-card--primary:hover {
             border-color: var(--k-accent);
             box-shadow: 0 10px 32px rgba(14,165,233,0.18);
-            transform: translateY(-4px);
-        }
-        .k-service-card.k-service-card--primary:active {
-            transform: scale(0.97);
         }
         .k-service-card.k-service-card--primary .k-service-icon {
-            width: 64px; height: 64px;
-            border-radius: 18px;
             background: rgba(14,165,233,0.12);
-            margin-bottom: 2px;
         }
-        .k-service-card.k-service-card--primary .k-service-icon svg { width: 32px; height: 32px; }
-        .k-service-card.k-service-card--primary .k-service-label {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 4px;
+        .k-service-card.k-service-card--primary .k-service-icon svg {
+            stroke: var(--k-accent);
+        }
+        .k-service-card.k-service-card--primary.selected {
+            border-color: var(--k-accent);
+            box-shadow: 0 6px 24px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
+        /* ── آیکون، عنوان و توضیحات سرویس ── */
         .k-service-icon {
-            width: 60px; height: 60px;
+            width: 58px; height: 58px;
             border-radius: 18px;
             display: flex; align-items: center; justify-content: center;
             background: rgba(14,165,233,0.1);
+            margin-bottom: 2px;
+            flex-shrink: 0;
             transition: all var(--k-transition-spring);
         }
         .k-service-card:hover .k-service-icon {
@@ -438,50 +433,62 @@
             box-shadow: 0 4px 14px var(--k-glow);
             transform: scale(1.05);
         }
-        .k-service-icon svg { width: 30px; height: 30px; stroke: var(--k-accent); stroke-width: 1.8; transition: stroke var(--k-transition); }
+        .k-service-icon svg {
+            width: 30px; height: 30px;
+            stroke: var(--k-accent);
+            stroke-width: 1.8;
+            transition: stroke var(--k-transition);
+        }
         .k-service-card:hover .k-service-icon svg { stroke: #fff; }
 
         .k-service-label {
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 21px;
+            font-weight: 800;
             color: var(--k-text-dim);
+            margin-bottom: 2px;
             transition: color var(--k-transition);
         }
         .k-service-card:hover .k-service-label { color: var(--k-text); }
 
         .k-service-desc {
-            font-size: 12.5px;
+            font-size: 11.5px;
             color: var(--k-text-dim);
             text-align: center;
-            line-height: 1.6;
-            margin-top: 2px;
-            max-width: 92%;
+            line-height: 1.45;
+            margin-top: 0;
+            max-width: 94%;
             font-weight: 400;
         }
+
+        /* ── دکمه نمونه‌گیری (سبز) ── */
         .k-service-card.k-service-card--sampling {
-            height: auto;
-            min-height: 170px;
-            padding: 18px 14px 16px;
-            justify-content: flex-start;
-            border: 1.5px solid rgba(34,197,94,0.18);
+            border: 2px solid rgba(34,197,94,0.22);
             background: linear-gradient(145deg, rgba(34,197,94,0.06), rgba(16,185,129,0.04));
+            box-shadow: 0 6px 24px rgba(34,197,94,0.09);
+        }
+        .k-service-card.k-service-card--sampling::after {
+            background: linear-gradient(90deg, #22c55e, #10b981);
         }
         .k-service-card.k-service-card--sampling .k-service-icon {
             background: rgba(34,197,94,0.12);
-            width: 64px; height: 64px; border-radius: 18px;
         }
-        .k-service-card.k-service-card--sampling .k-service-icon svg { stroke: #22c55e; width: 32px; height: 32px; }
-        .k-service-card.k-service-card--sampling .k-service-label { font-size: 20px; font-weight: 800; }
+        .k-service-card.k-service-card--sampling .k-service-icon svg {
+            stroke: #22c55e;
+            width: 30px; height: 30px;
+        }
         .k-service-card.k-service-card--sampling:hover {
             border-color: #22c55e;
             box-shadow: 0 10px 32px rgba(34,197,94,0.18);
-            transform: translateY(-4px);
         }
         .k-service-card.k-service-card--sampling:hover .k-service-icon {
             background: linear-gradient(135deg, #22c55e, #16a34a);
             box-shadow: 0 4px 14px rgba(34,197,94,0.35);
         }
         .k-service-card.k-service-card--sampling:hover .k-service-icon svg { stroke: #fff; }
+        .k-service-card.k-service-card--sampling.selected {
+            border-color: #22c55e;
+            box-shadow: 0 6px 24px rgba(34,197,94,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
 
         /* ── مودال نوبت ── */
         .k-modal-overlay {
@@ -779,16 +786,23 @@
         body.portrait .k-services {
             flex-direction: row;
             gap: 16px;
+            align-items: stretch;
         }
         body.portrait .k-service-card {
-            flex: 1;
-            height: 120px;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 170px;
+            height: auto;
+            padding: 16px 14px 14px;
         }
-        body.portrait .k-service-card.k-service-card--primary {
-            height: 150px;
-        }
-        body.portrait .k-service-card.k-service-card--primary .k-service-icon {
+        body.portrait .k-service-card .k-service-icon {
             width: 56px; height: 56px;
+        }
+        body.portrait .k-service-card .k-service-icon svg {
+            width: 28px; height: 28px;
+        }
+        body.portrait .k-service-card .k-service-label {
+            font-size: 21px;
         }
         body.portrait .k-title { font-size: 28px; }
 
@@ -804,8 +818,11 @@
             .k-main-card { padding: 24px; gap: 20px; }
             .k-main-card__title { font-size: 20px; }
             .k-services { flex-direction: column; gap: 14px; }
-            .k-service-card { height: 100px; }
-            .k-service-card.k-service-card--primary .k-service-label { font-size: 22px; }
+            .k-service-card { min-height: 120px; height: auto; padding: 14px 12px; }
+            .k-service-card .k-service-icon { width: 48px; height: 48px; }
+            .k-service-card .k-service-icon svg { width: 24px; height: 24px; }
+            .k-service-card .k-service-label { font-size: 20px; }
+            .k-service-card .k-service-desc { font-size: 11px; }
             .k-clock { padding: 14px 20px; gap: 12px; }
             .k-clock-icon { width: 44px; height: 44px; }
             .k-clock-icon svg { width: 24px; height: 24px; }
@@ -820,7 +837,11 @@
             .k-logo img { width: 72px; height: 72px; }
             .k-title { font-size: 26px; }
             .k-main-card { padding: 22px; gap: 16px; }
-            .k-service-card { height: 110px; }
+            .k-service-card { min-height: 155px; height: auto; padding: 14px 12px; }
+            .k-service-card .k-service-icon { width: 50px; height: 50px; }
+            .k-service-card .k-service-icon svg { width: 26px; height: 26px; }
+            .k-service-card .k-service-label { font-size: 19px; }
+            .k-service-card .k-service-desc { font-size: 11px; }
         }
 
         /* ══════════════════════════════════════════════════════════════════════
@@ -1510,7 +1531,7 @@
                         </svg>
                     </div>
                     <span class="k-service-label">پذیرش</span>
-                    <span class="k-service-desc" style="font-size:11.5px">پذیرش اولیه، چکاپ‌ها و آزمایش با نسخه</span>
+                    <span class="k-service-desc">پذیرش اولیه، چکاپ‌ها و آزمایش با نسخه</span>
                 </button>
                 <button class="k-service-card k-service-card--sampling" data-service="نمونه‌گیری" onclick="selectService(this)">
                     <div class="k-service-icon">
