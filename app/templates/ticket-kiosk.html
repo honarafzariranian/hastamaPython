@@ -84,6 +84,7 @@
             touch-action: manipulation;
             -webkit-font-smoothing: antialiased;
             transition: background var(--k-transition), color var(--k-transition);
+            display: flex; flex-direction: column;
         }
 
         /* ── پس‌زمینه متحرک ── */
@@ -139,25 +140,25 @@
         /* ── کانتینر اصلی ── */
         .k-container {
             position: relative; z-index: 1;
-            width: 100%; height: 100vh;
+            width: 100%; flex: 1;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            gap: 26px;
-            padding: 32px;
+            gap: 36px;
+            padding: 40px;
             overflow-y: auto;
         }
 
         /* ── نوار ابزار (تم + جهت) ── */
         .k-toolbar {
             position: fixed;
-            top: 18px; left: 18px;
+            top: 20px; left: 20px;
             z-index: 100;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         .k-tool-btn {
-            width: 46px; height: 46px;
-            border-radius: 14px;
+            width: 56px; height: 56px;
+            border-radius: 16px;
             border: 1px solid var(--k-border-strong);
             background: var(--k-card);
             backdrop-filter: blur(12px);
@@ -176,35 +177,48 @@
             box-shadow: 0 6px 20px var(--k-glow);
         }
         .k-tool-btn:active { transform: scale(0.92); }
-        .k-tool-btn svg { width: 22px; height: 22px; }
+        .k-tool-btn svg { width: 28px; height: 28px; }
 
         /* ── ساعت ── */
         .k-clock {
             position: fixed;
-            top: 18px; right: 18px;
+            top: 20px; right: 20px;
             text-align: right;
             z-index: 100;
-            padding: 10px 18px;
-            border-radius: 14px;
+            padding: 16px 26px;
+            border-radius: 20px;
             background: var(--k-card);
             border: 1px solid var(--k-border);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: var(--k-shadow-sm);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--k-shadow-md);
             animation: k-fadeSlideDown 0.7s var(--k-transition-spring) both;
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
+        .k-clock-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px var(--k-glow);
+        }
+        .k-clock-icon svg { width: 28px; height: 28px; stroke: #fff; stroke-width: 2; }
+        .k-clock-info { display: flex; flex-direction: column; gap: 2px; }
         .k-clock-time {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 800;
             color: var(--k-text);
             direction: ltr;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             line-height: 1.2;
         }
         .k-clock-date {
-            font-size: 12px;
+            font-size: 15px;
             color: var(--k-text-dim);
-            margin-top: 2px;
+            font-weight: 500;
         }
         @keyframes k-fadeSlideDown {
             from { transform: translateY(-16px); opacity: 0; }
@@ -220,91 +234,124 @@
             animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
         .k-logo {
-            width: 84px; height: 84px;
-            border-radius: 24px;
-            background: linear-gradient(135deg, var(--k-accent) 0%, var(--c-purple) 100%);
+            width: 120px; height: 120px;
+            border-radius: 32px;
+            background: var(--k-card-solid);
+            border: 2px solid var(--k-border);
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.25);
-            animation: k-logoFloat 5s ease-in-out infinite, k-logoPulse 3.5s ease-in-out infinite;
+            animation: k-logoFloat 5s ease-in-out infinite;
             position: relative;
+            overflow: hidden;
         }
         .k-logo::after {
             content: '';
             position: absolute; inset: -3px;
-            border-radius: 27px;
+            border-radius: 35px;
             background: linear-gradient(135deg, var(--k-accent), var(--c-purple));
             filter: blur(14px);
-            opacity: 0.4;
+            opacity: 0.3;
             z-index: -1;
         }
-        .k-logo svg { width: 42px; height: 42px; stroke: #fff; stroke-width: 1.8; }
+        .k-logo img {
+            width: 96px; height: 96px;
+            object-fit: contain;
+            border-radius: 20px;
+        }
         @keyframes k-logoFloat {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-        @keyframes k-logoPulse {
-            0%, 100% { box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.25); }
-            50% { box-shadow: 0 8px 44px var(--k-glow), 0 0 0 10px rgba(14,165,233,0.06), inset 0 1px 0 rgba(255,255,255,0.25); }
+            50% { transform: translateY(-5px); }
         }
         .k-title {
-            font-size: 30px;
+            font-size: 34px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--k-text) 20%, var(--k-accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-align: center;
         }
         .k-subtitle {
-            font-size: 15px;
+            font-size: 18px;
             color: var(--k-text-dim);
             font-weight: 400;
-            margin-top: -8px;
+            margin-top: -4px;
         }
 
-        /* ── نشان وضعیت صف ── */
-        .k-queue-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 22px;
+        /* ── باکس اصلی اقدامات ── */
+        .k-main-card {
+            width: 100%;
+            max-width: 620px;
             border-radius: 28px;
             background: var(--k-card);
             border: 1px solid var(--k-border);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            font-size: 15px;
-            color: var(--k-success);
-            font-weight: 600;
-            box-shadow: var(--k-shadow-sm);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--k-shadow-md);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
             animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
         }
+        .k-main-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .k-main-card__title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--k-text);
+        }
+        .k-main-card__title-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-purple));
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-main-card__title-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2; }
+
+        /* ── نشانگر صف ── */
+        .k-queue-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--k-text-dim);
+            background: var(--k-card-solid);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--k-border);
+        }
         .k-queue-dot {
-            width: 9px; height: 9px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             background: var(--k-success);
-            animation: k-dotPulse 2s ease-in-out infinite;
-            box-shadow: 0 0 0 0 rgba(34,197,94,0.4);
+            animation: k-pulse 1.8s ease-in-out infinite;
         }
-        @keyframes k-dotPulse {
-            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-            50% { opacity: 0.7; transform: scale(0.85); box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+        @keyframes k-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
         }
 
         /* ── انتخاب سرویس ── */
         .k-services {
             display: flex;
             gap: 18px;
-            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
         }
         .k-service-card {
             position: relative;
-            width: 210px;
-            height: 128px;
-            border-radius: var(--k-radius);
+            flex: 1;
+            height: 140px;
+            border-radius: 22px;
             border: 1.5px solid var(--k-border);
-            background: var(--k-card);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+            background: var(--k-card-solid);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -318,7 +365,7 @@
         .k-service-card::before {
             content: '';
             position: absolute; inset: 0;
-            border-radius: var(--k-radius);
+            border-radius: 22px;
             background: linear-gradient(135deg, rgba(14,165,233,0.08), transparent 60%);
             opacity: 0;
             transition: opacity var(--k-transition);
@@ -337,107 +384,70 @@
         .k-service-card.selected::before { opacity: 1; }
         .k-service-card:hover {
             border-color: var(--k-border-strong);
-            transform: translateY(-4px);
+            transform: translateY(-3px);
             box-shadow: var(--k-shadow-md);
         }
         .k-service-card.selected {
             border-color: var(--k-accent);
-            background: var(--k-card-solid);
-            box-shadow: 0 8px 32px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.08);
+            box-shadow: 0 6px 24px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.08);
         }
         .k-service-card.selected::after { transform: scaleX(1); }
-        .k-service-card:active { transform: scale(0.96); }
+        .k-service-card:active { transform: scale(0.97); }
 
-        .k-service-check {
-            position: absolute;
-            top: 12px; left: 12px;
-            width: 24px; height: 24px;
-            border-radius: 50%;
-            background: var(--k-accent);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0;
-            transform: scale(0.4);
-            transition: all var(--k-transition-spring);
+        /* ── دکمه پذیرش (بزرگ‌تر و متمایز) ── */
+        .k-service-card.k-service-card--primary {
+            height: 170px;
+            border: 2px solid rgba(14,165,233,0.2);
+            background: linear-gradient(145deg, rgba(14,165,233,0.06), rgba(99,102,241,0.04));
+            box-shadow: 0 6px 24px rgba(14,165,233,0.1);
+            justify-content: center;
+            padding: 18px 16px 14px;
+            gap: 8px;
+            cursor: pointer;
         }
-        .k-service-card.selected .k-service-check {
-            opacity: 1;
-            transform: scale(1);
+        .k-service-card.k-service-card--primary:hover {
+            border-color: var(--k-accent);
+            box-shadow: 0 10px 32px rgba(14,165,233,0.18);
+            transform: translateY(-4px);
         }
-        .k-service-check svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3; }
+        .k-service-card.k-service-card--primary:active {
+            transform: scale(0.97);
+        }
+        .k-service-card.k-service-card--primary .k-service-icon {
+            width: 64px; height: 64px;
+            border-radius: 18px;
+            background: rgba(14,165,233,0.12);
+            margin-bottom: 2px;
+        }
+        .k-service-card.k-service-card--primary .k-service-icon svg { width: 32px; height: 32px; }
+        .k-service-card.k-service-card--primary .k-service-label {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
 
         .k-service-icon {
-            width: 52px; height: 52px;
-            border-radius: 16px;
+            width: 60px; height: 60px;
+            border-radius: 18px;
             display: flex; align-items: center; justify-content: center;
             background: rgba(14,165,233,0.1);
             transition: all var(--k-transition-spring);
         }
-        .k-service-card.selected .k-service-icon {
+        .k-service-card:hover .k-service-icon {
             background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
-            box-shadow: 0 6px 20px var(--k-glow);
-            transform: scale(1.06);
+            box-shadow: 0 4px 14px var(--k-glow);
+            transform: scale(1.05);
         }
-        .k-service-icon svg { width: 26px; height: 26px; stroke: var(--k-accent); stroke-width: 1.8; transition: stroke var(--k-transition); }
-        .k-service-card.selected .k-service-icon svg { stroke: #fff; }
+        .k-service-icon svg { width: 30px; height: 30px; stroke: var(--k-accent); stroke-width: 1.8; transition: stroke var(--k-transition); }
+        .k-service-card:hover .k-service-icon svg { stroke: #fff; }
 
         .k-service-label {
-            font-size: 17px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--k-text-dim);
             transition: color var(--k-transition);
         }
-        .k-service-card.selected .k-service-label { color: var(--k-text); }
-
-        /* ── دکمه دریافت نوبت ── */
-        .k-take-btn {
-            position: relative;
-            width: 260px;
-            height: 86px;
-            border: none;
-            border-radius: 22px;
-            background: linear-gradient(135deg, var(--k-accent) 0%, var(--c-primary-dark) 100%);
-            color: #fff;
-            font-family: 'Vazir', Tahoma, Arial, sans-serif;
-            font-size: 21px;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            overflow: hidden;
-            transition: all var(--k-transition);
-            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
-            box-shadow: 0 8px 28px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .k-take-btn::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: linear-gradient(135deg, transparent 35%, rgba(255,255,255,0.14) 100%);
-        }
-        .k-take-btn::after {
-            content: '';
-            position: absolute;
-            width: 220px; height: 220px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.18);
-            transform: scale(0);
-            transition: transform 0.7s ease, opacity 0.7s ease;
-        }
-        .k-take-btn:active::after { transform: scale(3); opacity: 0; }
-        .k-take-btn:active { transform: scale(0.96); }
-        .k-take-btn:hover {
-            box-shadow: 0 12px 40px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-            transform: translateY(-3px);
-        }
-        .k-take-btn svg { width: 30px; height: 30px; position: relative; z-index: 1; }
-        .k-take-btn span { position: relative; z-index: 1; }
-
-        .k-hint {
-            font-size: 13px;
-            color: var(--k-text-muted);
-            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
-        }
+        .k-service-card:hover .k-service-label { color: var(--k-text); }
 
         /* ── مودال نوبت ── */
         .k-modal-overlay {
@@ -452,12 +462,12 @@
 
         .k-modal {
             position: relative;
-            width: 400px;
+            width: 480px;
             max-width: 92vw;
-            border-radius: 26px;
+            border-radius: 30px;
             border: 1px solid var(--k-border-strong);
             background: var(--k-card-solid);
-            padding: 42px 34px 34px;
+            padding: 48px 40px 40px;
             text-align: center;
             box-shadow: var(--k-shadow-lg);
             animation: k-modalIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -476,8 +486,8 @@
         }
 
         .k-modal-icon {
-            width: 72px; height: 72px;
-            margin: 0 auto 18px;
+            width: 90px; height: 90px;
+            margin: 0 auto 22px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--k-success), #16a34a);
             display: flex; align-items: center; justify-content: center;
@@ -488,21 +498,21 @@
             from { transform: scale(0) rotate(-90deg); }
             to { transform: scale(1) rotate(0); }
         }
-        .k-modal-icon svg { width: 34px; height: 34px; stroke: #fff; stroke-width: 2.6; }
+        .k-modal-icon svg { width: 42px; height: 42px; stroke: #fff; stroke-width: 2.6; }
 
         .k-modal-title {
-            font-size: 19px;
+            font-size: 24px;
             font-weight: 700;
             color: var(--k-text);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .k-modal-number {
-            font-size: 64px;
+            font-size: 80px;
             font-weight: 900;
             color: var(--k-accent);
             direction: ltr;
             line-height: 1.1;
-            margin: 6px 0 4px;
+            margin: 8px 0 6px;
             text-shadow: 0 4px 24px var(--k-glow);
             animation: k-numberIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
         }
@@ -511,25 +521,25 @@
             to { transform: scale(1); opacity: 1; }
         }
         .k-modal-service {
-            font-size: 15px;
+            font-size: 19px;
             color: var(--k-text-dim);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .k-modal-hint {
-            font-size: 13px;
+            font-size: 16px;
             color: var(--k-text-muted);
-            margin-bottom: 26px;
+            margin-bottom: 32px;
             line-height: 1.7;
         }
         .k-modal-close {
             width: 100%;
-            padding: 15px;
+            padding: 18px;
             border: none;
-            border-radius: 15px;
+            border-radius: 18px;
             background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
             color: #fff;
             font-family: 'Vazir', Tahoma, Arial, sans-serif;
-            font-size: 16px;
+            font-size: 20px;
             font-weight: 700;
             cursor: pointer;
             transition: all var(--k-transition);
@@ -547,37 +557,6 @@
         /* ══════════════════════════════════════════════════════════════════════
            بخش چکاپ‌های تخصصی و عمومی
            ══════════════════════════════════════════════════════════════════════ */
-        .k-checkup-entry {
-            display: flex; align-items: center; gap: 14px;
-            width: 280px; padding: 13px 16px;
-            border-radius: 18px;
-            border: 1.5px dashed var(--k-border-strong);
-            background: var(--k-card);
-            color: var(--k-text);
-            cursor: pointer;
-            text-align: right;
-            transition: all var(--k-transition);
-            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
-        }
-        .k-checkup-entry:hover {
-            border-color: var(--c-purple);
-            border-style: solid;
-            transform: translateY(-2px);
-            box-shadow: var(--k-shadow-md);
-        }
-        .k-checkup-entry:active { transform: scale(0.97); }
-        .k-checkup-entry__icon {
-            width: 44px; height: 44px;
-            border-radius: 14px;
-            background: rgba(139, 92, 246, 0.12);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .k-checkup-entry__icon svg { width: 22px; height: 22px; stroke: var(--c-purple); stroke-width: 1.8; }
-        .k-checkup-entry__text { flex: 1; }
-        .k-checkup-entry__text strong { display: block; font-size: 14.5px; font-weight: 700; color: var(--k-text); }
-        .k-checkup-entry__text span { font-size: 12px; color: var(--k-text-dim); }
-        .k-checkup-entry > svg:last-child { width: 18px; height: 18px; stroke: var(--k-text-muted); margin-inline-start: auto; flex-shrink: 0; }
 
         /* ── اورلی تمام‌صفحه چکاپ‌ها ── */
         .k-checkup-overlay {
@@ -593,8 +572,8 @@
 
         .k-checkup-shell { position: absolute; inset: 0; display: flex; flex-direction: column; }
         .k-checkup-header {
-            display: flex; align-items: center; gap: 14px;
-            padding: 16px 22px;
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px 26px;
             border-bottom: 1px solid var(--k-border);
             background: var(--k-card);
             backdrop-filter: blur(12px);
@@ -602,34 +581,34 @@
             flex-shrink: 0;
         }
         .k-back-btn {
-            display: flex; align-items: center; gap: 8px;
-            padding: 10px 16px;
-            border-radius: 12px;
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px;
+            border-radius: 14px;
             border: 1px solid var(--k-border-strong);
             background: transparent;
             color: var(--k-text-dim);
-            font-size: 14px; font-weight: 600;
+            font-size: 16px; font-weight: 600;
             cursor: pointer;
             transition: all var(--k-transition);
         }
         .k-back-btn:hover { color: var(--k-accent); border-color: var(--k-accent); }
         .k-back-btn:active { transform: scale(0.95); }
-        .k-back-btn svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2; }
-        .k-checkup-header h2 { font-size: 19px; font-weight: 800; color: var(--k-text); }
-        .k-checkup-sub { padding: 12px 24px 2px; color: var(--k-text-dim); font-size: 13px; flex-shrink: 0; }
+        .k-back-btn svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; }
+        .k-checkup-header h2 { font-size: 24px; font-weight: 800; color: var(--k-text); }
+        .k-checkup-sub { padding: 14px 28px 4px; color: var(--k-text-dim); font-size: 15px; flex-shrink: 0; }
 
         .k-checkup-list {
             flex: 1; overflow-y: auto;
-            padding: 12px 20px 30px;
+            padding: 16px 24px 36px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
             align-content: start;
         }
         .k-checkup-card {
-            display: flex; align-items: center; gap: 14px;
-            padding: 16px;
-            border-radius: 18px;
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px;
+            border-radius: 22px;
             border: 1.5px solid var(--k-border);
             background: var(--k-card);
             backdrop-filter: blur(12px);
@@ -647,26 +626,26 @@
         }
         .k-checkup-card:active { transform: scale(0.97); }
         .k-checkup-card__icon {
-            width: 52px; height: 52px;
-            border-radius: 16px;
+            width: 64px; height: 64px;
+            border-radius: 18px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        .k-checkup-card__icon svg { width: 26px; height: 26px; stroke: var(--cc); stroke-width: 1.8; }
-        .k-checkup-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-        .k-checkup-card__body strong { font-size: 16px; color: var(--k-text); font-weight: 700; }
-        .k-checkup-card__body span { font-size: 12.5px; color: var(--k-text-dim); line-height: 1.7; }
+        .k-checkup-card__icon svg { width: 32px; height: 32px; stroke: var(--cc); stroke-width: 1.8; }
+        .k-checkup-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        .k-checkup-card__body strong { font-size: 19px; color: var(--k-text); font-weight: 700; }
+        .k-checkup-card__body span { font-size: 15px; color: var(--k-text-dim); line-height: 1.7; }
         .k-checkup-card__time {
-            display: inline-flex; align-items: center; gap: 5px;
+            display: inline-flex; align-items: center; gap: 6px;
             font-style: normal;
-            font-size: 11px; font-weight: 600;
+            font-size: 13px; font-weight: 600;
             color: var(--cc);
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 5px 12px;
+            border-radius: 22px;
             width: fit-content;
         }
-        .k-checkup-card__time svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2; }
-        .k-checkup-card > svg:last-child { width: 18px; height: 18px; stroke: var(--k-text-muted); flex-shrink: 0; margin-inline-start: auto; }
+        .k-checkup-card__time svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; }
+        .k-checkup-card > svg:last-child { width: 22px; height: 22px; stroke: var(--k-text-muted); flex-shrink: 0; margin-inline-start: auto; }
 
         /* ── صفحه جزئیات چکاپ ── */
         .k-checkup-detail {
@@ -680,75 +659,75 @@
             from { opacity: 0; transform: translateX(-36px); }
             to { opacity: 1; transform: none; }
         }
-        .k-checkup-detail__scroll { flex: 1; overflow-y: auto; padding: 24px 22px 36px; max-width: 720px; width: 100%; margin: 0 auto; }
-        .k-checkup-detail__hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 22px; }
+        .k-checkup-detail__scroll { flex: 1; overflow-y: auto; padding: 28px 26px 42px; max-width: 800px; width: 100%; margin: 0 auto; }
+        .k-checkup-detail__hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; margin-bottom: 28px; }
         .k-checkup-detail__icon {
-            width: 78px; height: 78px;
-            border-radius: 22px;
+            width: 96px; height: 96px;
+            border-radius: 26px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: var(--k-shadow-sm);
         }
-        .k-checkup-detail__icon svg { width: 38px; height: 38px; stroke-width: 1.8; }
-        .k-checkup-detail__hero h3 { font-size: 23px; font-weight: 800; color: var(--k-text); }
-        .k-checkup-detail__hero p { font-size: 13.5px; color: var(--k-text-dim); }
+        .k-checkup-detail__icon svg { width: 46px; height: 46px; stroke-width: 1.8; }
+        .k-checkup-detail__hero h3 { font-size: 28px; font-weight: 800; color: var(--k-text); }
+        .k-checkup-detail__hero p { font-size: 16px; color: var(--k-text-dim); }
         .k-checkup-detail__desc {
-            font-size: 14.5px; line-height: 2.1;
+            font-size: 17px; line-height: 2.1;
             color: var(--k-text-dim);
             background: var(--k-card);
             border: 1px solid var(--k-border);
-            border-radius: 16px;
-            padding: 16px 18px;
-            margin-bottom: 4px;
+            border-radius: 20px;
+            padding: 20px 22px;
+            margin-bottom: 6px;
             text-align: justify;
         }
         .k-checkup-section-title {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 15px; font-weight: 700; color: var(--k-text);
-            margin: 18px 0 10px;
-        }
-        .k-checkup-section-title svg { width: 17px; height: 17px; stroke: var(--cc, var(--k-accent)); stroke-width: 2; }
-        .k-checkup-tests { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .k-checkup-tests li {
             display: flex; align-items: center; gap: 10px;
+            font-size: 18px; font-weight: 700; color: var(--k-text);
+            margin: 22px 0 12px;
+        }
+        .k-checkup-section-title svg { width: 20px; height: 20px; stroke: var(--cc, var(--k-accent)); stroke-width: 2; }
+        .k-checkup-tests { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .k-checkup-tests li {
+            display: flex; align-items: center; gap: 12px;
             background: var(--k-card);
             border: 1px solid var(--k-border);
-            border-radius: 12px;
-            padding: 11px 14px;
-            font-size: 14px; color: var(--k-text);
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 16px; color: var(--k-text);
             line-height: 1.8;
         }
-        .k-checkup-tests li svg { width: 16px; height: 16px; stroke: var(--k-success); stroke-width: 2.5; flex-shrink: 0; }
+        .k-checkup-tests li svg { width: 20px; height: 20px; stroke: var(--k-success); stroke-width: 2.5; flex-shrink: 0; }
         .k-checkup-time {
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 12px;
             background: rgba(14, 165, 233, 0.08);
             border: 1px solid rgba(14, 165, 233, 0.18);
             color: var(--k-accent);
-            border-radius: 14px;
-            padding: 13px 16px;
-            font-size: 14px; font-weight: 600;
-            margin-top: 18px;
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 16px; font-weight: 600;
+            margin-top: 22px;
             line-height: 1.8;
         }
-        .k-checkup-time svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
+        .k-checkup-time svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
         .k-checkup-urgent {
-            display: flex; gap: 12px;
+            display: flex; gap: 14px;
             background: rgba(245, 158, 11, 0.09);
             border: 1px solid rgba(245, 158, 11, 0.25);
-            border-radius: 14px;
-            padding: 14px 16px;
-            margin-top: 12px;
-        }
-        .k-checkup-urgent > svg { width: 20px; height: 20px; stroke: #f59e0b; stroke-width: 2; flex-shrink: 0; margin-top: 2px; }
-        .k-checkup-urgent__title { font-size: 13.5px; font-weight: 800; color: #f59e0b; margin-bottom: 4px; }
-        .k-checkup-urgent p { font-size: 13px; line-height: 1.9; color: var(--k-text-dim); }
-        .k-checkup-cta {
-            margin: 22px 0 0; width: 100%;
-            padding: 16px;
-            border: none;
             border-radius: 16px;
+            padding: 18px 20px;
+            margin-top: 14px;
+        }
+        .k-checkup-urgent > svg { width: 24px; height: 24px; stroke: #f59e0b; stroke-width: 2; flex-shrink: 0; margin-top: 2px; }
+        .k-checkup-urgent__title { font-size: 16px; font-weight: 800; color: #f59e0b; margin-bottom: 6px; }
+        .k-checkup-urgent p { font-size: 15px; line-height: 1.9; color: var(--k-text-dim); }
+        .k-checkup-cta {
+            margin: 26px 0 0; width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 20px;
             background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
             color: #fff;
-            font-size: 16.5px; font-weight: 800;
+            font-size: 20px; font-weight: 800;
             cursor: pointer;
             box-shadow: 0 8px 24px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
             transition: all var(--k-transition);
@@ -761,45 +740,494 @@
            ══════════════════════════════════════════════════════════════════════ */
         body.portrait .k-container {
             flex-direction: column;
-            gap: 22px;
+            gap: 30px;
         }
         body.portrait .k-services {
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-        }
-        body.portrait .k-service-card {
-            width: 280px;
-            height: 86px;
             flex-direction: row;
-            justify-content: flex-start;
-            padding-right: 22px;
             gap: 16px;
         }
-        body.portrait .k-service-check { top: auto; bottom: 14px; left: 16px; }
-        body.portrait .k-service-icon { width: 48px; height: 48px; border-radius: 14px; }
-        body.portrait .k-service-icon svg { width: 24px; height: 24px; }
-        body.portrait .k-title { font-size: 24px; }
+        body.portrait .k-service-card {
+            flex: 1;
+            height: 120px;
+        }
+        body.portrait .k-service-card.k-service-card--primary {
+            height: 150px;
+        }
+        body.portrait .k-service-card.k-service-card--primary .k-service-icon {
+            width: 56px; height: 56px;
+        }
+        body.portrait .k-title { font-size: 28px; }
 
         /* ══════════════════════════════════════════════════════════════════════
            موبایل
            ══════════════════════════════════════════════════════════════════════ */
         @media (max-width: 600px) {
-            .k-container { padding: 20px; gap: 16px; }
-            .k-logo { width: 60px; height: 60px; border-radius: 18px; }
-            .k-logo svg { width: 30px; height: 30px; }
-            .k-title { font-size: 20px; }
-            .k-service-card { width: 100% !important; }
-            .k-take-btn { width: 100%; font-size: 18px; }
+            .k-container { padding: 20px; gap: 22px; }
+            .k-logo { width: 100px; height: 100px; border-radius: 28px; }
+            .k-logo img { width: 80px; height: 80px; }
+            .k-title { font-size: 24px; }
+            .k-subtitle { font-size: 16px; }
+            .k-main-card { padding: 24px; gap: 20px; }
+            .k-main-card__title { font-size: 20px; }
+            .k-services { flex-direction: column; gap: 14px; }
+            .k-service-card { height: 100px; }
+            .k-service-card.k-service-card--primary .k-service-label { font-size: 22px; }
+            .k-clock { padding: 14px 20px; gap: 12px; }
+            .k-clock-icon { width: 44px; height: 44px; }
+            .k-clock-icon svg { width: 24px; height: 24px; }
+            .k-clock-time { font-size: 26px; }
+            .k-clock-date { font-size: 14px; }
         }
 
         /* صفحه‌های کوتاه: محتوا از بالا شروع میشه تا چیزی بریده نشه */
         @media (max-height: 820px) {
-            .k-container { justify-content: flex-start; gap: 14px; padding: 20px 24px; }
-            .k-logo { width: 64px; height: 64px; border-radius: 18px; }
-            .k-logo svg { width: 32px; height: 32px; }
-            .k-title { font-size: 22px; }
-            .k-take-btn { height: 74px; }
+            .k-container { justify-content: flex-start; gap: 18px; padding: 20px 24px; }
+            .k-logo { width: 90px; height: 90px; border-radius: 24px; }
+            .k-logo img { width: 72px; height: 72px; }
+            .k-title { font-size: 26px; }
+            .k-main-card { padding: 22px; gap: 16px; }
+            .k-service-card { height: 110px; }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           فوتر
+           ══════════════════════════════════════════════════════════════════════ */
+        .k-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 32px;
+            background: rgba(255,255,255,0.4);
+            border-top: 1px solid rgba(0,0,0,0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            flex-shrink: 0;
+            font-size: 13px;
+            color: var(--k-text-dim);
+        }
+        body.dark-mode .k-footer { background: rgba(30,32,48,0.6); border-top-color: rgba(255,255,255,0.04); }
+        .k-footer-brand { font-weight: 700; }
+        .k-footer-sep { color: rgba(0,0,0,0.1); }
+        body.dark-mode .k-footer-sep { color: rgba(255,255,255,0.1); }
+        .k-footer-company { font-weight: 500; }
+        .k-footer-tm { font-weight: 900; }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           فرم بیمار (مرحله‌ای)
+           ══════════════════════════════════════════════════════════════════════ */
+        .k-patient-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(8,12,24,0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        .k-patient-overlay.visible { display: flex; }
+
+        .k-patient-card {
+            position: relative;
+            width: 560px; max-width: 94vw;
+            max-height: 90vh;
+            border-radius: 28px;
+            border: 1px solid var(--k-border-strong);
+            background: var(--k-card-solid);
+            box-shadow: var(--k-shadow-lg);
+            animation: k-modalIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .k-patient-card::before {
+            content: '';
+            position: absolute; top: 0; right: 15%; left: 15%;
+            height: 4px; border-radius: 0 0 4px 4px;
+            background: linear-gradient(90deg, var(--k-accent), var(--c-purple), var(--k-gold));
+        }
+
+        /* ── هدر ── */
+        .k-patient-header {
+            display: flex; align-items: center; gap: 14px;
+            padding: 22px 28px 16px;
+            border-bottom: 1px solid var(--k-border);
+        }
+        .k-patient-header-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-purple));
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-patient-header-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2; }
+        .k-patient-header-text h2 { font-size: 20px; font-weight: 800; color: var(--k-text); margin: 0; }
+        .k-patient-header-text p { font-size: 13px; color: var(--k-text-dim); margin: 2px 0 0; }
+
+        /* ── نوار پیشرفت ── */
+        .k-progress {
+            display: flex; gap: 4px; padding: 14px 28px 0;
+        }
+        .k-progress-dot {
+            flex: 1; height: 4px; border-radius: 2px;
+            background: var(--k-border);
+            transition: background 0.3s ease;
+        }
+        .k-progress-dot.active { background: var(--k-accent); }
+        .k-progress-dot.done { background: var(--k-success); }
+
+        /* ── بدنه مرحله‌ای ── */
+        .k-step-body {
+            flex: 1; overflow-y: auto; padding: 28px;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 260px;
+        }
+
+        .k-step {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: k-stepIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .k-step.active { display: flex; }
+        @keyframes k-stepIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .k-step-icon {
+            width: 72px; height: 72px; border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 18px;
+        }
+        .k-step-icon svg { width: 34px; height: 34px; stroke-width: 1.8; }
+
+        .k-step-title {
+            font-size: 22px; font-weight: 800; color: var(--k-text);
+            margin-bottom: 6px; text-align: center;
+        }
+        .k-step-hint {
+            font-size: 14px; color: var(--k-text-dim);
+            margin-bottom: 24px; text-align: center;
+        }
+
+        .k-step-input {
+            width: 100%; max-width: 400px; height: 60px;
+            border-radius: 16px;
+            border: 2px solid var(--k-border);
+            background: var(--k-card);
+            color: var(--k-text);
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 22px; font-weight: 600;
+            padding: 0 20px;
+            text-align: center;
+            outline: none;
+            transition: all var(--k-transition);
+            direction: rtl;
+        }
+        .k-step-input:focus {
+            border-color: var(--k-accent);
+            box-shadow: 0 0 0 4px rgba(14,165,233,0.12);
+        }
+        .k-step-input::placeholder { color: var(--k-text-muted); font-size: 18px; }
+        .k-step-input.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+        }
+
+        .k-step-select {
+            width: 100%; max-width: 400px; height: 60px;
+            border-radius: 16px;
+            border: 2px solid var(--k-border);
+            background: var(--k-card);
+            color: var(--k-text);
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 18px; font-weight: 600;
+            padding: 0 20px;
+            text-align: center;
+            text-align-last: center;
+            outline: none;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            -webkit-appearance: none; appearance: none;
+        }
+        .k-step-select:focus {
+            border-color: var(--k-accent);
+            box-shadow: 0 0 0 4px rgba(14,165,233,0.12);
+        }
+
+        /* ── دکمه‌های انتخاب بیمه ── */
+        .k-insurance-options {
+            display: flex; flex-direction: column; gap: 12px;
+            width: 100%; max-width: 400px;
+        }
+        .k-insurance-opt {
+            width: 100%; height: 60px;
+            border-radius: 16px;
+            border: 2px solid var(--k-border);
+            background: var(--k-card);
+            color: var(--k-text);
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 17px; font-weight: 600;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .k-insurance-opt:active { transform: scale(0.97); }
+        .k-insurance-opt.selected {
+            border-color: var(--k-accent);
+            background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(99,102,241,0.05));
+            color: var(--k-accent);
+            box-shadow: 0 4px 16px var(--k-glow);
+        }
+
+        .k-step-error {
+            display: none;
+            align-items: center; gap: 8px;
+            margin-top: 16px; padding: 10px 16px;
+            border-radius: 12px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #ef4444;
+            font-size: 14px; font-weight: 600;
+            width: 100%; max-width: 400px;
+        }
+        .k-step-error.visible { display: flex; }
+        .k-step-error svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ── فوتر فرم ── */
+        .k-patient-footer {
+            display: flex; gap: 12px;
+            padding: 16px 28px 20px;
+            border-top: 1px solid var(--k-border);
+        }
+        .k-patient-back {
+            height: 54px; width: 54px;
+            border-radius: 14px;
+            border: 1.5px solid var(--k-border-strong);
+            background: transparent;
+            color: var(--k-text-dim);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--k-transition);
+            flex-shrink: 0;
+        }
+        .k-patient-back:hover { border-color: var(--k-accent); color: var(--k-accent); }
+        .k-patient-back svg { width: 22px; height: 22px; }
+        .k-patient-back.hidden { visibility: hidden; }
+
+        .k-patient-next {
+            flex: 1; height: 54px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            color: #fff;
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 17px; font-weight: 700;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            box-shadow: 0 4px 16px rgba(14,165,233,0.25);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .k-patient-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+        .k-patient-next:active { transform: scale(0.97); }
+        .k-patient-next svg { width: 20px; height: 20px; }
+
+        .k-patient-skip {
+            height: 54px; padding: 0 20px;
+            border-radius: 14px;
+            border: 1.5px solid var(--k-border-strong);
+            background: transparent;
+            color: var(--k-text-dim);
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer;
+            transition: all var(--k-transition);
+            flex-shrink: 0;
+        }
+        .k-patient-skip:hover { border-color: var(--k-text-dim); color: var(--k-text); }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           صفحه انتخاب نوع پذیرش
+           ══════════════════════════════════════════════════════════════════════ */
+        .k-choice-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(8,12,24,0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            align-items: center; justify-content: center;
+        }
+        .k-choice-overlay.visible { display: flex; }
+
+        .k-choice-card {
+            position: relative;
+            width: 500px; max-width: 94vw;
+            border-radius: 28px;
+            border: 1px solid var(--k-border-strong);
+            background: var(--k-card-solid);
+            box-shadow: var(--k-shadow-lg);
+            animation: k-modalIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+            overflow: hidden;
+        }
+        .k-choice-card::before {
+            content: '';
+            position: absolute; top: 0; right: 15%; left: 15%;
+            height: 4px; border-radius: 0 0 4px 4px;
+            background: linear-gradient(90deg, var(--k-accent), var(--c-purple), var(--k-gold));
+        }
+
+        .k-choice-header {
+            display: flex; align-items: center; gap: 14px;
+            padding: 24px 28px 18px;
+            border-bottom: 1px solid var(--k-border);
+        }
+        .k-choice-header-icon {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-purple));
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-choice-header-icon svg { width: 26px; height: 26px; stroke: #fff; stroke-width: 2; }
+        .k-choice-header h2 { font-size: 22px; font-weight: 800; color: var(--k-text); margin: 0; }
+        .k-choice-header p { font-size: 14px; color: var(--k-text-dim); margin: 4px 0 0; }
+        .k-choice-header div:nth-child(2) { flex: 1; }
+
+        .k-choice-close {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--k-border-strong);
+            background: transparent;
+            color: var(--k-text-dim);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--k-transition);
+            flex-shrink: 0;
+        }
+        .k-choice-close:hover { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.06); }
+        .k-choice-close:active { transform: scale(0.92); }
+        .k-choice-close svg { width: 20px; height: 20px; }
+
+        .k-choice-body {
+            padding: 20px 28px 28px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        .k-choice-btn {
+            display: flex; align-items: center; gap: 16px;
+            width: 100%; padding: 18px 20px;
+            border-radius: 18px;
+            border: 1.5px solid var(--k-border);
+            background: var(--k-card);
+            cursor: pointer;
+            transition: all var(--k-transition);
+            text-align: right;
+        }
+        .k-choice-btn:hover {
+            border-color: var(--k-border-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--k-shadow-md);
+        }
+        .k-choice-btn:active { transform: scale(0.98); }
+
+        .k-choice-btn__icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-choice-btn__icon svg { width: 26px; height: 26px; stroke-width: 1.8; }
+
+        .k-choice-btn__text { flex: 1; }
+        .k-choice-btn__title { font-size: 17px; font-weight: 700; color: var(--k-text); display: block; }
+        .k-choice-btn__desc { font-size: 13px; color: var(--k-text-dim); margin-top: 2px; display: block; }
+
+        .k-choice-btn__arrow {
+            width: 20px; height: 20px; stroke: var(--k-text-muted); flex-shrink: 0;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           کیبورد مجازی
+           ══════════════════════════════════════════════════════════════════════ */
+        .k-keyboard {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            z-index: 300;
+            background: var(--k-card-solid);
+            border-top: 1px solid var(--k-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+            padding: 12px 8px 24px;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+        }
+        .k-keyboard.visible { transform: translateY(0); }
+
+        .k-kb-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 8px 10px;
+        }
+        .k-kb-toolbar-label { font-size: 13px; font-weight: 600; color: var(--k-text-dim); }
+        .k-kb-close {
+            width: 36px; height: 36px; border-radius: 10px;
+            border: 1px solid var(--k-border); background: var(--k-card);
+            color: var(--k-text-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all var(--k-transition);
+            flex-shrink: 0;
+        }
+        .k-kb-close:hover { color: var(--k-accent); border-color: var(--k-accent); }
+        .k-kb-close svg { width: 18px; height: 18px; }
+
+        .k-kb-row {
+            display: flex; justify-content: center; gap: 6px;
+            margin-bottom: 6px;
+        }
+        .k-kb-key {
+            min-width: 38px; height: 52px;
+            border-radius: 12px;
+            border: 1px solid var(--k-border);
+            background: var(--k-card);
+            color: var(--k-text);
+            font-family: 'Vazir', Tahoma, Arial, sans-serif;
+            font-size: 18px; font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.12s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            flex: 1;
+            max-width: 52px;
+        }
+        .k-kb-key:active {
+            transform: scale(0.92);
+            background: var(--k-accent);
+            color: #fff;
+            border-color: var(--k-accent);
+        }
+        .k-kb-key--wide { min-width: 72px; max-width: 80px; font-size: 14px; }
+        .k-kb-key--space { flex: 4; max-width: none; font-size: 14px; }
+        .k-kb-key--action {
+            background: linear-gradient(135deg, var(--k-accent), #6366f1);
+            color: #fff; border-color: transparent;
+            font-size: 14px;
+        }
+        .k-kb-key--action:active { background: #0284c7; }
+        .k-kb-key--shift-active { background: var(--k-accent); color: #fff; border-color: var(--k-accent); }
+
+        .k-kb-num {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            max-width: 300px; margin: 0 auto;
+        }
+        .k-kb-num .k-kb-key { max-width: none; min-width: 0; height: 58px; font-size: 22px; font-weight: 700; }
+        .k-kb-num .k-kb-key--0 { grid-column: 2; }
+
+        @media (max-width: 600px) {
+            .k-patient-card { width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+            .k-step-body { padding: 20px; min-height: 220px; }
+            .k-step-input { height: 54px; font-size: 20px; }
+            .k-step-title { font-size: 20px; }
+            .k-insurance-opt { height: 52px; font-size: 16px; }
+            .k-kb-key { height: 48px; font-size: 16px; min-width: 32px; }
+            .k-kb-num .k-kb-key { height: 52px; font-size: 20px; }
         }
     </style>
 </head>
@@ -817,8 +1245,16 @@
 
     <!-- ساعت -->
     <div class="k-clock">
-        <div class="k-clock-time" id="kClockTime">--:--</div>
-        <div class="k-clock-date" id="kClockDate">---</div>
+        <div class="k-clock-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+        </div>
+        <div class="k-clock-info">
+            <div class="k-clock-time" id="kClockTime">--:--</div>
+            <div class="k-clock-date" id="kClockDate">---</div>
+        </div>
     </div>
 
     <!-- دکمه تغییر تم روشن/تاریک -->
@@ -847,87 +1283,63 @@
         <!-- لوگو + عنوان -->
         <div class="k-logo-section">
             <div class="k-logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                    <rect x="9" y="3" width="6" height="4" rx="1"/>
-                    <path d="M9 14l2 2 4-4"/>
-                </svg>
+                <img src="/static/images/lab-logo.png" alt="لوگوی آزمایشگاه">
             </div>
-            <div class="k-title">آزمایشگاه پاتوبیولوژی</div>
+            <div class="k-title">آزمایشگاه تشخیص طبی دکتر امینی</div>
             <div class="k-subtitle">سیستم نوبت‌دهی خودکار</div>
         </div>
 
-        <!-- وضعیت صف -->
-        <div class="k-queue-badge">
-            <span class="k-queue-dot"></span>
-            <span><span id="queueCount">0</span> نفر در صف</span>
+        <!-- باکس اصلی اقدامات -->
+        <div class="k-main-card">
+            <div class="k-main-card__header">
+                <div class="k-main-card__title">
+                    <span class="k-main-card__title-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </span>
+                    انتخاب سرویس
+                </div>
+                <div class="k-queue-badge">
+                    <span class="k-queue-dot"></span>
+                    <span><span id="queueCount">0</span> نفر در صف</span>
+                </div>
+            </div>
+
+            <!-- انتخاب سرویس -->
+            <div class="k-services">
+                <button class="k-service-card k-service-card--primary" data-service="پذیرش" onclick="selectService(this)">
+                    <div class="k-service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                    </div>
+                    <span class="k-service-label">پذیرش</span>
+                </button>
+                <button class="k-service-card" data-service="نمونه‌گیری" onclick="selectService(this)">
+                    <div class="k-service-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 21h10"/>
+                            <rect x="10" y="9" width="4" height="12" rx="2"/>
+                            <path d="M12 9V5a2 2 0 00-2-2H8a2 2 0 00-2 2v4"/>
+                            <path d="M12 9V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
+                        </svg>
+                    </div>
+                    <span class="k-service-label">نمونه‌گیری</span>
+                </button>
+            </div>
         </div>
 
-        <!-- انتخاب سرویس -->
-        <div class="k-services">
-            <button class="k-service-card selected" data-service="پذیرش" onclick="selectService(this)">
-                <div class="k-service-check">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                </div>
-                <div class="k-service-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                        <circle cx="8.5" cy="7" r="4"/>
-                        <line x1="20" y1="8" x2="20" y2="14"/>
-                        <line x1="23" y1="11" x2="17" y2="11"/>
-                    </svg>
-                </div>
-                <span class="k-service-label">پذیرش</span>
-            </button>
-            <button class="k-service-card" data-service="نمونه‌گیری" onclick="selectService(this)">
-                <div class="k-service-check">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                </div>
-                <div class="k-service-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M7 21h10"/>
-                        <rect x="10" y="9" width="4" height="12" rx="2"/>
-                        <path d="M12 9V5a2 2 0 00-2-2H8a2 2 0 00-2 2v4"/>
-                        <path d="M12 9V5a2 2 0 012-2h2a2 2 0 012 2v4"/>
-                    </svg>
-                </div>
-                <span class="k-service-label">نمونه‌گیری</span>
-            </button>
-        </div>
-
-        <!-- دکمه دریافت نوبت -->
-        <button class="k-take-btn" onclick="takeTicket()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            <span>نوبت بگیرید</span>
-        </button>
-
-        <!-- دکمه ورود به بخش چکاپ‌ها -->
-        <button class="k-checkup-entry" onclick="openCheckups()">
-            <span class="k-checkup-entry__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-                    <rect x="9" y="3" width="6" height="4" rx="1"/>
-                    <path d="M8 12h2M8 16h2M14 12h2M14 16h2"/>
-                </svg>
-            </span>
-            <span class="k-checkup-entry__text">
-                <strong>چکاپ‌های تخصصی و عمومی</strong>
-                <span>مشاهده پنل‌ها و توضیحات کامل</span>
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m15 18-6-6 6-6"/>
-            </svg>
-        </button>
-
-        <div class="k-hint">روی دکمه بالا لمس کنید</div>
     </div>
+
+    <!-- فوتر -->
+    <footer class="k-footer">
+        <span class="k-footer-brand">سامانه نوبتدهی</span>
+        <span class="k-footer-sep">|</span>
+        <span class="k-footer-company">محصول شرکت هنر افزار ایرانیان</span>
+        <span class="k-footer-tm">&#x00AE;</span>
+    </footer>
 
     <!-- بخش چکاپ‌های تخصصی و عمومی -->
     <div class="k-checkup-overlay" id="checkupOverlay">
@@ -961,6 +1373,205 @@
             <div class="k-modal-hint">لطفاً برگه نوبت خود را از دستگاه چاپ دریافت کنید</div>
             <button class="k-modal-close" onclick="closeModal()">بستن</button>
         </div>
+    </div>
+
+    <!-- صفحه انتخاب نوع پذیرش -->
+    <div class="k-choice-overlay" id="choiceOverlay">
+        <div class="k-choice-card">
+            <div class="k-choice-header">
+                <div class="k-choice-header-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>نوع پذیرش</h2>
+                    <p>لطفاً نوع درخواست خود را انتخاب کنید</p>
+                </div>
+                <button class="k-choice-close" onclick="closeChoice()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="k-choice-body">
+                <button class="k-choice-btn" onclick="chooseCheckup()">
+                    <span class="k-choice-btn__icon" style="background:rgba(139,92,246,0.1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </span>
+                    <span class="k-choice-btn__text">
+                        <span class="k-choice-btn__title">چکاپ آزاد</span>
+                        <span class="k-choice-btn__desc">انتخاب پنل چکاپ تخصصی و عمومی</span>
+                    </span>
+                    <svg class="k-choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="k-choice-btn" onclick="chooseFreeTest()">
+                    <span class="k-choice-btn__icon" style="background:rgba(14,165,233,0.1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21h10"/><rect x="10" y="9" width="4" height="12" rx="2"/><path d="M12 9V5a2 2 0 00-2-2H8a2 2 0 00-2 2v4"/><path d="M12 9V5a2 2 0 012-2h2a2 2 0 012 2v4"/></svg>
+                    </span>
+                    <span class="k-choice-btn__text">
+                        <span class="k-choice-btn__title">تست آزاد</span>
+                        <span class="k-choice-btn__desc">آزمایش بدون نسخه پزشک</span>
+                    </span>
+                    <svg class="k-choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="k-choice-btn" onclick="choosePrescription()">
+                    <span class="k-choice-btn__icon" style="background:rgba(34,197,94,0.1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M8 12h8M8 16h8"/></svg>
+                    </span>
+                    <span class="k-choice-btn__text">
+                        <span class="k-choice-btn__title">نسخه‌دار</span>
+                        <span class="k-choice-btn__desc">دارای نسخه پزشک معالج</span>
+                    </span>
+                    <svg class="k-choice-btn__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- فرم بیمار (مرحله‌ای) -->
+    <div class="k-patient-overlay" id="patientOverlay">
+        <div class="k-patient-card">
+            <div class="k-patient-header">
+                <div class="k-patient-header-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                </div>
+                <div class="k-patient-header-text">
+                    <h2>اطلاعات بیمار</h2>
+                    <p id="stepLabel">مرحله ۱ از ۶</p>
+                </div>
+            </div>
+
+            <div class="k-progress" id="progressBar"></div>
+
+            <div class="k-step-body">
+                <!-- مرحله ۱: نام -->
+                <div class="k-step active" data-step="0">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #0ea5e91a, #6366f11a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">نام و نام خانوادگی</div>
+                    <div class="k-step-hint">نام کامل خود را وارد کنید</div>
+                    <input class="k-step-input" id="pf-name" type="text" placeholder="مثال: علی رضایی" data-kb="persian" readonly>
+                    <div class="k-step-error" id="err-name">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>لطفاً نام خود را وارد کنید</span>
+                    </div>
+                </div>
+
+                <!-- مرحله ۲: سن -->
+                <div class="k-step" data-step="1">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #8b5cf61a, #a78bfa1a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">سن شما</div>
+                    <div class="k-step-hint">سن خود را به سال وارد کنید</div>
+                    <input class="k-step-input" id="pf-age" type="text" placeholder="مثال: ۳۵" data-kb="number" maxlength="3" readonly>
+                    <div class="k-step-error" id="err-age">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>لطفاً سن معتبر وارد کنید</span>
+                    </div>
+                </div>
+
+                <!-- مرحله ۳: شماره ملی -->
+                <div class="k-step" data-step="2">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #f59e0b1a, #fbbf241a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">شماره ملی</div>
+                    <div class="k-step-hint">کد ملی ۱۰ رقمی خود را وارد کنید</div>
+                    <input class="k-step-input" id="pf-national" type="text" placeholder="۱۲۳۴۵۶۷۸۹۰" data-kb="number" maxlength="10" readonly>
+                    <div class="k-step-error" id="err-national">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>شماره ملی باید ۱۰ رقم باشد</span>
+                    </div>
+                </div>
+
+                <!-- مرحله ۴: شماره تماس -->
+                <div class="k-step" data-step="3">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #14b8a61a, #2dd4bf1a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">شماره تماس</div>
+                    <div class="k-step-hint">شماره موبایل خود را وارد کنید</div>
+                    <input class="k-step-input" id="pf-phone" type="text" placeholder="۰۹۱۲۱۲۳۴۵۶۷" data-kb="number" maxlength="11" readonly>
+                    <div class="k-step-error" id="err-phone">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>شماره تماس معتبر نیست (باید با ۰۹ شروع شود)</span>
+                    </div>
+                </div>
+
+                <!-- مرحله ۵: بیمه پایه -->
+                <div class="k-step" data-step="4">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #22c55e1a, #4ade801a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">بیمه پایه</div>
+                    <div class="k-step-hint">در صورت نداشتن بیمه، «ندارم» را بزنید</div>
+                    <div class="k-insurance-options">
+                        <button class="k-insurance-opt" data-val="tamin" onclick="selectInsurance(this)">تأمین اجتماعی</button>
+                        <button class="k-insurance-opt" data-val="servant" onclick="selectInsurance(this)">خدمات درمان</button>
+                        <button class="k-insurance-opt" data-val="nirou" onclick="selectInsurance(this)">نیروهای مسلح</button>
+                        <button class="k-insurance-opt" data-val="none" onclick="selectInsurance(this)">ندارم</button>
+                    </div>
+                </div>
+
+                <!-- مرحله ۶: بیمه تکمیلی -->
+                <div class="k-step" data-step="5">
+                    <div class="k-step-icon" style="background: linear-gradient(135deg, #ec48991a, #f472b61a)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>
+                        </svg>
+                    </div>
+                    <div class="k-step-title">بیمه تکمیلی</div>
+                    <div class="k-step-hint">نام شرکت بیمه تکمیلی خود را وارد کنید</div>
+                    <input class="k-step-input" id="pf-insurance-extra" type="text" placeholder="اختیاری — نام شرکت بیمه" data-kb="persian" readonly>
+                </div>
+            </div>
+
+            <div class="k-patient-footer">
+                <button class="k-patient-back hidden" id="btnBack" onclick="prevStep()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="k-patient-skip" id="btnSkip" onclick="prevStep()" style="display:none">رد شدن</button>
+                <button class="k-patient-next" id="btnNext" onclick="nextStep()">
+                    <span id="btnNextText">مرحله بعد</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- کیبورد مجازی -->
+    <div class="k-keyboard" id="virtualKeyboard">
+        <div class="k-kb-toolbar">
+            <span class="k-kb-toolbar-label" id="kbLabel">ورود متن</span>
+            <button class="k-kb-close" ontouchend="event.preventDefault();closeKeyboard()" onclick="closeKeyboard()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div id="kbBody"></div>
     </div>
 
     <script>
@@ -1013,23 +1624,329 @@
             document.querySelectorAll('.k-service-card').forEach(function (c) { c.classList.remove('selected'); });
             el.classList.add('selected');
             selectedService = el.dataset.service;
+            startFlow(selectedService);
         }
 
-        /* ── دریافت نوبت ── */
-        async function takeTicket() {
+        function startFlow(service) {
+            if (service === 'پذیرش') {
+                document.getElementById('choiceOverlay').classList.add('visible');
+            } else {
+                showPatientForm(service, null);
+            }
+        }
+
+        function closeChoice() {
+            document.getElementById('choiceOverlay').classList.remove('visible');
+        }
+
+        function chooseCheckup() {
+            closeChoice();
+            openCheckups();
+        }
+
+        function chooseFreeTest() {
+            closeChoice();
+            showPatientForm('تست آزاد', null);
+        }
+
+        function choosePrescription() {
+            closeChoice();
+            showPatientForm('نسخه‌دار', null);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           کیبورد مجازی
+           ═══════════════════════════════════════════════════════════════ */
+        var activeInput = null;
+        var kbShift = false;
+
+        var PERSIAN_ROWS = [
+            ['ض','ص','ث','ق','ف','غ','ع','ه','خ','ح','ج','چ'],
+            ['ش','س','ی','ب','ل','ا','ت','ن','م','ک','گ'],
+            ['ظ','ط','ز','ر','ذ','د','پ','و','ژ']
+        ];
+        var PERSIAN_SHIFT_ROWS = [
+            ['َ','ً','ُ','ٌ','ّ','ْ','ٓ','ٰ','ژ','ِ','ٔ','ٖ'],
+            ['ٛ','ٜ','ٝ','ٞ','ٟ','ۤ','ۥ','ۧ','ۨ','٬','٫'],
+            ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹']
+        ];
+
+        function buildPersianKB() {
+            var html = '';
+            for (var r = 0; r < 3; r++) {
+                html += '<div class="k-kb-row">';
+                var row = kbShift ? PERSIAN_SHIFT_ROWS[r] : PERSIAN_ROWS[r];
+                row.forEach(function (ch) {
+                    html += '<button class="k-kb-key" ontouchend="event.preventDefault();kbType(\'' + ch + '\')" onclick="kbType(\'' + ch + '\')">' + ch + '</button>';
+                });
+                html += '</div>';
+            }
+            html += '<div class="k-kb-row">';
+            html += '<button class="k-kb-key k-kb-key--wide" ontouchend="event.preventDefault();kbShiftToggle()" onclick="kbShiftToggle()" id="kbShiftBtn"> CBS</button>';
+            html += '<button class="k-kb-key k-kb-key--space" ontouchend="event.preventDefault();kbType(\' \')" onclick="kbType(\' \')">فاصله</button>';
+            html += '<button class="k-kb-key k-kb-key--wide" ontouchend="event.preventDefault();kbBackspace()" onclick="kbBackspace()">پاک کردن</button>';
+            html += '</div>';
+            return html;
+        }
+
+        function buildNumberKB() {
+            var keys = ['۱','۲','۳','۴','۵','۶','۷','۸','۹','۰'];
+            var html = '<div class="k-kb-num">';
+            keys.forEach(function (k) {
+                html += '<button class="k-kb-key" ontouchend="event.preventDefault();kbType(\'' + k + '\')" onclick="kbType(\'' + k + '\')">' + k + '</button>';
+            });
+            html += '<button class="k-kb-key k-kb-key--wide" ontouchend="event.preventDefault();kbBackspace()" onclick="kbBackspace()" style="grid-column:3">پاک کردن</button>';
+            html += '</div>';
+            return html;
+        }
+
+        function openKeyboard(input) {
+            activeInput = input;
+            var kb = document.getElementById('virtualKeyboard');
+            var body = document.getElementById('kbBody');
+            var label = document.getElementById('kbLabel');
+            var type = input.dataset.kb || 'persian';
+            label.textContent = type === 'number' ? 'ورود عدد' : 'ورود متن فارسی';
+            body.innerHTML = type === 'number' ? buildNumberKB() : buildPersianKB();
+            kb.classList.add('visible');
+        }
+
+        function closeKeyboard() {
+            document.getElementById('virtualKeyboard').classList.remove('visible');
+            activeInput = null;
+        }
+
+        function kbType(ch) {
+            if (!activeInput) return;
+            activeInput.value += ch;
+            activeInput.focus();
+        }
+
+        function kbBackspace() {
+            if (!activeInput) return;
+            activeInput.value = activeInput.value.slice(0, -1);
+            activeInput.focus();
+        }
+
+        function kbShiftToggle() {
+            kbShift = !kbShift;
+            var btn = document.getElementById('kbShiftBtn');
+            if (btn) btn.classList.toggle('k-kb-key--shift-active', kbShift);
+            if (activeInput) openKeyboard(activeInput);
+        }
+
+        /* ── اتصال فیلدها به کیبورد ── */
+        function bindInputs() {
+            document.querySelectorAll('.k-step-input[data-kb]').forEach(function (inp) {
+                if (inp._bound) return;
+                inp._bound = true;
+                inp.addEventListener('focus', function () { openKeyboard(inp); });
+                inp.addEventListener('click', function () { openKeyboard(inp); });
+                inp.addEventListener('touchstart', function (e) {
+                    openKeyboard(inp);
+                }, { passive: true });
+            });
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           فرم بیمار (مرحله‌ای)
+           ═══════════════════════════════════════════════════════════════ */
+        var STEP_FIELDS = ['pf-name','pf-age','pf-national','pf-phone','pf-insurance-base','pf-insurance-extra'];
+        var STEP_REQUIRED = [true, true, true, true, false, false];
+        var STEP_LABELS = ['نام و نام خانوادگی','سن','شماره ملی','شماره تماس','بیمه پایه','بیمه تکمیلی'];
+        var currentStep = 0;
+        var totalSteps = 6;
+        var pendingService = null;
+        var pendingCheckupId = null;
+        var selectedInsuranceBase = '';
+
+        function buildProgressBar() {
+            var bar = document.getElementById('progressBar');
+            bar.innerHTML = '';
+            for (var i = 0; i < totalSteps; i++) {
+                var dot = document.createElement('div');
+                dot.className = 'k-progress-dot';
+                if (i < currentStep) dot.classList.add('done');
+                if (i === currentStep) dot.classList.add('active');
+                bar.appendChild(dot);
+            }
+        }
+
+        function showStep(idx) {
+            currentStep = idx;
+            document.querySelectorAll('.k-step').forEach(function (s, i) {
+                s.classList.toggle('active', i === idx);
+            });
+            document.getElementById('stepLabel').textContent = 'مرحله ' + faNum(idx + 1) + ' از ' + faNum(totalSteps);
+            buildProgressBar();
+
+            var back = document.getElementById('btnBack');
+            var skip = document.getElementById('btnSkip');
+            var next = document.getElementById('btnNext');
+            var nextText = document.getElementById('btnNextText');
+
+            back.classList.toggle('hidden', idx === 0);
+
+            if (idx === 4) {
+                skip.style.display = 'block';
+            } else {
+                skip.style.display = 'none';
+            }
+
+            if (idx === totalSteps - 1) {
+                nextText.textContent = 'دریافت نوبت';
+            } else {
+                nextText.textContent = 'مرحله بعد';
+            }
+
+            var inp = document.querySelector('.k-step.active .k-step-input');
+            if (inp) {
+                setTimeout(function () { inp.focus(); }, 400);
+            }
+        }
+
+        function faNum(n) {
+            var map = {'0':'۰','1':'۱','2':'۲','3':'۳','4':'۴','5':'۵','6':'۶','7':'۷','8':'۸','9':'۹'};
+            return String(n).replace(/[0-9]/g, function (d) { return map[d]; });
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps - 1) {
+                if (!validateStep(currentStep)) return;
+                showStep(currentStep + 1);
+            } else {
+                submitPatientForm();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) showStep(currentStep - 1);
+        }
+
+        function validateStep(idx) {
+            clearErrors();
+            if (!STEP_REQUIRED[idx]) return true;
+
+            var val = '';
+            if (idx < 4) {
+                val = document.getElementById(STEP_FIELDS[idx]).value.trim();
+            } else if (idx === 4) {
+                val = selectedInsuranceBase;
+            }
+
+            if (!val) {
+                showStepError(idx, STEP_LABELS[idx] + ' را وارد کنید');
+                return false;
+            }
+            if (idx === 1) {
+                var age = parseInt(toEnDigits(val));
+                if (isNaN(age) || age < 1 || age > 120) {
+                    showStepError(idx, 'سن معتبر نیست');
+                    return false;
+                }
+            }
+            if (idx === 2) {
+                if (toEnDigits(val).length !== 10) {
+                    showStepError(idx, 'شماره ملی باید ۱۰ رقم باشد');
+                    return false;
+                }
+            }
+            if (idx === 3) {
+                var en = toEnDigits(val);
+                if (en.length !== 11 || en.substring(0, 2) !== '09') {
+                    showStepError(idx, 'شماره تماس معتبر نیست');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function showStepError(idx, msg) {
+            var step = document.querySelectorAll('.k-step')[idx];
+            var err = step.querySelector('.k-step-error');
+            var inp = step.querySelector('.k-step-input, .k-step-select');
+            if (err) { err.querySelector('span').textContent = msg; err.classList.add('visible'); }
+            if (inp) inp.classList.add('error');
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.k-step-error').forEach(function (e) { e.classList.remove('visible'); });
+            document.querySelectorAll('.k-step-input, .k-step-select').forEach(function (i) { i.classList.remove('error'); });
+        }
+
+        function selectInsurance(el) {
+            document.querySelectorAll('.k-insurance-opt').forEach(function (b) { b.classList.remove('selected'); });
+            el.classList.add('selected');
+            selectedInsuranceBase = el.dataset.val;
+        }
+
+        function showPatientForm(service, checkupId) {
+            pendingService = service || selectedService;
+            pendingCheckupId = checkupId || null;
+            selectedInsuranceBase = '';
+            document.getElementById('pf-name').value = '';
+            document.getElementById('pf-age').value = '';
+            document.getElementById('pf-national').value = '';
+            document.getElementById('pf-phone').value = '';
+            document.getElementById('pf-insurance-extra').value = '';
+            document.querySelectorAll('.k-insurance-opt').forEach(function (b) { b.classList.remove('selected'); });
+            clearErrors();
+            document.getElementById('patientOverlay').classList.add('visible');
+            showStep(0);
+            bindInputs();
+        }
+
+        function closePatientForm() {
+            document.getElementById('patientOverlay').classList.remove('visible');
+            closeKeyboard();
+            pendingService = null;
+            pendingCheckupId = null;
+        }
+
+        function toEnDigits(s) {
+            var map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+            return s.replace(/[۰-۹]/g, function (d) { return map[d] || d; });
+        }
+
+        function submitPatientForm() {
+            if (!validateStep(currentStep)) return;
+
+            var patientData = {
+                name: document.getElementById('pf-name').value.trim(),
+                age: toEnDigits(document.getElementById('pf-age').value.trim()),
+                national_id: toEnDigits(document.getElementById('pf-national').value.trim()),
+                phone: toEnDigits(document.getElementById('pf-phone').value.trim()),
+                insurance_base: selectedInsuranceBase === 'none' ? '' : selectedInsuranceBase,
+                insurance_extra: document.getElementById('pf-insurance-extra').value.trim()
+            };
+
+            closePatientForm();
+            if (pendingCheckupId) {
+                closeCheckups();
+                issueTicket(pendingService, patientData);
+            } else {
+                issueTicket(pendingService, patientData);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           صدور نوبت
+           ═══════════════════════════════════════════════════════════════ */
+
+        async function issueTicket(service, patientData, checkupId) {
             try {
+                var payload = { service: service, patient: patientData };
                 var resp = await fetch('/api/queue/take', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ service: selectedService })
+                    body: JSON.stringify(payload)
                 });
                 var data = await resp.json();
                 if (!resp.ok) return;
                 var ticket = data.ticket || {};
                 document.getElementById('modalNumber').textContent = ticket.persian_number || ticket.number || '--';
-                document.getElementById('modalService').textContent = (ticket.service || selectedService) + ' — شماره ' + (ticket.number || '');
+                document.getElementById('modalService').textContent = (ticket.service || service) + ' — شماره ' + (ticket.number || '');
                 document.getElementById('ticketModal').classList.add('visible');
-
                 printTicket(ticket);
                 refreshQueueCount();
             } catch (err) {
@@ -1050,7 +1967,7 @@
                 '.service { font-size: 9pt; color: #555; margin-bottom: 1mm; }' +
                 '.date { font-size: 7pt; color: #888; margin-top: 2mm; border-top: 1px dashed #333; padding-top: 2mm; }' +
                 '</style></head><body>' +
-                '<div class="header">آزمایشگاه پاتوبیولوژی</div>' +
+                '<div class="header">آزمایشگاه تشخیص طبی دکتر امینی</div>' +
                 '<div class="service">' + (ticket.service || '') + '</div>' +
                 '<div class="number">' + (ticket.persian_number || ticket.number || '') + '</div>' +
                 '<div class="date">' + new Date().toLocaleDateString('fa-IR') + ' — ' + new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'}) + '</div>' +
@@ -1081,6 +1998,7 @@
                     'آنالیز کامل ادرار'
                 ],
                 time: 'جواب آزمایش‌های اصلی معمولاً همان روز و حداکثر ۲۴ ساعت بعد حاضر است. ویتامین D و B12 ممکن است تا ۴۸ ساعت طول بکشد.',
+                shortTime: '۲۴ تا ۴۸ ساعت',
                 urgent: 'اگر جواب شما خیلی خارج از محدوده نرمال بود (مثلاً قند خون بالای ۳۰۰ یا چربی بسیار بالا)، حتماً همان روز با پزشک مشورت کنید. اگر علائمی مثل تشنگی شدید، تاری دید یا ضعف دارید، بلافاصله به اورژانس مراجعه کنید.'
             },
             {
@@ -1097,6 +2015,7 @@
                     'انسولین ناشتا'
                 ],
                 time: 'بیشتر هورمون‌ها ظرف ۲۴ تا ۴۸ ساعت جواب میدهند. برخی تست‌های خاص ممکن است تا ۷۲ ساعت زمان ببرند.',
+                shortTime: '۲۴ تا ۷۲ ساعت',
                 urgent: 'اگر TSH خیلی پایین یا خیلی بالا بود (مثلاً بالای ۱۰ یا زیر ۰/۰۱)، حتماً زودتر به پزشک غدد مراجعه کنید. تپش قلب شدید همراه با لرزش دست و کاهش وزن ناگهانی نیاز به بررسی سریع دارد.'
             },
             {
@@ -1113,6 +2032,7 @@
                     'معاینه و مشاوره ژنتیک در صورت نیاز'
                 ],
                 time: 'جواب اکثر آزمایش‌ها همان روز حاضر است. تست تالاسمی (الکترروفورز) معمولاً ۲ تا ۳ روز زمان می‌برد.',
+                shortTime: '۱ تا ۳ روز',
                 urgent: 'اگر نتیجه تالاسمی مینور برای هر دو نفر مثبت بود، حتماً قبل از تصمیم نهایی با مشاور ژنتیک صحبت کنید. برای هپاتیت B مثبت هم درمان وجود دارد و با پزشک در میان بگذارید.'
             },
             {
@@ -1129,6 +2049,7 @@
                     'تریکوموناس'
                 ],
                 time: 'آزمایش‌های خونی ظرف ۲۴ ساعت جواب میدهند. تست‌های PCR حدود ۴۸ تا ۷۲ ساعت زمان می‌برند.',
+                shortTime: '۲۴ تا ۷۲ ساعت',
                 urgent: 'اگر جواب HIV یا سیفلیس شما مثبت شد، نگران نباشید — هر دو قابل درمان و کنترل هستند. همان روز با پزشک عفونی تماس بگیرید. زخم فعال تناسلی همراه تب نیاز به مراجعه سریع دارد.'
             },
             {
@@ -1145,6 +2066,7 @@
                     'الکترولیت‌ها و عملکرد کلیه'
                 ],
                 time: 'اکثر آزمایش‌ها ۲۴ ساعته آماده می‌شوند. لیپوپروتئین(a) ممکن است تا ۷۲ ساعت زمان ببرد.',
+                shortTime: '۲۴ تا ۷۲ ساعت',
                 urgent: 'اگر درد قفسه سینه، تنگی نفس غیرعادی یا درد فک و بازو دارید، منتظر جواب آزمایش نمانید — فوراً به اورژانس مراجعه کنید. آزمایش خون جای اورژانس را نمی‌گیرد.'
             },
             {
@@ -1161,6 +2083,7 @@
                     'ادرار ۲۴ ساعته در صورت نیاز پزشک'
                 ],
                 time: 'قند ناشتا و A1c همان روز جواب میدهند. سایر تست‌ها حداکثر تا ۴۸ ساعت حاضر می‌شوند.',
+                shortTime: '۲۴ تا ۴۸ ساعت',
                 urgent: 'اگر قند تصادفی بالای ۳۰۰ بود یا علائمی مثل تشنگی شدید، تکرر ادرار، بوی استون از دهان و خواب‌آلودگی دارید، فوراً به اورژانس بروید — این علائم می‌تواند نشانه کتواسیدوز خطرناک باشد.'
             },
             {
@@ -1176,6 +2099,7 @@
                     'سونوگرافی تیروئید در صورت توصیه پزشک'
                 ],
                 time: 'TSH و هورمون‌ها ۲۴ ساعته جواب میدهند. آنتی‌بادی‌ها معمولاً ۴۸ ساعت زمان می‌برند.',
+                shortTime: '۲۴ تا ۴۸ ساعت',
                 urgent: 'اگر همراه جواب پرکاری، تپش قلب شدید، تعریق زیاد و کاهش وزن سریع دارید سریع به پزشک مراجعه کنید. تورم گردن با احساس فشار هم نیاز به بررسی سریع دارد.'
             },
             {
@@ -1192,6 +2116,7 @@
                     'کلسیم و فسفر'
                 ],
                 time: 'CBC و آهن همان روز جواب میدهند. ویتامین D و B12 معمولاً ۴۸ ساعت زمان می‌برند.',
+                shortTime: '۲۴ تا ۴۸ ساعت',
                 urgent: 'اگر هموگلوبین شما زیر ۸ بود یا علائم مثل بی‌حالی شدید، تنگی نفس هنگام راه رفتن و تپش قلب دارید، همزمان با دریافت مکمل به پزشک مراجعه کنید.'
             },
             {
@@ -1208,6 +2133,7 @@
                     'بررسی ایمنی سرخجه و آبله مرغان (IgG)'
                 ],
                 time: 'تست بارداری همان روز و اغلب در کمتر از ۲ ساعت جواب میدهد. سایر آزمایش‌ها ۲۴ تا ۴۸ ساعته حاضر می‌شوند.',
+                shortTime: '۲ ساعت تا ۴۸ ساعت',
                 urgent: 'اگر باردار هستید و خونریزی یا درد شدید شکم دارید، فوراً به اورژانس زنان مراجعه کنید — اینها به جواب آزمایش ربطی ندارند و نیاز به معاینه فوری دارند.'
             },
             {
@@ -1224,6 +2150,7 @@
                     'زمان پروترومبین (PT)'
                 ],
                 time: 'آنزیم‌های کبدی و بیلی‌روبین همان روز جواب میدهند. تست‌های هپاتیت ۲۴ تا ۴۸ ساعت زمان می‌برند.',
+                shortTime: '۲۴ تا ۴۸ ساعت',
                 urgent: 'زردی پوست و چشم، ادرار پررنگ مثل چای و درد شدید بالای شکم سمت راست، نشانه مشکلات حاد کبدی است — فوراً به اورژانس مراجعه کنید.'
             }
         ];
@@ -1321,24 +2248,8 @@
         async function takeCheckupTicket(id) {
             var c = CHECKUPS.find(function (x) { return x.id === id; });
             if (!c) return;
-            try {
-                var resp = await fetch('/api/queue/take', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ service: c.name })
-                });
-                var data = await resp.json();
-                if (!resp.ok) return;
-                var ticket = data.ticket || {};
-                closeCheckups();
-                document.getElementById('modalNumber').textContent = ticket.persian_number || ticket.number || '--';
-                document.getElementById('modalService').textContent = c.name + ' — شماره ' + (ticket.number || '');
-                document.getElementById('ticketModal').classList.add('visible');
-                printTicket(ticket);
-                refreshQueueCount();
-            } catch (err) {
-                console.error(err);
-            }
+            closeCheckups();
+            showPatientForm(c.name, c.id);
         }
 
         /* ── شمارنده صف ── */
