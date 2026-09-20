@@ -144,6 +144,7 @@
             align-items: center; justify-content: center;
             gap: 26px;
             padding: 32px;
+            overflow-y: auto;
         }
 
         /* ── نوار ابزار (تم + جهت) ── */
@@ -544,29 +545,219 @@
         }
 
         /* ══════════════════════════════════════════════════════════════════════
-           حالت افقی (LANDSCAPE)
+           بخش چکاپ‌های تخصصی و عمومی
            ══════════════════════════════════════════════════════════════════════ */
-        body.landscape .k-container {
-            flex-direction: row;
-            gap: 56px;
-            padding: 24px 56px;
-        }
-        body.landscape .k-logo-section {
-            align-items: flex-start;
+        .k-checkup-entry {
+            display: flex; align-items: center; gap: 14px;
+            width: 280px; padding: 13px 16px;
+            border-radius: 18px;
+            border: 1.5px dashed var(--k-border-strong);
+            background: var(--k-card);
+            color: var(--k-text);
+            cursor: pointer;
             text-align: right;
-            min-width: 300px;
+            transition: all var(--k-transition);
+            animation: k-fadeSlideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
         }
-        body.landscape .k-title { font-size: 32px; }
-        body.landscape .k-services {
-            flex-direction: row;
-            gap: 16px;
+        .k-checkup-entry:hover {
+            border-color: var(--c-purple);
+            border-style: solid;
+            transform: translateY(-2px);
+            box-shadow: var(--k-shadow-md);
         }
-        body.landscape .k-service-card { width: 180px; height: 118px; }
-        body.landscape .k-take-btn { width: auto; padding: 0 44px; }
-        body.landscape .k-clock { top: 18px; right: auto; left: 96px; }
+        .k-checkup-entry:active { transform: scale(0.97); }
+        .k-checkup-entry__icon {
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            background: rgba(139, 92, 246, 0.12);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-checkup-entry__icon svg { width: 22px; height: 22px; stroke: var(--c-purple); stroke-width: 1.8; }
+        .k-checkup-entry__text { flex: 1; }
+        .k-checkup-entry__text strong { display: block; font-size: 14.5px; font-weight: 700; color: var(--k-text); }
+        .k-checkup-entry__text span { font-size: 12px; color: var(--k-text-dim); }
+        .k-checkup-entry > svg:last-child { width: 18px; height: 18px; stroke: var(--k-text-muted); margin-inline-start: auto; flex-shrink: 0; }
+
+        /* ── اورلی تمام‌صفحه چکاپ‌ها ── */
+        .k-checkup-overlay {
+            position: fixed; inset: 0; z-index: 150;
+            display: none;
+            background: var(--k-bg);
+        }
+        .k-checkup-overlay.visible { display: block; animation: k-overlayIn 0.35s ease both; }
+        @keyframes k-overlayIn {
+            from { opacity: 0; transform: translateY(28px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .k-checkup-shell { position: absolute; inset: 0; display: flex; flex-direction: column; }
+        .k-checkup-header {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--k-border);
+            background: var(--k-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            flex-shrink: 0;
+        }
+        .k-back-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--k-border-strong);
+            background: transparent;
+            color: var(--k-text-dim);
+            font-size: 14px; font-weight: 600;
+            cursor: pointer;
+            transition: all var(--k-transition);
+        }
+        .k-back-btn:hover { color: var(--k-accent); border-color: var(--k-accent); }
+        .k-back-btn:active { transform: scale(0.95); }
+        .k-back-btn svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2; }
+        .k-checkup-header h2 { font-size: 19px; font-weight: 800; color: var(--k-text); }
+        .k-checkup-sub { padding: 12px 24px 2px; color: var(--k-text-dim); font-size: 13px; flex-shrink: 0; }
+
+        .k-checkup-list {
+            flex: 1; overflow-y: auto;
+            padding: 12px 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+            align-content: start;
+        }
+        .k-checkup-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1.5px solid var(--k-border);
+            background: var(--k-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            cursor: pointer;
+            text-align: right;
+            transition: all var(--k-transition);
+            animation: k-fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+            box-shadow: var(--k-shadow-sm);
+        }
+        .k-checkup-card:hover {
+            border-color: var(--cc, var(--k-accent));
+            transform: translateY(-3px);
+            box-shadow: var(--k-shadow-md);
+        }
+        .k-checkup-card:active { transform: scale(0.97); }
+        .k-checkup-card__icon {
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .k-checkup-card__icon svg { width: 26px; height: 26px; stroke: var(--cc); stroke-width: 1.8; }
+        .k-checkup-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .k-checkup-card__body strong { font-size: 16px; color: var(--k-text); font-weight: 700; }
+        .k-checkup-card__body span { font-size: 12.5px; color: var(--k-text-dim); line-height: 1.7; }
+        .k-checkup-card__time {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-style: normal;
+            font-size: 11px; font-weight: 600;
+            color: var(--cc);
+            padding: 4px 10px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+        .k-checkup-card__time svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2; }
+        .k-checkup-card > svg:last-child { width: 18px; height: 18px; stroke: var(--k-text-muted); flex-shrink: 0; margin-inline-start: auto; }
+
+        /* ── صفحه جزئیات چکاپ ── */
+        .k-checkup-detail {
+            position: absolute; inset: 0; z-index: 2;
+            display: none;
+            flex-direction: column;
+            background: var(--k-bg);
+        }
+        .k-checkup-detail.visible { display: flex; animation: k-detailIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        @keyframes k-detailIn {
+            from { opacity: 0; transform: translateX(-36px); }
+            to { opacity: 1; transform: none; }
+        }
+        .k-checkup-detail__scroll { flex: 1; overflow-y: auto; padding: 24px 22px 36px; max-width: 720px; width: 100%; margin: 0 auto; }
+        .k-checkup-detail__hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 22px; }
+        .k-checkup-detail__icon {
+            width: 78px; height: 78px;
+            border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--k-shadow-sm);
+        }
+        .k-checkup-detail__icon svg { width: 38px; height: 38px; stroke-width: 1.8; }
+        .k-checkup-detail__hero h3 { font-size: 23px; font-weight: 800; color: var(--k-text); }
+        .k-checkup-detail__hero p { font-size: 13.5px; color: var(--k-text-dim); }
+        .k-checkup-detail__desc {
+            font-size: 14.5px; line-height: 2.1;
+            color: var(--k-text-dim);
+            background: var(--k-card);
+            border: 1px solid var(--k-border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 4px;
+            text-align: justify;
+        }
+        .k-checkup-section-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 700; color: var(--k-text);
+            margin: 18px 0 10px;
+        }
+        .k-checkup-section-title svg { width: 17px; height: 17px; stroke: var(--cc, var(--k-accent)); stroke-width: 2; }
+        .k-checkup-tests { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .k-checkup-tests li {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--k-card);
+            border: 1px solid var(--k-border);
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-size: 14px; color: var(--k-text);
+            line-height: 1.8;
+        }
+        .k-checkup-tests li svg { width: 16px; height: 16px; stroke: var(--k-success); stroke-width: 2.5; flex-shrink: 0; }
+        .k-checkup-time {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.18);
+            color: var(--k-accent);
+            border-radius: 14px;
+            padding: 13px 16px;
+            font-size: 14px; font-weight: 600;
+            margin-top: 18px;
+            line-height: 1.8;
+        }
+        .k-checkup-time svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
+        .k-checkup-urgent {
+            display: flex; gap: 12px;
+            background: rgba(245, 158, 11, 0.09);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-top: 12px;
+        }
+        .k-checkup-urgent > svg { width: 20px; height: 20px; stroke: #f59e0b; stroke-width: 2; flex-shrink: 0; margin-top: 2px; }
+        .k-checkup-urgent__title { font-size: 13.5px; font-weight: 800; color: #f59e0b; margin-bottom: 4px; }
+        .k-checkup-urgent p { font-size: 13px; line-height: 1.9; color: var(--k-text-dim); }
+        .k-checkup-cta {
+            margin: 22px 0 0; width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--k-accent), var(--c-primary-dark));
+            color: #fff;
+            font-size: 16.5px; font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 24px var(--k-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: all var(--k-transition);
+        }
+        .k-checkup-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--k-glow); }
+        .k-checkup-cta:active { transform: scale(0.97); }
 
         /* ══════════════════════════════════════════════════════════════════════
-           حالت عمودی (PORTRAIT — پیش‌فرض)
+           حالت عمودی (PORTRAIT) — همیشه فعال
            ══════════════════════════════════════════════════════════════════════ */
         body.portrait .k-container {
             flex-direction: column;
@@ -600,6 +791,15 @@
             .k-title { font-size: 20px; }
             .k-service-card { width: 100% !important; }
             .k-take-btn { width: 100%; font-size: 18px; }
+        }
+
+        /* صفحه‌های کوتاه: محتوا از بالا شروع میشه تا چیزی بریده نشه */
+        @media (max-height: 820px) {
+            .k-container { justify-content: flex-start; gap: 14px; padding: 20px 24px; }
+            .k-logo { width: 64px; height: 64px; border-radius: 18px; }
+            .k-logo svg { width: 32px; height: 32px; }
+            .k-title { font-size: 22px; }
+            .k-take-btn { height: 74px; }
         }
     </style>
 </head>
@@ -708,7 +908,43 @@
             <span>نوبت بگیرید</span>
         </button>
 
+        <!-- دکمه ورود به بخش چکاپ‌ها -->
+        <button class="k-checkup-entry" onclick="openCheckups()">
+            <span class="k-checkup-entry__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                    <path d="M8 12h2M8 16h2M14 12h2M14 16h2"/>
+                </svg>
+            </span>
+            <span class="k-checkup-entry__text">
+                <strong>چکاپ‌های تخصصی و عمومی</strong>
+                <span>مشاهده پنل‌ها و توضیحات کامل</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+        </button>
+
         <div class="k-hint">روی دکمه بالا لمس کنید</div>
+    </div>
+
+    <!-- بخش چکاپ‌های تخصصی و عمومی -->
+    <div class="k-checkup-overlay" id="checkupOverlay">
+        <div class="k-checkup-shell">
+            <div class="k-checkup-header">
+                <button class="k-back-btn" onclick="closeCheckups()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                    <span>بازگشت</span>
+                </button>
+                <h2>چکاپ‌های تخصصی و عمومی</h2>
+            </div>
+            <div class="k-checkup-sub">برای مشاهده توضیحات کامل، تست‌ها و زمان جواب، روی هر چکاپ لمس کنید</div>
+            <div class="k-checkup-list" id="checkupList"></div>
+        </div>
+        <div class="k-checkup-detail" id="checkupDetail"></div>
     </div>
 
     <!-- مودال: نوبت صادر شد -->
@@ -748,18 +984,6 @@
                 document.querySelector('.k-icon-sun').style.display = isDark ? 'block' : 'none';
             }
         })();
-        /* ── تشخیص خودکار جهت نمایش (عمودی/افقی) بر اساس ابعاد صفحه ── */
-        (function () {
-            function applyOrientation() {
-                var isLandscape = window.innerWidth > window.innerHeight;
-                document.body.classList.toggle('landscape', isLandscape);
-                document.body.classList.toggle('portrait', !isLandscape);
-            }
-            applyOrientation();
-            window.addEventListener('resize', applyOrientation);
-            window.addEventListener('orientationchange', applyOrientation);
-        })();
-
         /* ── ذرات شناور ── */
         (function () {
             var container = document.getElementById('kParticles');
@@ -839,6 +1063,282 @@
         /* ── بستن مودال ── */
         function closeModal() {
             document.getElementById('ticketModal').classList.remove('visible');
+        }
+
+        /* ── داده‌های چکاپ‌های تخصصی و عمومی ── */
+        var CHECKUPS = [
+            {
+                id: 'general',
+                name: 'چکاپ عمومی سالانه',
+                color: '#0ea5e9',
+                desc: 'این چکاپ برای همه افرادی که می‌خواهن از سلامت کلی بدنشون مطمئن بشن مناسبه. با یه آزمایش ساده خون و ادرار، وضعیت قند، چربی، کلیه، کبد و کم‌خونی شما بررسی میشه. اگه سالم هستید ولی سالانه چکاپ ندادید، این بهترین نقطه شروعه.',
+                tests: [
+                    'قند خون ناشتا و هموگلوبین A1c (قند ۳ ماه اخیر)',
+                    'چربی خون: کلسترول، تری‌گلیسیرید، HDL و LDL',
+                    'عملکرد کلیه: اوره و کراتینین',
+                    'عملکرد کبد: آنزیم‌های کبدی (AST، ALT، ALP)',
+                    'کم‌خونی و ویتامین‌ها: CBC، آهن، ویتامین D و B12',
+                    'آنالیز کامل ادرار'
+                ],
+                time: 'جواب آزمایش‌های اصلی معمولاً همان روز و حداکثر ۲۴ ساعت بعد حاضر است. ویتامین D و B12 ممکن است تا ۴۸ ساعت طول بکشد.',
+                urgent: 'اگر جواب شما خیلی خارج از محدوده نرمال بود (مثلاً قند خون بالای ۳۰۰ یا چربی بسیار بالا)، حتماً همان روز با پزشک مشورت کنید. اگر علائمی مثل تشنگی شدید، تاری دید یا ضعف دارید، بلافاصله به اورژانس مراجعه کنید.'
+            },
+            {
+                id: 'hormone',
+                name: 'چکاپ هورمونی',
+                color: '#8b5cf6',
+                desc: 'هورمون‌ها تنظیم‌کننده تقریباً همه چیز در بدن هستند: خواب، وزن، انرژی، خلق‌وخو و قاعدگی. اگر احساس خستگی دائمی، ریزش مو، تغییر وزن بی‌دلیل یا بی‌نظمی قاعدگی دارید، این پنل به پزشک کمک می‌کند ریشه مشکل را پیدا کند.',
+                tests: [
+                    'TSH، T3 و T4 (عملکرد تیروئید)',
+                    'هورمون‌های زنانه: FSH، LH، استرادیول و پروژسترون',
+                    'هورمون‌های مردانه: تستوسترون آزاد و کلی',
+                    'پرولاکتین (هورمون شیردهی)',
+                    'کورتیزول صبحگاهی (هورمون استرس)',
+                    'انسولین ناشتا'
+                ],
+                time: 'بیشتر هورمون‌ها ظرف ۲۴ تا ۴۸ ساعت جواب میدهند. برخی تست‌های خاص ممکن است تا ۷۲ ساعت زمان ببرند.',
+                urgent: 'اگر TSH خیلی پایین یا خیلی بالا بود (مثلاً بالای ۱۰ یا زیر ۰/۰۱)، حتماً زودتر به پزشک غدد مراجعه کنید. تپش قلب شدید همراه با لرزش دست و کاهش وزن ناگهانی نیاز به بررسی سریع دارد.'
+            },
+            {
+                id: 'marriage',
+                name: 'چکاپ پیش از ازدواج',
+                color: '#f0c040',
+                desc: 'این چکاپ قبل از عقد و ازدواج توصیه میشه تا هر دو نفر از سلامت خودشون و احتمال انتقال برخی بیماری‌ها مطمئن بشن. خیلی از این مشکلات اگر زود مشخص بشن، به‌راحتی قابل درمان یا پیشگیری هستن. این آزمایش‌ها راحت و بدون نیاز به ناشتایی هستن.',
+                tests: [
+                    'گروه خونی و فاکتور Rh دو نفر',
+                    'تالاسمی مینور: CBC و تست هموگلوبین الکترروفورز',
+                    'سازگاری Rh زوج‌ها',
+                    'سیفلیس (VDRL)، هپاتیت B و C و HIV',
+                    'قند خون ناشتا',
+                    'معاینه و مشاوره ژنتیک در صورت نیاز'
+                ],
+                time: 'جواب اکثر آزمایش‌ها همان روز حاضر است. تست تالاسمی (الکترروفورز) معمولاً ۲ تا ۳ روز زمان می‌برد.',
+                urgent: 'اگر نتیجه تالاسمی مینور برای هر دو نفر مثبت بود، حتماً قبل از تصمیم نهایی با مشاور ژنتیک صحبت کنید. برای هپاتیت B مثبت هم درمان وجود دارد و با پزشک در میان بگذارید.'
+            },
+            {
+                id: 'sti',
+                name: 'چکاپ بیماری‌های مقاربتی',
+                color: '#14b8a6',
+                desc: 'این پنل برای کسانیه که می‌خوان از سلامت خودشون در زمینه بیماری‌های منتقله از راه تماس جنسی مطمئن بشن. خیلی از این عفونت‌ها هیچ علائمی ندارن ولی قابل درمان هستن. انجامش خیلی ساده‌ست و همه اطلاعات شما کاملاً محرمانه می‌مونه.',
+                tests: [
+                    'HIV (ویروس نقص ایمنی)',
+                    'هپاتیت B و C',
+                    'سیفلیس (VDRL / RPR)',
+                    'کلامیدیا و سوزاک (PCR)',
+                    'هرپس تناسلی (HSV نوع ۱ و ۲)',
+                    'تریکوموناس'
+                ],
+                time: 'آزمایش‌های خونی ظرف ۲۴ ساعت جواب میدهند. تست‌های PCR حدود ۴۸ تا ۷۲ ساعت زمان می‌برند.',
+                urgent: 'اگر جواب HIV یا سیفلیس شما مثبت شد، نگران نباشید — هر دو قابل درمان و کنترل هستند. همان روز با پزشک عفونی تماس بگیرید. زخم فعال تناسلی همراه تب نیاز به مراجعه سریع دارد.'
+            },
+            {
+                id: 'heart',
+                name: 'چکاپ قلب و عروق',
+                color: '#ef4444',
+                desc: 'این پنل ریسک‌های قلبی شما را بررسی می‌کند: فشار خون، چربی‌های خون و التهاب عروق. اگر بالای ۴۰ سال هستید، سابقه خانوادگی سکته دارید، سیگار مصرف می‌کنید یا فشار خون بالا دارید، این چکاپ برای شماست.',
+                tests: [
+                    'پروفایل کامل چربی خون',
+                    'لیپوپروتئین(a) و ApoA / ApoB (ریسک ژنتیکی قلبی)',
+                    'هموسیستئین',
+                    'hs-CRP (پروتئین واکنشی C حساس)',
+                    'قند خون و هموگلوبین A1c',
+                    'الکترولیت‌ها و عملکرد کلیه'
+                ],
+                time: 'اکثر آزمایش‌ها ۲۴ ساعته آماده می‌شوند. لیپوپروتئین(a) ممکن است تا ۷۲ ساعت زمان ببرد.',
+                urgent: 'اگر درد قفسه سینه، تنگی نفس غیرعادی یا درد فک و بازو دارید، منتظر جواب آزمایش نمانید — فوراً به اورژانس مراجعه کنید. آزمایش خون جای اورژانس را نمی‌گیرد.'
+            },
+            {
+                id: 'diabetes',
+                name: 'چکاپ قند و دیابت',
+                color: '#f59e0b',
+                desc: 'دیابت در مراحل اولیه هیچ علامتی ندارد و معمولاً سال‌ها بی‌صدا پیش میره. این پنل مشخص می‌کنه که سالم هستید، در مرز خطر (قبل از دیابت) هستید یا دیابت دارید. اگر سابقه خانوادگی دیابت یا اضافه‌وزن دارید، سالی یک‌بار این چکاپ رو بدید.',
+                tests: [
+                    'قند خون ناشتا و قند تصادفی',
+                    'هموگلوبین A1c (میانگین قند ۳ ماه اخیر)',
+                    'انسولین ناشتا و مقاومت به انسولین (HOMA-IR)',
+                    'کراتینین و اوره (سلامت کلیه)',
+                    'چربی خون همراه',
+                    'ادرار ۲۴ ساعته در صورت نیاز پزشک'
+                ],
+                time: 'قند ناشتا و A1c همان روز جواب میدهند. سایر تست‌ها حداکثر تا ۴۸ ساعت حاضر می‌شوند.',
+                urgent: 'اگر قند تصادفی بالای ۳۰۰ بود یا علائمی مثل تشنگی شدید، تکرر ادرار، بوی استون از دهان و خواب‌آلودگی دارید، فوراً به اورژانس بروید — این علائم می‌تواند نشانه کتواسیدوز خطرناک باشد.'
+            },
+            {
+                id: 'thyroid',
+                name: 'چکاپ تیروئید کامل',
+                color: '#38bdf8',
+                desc: 'تیروئید موتور بدن است. کم‌کاریش باعث خستگی، اضافه وزن و سرماخوردگی دائمی میشه و پرکاریش باعث تپش قلب، لاغری و بی‌قراری. این پنل تخصصی‌تر از چکاپ هورمونی، تصویر کاملی از تیروئید شما میده.',
+                tests: [
+                    'TSH حساس نسل سوم',
+                    'T4 آزاد (Free T4) و T3 آزاد',
+                    'آنتی‌بادی‌های تیروئید: Anti-TPO و Anti-TG (تیروئید خودایمنی)',
+                    'تیروگلوبولین',
+                    'سونوگرافی تیروئید در صورت توصیه پزشک'
+                ],
+                time: 'TSH و هورمون‌ها ۲۴ ساعته جواب میدهند. آنتی‌بادی‌ها معمولاً ۴۸ ساعت زمان می‌برند.',
+                urgent: 'اگر همراه جواب پرکاری، تپش قلب شدید، تعریق زیاد و کاهش وزن سریع دارید سریع به پزشک مراجعه کنید. تورم گردن با احساس فشار هم نیاز به بررسی سریع دارد.'
+            },
+            {
+                id: 'vitamin',
+                name: 'چکاپ ویتامین و کم‌خونی',
+                color: '#22c55e',
+                desc: 'کمبود ویتامین D و آهن در کشور ما خیلی شایع‌ست و علائمش (خستگی، ریزش مو، ضعف، تغییرات خلقی) معمولاً به چیز دیگه نسبت داده میشه. این پنل دقیقاً مشخص می‌کنه بدنتون چی کم داره تا با یه مکمل ساده برطرف بشه.',
+                tests: [
+                    'ویتامین D (25-OH)',
+                    'ویتامین B12 و فولات',
+                    'آهن سرم، فریتین و ظرفیت اتصال آهن (TIBC)',
+                    'شمارش کامل خون (CBC) برای تشخیص کم‌خونی',
+                    'روی (Zn) و منیزیم',
+                    'کلسیم و فسفر'
+                ],
+                time: 'CBC و آهن همان روز جواب میدهند. ویتامین D و B12 معمولاً ۴۸ ساعت زمان می‌برند.',
+                urgent: 'اگر هموگلوبین شما زیر ۸ بود یا علائم مثل بی‌حالی شدید، تنگی نفس هنگام راه رفتن و تپش قلب دارید، همزمان با دریافت مکمل به پزشک مراجعه کنید.'
+            },
+            {
+                id: 'pregnancy',
+                name: 'چکاپ بارداری و پیش از بارداری',
+                color: '#ec4899',
+                desc: 'اگر قصد بارداری دارید یا تازه باردار شدید، این پنل کمک می‌کند سلامت مادر و جنین از همون اول تضمین بشه. خیلی از ویتامین‌ها و عفونت‌ها اگر قبل یا در سه ماه اول چک بشن، خیلی راحت‌تر مدیریت میشن.',
+                tests: [
+                    'تست بارداری (β-hCG)',
+                    'گروه خونی و Rh مادر',
+                    'CDC کامل و آهن و فریتین',
+                    'ویتامین D و کلسیم',
+                    'هپاتیت B، HIV و سیفلیس',
+                    'بررسی ایمنی سرخجه و آبله مرغان (IgG)'
+                ],
+                time: 'تست بارداری همان روز و اغلب در کمتر از ۲ ساعت جواب میدهد. سایر آزمایش‌ها ۲۴ تا ۴۸ ساعته حاضر می‌شوند.',
+                urgent: 'اگر باردار هستید و خونریزی یا درد شدید شکم دارید، فوراً به اورژانس زنان مراجعه کنید — اینها به جواب آزمایش ربطی ندارند و نیاز به معاینه فوری دارند.'
+            },
+            {
+                id: 'liver',
+                name: 'چکاپ کبد',
+                color: '#d97706',
+                desc: 'کبد یک ارگان ساکت است — تا مشکل بزرگ نشه، علامتی نمیده. اگر الکل مصرف می‌کنید، چاق هستید، داروهای طولانی‌مدت می‌خورید یا سابقه خانوادگی هپاتیت دارید، این چکاپ سالانه برای شماست.',
+                tests: [
+                    'آنزیم‌های کبدی: AST، ALT، ALP و GGT',
+                    'بیلی‌روبین کل و مستقیم',
+                    'پروتئین کل و آلبومین',
+                    'هپاتیت A، B و C (آنتی‌بادی و آنتی‌ژن)',
+                    'شاخص FIB-4 (برآورد چربی و فیبروز کبد)',
+                    'زمان پروترومبین (PT)'
+                ],
+                time: 'آنزیم‌های کبدی و بیلی‌روبین همان روز جواب میدهند. تست‌های هپاتیت ۲۴ تا ۴۸ ساعت زمان می‌برند.',
+                urgent: 'زردی پوست و چشم، ادرار پررنگ مثل چای و درد شدید بالای شکم سمت راست، نشانه مشکلات حاد کبدی است — فوراً به اورژانس مراجعه کنید.'
+            }
+        ];
+
+        /* ── مدیریت بخش چکاپ‌ها ── */
+        function openCheckups() {
+            renderCheckupList();
+            document.getElementById('checkupDetail').classList.remove('visible');
+            document.getElementById('checkupOverlay').classList.add('visible');
+        }
+
+        function closeCheckups() {
+            document.getElementById('checkupOverlay').classList.remove('visible');
+        }
+
+        function renderCheckupList() {
+            var list = document.getElementById('checkupList');
+            list.innerHTML = '';
+            CHECKUPS.forEach(function (c, i) {
+                var card = document.createElement('button');
+                card.className = 'k-checkup-card';
+                card.style.setProperty('--cc', c.color);
+                card.style.animationDelay = (i * 0.05) + 's';
+                card.onclick = function () { showCheckupDetail(c.id); };
+                card.innerHTML =
+                    '<span class="k-checkup-card__icon">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>'
+                    + '</span>'
+                    + '<span class="k-checkup-card__body">'
+                        + '<strong>' + c.name + '</strong>'
+                        + '<span>' + c.tests.length + ' آزمایش در این پنل</span>'
+                        + '<em class="k-checkup-card__time">'
+                            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+                            + c.shortTime
+                        + '</em>'
+                    + '</span>'
+                    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
+                list.appendChild(card);
+            });
+        }
+
+        function showCheckupDetail(id) {
+            var c = CHECKUPS.find(function (x) { return x.id === id; });
+            if (!c) return;
+            var detail = document.getElementById('checkupDetail');
+            detail.innerHTML =
+                '<div class="k-checkup-header">'
+                    + '<button class="k-back-btn" onclick="hideCheckupDetail()">'
+                        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>'
+                        + '<span>بازگشت</span>'
+                    + '</button>'
+                    + '<h2>' + c.name + '</h2>'
+                + '</div>'
+                + '<div class="k-checkup-detail__scroll">'
+                    + '<div class="k-checkup-detail__hero">'
+                        + '<span class="k-checkup-detail__icon" style="background:' + c.color + '1f">'
+                            + '<svg viewBox="0 0 24 24" fill="none" stroke="' + c.color + '" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>'
+                        + '</span>'
+                        + '<h3>' + c.name + '</h3>'
+                    + '</div>'
+                    + '<div class="k-checkup-detail__desc">' + c.desc + '</div>'
+                    + '<div class="k-checkup-section-title" style="--cc:' + c.color + '">'
+                        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>'
+                        + '<span>تست‌های این پنل</span>'
+                    + '</div>'
+                    + '<ul class="k-checkup-tests">'
+                        + c.tests.map(function (t) {
+                            return '<li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>' + t + '</span></li>';
+                        }).join('')
+                    + '</ul>'
+                    + '<div class="k-checkup-time">'
+                        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+                        + '<span>' + c.time + '</span>'
+                    + '</div>'
+                    + '<div class="k-checkup-urgent">'
+                        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+                        + '<span class="k-checkup-urgent__body">'
+                            + '<span class="k-checkup-urgent__title">اگر شرایط حاد داشتید چه کنید؟</span>'
+                            + '<p>' + c.urgent + '</p>'
+                        + '</span>'
+                    + '</div>'
+                    + '<button class="k-checkup-cta" onclick="takeCheckupTicket(\'' + c.id + '\')">'
+                        + 'نوبت «' + c.name + '» بگیرید'
+                    + '</button>'
+                + '</div>';
+            detail.classList.add('visible');
+            detail.querySelector('.k-checkup-detail__scroll').scrollTop = 0;
+        }
+
+        function hideCheckupDetail() {
+            document.getElementById('checkupDetail').classList.remove('visible');
+        }
+
+        /* ── گرفتن نوبت برای چکاپ انتخابی ── */
+        async function takeCheckupTicket(id) {
+            var c = CHECKUPS.find(function (x) { return x.id === id; });
+            if (!c) return;
+            try {
+                var resp = await fetch('/api/queue/take', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service: c.name })
+                });
+                var data = await resp.json();
+                if (!resp.ok) return;
+                var ticket = data.ticket || {};
+                closeCheckups();
+                document.getElementById('modalNumber').textContent = ticket.persian_number || ticket.number || '--';
+                document.getElementById('modalService').textContent = c.name + ' — شماره ' + (ticket.number || '');
+                document.getElementById('ticketModal').classList.add('visible');
+                printTicket(ticket);
+                refreshQueueCount();
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         /* ── شمارنده صف ── */
