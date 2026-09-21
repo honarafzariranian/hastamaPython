@@ -1,67 +1,99 @@
 /* =============================================================================
-   dashboard-modern.css — بازطراحی کامل داشبورد مدیریت (نسخهٔ ۱۴۰۵)
+   dashboard-modern.css — «بوم داده»ی داشبورد مدیریت (نسخهٔ ۱۴۰۵ / v2)
    -----------------------------------------------------------------------------
-   این فایل «فقط» روی باکس داشبورد (#dashboardBox.hx-dashboard) اثر می‌گذارد و
-   بعد از admin.css بارگذاری می‌شود؛ بنابراین ظاهر کارتی قدیمی داشبورد را
-   کاملاً بازنویسی می‌کند بدون آنکه سایر بخش‌های پنل مدیریت تغییر کنند.
+   بازطراحی کامل داشبورد مدیریت بر پایهٔ متدهای روز طراحی محصول:
 
-   اصول طراحی:
-     • هوشمند و مدرن: سطوح شیشه‌ای (glassmorphism)، گرادیان‌های نرم، سایه‌های
-       چندلایه و گوشه‌های بزرگ (۱۸–۲۶px).
-     • حرکتی: ورود پله‌ای کارت‌ها (reveal)، شمارش اعداد، رشد میله‌ها و گیج‌ها،
-       درخشش دنبال‌کنندهٔ نشانگر روی کارت‌ها و هالهٔ متحرک در کارت قهرمان.
-     • راست‌به‌چپ کامل؛ همهٔ فاصله‌ها منطقی‌اند (inline-start/end).
-     • رنگ‌ها از توکن‌های محلی (--hx-*) می‌آیند. نسخهٔ تیره در dark-theme.css
-       و در انتهای همان فایل تعریف شده است؛ هیچ رنگ تیره‌ای در این فایل نیست.
-     • دسترس‌پذیری: focus-visible، نقش‌های ARIA و احترام کامل به
-       prefers-reduced-motion.
+     • صفر «باکس»: هیچ کارت/قاب/سایهٔ جعبه‌ای وجود ندارد. کل داشبورد یک بوم
+       پیوسته است که با خط‌های مو (hairline)، تایپوگرافی درشت و داده‌نما زندگی
+       می‌کند. عمق با نور (glow)، گرادیان و بلاب‌های نرم ساخته می‌شود، نه با قاب.
+     • داده‌نما واقعی: نمودار ناحیه‌ای SVG با گرادیان و خط کشیده‌شده، هزارخانه‌های
+       شمارشی، ستون‌های گرادیانی، گیج‌های حلقه‌ای و نوارهای سهم — همه از دادهٔ
+       سمت سرور (بدون هیچ عدد ساختگی).
+     • حرکت مدرن: ورود پله‌ای با easing فنری، شمارش اعداد، کشیده‌شدن مسیر SVG،
+       رشد ستون‌ها، جاروی حلقه‌ها، تیکر بی‌پایان، درخشش دنبال‌کنندهٔ نشانگر و
+       ریزتعامل‌های hover/press.
+     • فناوری روز: @property برای انیمیت متغیرهای CSS، clamp()، رنگ منطقی RTL،
+       transform-box: fill-box و mask-image — با fallback بی‌صدا.
+
+   مقررات نگهداری:
+     • این فایل فقط روی #dashboardBox اثر می‌گذارد و بعد از admin.css بارگذاری
+       می‌شود؛ هیچ رنگ تیره‌ای اینجا نیست (حالت تیره در dark-theme.css است).
+     • display باکس هرگز در CSS ست نمی‌شود؛ منطق toggleBox() با style.display کار
+       می‌کند و باید دست‌نخورده بماند.
+     • همهٔ مقادیر از سمت سرور رندر می‌شوند؛ JS فقط حرکت می‌آورد. بدون JS هم
+       داشبورد کامل و خوانا است.
+     • prefers-reduced-motion کاملاً رعایت می‌شود.
    ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   ۰) متغیرهای انیمیشن‌شدنی (@property)
+      با ثبت نوعِ متغیر، خود CSS مقدارها را بین دو حالت ترانزیشن می‌دهد؛
+      در نتیجهٔ JS فقط «مقدار نهایی» را می‌نویسد و حرکت با GPU انجام می‌شود.
+   -------------------------------------------------------------------------- */
+@property --hx-p {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+}
+
+@property --hx-h {
+    syntax: '<percentage>';
+    inherits: true;
+    initial-value: 0%;
+}
+
+@property --hx-w {
+    syntax: '<percentage>';
+    inherits: true;
+    initial-value: 0%;
+}
 
 /* --------------------------------------------------------------------------
    ۱) توکن‌های طراحی
    -------------------------------------------------------------------------- */
 #dashboardBox.hx-dashboard {
-    --hx-ink: #0b1220;
-    --hx-ink-2: #56708d;
-    --hx-ink-3: #8698ae;
+    --hx-ink: #0a1020;
+    --hx-ink-2: #46586f;
+    --hx-ink-3: #7c8ba0;
 
-    --hx-bg: #f4f7fc;
-    --hx-surface: rgba(255, 255, 255, 0.78);
-    --hx-surface-strong: rgba(255, 255, 255, 0.94);
-    --hx-surface-soft: rgba(255, 255, 255, 0.55);
-    --hx-border: rgba(16, 42, 82, 0.08);
-    --hx-border-strong: rgba(16, 42, 82, 0.14);
+    --hx-line: rgba(13, 33, 66, 0.10);
+    --hx-line-2: rgba(13, 33, 66, 0.18);
+    --hx-grid-line: rgba(13, 33, 66, 0.055);
+
+    --hx-wash-1: rgba(99, 102, 241, 0.13);
+    --hx-wash-2: rgba(34, 211, 238, 0.12);
+    --hx-wash-3: rgba(168, 85, 247, 0.11);
 
     --hx-blue: #4f8dff;
     --hx-violet: #7c5cff;
     --hx-teal: #10b9a6;
-    --hx-amber: #f5a524;
+    --hx-amber: #f59e0b;
     --hx-cyan: #22a9e0;
-    --hx-indigo: #6d6bff;
-    --hx-rose: #f4587a;
-    --hx-green: #18b877;
-    --hx-slate: #94a8c0;
+    --hx-indigo: #6366f1;
+    --hx-rose: #f43f5e;
+    --hx-green: #10b981;
+    --hx-slate: #94a3b8;
 
-    --hx-radius-xl: 26px;
-    --hx-radius-lg: 20px;
-    --hx-radius-md: 15px;
-    --hx-radius-sm: 11px;
-
-    --hx-shadow-xs: 0 1px 2px rgba(13, 35, 71, 0.05);
-    --hx-shadow-sm: 0 1px 2px rgba(13, 35, 71, 0.05), 0 8px 20px -12px rgba(13, 35, 71, 0.22);
-    --hx-shadow-md: 0 2px 4px rgba(13, 35, 71, 0.05), 0 22px 45px -26px rgba(13, 35, 71, 0.38);
-    --hx-shadow-lg: 0 40px 80px -40px rgba(13, 35, 71, 0.5);
+    --hx-hero-1: #241a68;
+    --hx-hero-2: #3b2ea8;
+    --hx-hero-3: #7c3aed;
+    --hx-hero-4: #0e7490;
+    --hx-hero-ink: #f7f9ff;
+    --hx-hero-ink-2: rgba(233, 238, 255, 0.76);
+    --hx-hero-ink-3: rgba(226, 233, 255, 0.56);
 
     --hx-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --hx-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
-    --hx-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --hx-ease-spring: cubic-bezier(0.34, 1.42, 0.64, 1);
+    --hx-dur-fast: 0.24s;
+    --hx-dur: 0.55s;
+    --hx-dur-slow: 1.1s;
 
-    --hx-gap: 16px;
+    --hx-gap: clamp(28px, 3.2vw, 52px);
 }
 
 /* --------------------------------------------------------------------------
-   ۲) ریست باکس داشبورد — حذف قاب، ارتفاع محدود و اسکرول داخلی قدیمی
-      (محتوا در جریان عادی صفحه قرار می‌گیرد تا اسکرول صفحه طبیعی باشد)
+   ۲) صفر کردنِ قابِ قدیمی — بوم بی‌قاب، بدون ارتفاع ثابت و بدون اسکرول داخلی
    -------------------------------------------------------------------------- */
 #dashboardBox.hx-dashboard {
     position: static !important;
@@ -69,18 +101,14 @@
     right: auto !important;
     bottom: auto !important;
     left: auto !important;
-    /* نکته: display دست‌کاری نمی‌شود تا منطق موجود toggleBox()
-       (نمایش/پنهان‌کردن بخش‌ها با style.display) دست‌نخورده بماند. */
+    /* نکته: display دست‌کاری نمی‌شود تا منطق موجود toggleBox() دست‌نخورده بماند. */
     width: auto !important;
     max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
-    /* .page-shell با align-items:center چیده شده؛ برای پر کردن عرض میان دو
-       حاشیه، کشیده‌شدن در محور عرض لازم است. */
     align-self: stretch !important;
-    /* فاصلهٔ منطقی: سمت شروع (راست در RTL) برای سایدبار و سمت پایان برای نفس‌گیری */
-    margin-block: 0 34px !important;
+    margin-block: 0 40px !important;
     margin-inline-start: calc(clamp(64px, 6vw, 78px) + 1.15rem) !important;
     margin-inline-end: 1.6rem !important;
     padding: 0 !important;
@@ -93,1502 +121,2045 @@
     gap: 0 !important;
 }
 
-/* فقط وقتی داشبورد فعال است، فاصلهٔ بالای آن تنظیم می‌شود */
 #dashboardBox.hx-dashboard.is-visible {
-    animation: hx-box-in 0.55s var(--hx-ease) both;
+    animation: hx-canvas-in 0.6s var(--hx-ease) both;
 }
 
-@keyframes hx-box-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+@keyframes hx-canvas-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
 }
 
 .hx-dash {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    /* والد (#dashboardBox) با display:flex از سمت JS نمایش داده می‌شود؛ این
+       سه خط تضمین می‌کنند بوم در هر دو حالت flex/block تمام‌عرض بماند. */
+    flex: 1 1 auto;
+    align-self: stretch;
+    inline-size: 100%;
+    min-inline-size: 0;
+    gap: var(--hx-gap);
     color: var(--hx-ink);
     font-family: 'Vazir', 'Vazirmatn', Tahoma, sans-serif;
+    isolation: isolate;
 }
 
-/* آستری نرم پشت کل داشبورد تا کارت‌های شیشه‌ای عمق بگیرند */
-.hx-dash::before {
-    content: "";
-    position: absolute;
-    inset: -20px -22px -24px;
-    border-radius: 40px;
-    background:
-        radial-gradient(120% 90% at 100% 0%, rgba(79, 141, 255, 0.12), transparent 58%),
-        radial-gradient(110% 85% at 0% 100%, rgba(124, 92, 255, 0.1), transparent 60%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.28));
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: var(--hx-shadow-sm);
-    z-index: 0;
-    pointer-events: none;
-}
-
-.hx-dash > * {
+/* همهٔ بلوک‌های محتوایی روی لایهٔ جوی می‌نشینند */
+#dashboardBox .hx-dash > .hx-head,
+#dashboardBox .hx-dash > .hx-hero,
+#dashboardBox .hx-dash > .hx-ticker,
+#dashboardBox .hx-dash > .hx-podium,
+#dashboardBox .hx-dash > .hx-block {
     position: relative;
     z-index: 1;
 }
 
-/* --------------------------------------------------------------------------
-   ۳) انیمیشن ورود (reveal) — کارت‌ها با تأخیر پله‌ای بالا می‌آیند
-   -------------------------------------------------------------------------- */
-.hx-reveal {
-    opacity: 0;
-    transform: translateY(18px) scale(0.985);
-    transition:
-        opacity 0.7s var(--hx-ease),
-        transform 0.75s var(--hx-ease);
-    transition-delay: calc(var(--hx-i, 0) * 55ms);
-    will-change: opacity, transform;
-}
-
-#dashboardBox.hx-dashboard.is-in .hx-reveal,
-.hx-reveal.is-in {
-    opacity: 1;
-    transform: none;
+.hx-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
 }
 
 /* --------------------------------------------------------------------------
-   ۴) هدر داشبورد
+   ۳) لایهٔ جوّی بوم (بلاب‌های گرادیانی، گرید مو، نویز)
+      این لایه «باکس» نیست: بدون مرز، بدون سایه — فقط نور.
    -------------------------------------------------------------------------- */
-.hx-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    flex-wrap: wrap;
-    padding: 2px 4px;
-}
-
-.hx-head__title {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-}
-
-.hx-head__mark {
-    display: grid;
-    place-items: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 15px;
-    color: #fff;
-    background: linear-gradient(140deg, var(--hx-blue), var(--hx-violet));
-    box-shadow: 0 14px 26px -14px rgba(79, 141, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.45);
-    flex: none;
-}
-
-.hx-head__mark svg {
-    width: 24px;
-    height: 24px;
-}
-
-.hx-head__text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.hx-head__text h2 {
-    margin: 0;
-    font-size: clamp(17px, 1.3vw, 21px);
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    color: var(--hx-ink);
-}
-
-.hx-head__text p {
-    margin: 0;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--hx-ink-3);
-}
-
-.hx-head__side {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.hx-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    height: 32px;
-    padding: 0 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-    border: 1px solid var(--hx-border);
-    background: var(--hx-surface-strong);
-    color: var(--hx-ink-2);
-    box-shadow: var(--hx-shadow-xs);
-}
-
-.hx-chip--soft {
-    background: rgba(255, 255, 255, 0.62);
-    color: var(--hx-ink-3);
-}
-
-.hx-chip--live {
-    color: var(--hx-green);
-    background: rgba(24, 184, 119, 0.1);
-    border-color: rgba(24, 184, 119, 0.24);
-}
-
-.hx-live-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: var(--hx-green);
-    box-shadow: 0 0 0 0 rgba(24, 184, 119, 0.55);
-    animation: hx-pulse 2.4s var(--hx-ease-soft) infinite;
-}
-
-@keyframes hx-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(24, 184, 119, 0.5); }
-    70%  { box-shadow: 0 0 0 9px rgba(24, 184, 119, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(24, 184, 119, 0); }
-}
-
-/* --------------------------------------------------------------------------
-   ۵) کارت قهرمان — وضعیت اشتراک
-   -------------------------------------------------------------------------- */
-.hx-hero {
-    position: relative;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 26px;
-    padding: 30px 34px;
-    border-radius: var(--hx-radius-xl);
-    color: #fff;
-    background:
-        radial-gradient(120% 140% at 88% 10%, rgba(126, 231, 255, 0.32), transparent 55%),
-        radial-gradient(120% 160% at 8% 100%, rgba(160, 118, 255, 0.45), transparent 58%),
-        linear-gradient(118deg, #101a3a 0%, #1b2b62 42%, #2b3f8f 72%, #4b3bb0 100%);
-    box-shadow: var(--hx-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    isolation: isolate;
-}
-
-/* هاله‌های متحرک داخل کارت قهرمان */
-.hx-hero__aurora {
+#dashboardBox .hx-atmos {
     position: absolute;
-    inset: -40%;
-    z-index: -1;
+    inset: -6% -4% -10%;
+    z-index: 0;
     pointer-events: none;
-    opacity: 0.85;
+    overflow: hidden;
+    border-radius: 48px;
 }
 
-.hx-hero__aurora i {
+#dashboardBox .hx-atmos__blob {
     position: absolute;
     display: block;
     border-radius: 50%;
-    filter: blur(48px);
-    mix-blend-mode: screen;
-    animation: hx-aurora-drift 18s var(--hx-ease-soft) infinite alternate;
+    filter: blur(46px);
+    opacity: 0.9;
+    will-change: transform;
 }
 
-.hx-hero__aurora i:nth-child(1) {
-    width: 320px;
-    height: 320px;
-    top: 8%;
-    right: 6%;
-    background: rgba(94, 214, 255, 0.55);
+#dashboardBox .hx-atmos__blob--a {
+    inset-inline-end: -4%;
+    inset-block-start: -12%;
+    width: 46%;
+    height: 58%;
+    background: radial-gradient(circle at 30% 30%, var(--hx-wash-1), transparent 68%);
+    animation: hx-drift-a 26s var(--hx-ease-soft) infinite alternate;
 }
 
-.hx-hero__aurora i:nth-child(2) {
-    width: 280px;
-    height: 280px;
-    bottom: 4%;
-    right: 32%;
-    background: rgba(154, 108, 255, 0.6);
-    animation-delay: -6s;
+#dashboardBox .hx-atmos__blob--b {
+    inset-inline-start: 4%;
+    inset-block-start: 22%;
+    width: 40%;
+    height: 52%;
+    background: radial-gradient(circle at 60% 40%, var(--hx-wash-2), transparent 66%);
+    animation: hx-drift-b 32s var(--hx-ease-soft) infinite alternate;
 }
 
-.hx-hero__aurora i:nth-child(3) {
-    width: 240px;
-    height: 240px;
-    top: 22%;
-    left: 4%;
-    background: rgba(58, 242, 205, 0.42);
-    animation-delay: -11s;
+#dashboardBox .hx-atmos__blob--c {
+    inset-inline-end: 22%;
+    inset-block-end: -8%;
+    width: 44%;
+    height: 48%;
+    background: radial-gradient(circle at 50% 50%, var(--hx-wash-3), transparent 68%);
+    animation: hx-drift-c 38s var(--hx-ease-soft) infinite alternate;
 }
 
-@keyframes hx-aurora-drift {
-    0%   { transform: translate3d(0, 0, 0) scale(1); }
-    50%  { transform: translate3d(-26px, 18px, 0) scale(1.12); }
-    100% { transform: translate3d(18px, -22px, 0) scale(1.04); }
+@keyframes hx-drift-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(-6%, 8%, 0) scale(1.16); }
 }
 
-/* برق افتان یک‌باره روی کارت قهرمان */
-.hx-hero::after {
-    content: "";
+@keyframes hx-drift-b {
+    from { transform: translate3d(0, 0, 0) scale(1.08); }
+    to   { transform: translate3d(7%, -6%, 0) scale(1); }
+}
+
+@keyframes hx-drift-c {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(-5%, -7%, 0) scale(1.12); }
+}
+
+/* گرید موی ۲۸px — حس «بوم داده» بدون هیچ خط اضافه */
+#dashboardBox .hx-atmos__grid {
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.17) 48%, transparent 62%);
-    transform: translateX(-120%);
-    animation: hx-sheen 1.5s 0.35s var(--hx-ease) 1;
-    pointer-events: none;
-}
-
-@keyframes hx-sheen {
-    to { transform: translateX(120%); }
-}
-
-.hx-hero__content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-width: 0;
-}
-
-.hx-hero__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    align-self: flex-start;
-    padding: 6px 13px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: #eaf1ff;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(6px);
-}
-
-.hx-hero__pulse {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: #6ef7c9;
-    box-shadow: 0 0 0 0 rgba(110, 247, 201, 0.6);
-    animation: hx-pulse-green 2.2s var(--hx-ease-soft) infinite;
-}
-
-@keyframes hx-pulse-green {
-    0%   { box-shadow: 0 0 0 0 rgba(110, 247, 201, 0.65); }
-    70%  { box-shadow: 0 0 0 10px rgba(110, 247, 201, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(110, 247, 201, 0); }
-}
-
-.hx-hero__title {
-    margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-weight: 800;
-    line-height: 1.1;
-}
-
-.hx-hero__title .hx-num {
-    font-size: clamp(34px, 3.4vw, 52px);
-    letter-spacing: -0.02em;
-    text-shadow: 0 12px 32px rgba(8, 16, 44, 0.45);
-}
-
-.hx-hero__unit {
-    font-size: clamp(14px, 1.2vw, 17px);
-    font-weight: 700;
-    color: rgba(234, 241, 255, 0.88);
-}
-
-.hx-hero__meta {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(226, 235, 255, 0.78);
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    flex-wrap: wrap;
-}
-
-.hx-hero__meta b {
-    color: #fff;
-    font-weight: 700;
-}
-
-.hx-hero__sep {
-    width: 4px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.45);
-}
-
-.hx-hero__actions {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-}
-
-.hx-hero__hint {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: rgba(219, 230, 255, 0.66);
-}
-
-/* دکمهٔ شیشه‌ای تمدید اشتراک */
-.quick-card-btn.hx-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    height: 44px;
-    padding: 0 20px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: 700;
-    color: #0e1b3d;
-    cursor: pointer;
-    overflow: hidden;
-    background: linear-gradient(135deg, #ffffff 0%, #dfe9ff 100%);
-    box-shadow: 0 18px 34px -18px rgba(6, 14, 40, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    transition: transform 0.35s var(--hx-ease), box-shadow 0.35s var(--hx-ease), filter 0.35s var(--hx-ease);
-}
-
-.quick-card-btn.hx-btn svg {
-    width: 17px;
-    height: 17px;
-}
-
-.quick-card-btn.hx-btn::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.85) 48%, transparent 66%);
-    transform: translateX(-130%);
-    transition: transform 0.7s var(--hx-ease);
-}
-
-.quick-card-btn.hx-btn:hover {
-    transform: translateY(-2px);
-    filter: saturate(1.06);
-    box-shadow: 0 24px 40px -18px rgba(6, 14, 40, 1);
-}
-
-.quick-card-btn.hx-btn:hover::after {
-    transform: translateX(130%);
-}
-
-.quick-card-btn.hx-btn:active {
-    transform: translateY(0) scale(0.985);
-}
-
-/* حلقهٔ پیشرفت دورهٔ اشتراک */
-.hx-hero__ring {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 148px;
-    height: 148px;
-    flex: none;
-}
-
-.hx-ring {
-    width: 148px;
-    height: 148px;
-    transform: rotate(-90deg);
-}
-
-.hx-ring__track {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.18);
-    stroke-width: 11;
-}
-
-.hx-ring__value {
-    fill: none;
-    stroke: url(#hxRingGradient);
-    stroke-width: 11;
-    stroke-linecap: round;
-    filter: drop-shadow(0 4px 12px rgba(124, 92, 255, 0.65));
-    transition: stroke-dashoffset 1.6s var(--hx-ease);
-}
-
-.hx-ring__center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    text-align: center;
-}
-
-.hx-ring__center strong {
-    font-size: 26px;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.02em;
-}
-
-.hx-ring__center strong small {
-    font-size: 15px;
-    font-weight: 700;
-    opacity: 0.85;
-}
-
-.hx-ring__center span {
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(226, 235, 255, 0.72);
-}
-
-/* --------------------------------------------------------------------------
-   ۶) سه ستارهٔ عملکرد
-   -------------------------------------------------------------------------- */
-.hx-spot-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--hx-gap);
-}
-
-.hx-spot {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 18px 20px 16px;
-    border-radius: var(--hx-radius-lg);
-    background:
-        linear-gradient(155deg, color-mix(in srgb, var(--acc) 9%, #ffffff) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.86) 100%);
-    border: 1px solid color-mix(in srgb, var(--acc) 18%, var(--hx-border));
-    box-shadow: var(--hx-shadow-sm);
-    backdrop-filter: blur(14px);
-    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
-}
-
-/* درخشش دنبال‌کنندهٔ نشانگر */
-.hx-spot::after,
-.hx-kpi::after,
-.hx-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(200px circle at var(--hx-mx, 50%) var(--hx-my, 0%), var(--hx-halo, rgba(79, 141, 255, 0.15)), transparent 68%);
-    opacity: 0;
-    transition: opacity 0.4s var(--hx-ease-soft);
-    pointer-events: none;
-}
-
-.hx-spot:hover::after,
-.hx-kpi:hover::after,
-.hx-card:hover::after {
-    opacity: 1;
-}
-
-.hx-spot:hover {
-    transform: translateY(-4px);
-    border-color: var(--hx-border-strong);
-    box-shadow: var(--hx-shadow-md);
-}
-
-/* نوار رنگی بالای کارت ستاره */
-.hx-spot::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--acc, var(--hx-blue)), transparent);
-    opacity: 0.85;
-}
-
-.hx-spot[data-accent="overtime"] { --acc: var(--hx-violet); --hx-halo: rgba(124, 92, 255, 0.16); }
-.hx-spot[data-accent="pass"]     { --acc: var(--hx-teal);   --hx-halo: rgba(16, 185, 166, 0.16); }
-.hx-spot[data-accent="dept"]     { --acc: var(--hx-amber);  --hx-halo: rgba(245, 165, 36, 0.16); }
-
-.hx-spot__head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.hx-spot__icon {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-    color: #fff;
-    background: linear-gradient(140deg, var(--acc), color-mix(in srgb, var(--acc) 55%, #ffffff));
-    box-shadow: 0 12px 22px -12px var(--acc), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    flex: none;
-    transition: transform 0.5s var(--hx-ease-spring);
-}
-
-.hx-spot:hover .hx-spot__icon {
-    transform: rotate(-8deg) scale(1.06);
-}
-
-.hx-spot__icon svg {
-    width: 19px;
-    height: 19px;
-}
-
-.hx-spot__label {
-    flex: 1 1 auto;
-    min-width: 0;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--hx-ink-2);
-    line-height: 1.5;
-}
-
-.hx-spot__rank {
-    flex: none;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--acc);
-    background: color-mix(in srgb, var(--acc) 12%, #ffffff);
-    border: 1px solid color-mix(in srgb, var(--acc) 26%, #ffffff);
-}
-
-.hx-spot__body {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-    min-width: 0;
-}
-
-.hx-spot__avatar {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    flex: none;
-    border-radius: 16px;
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    color: #fff;
-    background: linear-gradient(140deg, var(--acc), color-mix(in srgb, var(--acc) 45%, #1b2440));
-    box-shadow: 0 16px 28px -16px var(--acc), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    text-transform: lowercase;
-}
-
-.hx-spot__who {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.hx-spot__name {
-    font-size: clamp(17px, 1.5vw, 21px);
-    font-weight: 800;
-    color: var(--hx-ink);
-    letter-spacing: -0.01em;
-    overflow-wrap: anywhere;
-}
-
-.hx-spot__time {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--hx-ink-3);
-    font-variant-numeric: tabular-nums;
-}
-
-.hx-spot__share {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: auto;
-}
-
-.hx-spot__share-bar {
-    position: relative;
     display: block;
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(16, 42, 82, 0.07);
-    overflow: hidden;
-}
-
-.hx-spot__share-bar i {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: var(--hx-w, 0%);
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--acc), color-mix(in srgb, var(--acc) 45%, #ffffff));
-    transition: width 1.2s var(--hx-ease) 0.25s;
-}
-
-.hx-spot__share-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--hx-ink-3);
-}
-
-/* --------------------------------------------------------------------------
-   ۷) شاخص‌های کلیدی (KPI)
-   -------------------------------------------------------------------------- */
-.hx-section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 13px;
-    padding: 0 4px;
-}
-
-.hx-section-head h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--hx-ink);
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.hx-section-head h3::before {
-    content: "";
-    width: 4px;
-    height: 16px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, var(--hx-blue), var(--hx-violet));
-}
-
-.hx-section-head__hint {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--hx-ink-3);
-}
-
-.hx-kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--hx-gap);
-}
-
-.hx-kpi {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 17px 18px;
-    border-radius: var(--hx-radius-lg);
-    background: var(--hx-surface);
-    border: 1px solid var(--hx-border);
-    box-shadow: var(--hx-shadow-sm);
-    backdrop-filter: blur(14px);
-    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
-}
-
-.hx-kpi:hover {
-    transform: translateY(-5px);
-    border-color: color-mix(in srgb, var(--acc) 32%, #ffffff);
-    box-shadow: var(--hx-shadow-md);
-}
-
-/* گوشهٔ گرادیانی رنگی */
-.hx-kpi::before {
-    content: "";
-    position: absolute;
-    top: -34px;
-    inset-inline-end: -34px;
-    width: 108px;
-    height: 108px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 70%, color-mix(in srgb, var(--acc) 32%, transparent), transparent 70%);
-    opacity: 0.75;
-    transition: opacity 0.45s var(--hx-ease), transform 0.6s var(--hx-ease);
-    pointer-events: none;
-}
-
-.hx-kpi:hover::before {
-    opacity: 1;
-    transform: scale(1.16);
-}
-
-.hx-kpi[data-accent="blue"]   { --acc: var(--hx-blue);   --hx-halo: rgba(79, 141, 255, 0.15); }
-.hx-kpi[data-accent="violet"] { --acc: var(--hx-violet); --hx-halo: rgba(124, 92, 255, 0.15); }
-.hx-kpi[data-accent="teal"]   { --acc: var(--hx-teal);   --hx-halo: rgba(16, 185, 166, 0.15); }
-.hx-kpi[data-accent="amber"]  { --acc: var(--hx-amber);  --hx-halo: rgba(245, 165, 36, 0.16); }
-.hx-kpi[data-accent="cyan"]   { --acc: var(--hx-cyan);   --hx-halo: rgba(34, 169, 224, 0.15); }
-.hx-kpi[data-accent="indigo"] { --acc: var(--hx-indigo); --hx-halo: rgba(109, 107, 255, 0.15); }
-.hx-kpi[data-accent="rose"]   { --acc: var(--hx-rose);   --hx-halo: rgba(244, 88, 122, 0.15); }
-.hx-kpi[data-accent="green"]  { --acc: var(--hx-green);  --hx-halo: rgba(24, 184, 119, 0.15); }
-
-.hx-kpi__icon {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 46px;
-    height: 46px;
-    flex: none;
-    border-radius: 15px;
-    color: var(--acc);
-    background: linear-gradient(150deg, color-mix(in srgb, var(--acc) 24%, #ffffff), color-mix(in srgb, var(--acc) 11%, #ffffff));
-    border: 1px solid color-mix(in srgb, var(--acc) 30%, #ffffff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-    transition: transform 0.5s var(--hx-ease-spring), color 0.35s var(--hx-ease), background 0.35s var(--hx-ease);
-}
-
-.hx-kpi:hover .hx-kpi__icon {
-    transform: translateY(-2px) scale(1.06);
-    color: #fff;
-    background: linear-gradient(150deg, var(--acc), color-mix(in srgb, var(--acc) 50%, #ffffff));
-    box-shadow: 0 14px 24px -14px var(--acc);
-}
-
-.hx-kpi__icon svg {
-    width: 22px;
-    height: 22px;
-}
-
-.hx-kpi__text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.hx-kpi__label {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--hx-ink-2);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-.hx-kpi__value {
-    font-size: clamp(20px, 1.7vw, 26px);
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--hx-ink);
-    font-variant-numeric: tabular-nums;
-}
-
-.hx-kpi__meta {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--hx-ink-3);
-}
-
-/* --------------------------------------------------------------------------
-   ۸) کارت‌های تحلیلی (گیج + توزیع)
-   -------------------------------------------------------------------------- */
-.hx-insights {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--hx-gap);
-}
-
-.hx-card {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--hx-radius-lg);
-    background: var(--hx-surface);
-    border: 1px solid var(--hx-border);
-    box-shadow: var(--hx-shadow-sm);
-    backdrop-filter: blur(14px);
-    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
-}
-
-.hx-card:hover {
-    transform: translateY(-3px);
-    border-color: var(--hx-border-strong);
-    box-shadow: var(--hx-shadow-md);
-}
-
-.hx-card__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 16px 18px 13px;
-    border-bottom: 1px solid rgba(16, 42, 82, 0.06);
-}
-
-.hx-card__title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-width: 0;
-}
-
-.hx-card__icon {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    flex: none;
-    border-radius: 11px;
-    color: var(--acc, var(--hx-blue));
-    background: color-mix(in srgb, var(--acc, var(--hx-blue)) 13%, #ffffff);
-    border: 1px solid color-mix(in srgb, var(--acc, var(--hx-blue)) 22%, #ffffff);
-}
-
-.hx-card__icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.hx-card__icon[data-accent="blue"]   { --acc: var(--hx-blue); }
-.hx-card__icon[data-accent="violet"] { --acc: var(--hx-violet); }
-.hx-card__icon[data-accent="teal"]   { --acc: var(--hx-teal); }
-.hx-card__icon[data-accent="amber"]  { --acc: var(--hx-amber); }
-.hx-card__icon[data-accent="rose"]   { --acc: var(--hx-rose); }
-.hx-card__icon[data-accent="green"]  { --acc: var(--hx-green); }
-.hx-card__icon[data-accent="cyan"]   { --acc: var(--hx-cyan); }
-.hx-card__icon[data-accent="indigo"] { --acc: var(--hx-indigo); }
-
-.hx-card__head .card-title,
-.hx-card__head .table-title {
-    margin: 0;
-    font-size: 13.5px;
-    font-weight: 800;
-    color: var(--hx-ink);
-    line-height: 1.55;
-    overflow-wrap: anywhere;
-}
-
-.hx-card__body {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    padding: 16px 18px 18px;
-    min-height: 0;
-}
-
-/* گیج دایره‌ای */
-.hx-insight__body {
-    flex-direction: row;
-    align-items: center;
-    gap: 18px;
-}
-
-.hx-gauge {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 118px;
-    height: 118px;
-    flex: none;
-}
-
-.hx-gauge svg {
-    width: 118px;
-    height: 118px;
-    transform: rotate(-90deg);
-}
-
-.hx-gauge .hx-ring__track {
-    stroke: rgba(16, 42, 82, 0.08);
-    stroke-width: 10;
-}
-
-.hx-gauge .hx-ring__value {
-    stroke-width: 10;
-    stroke-linecap: round;
-    filter: none;
-    transition: stroke-dashoffset 1.5s var(--hx-ease) 0.15s;
-}
-
-.hx-gauge .hx-ring__center strong {
-    font-size: 22px;
-    color: var(--hx-ink);
-}
-
-.hx-gauge .hx-ring__center span {
-    color: var(--hx-ink-3);
-}
-
-.hx-insight__info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-}
-
-.hx-insight__value {
-    font-size: clamp(19px, 1.6vw, 24px);
-    font-weight: 800;
-    color: var(--hx-ink);
-    letter-spacing: -0.01em;
-    font-variant-numeric: tabular-nums;
-}
-
-.hx-insight__caption {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--hx-ink-3);
-    line-height: 1.8;
-}
-
-/* نوار توزیع (کارکنان با/بدون اضافه‌کاری) */
-.hx-split {
-    display: flex;
-    height: 14px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: rgba(16, 42, 82, 0.07);
-    gap: 3px;
-}
-
-.hx-split__seg {
-    position: relative;
-    height: 100%;
-    min-width: 6px;
-    transition: width 1.1s var(--hx-ease) 0.2s;
-}
-
-.hx-split__seg i {
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--seg-1), var(--seg-2));
-    opacity: 0.92;
-}
-
-.hx-split__seg[data-accent="green"] { --seg-1: #17b981; --seg-2: #5ce0a8; }
-.hx-split__seg[data-accent="slate"] { --seg-1: #b9c6d8; --seg-2: #d7e0ec; }
-.hx-split__seg[data-accent="amber"] { --seg-1: #f5a524; --seg-2: #ffcf75; }
-.hx-split__seg[data-accent="rose"]  { --seg-1: #f4587a; --seg-2: #ff9db4; }
-
-.hx-legend {
-    list-style: none;
-    margin: 14px 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.hx-legend li {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--hx-ink-2);
-}
-
-.hx-legend__dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 4px;
-    flex: none;
-    background: linear-gradient(140deg, var(--seg-1), var(--seg-2));
-}
-
-.hx-legend__dot[data-accent="green"] { --seg-1: #17b981; --seg-2: #5ce0a8; }
-.hx-legend__dot[data-accent="slate"] { --seg-1: #b9c6d8; --seg-2: #d7e0ec; }
-
-.hx-legend li b {
-    margin-inline-start: auto;
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--hx-ink);
-    font-variant-numeric: tabular-nums;
-}
-
-/* --------------------------------------------------------------------------
-   ۹) کارت‌های نمودار ستونی
-   -------------------------------------------------------------------------- */
-.hx-charts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--hx-gap);
-}
-
-.hx-chart {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    gap: 10px;
-    height: 244px;
-    padding: 10px 8px 6px;
-    border-radius: var(--hx-radius-md);
     background-image:
-        repeating-linear-gradient(to top, rgba(16, 42, 82, 0.045) 0 1px, transparent 1px 25%);
-    background-position: bottom;
-    overflow: hidden;
+        linear-gradient(to left, var(--hx-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--hx-grid-line) 1px, transparent 1px);
+    background-size: 28px 28px, 28px 28px;
+    mask-image: radial-gradient(120% 90% at 78% 0%, #000 12%, transparent 72%);
+    -webkit-mask-image: radial-gradient(120% 90% at 78% 0%, #000 12%, transparent 72%);
 }
 
-.hx-col {
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.hx-col__value {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--hx-ink-2);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    transition: color 0.35s var(--hx-ease), transform 0.45s var(--hx-ease);
-}
-
-.hx-col:hover .hx-col__value {
-    color: var(--hx-ink);
-    transform: translateY(-2px);
-}
-
-.hx-col__track {
-    position: relative;
-    flex: 1 1 auto;
-    width: 100%;
-    max-width: 46px;
-    min-height: 0;
-    display: flex;
-    align-items: flex-end;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(16, 42, 82, 0.02), rgba(16, 42, 82, 0.055));
-    overflow: hidden;
-    transition: background 0.4s var(--hx-ease);
-}
-
-.hx-col:hover .hx-col__track {
-    background: linear-gradient(180deg, rgba(16, 42, 82, 0.05), rgba(16, 42, 82, 0.1));
-}
-
-.hx-col__fill {
-    display: block;
-    width: 100%;
-    height: var(--hx-h, 2%);
-    border-radius: 12px 12px 8px 8px;
-    background: linear-gradient(180deg, var(--bar-1) 0%, var(--bar-2) 100%);
-    box-shadow: 0 8px 18px -8px var(--bar-2), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: height 1.05s var(--hx-ease);
-    transition-delay: calc(var(--hx-i, 0) * 80ms);
-    position: relative;
-    overflow: hidden;
-}
-
-/* بازتاب نوری متحرک داخل میله */
-.hx-col__fill::after {
-    content: "";
+/* نویز یکنواخت: بافت کاغذی خیلی ملایم */
+#dashboardBox .hx-atmos__grain {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 55%);
-    opacity: 0.7;
+    display: block;
+    opacity: 0.32;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
 }
 
-.hx-col__fill[data-accent="blue"]  { --bar-1: #7fb0ff; --bar-2: #3f6fe4; }
-.hx-col__fill[data-accent="teal"]  { --bar-1: #5ce0c8; --bar-2: #0f9d8f; }
-.hx-col__fill[data-accent="amber"] { --bar-1: #ffcf75; --bar-2: #ef8f1a; }
-.hx-col__fill[data-accent="rose"]  { --bar-1: #ffa3ba; --bar-2: #e8466c; }
-.hx-col__fill[data-accent="violet"]{ --bar-1: #b9a4ff; --bar-2: #6d4be0; }
-
-.hx-col__name {
-    max-width: 100%;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--hx-ink-3);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color 0.35s var(--hx-ease);
-}
-
-.hx-col:hover .hx-col__name {
-    color: var(--hx-ink);
-}
-
-/* --------------------------------------------------------------------------
-   ۱۰) جدول‌های لیدربورد
-   -------------------------------------------------------------------------- */
-.hx-tables {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--hx-gap);
-}
-
-.hx-table-card .hx-card__body {
-    padding: 8px 12px 14px;
-}
-
-/* نشانگرهای SVG مشترک */
-.hx-defs {
+#dashboardBox .hx-defs {
     position: absolute;
     width: 0;
     height: 0;
     overflow: hidden;
-    pointer-events: none;
 }
 
-.hx-table-card .dashboard-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    font-size: 13px;
+/* --------------------------------------------------------------------------
+   ۴) سربرگ
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px 28px;
+    padding-block-end: 20px;
+    position: relative;
 }
 
-.hx-table-card .dashboard-table thead th {
-    padding: 9px 10px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--hx-ink-3);
-    text-align: start;
-    background: transparent;
-    border-bottom: 1px solid rgba(16, 42, 82, 0.08);
-    white-space: nowrap;
+#dashboardBox .hx-head::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    height: 1px;
+    background: linear-gradient(
+        to left,
+        transparent,
+        var(--hx-line-2) 12%,
+        var(--hx-line-2) 88%,
+        transparent
+    );
 }
 
-.hx-table-card .dashboard-table tbody td {
-    padding: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--hx-ink);
-    background: transparent;
-    border-bottom: 1px solid rgba(16, 42, 82, 0.05);
-    font-variant-numeric: tabular-nums;
-    transition: background 0.3s var(--hx-ease-soft);
+/* جرقهٔ نوری که آرام روی خط سربرگ حرکت می‌کند */
+#dashboardBox .hx-head::before {
+    content: "";
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 8%;
+    width: 26%;
+    height: 1px;
+    background: linear-gradient(to left, transparent, var(--hx-indigo), transparent);
+    opacity: 0.85;
+    animation: hx-scan 7s var(--hx-ease-soft) infinite;
+    z-index: 1;
 }
 
-.hx-table-card .dashboard-table tbody tr:last-child td {
-    border-bottom: 0;
+@keyframes hx-scan {
+    0%   { transform: translateX(0); opacity: 0; }
+    18%  { opacity: 0.9; }
+    55%  { transform: translateX(-240%); opacity: 0.9; }
+    70%  { opacity: 0; }
+    100% { transform: translateX(-240%); opacity: 0; }
 }
 
-/* خنثی‌سازی زبرا/هایلایت لایهٔ جدول‌های عمومی داخل کارت لیدربورد */
-.hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(even) td,
-.hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(odd) td {
-    background: transparent;
+#dashboardBox .hx-head__brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
 }
 
-.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td {
-    background: rgba(79, 141, 255, 0.06);
-}
-
-.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td:first-child {
-    border-start-start-radius: 12px;
-    border-end-start-radius: 12px;
-}
-
-.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td:last-child {
-    border-start-end-radius: 12px;
-    border-end-end-radius: 12px;
-}
-
-.hx-rank {
+#dashboardBox .hx-brandmark {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
-    font-size: 12.5px;
+    inline-size: 54px;
+    block-size: 54px;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    color: #fff;
+    background:
+        radial-gradient(120% 120% at 20% 0%, rgba(255, 255, 255, 0.34), transparent 55%),
+        linear-gradient(140deg, var(--hx-indigo), var(--hx-cyan));
+    box-shadow: 0 18px 34px -18px rgba(79, 70, 229, 0.75);
+    transition: transform var(--hx-dur) var(--hx-ease-spring), box-shadow var(--hx-dur) var(--hx-ease);
+}
+
+#dashboardBox .hx-brandmark svg {
+    inline-size: 27px;
+    block-size: 27px;
+}
+
+#dashboardBox .hx-head:hover .hx-brandmark {
+    transform: translateY(-3px) rotate(-4deg);
+    box-shadow: 0 24px 40px -18px rgba(79, 70, 229, 0.85);
+}
+
+#dashboardBox .hx-kicker {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--hx-ink-3);
+    margin-block-end: 4px;
+}
+
+#dashboardBox .hx-head__title h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 2.5vw, 2.05rem);
     font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--hx-ink);
+    line-height: 1.25;
+    text-wrap: balance;
+}
+
+#dashboardBox .hx-head__title p {
+    margin: 6px 0 0;
+    font-size: 0.92rem;
+    color: var(--hx-ink-3);
+    line-height: 1.8;
+}
+
+#dashboardBox .hx-head__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#dashboardBox .hx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--hx-ink-2);
-    background: rgba(16, 42, 82, 0.06);
-    border: 1px solid rgba(16, 42, 82, 0.06);
-    transition: transform 0.4s var(--hx-ease-spring);
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid var(--hx-line);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    white-space: nowrap;
+    transition: transform var(--hx-dur-fast) var(--hx-ease), background var(--hx-dur-fast) var(--hx-ease-soft);
 }
 
-.dashboard-table tbody tr:hover .hx-rank {
-    transform: scale(1.08);
+#dashboardBox .hx-chip--live {
+    color: #0f766e;
+    background: rgba(16, 185, 129, 0.10);
+    border-color: rgba(16, 185, 129, 0.22);
 }
 
-.hx-rank--1 {
-    color: #8a5a00;
-    background: linear-gradient(140deg, #ffe9a8, #ffc75f);
-    border-color: rgba(255, 190, 60, 0.6);
-    box-shadow: 0 8px 16px -10px rgba(224, 152, 12, 0.9);
+#dashboardBox .hx-chip--ghost {
+    background: transparent;
+    border-style: dashed;
+    color: var(--hx-ink-3);
 }
 
-.hx-rank--2 {
-    color: #4a5b70;
-    background: linear-gradient(140deg, #eef3f9, #cdd8e6);
-    border-color: rgba(150, 168, 190, 0.5);
+#dashboardBox .hx-chip:hover {
+    transform: translateY(-1px);
 }
 
-.hx-rank--3 {
-    color: #7a4a1f;
-    background: linear-gradient(140deg, #ffe0c6, #f0b183);
-    border-color: rgba(224, 150, 90, 0.55);
+#dashboardBox .hx-live-dot {
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+    animation: hx-pulse 2.4s var(--hx-ease-soft) infinite;
 }
 
-.hx-user {
+@keyframes hx-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+#dashboardBox .hx-clock {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   ۵) قهرمان: اشتراک — «نوار نور» تمام‌عرض با هالهٔ متحرک
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(20px, 3vw, 44px);
+    padding: clamp(26px, 3.4vw, 46px);
+    border-radius: 34px;
+    overflow: hidden;
+    color: var(--hx-hero-ink);
+    background:
+        radial-gradient(120% 130% at 88% 0%, rgba(124, 58, 237, 0.55), transparent 58%),
+        radial-gradient(90% 120% at 8% 100%, rgba(14, 116, 144, 0.5), transparent 62%),
+        linear-gradient(135deg, var(--hx-hero-1), var(--hx-hero-2) 52%, var(--hx-hero-3));
+    box-shadow:
+        0 42px 80px -46px rgba(36, 26, 104, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    isolation: isolate;
+}
+
+/* هالهٔ دنبال‌کنندهٔ نشانگر (JS فقط --hx-mx/--hx-my را می‌نویسد) */
+#dashboardBox .hx-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        420px circle at var(--hx-mx, 78%) var(--hx-my, 12%),
+        rgba(255, 255, 255, 0.18),
+        transparent 62%
+    );
+    opacity: 0;
+    transition: opacity var(--hx-dur) var(--hx-ease-soft);
+    pointer-events: none;
+    z-index: 2;
+}
+
+#dashboardBox .hx-hero[data-hx-spot]:hover::after {
+    opacity: 1;
+}
+
+#dashboardBox .hx-hero__glow {
+    position: absolute;
+    inset: 0;
+    display: block;
+    pointer-events: none;
+    z-index: 0;
+}
+
+#dashboardBox .hx-hero__glow i {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    filter: blur(38px);
+    will-change: transform;
+}
+
+#dashboardBox .hx-hero__glow i:nth-child(1) {
+    inline-size: 320px;
+    block-size: 320px;
+    inset-inline-end: -60px;
+    inset-block-start: -120px;
+    background: radial-gradient(circle, rgba(147, 197, 253, 0.5), transparent 66%);
+    animation: hx-hero-orb-a 17s var(--hx-ease-soft) infinite alternate;
+}
+
+#dashboardBox .hx-hero__glow i:nth-child(2) {
+    inline-size: 260px;
+    block-size: 260px;
+    inset-inline-start: -80px;
+    inset-block-end: -140px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.42), transparent 68%);
+    animation: hx-hero-orb-b 21s var(--hx-ease-soft) infinite alternate;
+}
+
+#dashboardBox .hx-hero__glow i:nth-child(3) {
+    inline-size: 180px;
+    block-size: 180px;
+    inset-inline-start: 42%;
+    inset-block-start: 30%;
+    background: radial-gradient(circle, rgba(244, 114, 182, 0.34), transparent 70%);
+    animation: hx-hero-orb-a 26s var(--hx-ease-soft) infinite alternate-reverse;
+}
+
+@keyframes hx-hero-orb-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(-14%, 12%, 0) scale(1.18); }
+}
+
+@keyframes hx-hero-orb-b {
+    from { transform: translate3d(0, 0, 0) scale(1.1); }
+    to   { transform: translate3d(12%, -10%, 0) scale(1); }
+}
+
+#dashboardBox .hx-hero__body {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+#dashboardBox .hx-hero__eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    min-width: 0;
-    max-width: 100%;
+    padding: 6px 15px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--hx-hero-ink);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
-.hx-user__avatar {
+#dashboardBox .hx-hero__pulse {
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: 50%;
+    background: #7dd3fc;
+    box-shadow: 0 0 12px 2px rgba(125, 211, 252, 0.85);
+    animation: hx-hero-pulse 2.2s var(--hx-ease-soft) infinite;
+}
+
+@keyframes hx-hero-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.45; transform: scale(0.72); }
+}
+
+#dashboardBox .hx-hero__title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0 0;
+    font-weight: 800;
+    line-height: 1;
+}
+
+#dashboardBox .hx-hero__num {
+    font-size: clamp(3.2rem, 7.2vw, 5.2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    background: linear-gradient(180deg, #ffffff 12%, #cdd6ff 96%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 24px 60px rgba(9, 9, 40, 0.45);
+}
+
+#dashboardBox .hx-hero__unit {
+    font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+    font-weight: 600;
+    color: var(--hx-hero-ink-2);
+}
+
+#dashboardBox .hx-hero__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0 0;
+    font-size: 0.92rem;
+    color: var(--hx-hero-ink-2);
+}
+
+#dashboardBox .hx-hero__meta b {
+    color: #fff;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .hx-dot-sep {
+    inline-size: 4px;
+    block-size: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+#dashboardBox .hx-hero__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    margin-block-start: 24px;
+}
+
+#dashboardBox .hx-hero__hint {
+    font-size: 0.8rem;
+    color: var(--hx-hero-ink-3);
+}
+
+#dashboardBox .hx-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 26px;
+    border: 0;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #1b1145;
+    background: linear-gradient(120deg, #ffffff, #d9e3ff 60%, #ffffff);
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 20px 36px -20px rgba(4, 8, 40, 0.9);
+    transition:
+        transform var(--hx-dur-fast) var(--hx-ease-spring),
+        box-shadow var(--hx-dur-fast) var(--hx-ease-soft),
+        filter var(--hx-dur-fast) var(--hx-ease-soft);
+}
+
+#dashboardBox .hx-btn svg {
+    inline-size: 18px;
+    block-size: 18px;
+}
+
+#dashboardBox .hx-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 26px 44px -20px rgba(4, 8, 40, 1);
+}
+
+#dashboardBox .hx-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+#dashboardBox .hx-btn:focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: 3px;
+}
+
+#dashboardBox .hx-btn__sheen {
+    position: absolute;
+    inset-block: -40%;
+    inline-size: 42%;
+    inset-inline-start: -60%;
+    background: linear-gradient(100deg, transparent, rgba(120, 140, 255, 0.34), transparent);
+    transform: skewX(-18deg);
+    animation: hx-sheen 4.2s var(--hx-ease-soft) infinite;
+    pointer-events: none;
+}
+
+@keyframes hx-sheen {
+    0%   { inset-inline-start: -60%; }
+    55%  { inset-inline-start: 130%; }
+    100% { inset-inline-start: 130%; }
+}
+
+/* حلقهٔ اشتراک */
+#dashboardBox .hx-ringwrap {
+    position: relative;
+    z-index: 1;
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
-    flex: none;
-    border-radius: 9px;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: lowercase;
-    color: var(--avatar-ink, #23407a);
-    background: var(--avatar-bg, linear-gradient(140deg, #dce8ff, #b9cfff));
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    box-shadow: 0 6px 14px -10px rgba(35, 64, 122, 0.9);
+    inline-size: clamp(148px, 17vw, 186px);
+    block-size: clamp(148px, 17vw, 186px);
+    flex: 0 0 auto;
 }
 
-.hx-user__name {
+#dashboardBox .hx-ring {
+    inline-size: 100%;
+    block-size: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+#dashboardBox .hx-ring__track,
+#dashboardBox .hx-ring__value {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+}
+
+#dashboardBox .hx-ring__track {
+    stroke: rgba(255, 255, 255, 0.16);
+}
+
+#dashboardBox .hx-ring__value {
+    stroke: url(#hxRingGradient);
+    stroke-dasharray: var(--hx-len, 440) var(--hx-len, 440);
+    stroke-dashoffset: calc(var(--hx-len, 440) * (1 - var(--hx-p, 0)));
+    transition: --hx-p var(--hx-dur-slow) var(--hx-ease);
+    filter: drop-shadow(0 0 10px rgba(148, 163, 255, 0.55));
+}
+
+#dashboardBox .hx-ringwrap__center {
+    position: absolute;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    text-align: center;
+    color: var(--hx-hero-ink);
+}
+
+#dashboardBox .hx-ringwrap__center strong {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: clamp(1.5rem, 2.4vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+}
+
+#dashboardBox .hx-ringwrap__center small {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--hx-hero-ink-2);
+}
+
+#dashboardBox .hx-ringwrap__center > span {
+    font-size: 0.74rem;
+    color: var(--hx-hero-ink-3);
+}
+
+/* --------------------------------------------------------------------------
+   ۶) تیکر شاخص‌ها — نوار بی‌پایان با لبه‌های محو
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-ticker {
+    position: relative;
+    padding-block: 14px;
+    border-block: 1px solid var(--hx-line);
+    overflow: hidden;
+    mask-image: linear-gradient(to left, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 8%, #000 92%, transparent);
+}
+
+#dashboardBox .hx-ticker__track {
+    display: flex;
+    inline-size: max-content;
+    animation: hx-ticker 38s linear infinite;
+}
+
+#dashboardBox .hx-ticker:hover .hx-ticker__track {
+    animation-play-state: paused;
+}
+
+#dashboardBox .hx-ticker__group {
+    display: flex;
+    align-items: center;
+    gap: clamp(26px, 4vw, 56px);
+    margin: 0;
+    padding: 0 clamp(13px, 2vw, 28px);
+    list-style: none;
+}
+
+#dashboardBox .hx-ticker__group li {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-ticker__group b {
+    font-weight: 600;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-ticker__group span {
+    font-weight: 700;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .hx-ticker__group li::before {
+    content: "";
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, var(--hx-indigo), var(--hx-cyan));
+    opacity: 0.85;
+}
+
+/* جابه‌جایی دقیقاً به اندازهٔ یک گروه (قالب چهار گروه یکسان رندر می‌کند) */
+@keyframes hx-ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(25%); }
+}
+
+/* --------------------------------------------------------------------------
+   ۷) سکوی افتخار — سه ستارهٔ ماه، جدا شده با خط مو (بدون کارت)
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-podium {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 clamp(20px, 3vw, 40px);
+}
+
+#dashboardBox .hx-pod {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-block: clamp(18px, 2vw, 26px);
+    padding-inline: clamp(4px, 1vw, 14px);
+    --acc: var(--hx-blue);
+    --acc-2: var(--hx-violet);
+}
+
+#dashboardBox .hx-pod + .hx-pod {
+    padding-inline-start: clamp(20px, 3vw, 40px);
+    border-inline-start: 1px solid var(--hx-line);
+}
+
+#dashboardBox .hx-pod::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    block-size: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to left, var(--acc), var(--acc-2));
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
+    opacity: 0.9;
+    transition: transform var(--hx-dur) var(--hx-ease);
+}
+
+#dashboardBox .hx-pod.is-in::before {
+    transform: scaleX(1);
+    transition-delay: calc(var(--hx-i, 0) * 60ms);
+}
+
+#dashboardBox .hx-pod__rank {
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-end: 0;
+    font-size: 3.4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--acc);
+    opacity: 0.12;
+    pointer-events: none;
+    transition: opacity var(--hx-dur) var(--hx-ease-soft), transform var(--hx-dur) var(--hx-ease-spring);
+}
+
+#dashboardBox .hx-pod:hover .hx-pod__rank {
+    opacity: 0.22;
+    transform: translateY(-4px) scale(1.04);
+}
+
+#dashboardBox .hx-pod__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+    letter-spacing: 0.01em;
+}
+
+#dashboardBox .hx-pod__who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+#dashboardBox .hx-pod__avatar {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    flex: 0 0 auto;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: lowercase;
+    background:
+        radial-gradient(120% 120% at 25% 0%, rgba(255, 255, 255, 0.42), transparent 60%),
+        linear-gradient(140deg, var(--acc), var(--acc-2));
+    box-shadow: 0 16px 28px -18px rgba(79, 70, 229, 0.55);
+    transition: transform var(--hx-dur) var(--hx-ease-spring);
+}
+
+#dashboardBox .hx-pod:hover .hx-pod__avatar {
+    transform: translateY(-3px) rotate(-3deg);
+}
+
+#dashboardBox .hx-pod__name {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--hx-ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.hx-num-cell {
-    font-weight: 800 !important;
-    color: var(--hx-ink) !important;
-    text-align: end;
-    white-space: nowrap;
+#dashboardBox .hx-pod__value {
+    font-size: clamp(1.7rem, 2.8vw, 2.3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--hx-ink);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    background: linear-gradient(120deg, var(--hx-ink) 40%, var(--acc) 130%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+#dashboardBox .hx-pod__value small {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+    -webkit-text-fill-color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-meter {
+    display: grid;
+    gap: 8px;
+    margin-block-start: 2px;
+    --acc: var(--hx-indigo);
+    --acc-2: var(--hx-cyan);
+    /* JS فقط --hx-w را می‌نویسد؛ خود CSS مقدار را با easing فنری باز می‌کند */
+    transition: --hx-w var(--hx-dur-slow) var(--hx-ease);
+}
+
+#dashboardBox .hx-meter__track {
+    position: relative;
+    display: block;
+    block-size: 6px;
+    border-radius: 999px;
+    background: var(--hx-line);
+    overflow: hidden;
+}
+
+#dashboardBox .hx-meter__fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: var(--hx-w, 0%);
+    border-radius: inherit;
+    background: linear-gradient(to left, var(--acc), var(--acc-2));
+}
+
+#dashboardBox .hx-pod__meta {
+    font-size: 0.76rem;
+    color: var(--hx-ink-3);
 }
 
 /* --------------------------------------------------------------------------
-   ۱۱) حالت خالی
+   ۸) بلوک‌ها و سربرگ بخش‌ها
    -------------------------------------------------------------------------- */
-.hx-empty {
+#dashboardBox .hx-block {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 132px;
-    padding: 18px;
-    border-radius: var(--hx-radius-md);
-    border: 1px dashed rgba(16, 42, 82, 0.14);
-    background: rgba(255, 255, 255, 0.45);
+    gap: clamp(18px, 2.2vw, 30px);
+}
+
+#dashboardBox .hx-sec {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    position: relative;
+    padding-block-end: 14px;
+}
+
+#dashboardBox .hx-sec::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 1px;
+    background: linear-gradient(to left, var(--hx-line-2), transparent 78%);
+}
+
+#dashboardBox .hx-sec__kicker {
+    inline-size: 100%;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: transparent;
+    background: linear-gradient(to left, var(--hx-indigo), var(--hx-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+#dashboardBox .hx-sec__title {
+    margin: 0;
+    font-size: clamp(1.15rem, 1.9vw, 1.5rem);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--hx-ink);
+}
+
+#dashboardBox .hx-sec__hint {
+    margin-inline-start: auto;
+    font-size: 0.82rem;
     color: var(--hx-ink-3);
-    font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   ۹) دیوار شاخص‌ها — شبکهٔ بی‌قاب با خط‌های موی داخلی
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#dashboardBox .hx-metric {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    padding-block: clamp(16px, 2vw, 24px);
+    padding-inline: clamp(16px, 2vw, 26px);
+    border-inline-start: 1px solid var(--hx-line);
+    --acc: var(--hx-blue);
+    --acc-2: var(--hx-violet);
+    transition: transform var(--hx-dur) var(--hx-ease);
+}
+
+#dashboardBox .hx-metric:nth-child(4n + 1) {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+}
+
+#dashboardBox .hx-metric__index {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--acc);
+    opacity: 0.7;
+}
+
+#dashboardBox .hx-metric__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 12px;
+    color: var(--acc);
+    background: rgba(99, 102, 241, 0.12);
+    background: color-mix(in srgb, var(--acc) 13%, transparent);
+    transition: transform var(--hx-dur) var(--hx-ease-spring), background var(--hx-dur) var(--hx-ease-soft);
+}
+
+#dashboardBox .hx-metric__icon svg {
+    inline-size: 18px;
+    block-size: 18px;
+}
+
+#dashboardBox .hx-metric__label {
+    font-size: 0.82rem;
     font-weight: 600;
+    color: var(--hx-ink-2);
+}
+
+#dashboardBox .hx-metric__value {
+    font-size: clamp(1.7rem, 2.7vw, 2.35rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--hx-ink);
+    transition: color var(--hx-dur-fast) var(--hx-ease-soft);
+}
+
+#dashboardBox .hx-metric__meta {
+    font-size: 0.76rem;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-metric__rule {
+    position: absolute;
+    inset-block-end: -1px;
+    inset-inline-start: 0;
+    block-size: 2px;
+    inline-size: 0;
+    border-radius: 2px;
+    background: linear-gradient(to left, var(--acc), var(--acc-2));
+    transition: inline-size var(--hx-dur) var(--hx-ease);
+}
+
+#dashboardBox .hx-metric:hover {
+    transform: translateY(-3px);
+}
+
+#dashboardBox .hx-metric:hover .hx-metric__icon {
+    transform: translateY(-2px) rotate(-5deg);
+    background: rgba(99, 102, 241, 0.2);
+    background: color-mix(in srgb, var(--acc) 22%, transparent);
+}
+
+#dashboardBox .hx-metric:hover .hx-metric__rule {
+    inline-size: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۰) نسبت‌ها: گیج‌های حلقه‌ای + ترکیب پرسنل
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-figures {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0 clamp(20px, 3vw, 44px);
+}
+
+#dashboardBox .hx-figure {
+    display: grid;
+    justify-items: start;
+    gap: 12px;
+    padding-block: clamp(14px, 1.8vw, 22px);
+    padding-inline: clamp(4px, 1vw, 12px);
+}
+
+#dashboardBox .hx-figure + .hx-figure {
+    padding-inline-start: clamp(20px, 3vw, 40px);
+    border-inline-start: 1px solid var(--hx-line);
+}
+
+#dashboardBox .hx-figure--wide {
+    align-content: start;
+}
+
+#dashboardBox .hx-figure__label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--hx-ink-2);
+}
+
+#dashboardBox .hx-figure__body {
+    display: grid;
+    gap: 16px;
+    inline-size: 100%;
+}
+
+#dashboardBox .hx-figure__value {
+    font-size: clamp(1.5rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--hx-ink);
+}
+
+#dashboardBox .hx-figure__caption {
+    font-size: 0.78rem;
+    color: var(--hx-ink-3);
+    max-inline-size: 34ch;
+    line-height: 1.9;
+}
+
+#dashboardBox .hx-gauge {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: clamp(126px, 14vw, 158px);
+    block-size: clamp(126px, 14vw, 158px);
+}
+
+#dashboardBox .hx-gauge svg {
+    inline-size: 100%;
+    block-size: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+#dashboardBox .hx-gauge .hx-ring__track {
+    stroke: var(--hx-line);
+    stroke-width: 11;
+}
+
+#dashboardBox .hx-gauge .hx-ring__value {
+    stroke-width: 11;
+}
+
+#dashboardBox .hx-gauge__center {
+    position: absolute;
+    display: grid;
+    justify-items: center;
+    gap: 1px;
     text-align: center;
 }
 
-.hx-empty svg {
-    width: 30px;
-    height: 30px;
+#dashboardBox .hx-gauge__center strong {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--hx-ink);
+}
+
+#dashboardBox .hx-gauge__center small {
+    font-size: 0.62em;
+    font-weight: 700;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-gauge__center > span {
+    font-size: 0.72rem;
+    color: var(--hx-ink-3);
+}
+
+/* ترکیب پرسنل — نوار سهم دو‌رنگ */
+#dashboardBox .hx-split {
+    display: flex;
+    inline-size: 100%;
+    block-size: 16px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--hx-line);
+}
+
+#dashboardBox .hx-split__seg {
+    position: relative;
+    block-size: 100%;
+    inline-size: 0;
+    transition: inline-size var(--hx-dur-slow) var(--hx-ease);
+}
+
+#dashboardBox .hx-split__seg[data-accent="green"] { background: linear-gradient(to left, #10b981, #34d399); }
+#dashboardBox .hx-split__seg[data-accent="slate"] { background: linear-gradient(to left, #cbd5e1, #e2e8f0); }
+#dashboardBox .hx-split__seg[data-accent="amber"] { background: linear-gradient(to left, #f59e0b, #fbbf24); }
+#dashboardBox .hx-split__seg[data-accent="blue"]  { background: linear-gradient(to left, #4f8dff, #7cb2ff); }
+#dashboardBox .hx-split__seg[data-accent="violet"]{ background: linear-gradient(to left, #7c5cff, #a78bfa); }
+
+#dashboardBox .hx-split__seg i {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+    transform: translateX(-120%);
+    animation: hx-seg-sheen 5s var(--hx-ease-soft) infinite;
+}
+
+@keyframes hx-seg-sheen {
+    0%   { transform: translateX(-120%); }
+    45%  { transform: translateX(120%); }
+    100% { transform: translateX(120%); }
+}
+
+#dashboardBox .hx-legend {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#dashboardBox .hx-legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.84rem;
+    color: var(--hx-ink-2);
+}
+
+#dashboardBox .hx-legend li b {
+    margin-inline-start: auto;
+    font-weight: 800;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .hx-legend__dot {
+    inline-size: 10px;
+    block-size: 10px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+}
+
+#dashboardBox .hx-legend__dot[data-accent="green"] { background: linear-gradient(140deg, #10b981, #34d399); }
+#dashboardBox .hx-legend__dot[data-accent="slate"] { background: linear-gradient(140deg, #cbd5e1, #e2e8f0); }
+#dashboardBox .hx-legend__dot[data-accent="ghost"] { background: transparent; border: 1.5px dashed var(--hx-line-2); }
+
+/* --------------------------------------------------------------------------
+   ۱۱) نمودارها — بدون قاب، روی بوم
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-chartblock {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    padding-block: clamp(8px, 1.4vw, 16px) clamp(12px, 2vw, 22px);
+}
+
+#dashboardBox .hx-chartblock::before {
+    content: "";
+    position: absolute;
+    inset-block: 12% 8%;
+    inset-inline: -3% -3%;
+    border-radius: 50% 50% 46% 46%;
+    background: radial-gradient(60% 70% at 50% 46%, rgba(99, 102, 241, 0.09), transparent 72%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#dashboardBox .hx-chartblock > * {
+    position: relative;
+    z-index: 1;
+}
+
+#dashboardBox .hx-chartblock__head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding-block-end: 14px;
+    border-block-end: 1px solid var(--hx-line);
+}
+
+#dashboardBox .hx-chartblock__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+#dashboardBox .hx-chartblock__icon,
+#dashboardBox .hx-board__icon {
+    display: grid;
+    place-items: center;
+    inline-size: 34px;
+    block-size: 34px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    color: var(--acc, var(--hx-blue));
+    background: rgba(79, 141, 255, 0.12);
+    background: color-mix(in srgb, var(--acc, var(--hx-blue)) 13%, transparent);
+}
+
+#dashboardBox .hx-chartblock__icon svg,
+#dashboardBox .hx-board__icon svg {
+    inline-size: 18px;
+    block-size: 18px;
+}
+
+#dashboardBox .hx-chartblock__title h4,
+#dashboardBox .hx-board__head h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--hx-ink);
+}
+
+#dashboardBox .hx-chartblock__head .hx-chip,
+#dashboardBox .hx-board__head .hx-chip {
+    margin-inline-start: auto;
+}
+
+#dashboardBox .hx-chartblock__body {
+    position: relative;
+}
+
+/* نمودار ناحیه‌ای SVG */
+#dashboardBox .hx-area-wrap {
+    position: relative;
+    inline-size: 100%;
+}
+
+#dashboardBox .hx-area {
+    display: block;
+    inline-size: 100%;
+    height: auto;
+    overflow: visible;
+    font-family: inherit;
+}
+
+#dashboardBox .hx-area__grid line {
+    stroke: var(--hx-grid-line);
+    stroke-width: 1;
+    stroke-dasharray: 4 8;
+    vector-effect: non-scaling-stroke;
+}
+
+#dashboardBox .hx-area__fill {
+    fill: url(#hxAreaFill);
+    opacity: 1;
+    transform-box: fill-box;
+    transform-origin: bottom center;
+}
+
+#dashboardBox .hx-area__line {
+    fill: none;
+    stroke: url(#hxAreaStroke);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    filter: drop-shadow(0 12px 18px rgba(99, 102, 241, 0.35));
+    vector-effect: non-scaling-stroke;
+}
+
+#dashboardBox .hx-area__node {
+    transform-box: fill-box;
+}
+
+#dashboardBox .hx-area__stem {
+    stroke: var(--hx-line);
+    stroke-width: 1;
+    stroke-dasharray: 3 6;
+    vector-effect: non-scaling-stroke;
+}
+
+#dashboardBox .hx-area__dot {
+    fill: rgba(255, 255, 255, 0.94);
+    stroke: var(--hx-indigo);
+    stroke-width: 2.6;
+    vector-effect: non-scaling-stroke;
+}
+
+#dashboardBox .hx-area__core {
+    fill: var(--hx-indigo);
+}
+
+#dashboardBox .hx-area__value {
+    fill: var(--hx-ink);
+    font-size: 21px;
+    font-weight: 800;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .hx-area__name {
+    fill: var(--hx-ink-3);
+    font-size: 19px;
+    font-weight: 600;
+    text-anchor: middle;
+}
+
+/* ستون‌های اضافه‌کاری (CSS)
+   ارتفاع ستون‌ها با متغیر ثبت‌شدهٔ --hx-h از ۰٪ به مقدار واقعی می‌رود؛ همان متغیر
+   جای برچسب مقدار و نشان «بیشترین» را هم می‌چرخاند تا همیشه روی نوک ستون بمانند. */
+#dashboardBox .hx-bars {
+    position: relative;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 12px;
+    padding-block-end: 42px;
+}
+
+#dashboardBox .hx-bars__scale {
+    position: relative;
+    block-size: 300px;
+    margin-block-start: 40px;
+}
+
+#dashboardBox .hx-bars__scale span {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-start: calc(var(--pos) * 1%);
+    transform: translateY(-50%);
+    font-size: 0.68rem;
+    color: var(--hx-ink-3);
+    white-space: nowrap;
+}
+
+#dashboardBox .hx-bars__plot {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: clamp(10px, 2.4vw, 34px);
+    block-size: 300px;
+    margin-block-start: 40px;
+    background-image:
+        linear-gradient(to bottom, var(--hx-grid-line) 0 1px, transparent 1px),
+        linear-gradient(to bottom, var(--hx-grid-line) 0 1px, transparent 1px),
+        linear-gradient(to bottom, var(--hx-grid-line) 0 1px, transparent 1px),
+        linear-gradient(to bottom, var(--hx-grid-line) 0 1px, transparent 1px),
+        linear-gradient(to bottom, var(--hx-grid-line) 0 1px, transparent 1px);
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 25%, 0 50%, 0 75%, 0 100%;
+}
+
+#dashboardBox .hx-bars__col {
+    position: relative;
+    flex: 1 1 0;
+    block-size: 100%;
+    min-width: 0;
+    transition: --hx-h var(--hx-dur-slow) var(--hx-ease-spring);
+}
+
+#dashboardBox .hx-bars__col:hover .hx-bars__fill {
+    filter: saturate(1.16) brightness(1.05);
+}
+
+#dashboardBox .hx-bars__value,
+#dashboardBox .hx-bars__crown,
+#dashboardBox .hx-bars__name {
+    position: absolute;
+    inset-inline: 0;
+    text-align: center;
+    pointer-events: none;
+}
+
+#dashboardBox .hx-bars__value {
+    inset-block-end: var(--hx-h, 0%);
+    transform: translateY(-10px);
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .hx-bars__crown {
+    inset-block-end: calc(var(--hx-h, 0%) + 30px);
+    margin-inline: auto;
+    inline-size: max-content;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #92400e;
+    background: linear-gradient(120deg, #fde68a, #fca5a5);
+    box-shadow: 0 10px 20px -12px rgba(245, 158, 11, 0.9);
+    animation: hx-crown-float 3.6s var(--hx-ease-soft) infinite;
+}
+
+@keyframes hx-crown-float {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(0, -4px); }
+}
+
+#dashboardBox .hx-bars__track {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+#dashboardBox .hx-bars__fill {
+    inline-size: clamp(26px, 50%, 66px);
+    block-size: var(--hx-h, 0%);
+    border-radius: 14px 14px 6px 6px;
+    background: linear-gradient(to top, rgba(245, 158, 11, 0.18), #f59e0b 55%, #fbbf24);
+    box-shadow: 0 18px 30px -18px rgba(245, 158, 11, 0.85);
+    position: relative;
+    overflow: hidden;
+    transition: filter var(--hx-dur-fast) var(--hx-ease-soft);
+}
+
+#dashboardBox .hx-bars__fill[data-accent="blue"] {
+    background: linear-gradient(to top, rgba(79, 141, 255, 0.18), #4f8dff 55%, #7cb2ff);
+    box-shadow: 0 18px 30px -18px rgba(79, 141, 255, 0.85);
+}
+
+#dashboardBox .hx-bars__fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 42%);
+    opacity: 0.55;
+}
+
+#dashboardBox .hx-bars__name {
+    inset-block-start: calc(100% + 12px);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#dashboardBox .hx-bars__col.is-in .hx-bars__name {
+    color: var(--hx-ink-2);
+}
+
+/* حالت خالی */
+#dashboardBox .hx-empty {
+    display: grid;
+    place-items: center;
+    gap: 10px;
+    padding: clamp(26px, 4vw, 44px) 18px;
+    border: 1px dashed var(--hx-line-2);
+    border-radius: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-empty svg {
+    inline-size: 30px;
+    block-size: 30px;
+    color: var(--hx-ink-3);
     opacity: 0.7;
 }
 
 /* --------------------------------------------------------------------------
-   ۱۲) ریسپانسیو
+   ۱۲) جدول‌های برترین‌ها — ردیف‌های ساده با خط مو
    -------------------------------------------------------------------------- */
-@media (max-width: 1400px) {
-    #dashboardBox.hx-dashboard {
-        --hx-gap: 14px;
-    }
-
-    .hx-kpi-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+#dashboardBox .hx-boards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(24px, 3.4vw, 52px);
 }
 
+#dashboardBox .hx-board {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+#dashboardBox .hx-board__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-block-end: 14px;
+    border-block-end: 1px solid var(--hx-line);
+}
+
+#dashboardBox .hx-board__icon[data-accent="blue"]  { --acc: var(--hx-blue); }
+#dashboardBox .hx-board__icon[data-accent="amber"] { --acc: var(--hx-amber); }
+#dashboardBox .hx-board__head .hx-chip {
+    font-size: 0.72rem;
+    padding: 5px 12px;
+}
+
+#dashboardBox .hx-board .dashboard-table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    font-size: 0.86rem;
+}
+
+#dashboardBox .hx-board .dashboard-table thead th {
+    padding: 12px 12px;
+    background: transparent;
+    border: 0;
+    border-block-end: 1px solid var(--hx-line);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--hx-ink-3);
+    text-align: start;
+    white-space: nowrap;
+}
+
+#dashboardBox .hx-board .dashboard-table tbody td {
+    padding: 14px 12px;
+    border: 0;
+    border-block-end: 1px solid var(--hx-line);
+    background: transparent;
+    color: var(--hx-ink-2);
+    vertical-align: middle;
+}
+
+#dashboardBox .hx-board .dashboard-table tbody tr {
+    transition: background var(--hx-dur-fast) var(--hx-ease-soft), transform var(--hx-dur-fast) var(--hx-ease);
+}
+
+#dashboardBox .hx-board .dashboard-table tbody tr:hover {
+    background: linear-gradient(to left, rgba(99, 102, 241, 0.09), transparent 72%);
+}
+
+#dashboardBox .hx-board .dashboard-table tbody tr:hover td:first-child {
+    border-start-start-radius: 12px;
+    border-end-start-radius: 12px;
+}
+
+#dashboardBox .hx-board .dashboard-table tbody tr:last-child td {
+    border-block-end: 0;
+}
+
+#dashboardBox .hx-rank {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--hx-ink-2);
+    background: var(--hx-line);
+}
+
+#dashboardBox .hx-rank--1 {
+    color: #7c2d12;
+    background: linear-gradient(140deg, #fde68a, #fbbf24);
+    box-shadow: 0 10px 20px -12px rgba(251, 191, 36, 0.95);
+}
+
+#dashboardBox .hx-rank--2 {
+    color: #334155;
+    background: linear-gradient(140deg, #e2e8f0, #cbd5e1);
+}
+
+#dashboardBox .hx-rank--3 {
+    color: #7c2d12;
+    background: linear-gradient(140deg, #fed7aa, #fdba74);
+}
+
+#dashboardBox .hx-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+#dashboardBox .hx-user__avatar {
+    display: grid;
+    place-items: center;
+    inline-size: 32px;
+    block-size: 32px;
+    flex: 0 0 auto;
+    border-radius: 11px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(140deg, var(--hx-indigo), var(--hx-cyan));
+    box-shadow: 0 12px 22px -16px rgba(79, 70, 229, 0.95);
+}
+
+#dashboardBox .hx-user__name {
+    font-weight: 600;
+    color: var(--hx-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#dashboardBox .hx-cell--meter {
+    inline-size: 34%;
+    min-inline-size: 90px;
+}
+
+#dashboardBox .hx-meter--row {
+    gap: 0;
+}
+
+#dashboardBox .hx-meter--row .hx-meter__track {
+    block-size: 8px;
+    background: var(--hx-line);
+}
+
+#dashboardBox .hx-meter--row .hx-meter__fill {
+    background: linear-gradient(to left, var(--hx-indigo), var(--hx-cyan));
+}
+
+#dashboardBox .hx-num-cell {
+    font-weight: 800;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* پانویس */
+#dashboardBox .hx-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-block-start: 18px;
+    border-block-start: 1px solid var(--hx-line);
+    font-size: 0.78rem;
+    color: var(--hx-ink-3);
+}
+
+#dashboardBox .hx-foot b {
+    color: var(--hx-ink-2);
+}
+
+#dashboardBox .hx-foot__dot {
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, var(--hx-indigo), var(--hx-cyan));
+    animation: hx-pulse 3s var(--hx-ease-soft) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۳) واژه‌نامهٔ رنگ لهجه‌ها (data-accent)
+   -------------------------------------------------------------------------- */
+#dashboardBox [data-accent="blue"]   { --acc: var(--hx-blue);   --acc-2: #60a5fa; }
+#dashboardBox [data-accent="violet"] { --acc: var(--hx-violet); --acc-2: #a78bfa; }
+#dashboardBox [data-accent="teal"]   { --acc: var(--hx-teal);   --acc-2: #2dd4bf; }
+#dashboardBox [data-accent="amber"]  { --acc: var(--hx-amber);  --acc-2: #fbbf24; }
+#dashboardBox [data-accent="cyan"]   { --acc: var(--hx-cyan);   --acc-2: #38bdf8; }
+#dashboardBox [data-accent="indigo"] { --acc: var(--hx-indigo); --acc-2: #818cf8; }
+#dashboardBox [data-accent="rose"]   { --acc: var(--hx-rose);   --acc-2: #fb7185; }
+#dashboardBox [data-accent="green"]  { --acc: var(--hx-green);  --acc-2: #34d399; }
+#dashboardBox [data-accent="slate"]  { --acc: var(--hx-slate);  --acc-2: #cbd5e1; }
+
+/* --------------------------------------------------------------------------
+   ۱۴) حرکت ورود (reveal)
+      اصل مهم: در حالت پایه هیچ‌چیز پنهان نمی‌شود. انیمیشن‌ها فقط با کلاس
+      `is-in` (که JS اضافه می‌کند) شروع می‌شوند؛ پس اگر JS اجرا نشود یا خطا
+      بدهد، داشبورد کامل و خوانا می‌ماند و هیچ محتوایی گم نمی‌شود.
+   -------------------------------------------------------------------------- */
+#dashboardBox .hx-reveal.is-in {
+    animation: hx-rise var(--hx-dur) var(--hx-ease) both;
+    animation-delay: calc(var(--hx-i, 0) * 45ms);
+}
+
+@keyframes hx-rise {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* نمودار ناحیه‌ای: کشیده‌شدن مسیر، محو ورود ناحیه و روییدن نقطه‌ها */
+#dashboardBox .hx-chartblock.is-in .hx-area__line {
+    animation: hx-draw 1.9s var(--hx-ease) 0.15s both;
+}
+
+@keyframes hx-draw {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: 0; }
+}
+
+#dashboardBox .hx-chartblock.is-in .hx-area__fill {
+    animation: hx-area-in 1.5s var(--hx-ease) 0.35s both;
+}
+
+@keyframes hx-area-in {
+    from { opacity: 0; transform: scaleY(0.86); }
+    to   { opacity: 1; transform: scaleY(1); }
+}
+
+#dashboardBox .hx-chartblock.is-in .hx-area__node {
+    animation: hx-node-in 0.7s var(--hx-ease-spring) both;
+    animation-delay: calc(0.5s + var(--hx-i, 0) * 110ms);
+}
+
+@keyframes hx-node-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ردیف‌های جدول برترین‌ها */
+#dashboardBox .hx-board.is-in tbody tr {
+    animation: hx-row-in 0.6s var(--hx-ease) both;
+    animation-delay: calc(120ms + var(--hx-i, 0) * 80ms);
+}
+
+@keyframes hx-row-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* برچسب مقدار روی نوک ستون‌ها */
+#dashboardBox .hx-bars__col.is-in .hx-bars__value {
+    animation: hx-pop 0.6s var(--hx-ease) both;
+    animation-delay: calc(240ms + var(--hx-i, 0) * 70ms);
+}
+
+@keyframes hx-pop {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۵) رسپانسیو
+   -------------------------------------------------------------------------- */
 @media (max-width: 1180px) {
-    /* ۸ شاخص در ۴ ستون = دو ردیف کامل؛ تا این عرض هنوز جا می‌شود، پس
-       ستون‌ها را کم نمی‌کنیم تا ردیف ناقص ساخته نشود. */
-    .hx-insights {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    #dashboardBox .hx-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .hx-insights > :nth-child(3) {
-        grid-column: span 2;
+    #dashboardBox .hx-metric:nth-child(4n + 1) {
+        border-inline-start: 1px solid var(--hx-line);
+        padding-inline-start: clamp(16px, 2vw, 26px);
+    }
+
+    #dashboardBox .hx-metric:nth-child(3n + 1) {
+        border-inline-start: 0;
+        padding-inline-start: 0;
+    }
+
+    #dashboardBox .hx-figures {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 26px;
+    }
+
+    #dashboardBox .hx-figure--wide {
+        grid-column: 1 / -1;
+        border-inline-start: 0;
+        padding-inline-start: 0;
+        padding-block-start: 24px;
+        border-block-start: 1px solid var(--hx-line);
     }
 }
 
 @media (max-width: 980px) {
-    #dashboardBox.hx-dashboard {
-        width: auto !important;
-        max-width: none !important;
-        margin-inline: 12px !important;
-        margin-block: 0 24px !important;
-    }
-
-    .hx-dash {
-        gap: 20px;
-    }
-
-    .hx-dash::before {
-        inset: -14px -12px -18px;
-        border-radius: 28px;
-    }
-
-    .hx-hero {
+    #dashboardBox .hx-hero {
         grid-template-columns: minmax(0, 1fr);
-        padding: 24px 22px;
-        gap: 20px;
+        justify-items: stretch;
     }
 
-    .hx-hero__ring {
+    #dashboardBox .hx-ringwrap {
         justify-self: center;
+        margin-block-start: 6px;
     }
 
-    .hx-spot-row,
-    .hx-insights,
-    .hx-charts,
-    .hx-tables {
+    #dashboardBox .hx-boards {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .hx-insights > :nth-child(3) {
-        grid-column: auto;
+    #dashboardBox .hx-podium {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
     }
 
-    .hx-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    #dashboardBox .hx-pod {
+        padding-inline: 0;
+    }
+
+    #dashboardBox .hx-pod + .hx-pod {
+        padding-inline-start: 0;
+        padding-block-start: 22px;
+        margin-block-start: 22px;
+        border-inline-start: 0;
+        border-block-start: 1px solid var(--hx-line);
     }
 }
 
-/* بین ۶۲۰ تا ۹۸۰ پیکسل، دو ستون خوانا است؛ کمتر از آن تک‌ستونی می‌شود. */
-@media (max-width: 620px) {
-    .hx-head {
+@media (max-width: 760px) {
+    #dashboardBox.hx-dashboard {
+        margin-inline: 1rem !important;
+        margin-block-end: 28px !important;
+    }
+
+    #dashboardBox .hx-head {
         align-items: flex-start;
     }
 
-    /* عنوان قهرمان: عدد و واحد در یک خط بمانند */
-    .hx-hero__title {
-        gap: 8px;
-        flex-wrap: nowrap;
+    #dashboardBox .hx-head__meta {
+        inline-size: 100%;
     }
 
-    .hx-hero__title .hx-num {
-        font-size: 32px;
-        white-space: nowrap;
+    #dashboardBox .hx-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .hx-hero__unit {
-        font-size: 13px;
-        white-space: nowrap;
+    #dashboardBox .hx-metric:nth-child(3n + 1) {
+        border-inline-start: 1px solid var(--hx-line);
+        padding-inline-start: clamp(16px, 2vw, 26px);
     }
 
-    .hx-head__mark {
-        width: 40px;
-        height: 40px;
-        border-radius: 13px;
+    #dashboardBox .hx-metric:nth-child(odd) {
+        border-inline-start: 0;
+        padding-inline-start: 0;
     }
 
-    .hx-kpi-grid {
+    #dashboardBox .hx-figures {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .hx-kpi {
-        padding: 15px;
+    #dashboardBox .hx-figure {
+        padding-inline: 0;
     }
 
-    .hx-insight__body {
-        flex-direction: column;
-        align-items: flex-start;
+    #dashboardBox .hx-figure + .hx-figure {
+        padding-inline-start: 0;
+        padding-block-start: 22px;
+        margin-block-start: 22px;
+        border-inline-start: 0;
+        border-block-start: 1px solid var(--hx-line);
     }
 
-    .hx-chart {
-        height: 228px;
-        gap: 6px;
+    #dashboardBox .hx-bars {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 8px;
     }
 
-    .hx-col__value {
-        font-size: 10.5px;
+    #dashboardBox .hx-bars__plot {
+        block-size: 230px;
+        gap: 10px;
     }
 
-    .hx-col__name {
-        font-size: 10.5px;
+    #dashboardBox .hx-bars__scale {
+        block-size: 230px;
     }
 
-    .hx-hero__actions .quick-card-btn.hx-btn {
-        width: 100%;
-        justify-content: center;
+    #dashboardBox .hx-area__value {
+        display: none;
+    }
+
+    #dashboardBox .hx-area__name {
+        font-size: 22px;
+    }
+
+    #dashboardBox .hx-ticker__track {
+        animation-duration: 26s;
+    }
+}
+
+@media (max-width: 520px) {
+    #dashboardBox .hx-metrics {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #dashboardBox .hx-metric,
+    #dashboardBox .hx-metric:nth-child(odd),
+    #dashboardBox .hx-metric:nth-child(3n + 1),
+    #dashboardBox .hx-metric:nth-child(4n + 1) {
+        border-inline-start: 0;
+        padding-inline: 0;
+    }
+
+    #dashboardBox .hx-metric + .hx-metric {
+        border-block-start: 1px solid var(--hx-line);
+        padding-block-start: 18px;
+    }
+
+    #dashboardBox .hx-brandmark {
+        inline-size: 46px;
+        block-size: 46px;
+        border-radius: 15px;
+    }
+
+    #dashboardBox .hx-hero {
+        border-radius: 26px;
+    }
+
+    #dashboardBox .hx-hero__num {
+        font-size: clamp(2.6rem, 16vw, 3.4rem);
+    }
+
+    #dashboardBox .hx-cell--meter {
+        display: none;
     }
 }
 
 /* --------------------------------------------------------------------------
-   ۱۳) دسترس‌پذیری و حرکت کمتر
+   ۱۶) احترام کامل به prefers-reduced-motion
    -------------------------------------------------------------------------- */
-#dashboardBox.hx-dashboard :focus-visible {
-    outline: 3px solid rgba(79, 141, 255, 0.45);
-    outline-offset: 2px;
-    border-radius: 12px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .hx-reveal,
-    .hx-col__fill,
-    .hx-split__seg,
-    .hx-spot__share-bar i,
-    .hx-ring__value,
-    .hx-hero__aurora i,
-    .hx-hero::after,
-    .hx-live-dot,
-    .hx-hero__pulse {
+    #dashboardBox.hx-dashboard.is-visible {
+        animation: none;
+    }
+
+    #dashboardBox *,
+    #dashboardBox *::before,
+    #dashboardBox *::after {
         animation: none !important;
         transition: none !important;
     }
 
-    .hx-reveal {
+    /* بدون انیمیشن، مقادیر همان‌جای واقعی خود می‌نشینند (حالت پایه) */
+    #dashboardBox .hx-area__fill,
+    #dashboardBox .hx-area__node,
+    #dashboardBox .hx-area__line {
         opacity: 1;
         transform: none;
+        stroke-dashoffset: 0;
     }
 
-    .hx-spot:hover,
-    .hx-kpi:hover,
-    .hx-card:hover,
-    .quick-card-btn.hx-btn:hover {
+    #dashboardBox .hx-bars__value {
+        opacity: 1;
+    }
+
+    #dashboardBox .hx-ticker__track {
         transform: none;
     }
 }
 
-/* در چاپ، داشبورد ساده و روشن چاپ می‌شود */
+/* --------------------------------------------------------------------------
+   ۱۷) چاپ — بوم ساده و خوانا روی کاغذ
+   -------------------------------------------------------------------------- */
 @media print {
+    .hx-atmos,
+    .hx-defs,
+    .hx-hero__glow,
+    .hx-ticker,
+    .hx-btn__sheen,
+    #dashboardBox .hx-foot__dot {
+        display: none !important;
+    }
+
     #dashboardBox.hx-dashboard {
-        width: 100% !important;
-        max-width: 100% !important;
         margin: 0 !important;
         box-shadow: none !important;
     }
 
-    .hx-dash::before,
-    .hx-hero__aurora,
-    .hx-hero::after,
-    .hx-spot::after,
-    .hx-kpi::after,
-    .hx-card::after {
-        display: none !important;
-    }
-
-    .hx-reveal,
-    .hx-col__fill,
-    .hx-split__seg {
+    #dashboardBox .hx-reveal,
+    #dashboardBox .hx-board tbody tr,
+    #dashboardBox .hx-area__node,
+    #dashboardBox .hx-area__fill,
+    #dashboardBox .hx-area__line,
+    #dashboardBox .hx-bars__value {
         opacity: 1 !important;
         transform: none !important;
+        stroke-dashoffset: 0 !important;
         animation: none !important;
+    }
+
+    /* چاپ همیشه روشن و کم‌جوهر: نوار قهرمان به سطح سفید با مرز مو تبدیل می‌شود */
+    #dashboardBox .hx-hero {
+        background: #ffffff !important;
+        color: #0a1020 !important;
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1;
+        border-radius: 16px;
+    }
+
+    #dashboardBox .hx-hero__num {
+        background: none !important;
+        -webkit-text-fill-color: #0a1020;
+        color: #0a1020 !important;
+        text-shadow: none !important;
+    }
+
+    #dashboardBox .hx-hero__meta,
+    #dashboardBox .hx-hero__hint,
+    #dashboardBox .hx-hero__unit,
+    #dashboardBox .hx-ringwrap__center > span,
+    #dashboardBox .hx-ringwrap__center small {
+        color: #334155 !important;
+    }
+
+    #dashboardBox .hx-hero__meta b,
+    #dashboardBox .hx-ringwrap__center strong {
+        color: #0a1020 !important;
+    }
+
+    #dashboardBox .hx-hero__eyebrow {
+        color: #334155 !important;
+        background: none !important;
+        border-color: #cbd5e1;
+    }
+
+    #dashboardBox .hx-hero__pulse {
+        background: #0ea5e9;
+        box-shadow: none;
+    }
+
+    #dashboardBox .hx-ring__track {
+        stroke: #e2e8f0;
+    }
+
+    #dashboardBox .hx-ring__value {
+        stroke: #4f46e5;
+        filter: none;
+    }
+
+    #dashboardBox .hx-btn {
+        background: #eef2ff !important;
+        color: #1e1b4b !important;
+        box-shadow: none !important;
     }
 }

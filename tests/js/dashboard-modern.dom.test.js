@@ -1,13 +1,13 @@
-/* سوئیت DOM برای app/static/js/dashboard-modern.js
+/* سوئیت DOM برای app/static/js/dashboard-modern.js — «بوم داده»ی داشبورد
  *
- * رفتار موردانتظار لایهٔ حرکتی داشبورد:
- *   • شمارش اعداد با حفظ ارقام فارسی و ترتیب کاراکترها (۹۹٪ → ۱۰۰٪)
- *   • ارتفاع میله‌های نمودار از data-percent و با متغیر --hx-h
- *   • پر شدن حلقه‌های پیشرفت از data-hx-ring (stroke-dashoffset)
- *   • عرض نوارهای سهم و نوار توزیع کارکنان
- *   • تبدیل ارقام رتبه‌ها به فارسی (data-hx-fa)
- *   • افزودن کلاس is-in برای انیمیشن ورود
- *   • سهم زمانی («۱۵:۰۵») دقیق محاسبه شود، نه بر اساس رشته
+ * رفتار موردانتظار لایهٔ حرکتی جدید:
+ *   • شمارش اعداد با حفظ ارقام فارسی، جداکننده‌ها و ترتیب کاراکترها
+ *   • رشد ستون‌ها: data-percent → متغیر ثبت‌شدهٔ --hx-h روی همان ستون
+ *   • حلقه‌ها: data-hx-ring → --hx-len (محیط دایره) و --hx-p (۰ تا ۱)
+ *   • نوار سهم: سهم «زمانی» درست حساب شود (۱۵:۰۵ از ۳۰:۱۰ = ۵۰٪)
+ *   • نوار توزیع پرسنل: عرض هر بخش از data-hx-part نسبت به data-hx-total
+ *   • فارسی‌سازی نشانگرهای رتبه، ساعت زندهٔ سربرگ و کلاس ورود is-in
+ *   • هیچ رنگی با style اینلاین ست نمی‌شود و اجرای دوباره مقدارها را خراب نمی‌کند
  *
  * اجرا: node tests/js/dashboard-modern.dom.test.js
  */
@@ -42,75 +42,73 @@ function assert(cond, msg) {
 const BODY = `
 <div class="management-box hx-dashboard" id="dashboardBox">
   <div class="hx-dash">
-    <header class="hx-head hx-reveal" style="--hx-i:0">
-      <div class="hx-head__side"><span class="hx-chip hx-chip--soft" id="hxLiveClock">—</span></div>
+    <header class="hx-head hx-reveal" data-hx-reveal style="--hx-i:0">
+      <span class="hx-chip hx-chip--ghost hx-clock" id="hxLiveClock">—</span>
+      <span class="hx-kicker">پنل مدیریت هستما</span>
     </header>
-    <section class="hx-hero hx-reveal" style="--hx-i:1">
-      <h3 class="hx-hero__title"><span class="hx-num" data-hx-count>۲۳۱</span><span class="hx-hero__unit">روز باقی‌مانده</span></h3>
-      <div class="hx-hero__ring">
-        <svg class="hx-ring" viewBox="0 0 148 148">
-          <circle class="hx-ring__value" cx="74" cy="74" r="60" data-hx-ring="63"></circle>
+
+    <section class="hx-hero hx-reveal dashboard-quick-card" data-hx-reveal data-hx-spot style="--hx-i:1">
+      <span class="hx-hero__num hx-num" data-hx-count>۲۳۱</span>
+      <span class="hx-hero__meta"><b data-hx-count>۱۴۰۵/۱۲/۲۹</b></span>
+      <div class="hx-ringwrap">
+        <svg class="hx-ring" viewBox="0 0 168 168">
+          <circle class="hx-ring__value" cx="84" cy="84" r="70" data-hx-ring="۶۳"></circle>
         </svg>
-        <div class="hx-ring__center"><strong><span data-hx-count>۶۳</span><small>٪</small></strong></div>
+        <span class="hx-ringwrap__center"><strong><span data-hx-count>۶۳</span><small>٪</small></strong></span>
       </div>
     </section>
-    <section class="hx-spot-row">
-      <article class="hx-spot hx-reveal" style="--hx-i:2" data-accent="overtime">
-        <div class="hx-spot__share" data-hx-share data-hx-part="۱۵:۰۵" data-hx-whole="۳۰:۱۰">
-          <span class="hx-spot__share-bar"><i></i></span>
+
+    <section class="hx-podium">
+      <article class="hx-pod hx-reveal dashboard-card dashboard-card--highlight" data-hx-reveal data-hx-spot style="--hx-i:2">
+        <strong class="hx-pod__value hx-num" data-hx-count>۱۵:۰۵</strong>
+        <div class="hx-meter" data-hx-meter data-hx-part="۱۵:۰۵" data-hx-whole="۳۰:۱۰">
+          <span class="hx-meter__track"><i class="hx-meter__fill"></i></span>
         </div>
       </article>
     </section>
-    <section class="hx-kpis">
-      <div class="hx-kpi-grid">
-        <article class="hx-kpi hx-reveal" style="--hx-i:6" data-accent="blue">
-          <span class="hx-kpi__text">
-            <span class="hx-kpi__value" data-hx-count>۱۶</span>
-          </span>
-        </article>
-        <article class="hx-kpi hx-reveal" style="--hx-i:7" data-accent="violet">
-          <span class="hx-kpi__text"><span class="hx-kpi__value" data-hx-count>۱۵:۰۵</span></span>
-        </article>
-      </div>
+
+    <section class="hx-metrics">
+      <article class="hx-metric hx-reveal dashboard-card" data-hx-reveal style="--hx-i:3">
+        <span class="hx-metric__value hx-num" data-hx-count>۱۶</span>
+      </article>
     </section>
-    <section class="hx-insights">
-      <article class="hx-card hx-reveal" style="--hx-i:14">
+
+    <section class="hx-figures">
+      <article class="hx-figure hx-reveal dashboard-card" data-hx-reveal style="--hx-i:4">
         <div class="hx-gauge">
-          <svg viewBox="0 0 118 118">
-            <circle class="hx-ring__value" cx="59" cy="59" r="48" data-hx-ring="۴۴"></circle>
+          <svg viewBox="0 0 132 132">
+            <circle class="hx-ring__value" cx="66" cy="66" r="56" data-hx-ring="۴۴"></circle>
           </svg>
-          <div class="hx-ring__center"><strong><span data-hx-count>۴۴</span><small>٪</small></strong></div>
+          <span class="hx-gauge__center"><strong><span data-hx-count>۴۴</span><small>٪</small></strong></span>
         </div>
-      </article>
-      <article class="hx-card hx-reveal" style="--hx-i:16">
         <div class="hx-split" data-hx-split data-hx-total="۱۶">
-          <span class="hx-split__seg" data-hx-part="۱" style="width: 0%"><i></i></span>
-          <span class="hx-split__seg" data-hx-part="۱۵" style="width: 0%"><i></i></span>
+          <span class="hx-split__seg" data-hx-part="۱"></span>
+          <span class="hx-split__seg" data-hx-part="۱۵"></span>
         </div>
+        <ul class="hx-legend">
+          <li><b class="hx-num" data-hx-count>۱</b></li>
+          <li><b class="hx-num" data-hx-count>۱۵</b></li>
+        </ul>
       </article>
     </section>
+
     <section class="hx-charts">
-      <article class="hx-card hx-chart-card hx-reveal" style="--hx-i:17">
-        <div class="hx-chart">
-          <div class="hx-col" style="--hx-i:0">
-            <span class="hx-col__track"><span class="hx-col__fill" data-accent="blue" data-percent="100"></span></span>
-          </div>
-          <div class="hx-col" style="--hx-i:1">
-            <span class="hx-col__track"><span class="hx-col__fill" data-accent="blue" data-percent="42"></span></span>
-          </div>
-          <div class="hx-col" style="--hx-i:2">
-            <span class="hx-col__track"><span class="hx-col__fill" data-accent="blue" data-percent="0"></span></span>
-          </div>
+      <article class="hx-chartblock hx-reveal dashboard-chart-card" data-hx-reveal style="--hx-i:5">
+        <div class="hx-bars__plot">
+          <div class="hx-bars__col" data-hx-bar data-percent="100"><span class="hx-bars__value">۱۵:۰۵</span></div>
+          <div class="hx-bars__col" data-hx-bar data-percent="42"><span class="hx-bars__value">۰۵:۱۰</span></div>
+          <div class="hx-bars__col" data-hx-bar data-percent="0"><span class="hx-bars__value">۰۰:۰۰</span></div>
         </div>
       </article>
     </section>
-    <section class="hx-tables">
-      <article class="hx-card hx-table-card hx-reveal" style="--hx-i:19">
+
+    <section class="hx-boards">
+      <article class="hx-board hx-reveal dashboard-table-card" data-hx-reveal style="--hx-i:6">
         <table class="dashboard-table">
           <tbody>
             <tr><td><span class="hx-rank" data-hx-fa>1</span></td></tr>
-            <tr><td><span class="hx-rank" data-hx-fa>2</span></td></tr>
-            <tr><td><span class="hx-rank" data-hx-fa>۳</span></td></tr>
+            <tr><td><span class="hx-rank" data-hx-fa>۲</span></td></tr>
+            <tr><td><span class="hx-rank" data-hx-fa> 03 </span></td></tr>
           </tbody>
         </table>
       </article>
@@ -125,7 +123,7 @@ function makeDom(bodyHtml) {
     { runScripts: 'outside-only', pretendToBeVisual: true, url: 'https://example.test/admin/dashboard' }
   );
   const { window } = dom;
-  // jsdom چیدمان واقعی ندارد؛ فقط برای تست، لایهٔ حرکتی را مستقیماً اجرا می‌کنیم.
+  // jsdom چیدمان واقعی ندارد؛ برای تست، لایهٔ حرکتی را مستقیماً اجرا می‌کنیم.
   window.eval(DASH_JS);
   return window;
 }
@@ -134,8 +132,8 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/* ماژول در <head> بارگذاری می‌شود و اجرا را به DOMContentLoaded می‌سپارد؛
-   در jsdom این رویداد ناهمگام است، پس مثل مرورگر واقعی منتظر می‌مانیم. */
+/* ماژول اجرای اولیه را به DOMContentLoaded می‌سپارد؛ در jsdom این رویداد
+   ناهمگام است، پس مثل مرورگر واقعی منتظر می‌مانیم. */
 function ready(window) {
   if (window.document.readyState !== 'loading') return Promise.resolve();
   return new Promise((resolve) => {
@@ -149,7 +147,7 @@ function ready(window) {
 check('ماژول روی window.HastamaDashboard منتشر می‌شود', () => {
   const window = makeDom(BODY);
   assert(window.HastamaDashboard, 'HastamaDashboard تعریف نشده است');
-  ['refresh', 'runNow', 'toFaDigits', 'toLatinDigits'].forEach((fn) => {
+  ['refresh', 'runNow', 'toFaDigits', 'toLatinDigits', 'parseAmount'].forEach((fn) => {
     assert(typeof window.HastamaDashboard[fn] === 'function', `${fn} موجود نیست`);
   });
 });
@@ -163,29 +161,44 @@ check('اعداد فارسی درست به لاتین و برعکس تبدیل �
   assert(api.parseAmount('۱۶') === 16, 'عدد ساده درست خوانده نشد');
 });
 
-check('ارتفاع میله‌ها از data-percent ست می‌شود', async () => {
+check('اجرای فوری، کلاس ورود is-in را به بلوک‌ها می‌دهد', async () => {
   const window = makeDom(BODY);
-  window.HastamaDashboard.runNow();
-  await wait(900);
-  const fills = window.document.querySelectorAll('.hx-col__fill');
-  assert(fills[0].style.getPropertyValue('--hx-h') === '100%', `میلهٔ اول: ${fills[0].style.getPropertyValue('--hx-h')}`);
-  assert(fills[1].style.getPropertyValue('--hx-h') === '42%', `میلهٔ دوم: ${fills[1].style.getPropertyValue('--hx-h')}`);
-  assert(fills[2].style.getPropertyValue('--hx-h') === '0%', `میلهٔ صفر باید صفر بماند: ${fills[2].style.getPropertyValue('--hx-h')}`);
+  assert(window.HastamaDashboard.runNow() === true, 'runNow مقدار درست برنگرداند');
+  await wait(60);
+  const reveals = window.document.querySelectorAll('.hx-reveal');
+  assert(reveals.length >= 7, `تعداد بلوک‌ها کم است: ${reveals.length}`);
+  Array.prototype.forEach.call(reveals, (el, i) => {
+    assert(el.classList.contains('is-in'), `بلوک ${i} کلاس is-in نگرفت`);
+  });
 });
 
-check('حلقه‌های پیشرفت با data-hx-ring پر می‌شوند', async () => {
+check('ارتفاع ستون‌ها از data-percent روی --hx-h ست می‌شود', async () => {
   const window = makeDom(BODY);
   window.HastamaDashboard.runNow();
-  await wait(900);
+  await wait(700);
+  const cols = window.document.querySelectorAll('[data-hx-bar]');
+  const values = Array.prototype.map.call(cols, (c) => c.style.getPropertyValue('--hx-h'));
+  assert(values[0] === '100%', `ستون اول: ${values[0]}`);
+  assert(values[1] === '42%', `ستون دوم: ${values[1]}`);
+  assert(values[2] === '0%', `ستون صفر باید صفر بماند: ${values[2]}`);
+  Array.prototype.forEach.call(cols, (c, i) => {
+    assert(c.classList.contains('is-in'), `ستون ${i} کلاس is-in نگرفت`);
+  });
+});
+
+check('حلقه‌ها با data-hx-ring پر می‌شوند (--hx-len و --hx-p)', async () => {
+  const window = makeDom(BODY);
+  window.HastamaDashboard.runNow();
+  await wait(300);
   const rings = window.document.querySelectorAll('[data-hx-ring]');
-  rings.forEach((ring) => {
+  assert(rings.length === 2, `تعداد حلقه‌ها: ${rings.length}`);
+  Array.prototype.forEach.call(rings, (ring) => {
     const percent = Number(window.HastamaDashboard.toLatinDigits(ring.getAttribute('data-hx-ring')));
     const r = Number(ring.getAttribute('r'));
-    const length = 2 * Math.PI * r;
-    const offset = Number(ring.style.strokeDashoffset);
-    const expected = length * (1 - percent / 100);
-    assert(Math.abs(offset - expected) < 1.5, `offset حلقه: ${offset} ≠ ${expected}`);
-    assert(ring.style.strokeDasharray.length > 0, 'stroke-dasharray ست نشده است');
+    const length = Number(ring.style.getPropertyValue('--hx-len'));
+    const p = Number(ring.style.getPropertyValue('--hx-p'));
+    assert(Math.abs(length - 2 * Math.PI * r) < 1, `محیط حلقه: ${length} ≠ ${2 * Math.PI * r}`);
+    assert(Math.abs(p - percent / 100) < 0.001, `نسبت حلقه: ${p} ≠ ${percent / 100}`);
   });
 });
 
@@ -193,11 +206,11 @@ check('نوار سهم بر اساس سهم زمانی پر می‌شود (نه 
   const window = makeDom(BODY);
   window.HastamaDashboard.runNow();
   await wait(300);
-  const bar = window.document.querySelector('.hx-spot__share-bar i');
-  assert(bar.style.getPropertyValue('--hx-w') === '50%', `عرض نوار سهم: ${bar.style.getPropertyValue('--hx-w')}`);
+  const meter = window.document.querySelector('[data-hx-meter]');
+  assert(meter.style.getPropertyValue('--hx-w') === '50%', `عرض نوار سهم: ${meter.style.getPropertyValue('--hx-w')}`);
 });
 
-check('نوار توزیع کارکنان عرض هر بخش را می‌گیرد', async () => {
+check('نوار توزیع پرسنل عرض هر بخش را می‌گیرد', async () => {
   const window = makeDom(BODY);
   window.HastamaDashboard.runNow();
   await wait(300);
@@ -216,21 +229,13 @@ check('نشانگرهای رتبه به فارسی نمایش داده می‌ش
   assert(ranks[2].textContent.trim() === '۳', `رتبهٔ سوم: ${ranks[2].textContent}`);
 });
 
-check('کلاس is-in برای انیمیشن ورود اضافه می‌شود', async () => {
-  const window = makeDom(BODY);
-  window.HastamaDashboard.runNow();
-  await wait(120);
-  const box = window.document.getElementById('dashboardBox');
-  assert(box.classList.contains('is-in'), 'کلاس is-in اضافه نشده است');
-});
-
-check('شمارش اعداد با حفظ ارقام فارسی و طول رشته تمام می‌شود', async () => {
+check('شمارش اعداد با ارقام فارسی، جداکننده‌ها و طول رشته تمام می‌شود', async () => {
   const window = makeDom(BODY);
   window.HastamaDashboard.runNow();
   await wait(2200);
   const numbers = window.document.querySelectorAll('[data-hx-count]');
   const texts = Array.prototype.map.call(numbers, (n) => n.textContent.trim());
-  ['۲۳۱', '۶۳', '۱۶', '۱۵:۰۵', '۴۴'].forEach((expected, index) => {
+  ['۲۳۱', '۱۴۰۵/۱۲/۲۹', '۶۳', '۱۵:۰۵', '۱۶', '۴۴', '۱', '۱۵'].forEach((expected, index) => {
     assert(texts[index] === expected, `عدد ${index}: «${texts[index]}» ≠ «${expected}»`);
   });
 });
@@ -243,6 +248,40 @@ check('ساعت سربرگ داشبورد پر می‌شود', async () => {
   const text = clock.textContent.trim();
   assert(text !== '—' && text.length > 3, `ساعت سربرگ تنظیم نشد: «${text}»`);
   assert(/[۰-۹0-9]/.test(text), 'ساعت سربرگ عدد ندارد');
+});
+
+check('اجرای دوباره مقدارها را خراب نمی‌کند (idempotent)', async () => {
+  const window = makeDom(BODY);
+  window.HastamaDashboard.runNow();
+  await wait(700);
+  const bar = window.document.querySelector('[data-hx-bar]');
+  const first = bar.style.getPropertyValue('--hx-h');
+  window.HastamaDashboard.runNow();
+  await wait(120);
+  assert(bar.style.getPropertyValue('--hx-h') === first, `مقدار ستون تغییر کرد: ${bar.style.getPropertyValue('--hx-h')}`);
+});
+
+check('هیچ رنگی با style اینلاین ست نمی‌شود', async () => {
+  const window = makeDom(BODY);
+  window.HastamaDashboard.runNow();
+  await wait(300);
+  const nodes = window.document.querySelectorAll('#dashboardBox *');
+  Array.prototype.forEach.call(nodes, (node) => {
+    const css = node.style.cssText || '';
+    assert(!/color\s*:/i.test(css), `رنگ اینلاین روی ${node.className}: ${css}`);
+    assert(!/background/i.test(css), `پس‌زمینهٔ اینلاین روی ${node.className}: ${css}`);
+  });
+});
+
+check('بدون IntersectionObserver هم خطا نمی‌دهد و محتوا گم نمی‌شود', async () => {
+  const window = makeDom(BODY);
+  window.deleteProp && window.deleteProp('IntersectionObserver');
+  window.IntersectionObserver = undefined;
+  await ready(window);
+  await wait(60);
+  assert(window.HastamaDashboard, 'ماژول بعد از نبودن IntersectionObserver از کار افتاد');
+  const api = window.HastamaDashboard;
+  assert(api.runNow() === true, 'runNow در نبود IntersectionObserver کار نکرد');
 });
 
 /* ── اجرا ──────────────────────────────────────────────────────────── */

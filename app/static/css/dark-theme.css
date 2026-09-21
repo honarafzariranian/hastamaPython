@@ -1141,271 +1141,216 @@ body.dark-mode .shift-schedule-grid .day-label {
     color: var(--dk-text);
 }
 
-/* کارت‌های داشبورد — پایهٔ مشترک (متناسب با بازطراحی dashboard-modern.css) */
+/* =============================================================================
+   داشبورد مدیریت — «بوم داده» در حالت تیره
+   -----------------------------------------------------------------------------
+   طراحی مدرن داشبورد عمداً بدون کارت/قاب است؛ پس در تم تیره فقط رنگ متن،
+   خط‌های مو، هاله‌ها و داده‌نماها تیره می‌شوند. کلاس‌های قدیمی
+   (dashboard-card / dashboard-chart-card / dashboard-table-card /
+   dashboard-quick-card) روی مارک‌آپ جدید باقی مانده‌اند اما دیگر قاب و
+   پس‌زمینه نمی‌سازند — همان چیزی که «حذف کامل باکس‌ها» یعنی.
+   ========================================================================== */
+
+/* کارت‌های داشبورد — بدون قاب، بدون سایه، فقط رنگ متن پایه */
 body.dark-mode .dashboard-card,
 body.dark-mode .dashboard-chart-card,
 body.dark-mode .dashboard-table-card,
 body.dark-mode .dashboard-quick-card {
-    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
-    border-color: var(--dk-border);
-    box-shadow: var(--dk-shadow-sm);
+    background: none;
+    border: 0;
+    box-shadow: none;
+    color: var(--dk-text);
 }
 
-/* توکن‌های داشبورد مدرن در حالت تیره (همهٔ اجزا از همین متغیرها رنگ می‌گیرند) */
+/* توکن‌های بوم در حالت تیره (همهٔ اجزا از همین متغیرها رنگ می‌گیرند) */
 body.dark-mode #dashboardBox.hx-dashboard {
-    --hx-ink: #e9eff8;
+    --hx-ink: #eaf1fb;
     --hx-ink-2: #a9b8ce;
-    --hx-ink-3: #7e8ea6;
+    --hx-ink-3: #7f8fa6;
 
-    --hx-surface: rgba(24, 34, 51, 0.82);
-    --hx-surface-strong: rgba(31, 43, 62, 0.94);
-    --hx-surface-soft: rgba(24, 34, 51, 0.6);
-    --hx-border: rgba(255, 255, 255, 0.09);
-    --hx-border-strong: rgba(255, 255, 255, 0.18);
+    --hx-line: rgba(255, 255, 255, 0.10);
+    --hx-line-2: rgba(255, 255, 255, 0.20);
+    --hx-grid-line: rgba(255, 255, 255, 0.05);
+
+    --hx-wash-1: rgba(99, 102, 241, 0.26);
+    --hx-wash-2: rgba(34, 211, 238, 0.18);
+    --hx-wash-3: rgba(168, 85, 247, 0.24);
+
+    --hx-hero-1: #140f36;
+    --hx-hero-2: #2a2180;
+    --hx-hero-3: #5b21b6;
+    --hx-hero-4: #0b4a5e;
+    --hx-hero-ink: #f4f7ff;
+    --hx-hero-ink-2: rgba(226, 232, 255, 0.76);
+    --hx-hero-ink-3: rgba(214, 224, 255, 0.5);
 
     --hx-slate: #64748b;
-
-    --hx-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
-    --hx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
-    --hx-shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 28px 54px -30px rgba(0, 0, 0, 0.95);
-    --hx-shadow-lg: 0 40px 80px -40px rgba(0, 0, 0, 1);
 }
 
-/* آستری پشت داشبورد */
-body.dark-mode #dashboardBox .hx-dash::before {
-    background:
-        radial-gradient(120% 90% at 100% 0%, rgba(79, 141, 255, 0.16), transparent 58%),
-        radial-gradient(110% 85% at 0% 100%, rgba(124, 92, 255, 0.14), transparent 60%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008));
-    border-color: rgba(255, 255, 255, 0.06);
+/* لایهٔ جوی: در تیره فقط هاله‌ها می‌مانند و نویز ملایم‌تر می‌شود */
+body.dark-mode #dashboardBox .hx-atmos__grain {
+    opacity: 0.18;
+    mix-blend-mode: overlay;
 }
 
-/* سربرگ داشبورد */
-body.dark-mode #dashboardBox .hx-head__text h2 { color: var(--hx-ink); }
-body.dark-mode #dashboardBox .hx-head__text p { color: var(--hx-ink-3); }
+body.dark-mode #dashboardBox .hx-brandmark {
+    box-shadow: 0 18px 34px -18px rgba(0, 0, 0, 0.9);
+}
 
+body.dark-mode #dashboardBox .hx-head__title h2,
+body.dark-mode #dashboardBox .hx-sec__title,
+body.dark-mode #dashboardBox .hx-chartblock__title h4,
+body.dark-mode #dashboardBox .hx-board__head h4,
+body.dark-mode #dashboardBox .hx-metric__value,
+body.dark-mode #dashboardBox .hx-pod__name,
+body.dark-mode #dashboardBox .hx-pod__value,
+body.dark-mode #dashboardBox .hx-figure__value,
+body.dark-mode #dashboardBox .hx-gauge__center strong,
+body.dark-mode #dashboardBox .hx-legend li b,
+body.dark-mode #dashboardBox .hx-num-cell,
+body.dark-mode #dashboardBox .hx-bars__value,
+body.dark-mode #dashboardBox .hx-user__name {
+    color: var(--hx-ink);
+}
+
+body.dark-mode #dashboardBox .hx-head__title p,
+body.dark-mode #dashboardBox .hx-kicker,
+body.dark-mode #dashboardBox .hx-sec__hint,
+body.dark-mode #dashboardBox .hx-metric__meta,
+body.dark-mode #dashboardBox .hx-pod__label,
+body.dark-mode #dashboardBox .hx-pod__meta,
+body.dark-mode #dashboardBox .hx-figure__caption,
+body.dark-mode #dashboardBox .hx-figure__label,
+body.dark-mode #dashboardBox .hx-gauge__center > span,
+body.dark-mode #dashboardBox .hx-ticker__group li,
+body.dark-mode #dashboardBox .hx-ticker__group b,
+body.dark-mode #dashboardBox .hx-bars__name,
+body.dark-mode #dashboardBox .hx-bars__scale span,
+body.dark-mode #dashboardBox .hx-area__name,
+body.dark-mode #dashboardBox .hx-foot,
+body.dark-mode #dashboardBox .hx-board .dashboard-table thead th {
+    color: var(--hx-ink-3);
+}
+
+body.dark-mode #dashboardBox .hx-ticker__group span,
+body.dark-mode #dashboardBox .hx-metric__label,
+body.dark-mode #dashboardBox .hx-legend li,
+body.dark-mode #dashboardBox .hx-board .dashboard-table tbody td {
+    color: var(--hx-ink-2);
+}
+
+/* تراشه‌ها */
 body.dark-mode #dashboardBox .hx-chip {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--hx-line);
     color: var(--hx-ink-2);
-    box-shadow: none;
 }
 
-body.dark-mode #dashboardBox .hx-chip--soft {
-    background: rgba(255, 255, 255, 0.035);
+body.dark-mode #dashboardBox .hx-chip--ghost {
+    background: transparent;
     color: var(--hx-ink-3);
 }
 
 body.dark-mode #dashboardBox .hx-chip--live {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(52, 211, 153, 0.3);
     color: #6ee7b7;
-    background: rgba(16, 185, 129, 0.14);
-    border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* کارت قهرمان (اشتراک) — در تم تیره کمی تیره‌تر و کم‌درخشش‌تر */
+/* قهرمان */
 body.dark-mode #dashboardBox .hx-hero {
     background:
-        radial-gradient(120% 140% at 88% 10%, rgba(126, 231, 255, 0.22), transparent 55%),
-        radial-gradient(120% 160% at 8% 100%, rgba(160, 118, 255, 0.34), transparent 58%),
-        linear-gradient(118deg, #0c142c 0%, #16224c 42%, #222f6f 72%, #372c86 100%);
-    box-shadow: 0 30px 70px -34px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        radial-gradient(120% 130% at 88% 0%, rgba(124, 58, 237, 0.42), transparent 58%),
+        radial-gradient(90% 120% at 8% 100%, rgba(14, 116, 144, 0.36), transparent 62%),
+        linear-gradient(135deg, var(--hx-hero-1), var(--hx-hero-2) 52%, var(--hx-hero-3));
+    box-shadow:
+        0 42px 80px -46px rgba(0, 0, 0, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* کارت‌های شیشه‌ای (شاخص‌ها، ستاره‌ها، نمودار، جدول) */
-body.dark-mode #dashboardBox .hx-kpi,
-body.dark-mode #dashboardBox .hx-spot,
-body.dark-mode #dashboardBox .hx-card {
-    background: linear-gradient(150deg, rgba(26, 37, 55, 0.92), rgba(20, 29, 43, 0.9));
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: var(--hx-shadow-sm);
-    backdrop-filter: blur(10px);
+body.dark-mode #dashboardBox .hx-ring__track {
+    stroke: rgba(255, 255, 255, 0.13);
 }
 
-body.dark-mode #dashboardBox .hx-kpi:hover,
-body.dark-mode #dashboardBox .hx-spot:hover,
-body.dark-mode #dashboardBox .hx-card:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: var(--hx-shadow-md);
+body.dark-mode #dashboardBox .hx-btn {
+    color: #14103a;
 }
 
-body.dark-mode #dashboardBox .hx-kpi::after,
-body.dark-mode #dashboardBox .hx-spot::after,
-body.dark-mode #dashboardBox .hx-card::after {
-    background: radial-gradient(220px circle at var(--hx-mx, 50%) var(--hx-my, 0%), rgba(150, 190, 255, 0.14), transparent 68%);
-}
-
-/* کاشی آیکون‌ها */
-body.dark-mode #dashboardBox .hx-kpi__icon {
-    color: var(--acc);
-    background: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode #dashboardBox .hx-kpi:hover .hx-kpi__icon {
-    color: #fff;
-    background: linear-gradient(150deg, var(--acc), rgba(255, 255, 255, 0.16));
-    box-shadow: 0 14px 26px -16px var(--acc);
-}
-
-body.dark-mode #dashboardBox .hx-card__icon {
-    color: var(--acc, var(--hx-blue));
+/* دیوار شاخص‌ها و نسبت‌ها */
+body.dark-mode #dashboardBox .hx-metric__icon,
+body.dark-mode #dashboardBox .hx-chartblock__icon,
+body.dark-mode #dashboardBox .hx-board__icon {
     background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.1);
 }
 
-body.dark-mode #dashboardBox .hx-kpi::before {
-    opacity: 0.35;
+body.dark-mode #dashboardBox .hx-metric__index {
+    opacity: 0.85;
 }
 
-body.dark-mode #dashboardBox .hx-kpi:hover::before {
-    opacity: 0.55;
-}
-
-body.dark-mode #dashboardBox .hx-kpi__label,
-body.dark-mode #dashboardBox .hx-card__head .card-title,
-body.dark-mode #dashboardBox .hx-card__head .table-title,
-body.dark-mode #dashboardBox .hx-section-head h3 {
-    color: var(--hx-ink);
-}
-
-body.dark-mode #dashboardBox .hx-kpi__value,
-body.dark-mode #dashboardBox .hx-insight__value,
-body.dark-mode #dashboardBox .hx-spot__name,
-body.dark-mode #dashboardBox .hx-legend li b {
-    color: var(--hx-ink);
-}
-
-body.dark-mode #dashboardBox .hx-kpi__meta,
-body.dark-mode #dashboardBox .hx-spot__time,
-body.dark-mode #dashboardBox .hx-insight__caption,
-body.dark-mode #dashboardBox .hx-section-head__hint,
-body.dark-mode #dashboardBox .hx-spot__share-text {
-    color: var(--hx-ink-3);
-}
-
-body.dark-mode #dashboardBox .hx-spot__label,
-body.dark-mode #dashboardBox .hx-legend li {
-    color: var(--hx-ink-2);
-}
-
-body.dark-mode #dashboardBox .hx-spot__rank {
-    color: var(--acc);
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-body.dark-mode #dashboardBox .hx-spot__share-bar,
+body.dark-mode #dashboardBox .hx-gauge .hx-ring__track,
+body.dark-mode #dashboardBox .hx-meter__track,
 body.dark-mode #dashboardBox .hx-split {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode #dashboardBox .hx-card__head {
-    border-bottom-color: rgba(255, 255, 255, 0.07);
-}
-
-/* نمودار ستونی */
-body.dark-mode #dashboardBox .hx-chart {
-    background-image:
-        repeating-linear-gradient(to top, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 25%);
-}
-
-body.dark-mode #dashboardBox .hx-col__track {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.08));
-}
-
-body.dark-mode #dashboardBox .hx-col:hover .hx-col__track {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.12));
-}
-
-body.dark-mode #dashboardBox .hx-col__value {
-    color: var(--hx-ink-2);
-}
-
-body.dark-mode #dashboardBox .hx-col__name {
-    color: var(--hx-ink-3);
-}
-
-body.dark-mode #dashboardBox .hx-col__fill::after {
-    opacity: 0.35;
-}
-
-/* حلقه‌های پیشرفت */
-body.dark-mode #dashboardBox .hx-gauge .hx-ring__track {
-    stroke: rgba(255, 255, 255, 0.1);
-}
-
-body.dark-mode #dashboardBox .hx-gauge .hx-ring__center strong {
-    color: var(--hx-ink);
-}
-
-body.dark-mode #dashboardBox .hx-gauge .hx-ring__center span {
-    color: var(--hx-ink-3);
+    background: rgba(255, 255, 255, 0.09);
 }
 
 body.dark-mode #dashboardBox .hx-split__seg[data-accent="slate"] {
-    --seg-1: #475569;
-    --seg-2: #64748b;
+    background: linear-gradient(to left, #475569, #64748b);
 }
 
 body.dark-mode #dashboardBox .hx-legend__dot[data-accent="slate"] {
-    --seg-1: #475569;
-    --seg-2: #64748b;
+    background: linear-gradient(140deg, #475569, #64748b);
 }
 
-/* جدول‌های لیدربورد */
-body.dark-mode .dashboard-table th,
-body.dark-mode .dashboard-table td {
-    color: var(--dk-text);
-    border-bottom-color: var(--dk-line);
+/* نمودارها */
+body.dark-mode #dashboardBox .hx-chartblock::before {
+    background: radial-gradient(60% 70% at 50% 46%, rgba(99, 102, 241, 0.18), transparent 72%);
 }
 
-body.dark-mode #dashboardBox .hx-table-card .dashboard-table thead th {
+body.dark-mode #dashboardBox .hx-chartblock__head,
+body.dark-mode #dashboardBox .hx-board__head,
+body.dark-mode #dashboardBox .hx-board .dashboard-table thead th,
+body.dark-mode #dashboardBox .hx-board .dashboard-table tbody td,
+body.dark-mode #dashboardBox .hx-foot {
+    border-color: var(--hx-line);
+}
+
+body.dark-mode #dashboardBox .hx-area__dot {
+    fill: #141d2e;
+    stroke: #818cf8;
+}
+
+body.dark-mode #dashboardBox .hx-area__core {
+    fill: #a5b4fc;
+}
+
+body.dark-mode #dashboardBox .hx-area__stem {
+    stroke: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode #dashboardBox .hx-empty {
+    border-color: var(--hx-line-2);
     color: var(--hx-ink-3);
-    border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode #dashboardBox .hx-table-card .dashboard-table tbody td {
-    color: var(--hx-ink);
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-body.dark-mode #dashboardBox .hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(even) td,
-body.dark-mode #dashboardBox .hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(odd) td {
-    background: transparent;
-}
-
-body.dark-mode #dashboardBox .hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td {
-    background: rgba(120, 170, 255, 0.1);
 }
 
 body.dark-mode #dashboardBox .hx-rank {
     color: var(--hx-ink-2);
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode #dashboardBox .hx-user__avatar {
-    --avatar-ink: #d5e6ff;
-    --avatar-bg: linear-gradient(140deg, rgba(120, 170, 255, 0.32), rgba(120, 170, 255, 0.12));
-    border-color: rgba(255, 255, 255, 0.1);
     box-shadow: none;
 }
 
-/* حالت خالی */
-body.dark-mode #dashboardBox .hx-empty {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: var(--hx-ink-3);
+body.dark-mode #dashboardBox .hx-board .dashboard-table tbody tr:hover {
+    background: linear-gradient(to left, rgba(129, 140, 248, 0.14), transparent 72%);
 }
 
-/* کارت‌های گرادیانی قدیمی (سازگاری با کاربردهای دیگر) متن سفید خودشان را نگه می‌دارند */
-body.dark-mode .dashboard-card--highlight .card-title,
-body.dark-mode .dashboard-card--highlight .card-value,
-body.dark-mode .dashboard-card--highlight .card-meta,
-body.dark-mode .dashboard-quick-card--accent .quick-card-title,
-body.dark-mode .dashboard-quick-card--accent .quick-card-value {
-    color: #fff;
+body.dark-mode #dashboardBox .hx-bars__crown {
+    color: #422006;
+}
+
+body.dark-mode #dashboardBox .hx-metric__rule {
+    box-shadow: 0 0 14px -2px var(--acc);
 }
 
 /* =============================================================================
