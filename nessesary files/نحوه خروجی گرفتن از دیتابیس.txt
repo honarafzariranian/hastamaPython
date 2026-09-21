@@ -1,0 +1,17 @@
+# خروجی گرفتن
+make db-export
+
+# یا مستقیم
+python scripts/export_db.py
+
+# مسیر خروجی پیش‌فرض: database/exports/latest.sql
+
+
+
+
+بازیابی :
+# بازیابی در سرور دیگه
+make db-restore
+
+# یا با نام دیتابیس دلخواه
+python scripts/restore_db.py -i database/exports/latest.sql --database userDB_test

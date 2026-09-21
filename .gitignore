@@ -96,7 +96,11 @@ target/
 node_modules/
 package-lock.json
 
-# Database exports / dumps must never be committed (contain live PII and credentials)
+# Database exports / dumps (only allow in database/exports/)
 exported_data.sql
 *.dump
 *.sql.gz
+!database/exports/*.dump
+!database/exports/*.sql
+!database/exports/*.sql.gz
+!database/exports/exported_data.sql

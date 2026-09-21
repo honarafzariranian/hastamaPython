@@ -485,19 +485,11 @@
 
     if (document.readyState === 'complete') scheduleBuild();
 
-    /* ── نوتیفیکیشن داخلی ─────────────────────────────────────────── */
+    /* ── نوتیفیکیشن (از toast.js سراسری) ── */
     function showReportToast(message, type) {
-        var existing = document.querySelector('.report-toast');
-        if (existing) existing.remove();
-        var toast = document.createElement('div');
-        toast.className = 'report-toast report-toast--' + (type || 'error');
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        requestAnimationFrame(function () { toast.classList.add('is-visible'); });
-        setTimeout(function () {
-            toast.classList.remove('is-visible');
-            setTimeout(function () { toast.remove(); }, 400);
-        }, 4000);
+        if (window.showToast) {
+            window.showToast(message, type || 'error');
+        }
     }
 
     /* ── دکمه‌های چاپ و دریافت PDF ───────────────────────────────────

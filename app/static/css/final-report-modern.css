@@ -2301,43 +2301,7 @@ body.dark-mode.final-report-page .report-tab.is-active {
     }
 }
 
-/* ─── نوتیفیکیشن PDF ─── */
-.report-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    z-index: 10000;
-    min-width: 280px;
-    max-width: 520px;
-    padding: 14px 22px;
-    border: none;
-    border-radius: 14px;
-    background: #1e293b;
-    color: #f8fafc;
-    font: 600 .85rem/1.6 'Vazir', sans-serif;
-    text-align: center;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .3s ease, transform .3s ease;
-}
-
-.report-toast.is-visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
-}
-
-.report-toast--error {
-    border-right: 4px solid #ef4444;
-    background: linear-gradient(135deg, #1e293b, #2d1b1b);
-}
-
-.report-toast--success {
-    border-right: 4px solid #22c55e;
-    background: linear-gradient(135deg, #1e293b, #1b2d1f);
-}
+/* نوتیفیکیشن PDF → از toast.js و toast.css استفاده می‌شود */
 
 /* ─── لودر PDF ─── */
 .pdf-loader-overlay {

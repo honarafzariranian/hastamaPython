@@ -18,7 +18,7 @@ endif
 # Target section and Global definitions
 # -----------------------------------------------------------------------------
 
-.PHONY: all clean test install run run-local run-lan deploy down venv generate_dot_env
+.PHONY: all clean test install run run-local run-lan deploy down venv generate_dot_env db-export db-restore
 
 all: clean test install run deploy down
 
@@ -66,3 +66,9 @@ clean:
 	rm -rf htmlcov
 	rm -rf .tox/
 	rm -rf docs/_build
+
+db-export: venv
+	PYTHONPATH=. uv run python scripts/export_db.py $(ARGS)
+
+db-restore: venv
+	PYTHONPATH=. uv run python scripts/restore_db.py $(ARGS)

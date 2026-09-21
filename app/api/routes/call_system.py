@@ -1374,6 +1374,98 @@ async def call_next_ticket(request: Request, department: str = "پذیرش"):
 
 
 # ---------------------------------------------------------------------------
+# Kiosk -- Edit ticket info (اصلاح پذیرش)
+# ---------------------------------------------------------------------------
+
+@router.get("/queue/ticket/{ticket_number}")
+async def get_queue_ticket(request: Request, ticket_number: int):
+    """Get ticket details by ticket number for today (kiosk edit flow)."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        row = cursor.execute(
+            "SELECT id, ticket_number, ticket_date, status, service, "
+            "patient_name, patient_age, patient_national_id, patient_phone, "
+            "insurance_base, insurance_extra "
+            "FROM dbo.queue_tickets "
+            "WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE) "
+            "AND ticket_number = ?",
+            (ticket_number,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="نوبتی با این شماره امروز یافت نشد.")
+        columns = [d[0] for d in cursor.description]
+        ticket = dict(zip(columns, row))
+        ticket["ticket_date"] = str(ticket.pop("ticket_date", ""))
+        ticket["persian_number"] = to_persian_numbers(str(ticket["ticket_number"]))
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "ticket": ticket})
+
+
+class EditTicketRequest(BaseModel):
+    patient_name: Optional[str] = None
+    patient_age: Optional[str] = None
+    patient_national_id: Optional[str] = None
+    patient_phone: Optional[str] = None
+    insurance_base: Optional[str] = None
+    insurance_extra: Optional[str] = None
+
+
+@router.put("/queue/ticket/{ticket_number}")
+async def edit_queue_ticket(request: Request, ticket_number: int, body: EditTicketRequest):
+    """Update patient info for a waiting ticket (kiosk edit flow)."""
+    conn = _get_connection()
+    try:
+        _ensure_schema(conn)
+        cursor = conn.cursor()
+        # Check ticket exists and is still waiting
+        row = cursor.execute(
+            "SELECT id, status FROM dbo.queue_tickets "
+            "WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE) "
+            "AND ticket_number = ?",
+            (ticket_number,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="نوبتی با این شماره امروز یافت نشد.")
+        if row[1] != "waiting":
+            raise HTTPException(status_code=400, detail="فقط نوبت‌های در انتظار قابل اصلاح هستند.")
+        # Build update fields (only non-None values)
+        updates = []
+        params = []
+        if body.patient_name is not None:
+            updates.append("patient_name = ?")
+            params.append(body.patient_name.strip()[:200])
+        if body.patient_age is not None:
+            updates.append("patient_age = ?")
+            params.append(body.patient_age.strip()[:3])
+        if body.patient_national_id is not None:
+            updates.append("patient_national_id = ?")
+            params.append(body.patient_national_id.strip()[:10])
+        if body.patient_phone is not None:
+            updates.append("patient_phone = ?")
+            params.append(body.patient_phone.strip()[:11])
+        if body.insurance_base is not None:
+            updates.append("insurance_base = ?")
+            params.append(body.insurance_base.strip()[:100])
+        if body.insurance_extra is not None:
+            updates.append("insurance_extra = ?")
+            params.append(body.insurance_extra.strip()[:100])
+        if not updates:
+            raise HTTPException(status_code=400, detail="هیچ فیلدی برای اصلاح ارسال نشد.")
+        params.append(row[0])  # id
+        cursor.execute(
+            f"UPDATE dbo.queue_tickets SET {', '.join(updates)} WHERE id = ?",
+            tuple(params),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return JSONResponse({"success": True, "message": "اطلاعات نوبت با موفقیت اصلاح شد."})
+
+
+# ---------------------------------------------------------------------------
 # WebSocket endpoint -- TV displays connect here
 # ---------------------------------------------------------------------------
 

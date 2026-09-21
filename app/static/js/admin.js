@@ -4347,19 +4347,17 @@ document.getElementById("extractButton").addEventListener("click", function () {
                     }
 
                     row.innerHTML = `
-                        <td class="mjmoo-hozoor-gzrsh">${convertNumbersToPersianNumber(formatTimeFromMinutes(presenceDuration))}</td>
-                        <td class="ezafe-hozoor-gzrsh">${convertNumbersToPersianNumber(overtime > 0 ? formatTimeFromMinutes(overtime) : "00:00")}</td>
-                        <td class="khorojzd-hozoor-gzrsh">${convertNumbersToPersianNumber(earlyExit > 0 ? formatTimeFromMinutes(earlyExit) : "00:00")}</td>
-                        <td class="shorozd-hozoor-gzrsh">${convertNumbersToPersianNumber(earlyStart > 0 ? formatTimeFromMinutes(earlyStart) : "00:00")}</td>
-                        <td class="takhir-hozoor-gzrsh">${convertNumbersToPersianNumber(delay > 0 ? formatTimeFromMinutes(delay) : "00:00")}</td>
-
-                        <td class="zmnkhrj2-hozoor-gzrsh">${convertNumbersToPersianNumber(exitTime2)}</td>
-                        <td class="zmnvrd2-hozoor-gzrsh">${convertNumbersToPersianNumber(entryTime2)}</td>
-
-                        <td class="zmnkhrj-hozoor-gzrsh">${convertNumbersToPersianNumber(exitTime)}</td>
-                        <td class="zmnvrd-hozoor-gzrsh">${convertNumbersToPersianNumber(entryTime)}</td>
-                        <td class="hfte-hozoor-gzrsh">${weekdayName}</td>
                         <td class="sbt-hozoor-gzrsh">${convertNumbersToPersianNumber(day.Date.replace(/-/g, "/"))}</td>
+                        <td class="hfte-hozoor-gzrsh">${weekdayName}</td>
+                        <td class="zmnvrd-hozoor-gzrsh">${convertNumbersToPersianNumber(entryTime)}</td>
+                        <td class="zmnkhrj-hozoor-gzrsh">${convertNumbersToPersianNumber(exitTime)}</td>
+                        <td class="zmnvrd2-hozoor-gzrsh">${convertNumbersToPersianNumber(entryTime2)}</td>
+                        <td class="zmnkhrj2-hozoor-gzrsh">${convertNumbersToPersianNumber(exitTime2)}</td>
+                        <td class="takhir-hozoor-gzrsh">${convertNumbersToPersianNumber(delay > 0 ? formatTimeFromMinutes(delay) : "00:00")}</td>
+                        <td class="shorozd-hozoor-gzrsh">${convertNumbersToPersianNumber(earlyStart > 0 ? formatTimeFromMinutes(earlyStart) : "00:00")}</td>
+                        <td class="khorojzd-hozoor-gzrsh">${convertNumbersToPersianNumber(earlyExit > 0 ? formatTimeFromMinutes(earlyExit) : "00:00")}</td>
+                        <td class="ezafe-hozoor-gzrsh">${convertNumbersToPersianNumber(overtime > 0 ? formatTimeFromMinutes(overtime) : "00:00")}</td>
+                        <td class="mjmoo-hozoor-gzrsh">${convertNumbersToPersianNumber(formatTimeFromMinutes(presenceDuration))}</td>
                     `;
                     tableBody.appendChild(row);
                 });

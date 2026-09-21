@@ -1239,9 +1239,9 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
 .cs-waiting-btn svg { width: 16px; height: 16px; }
 
 .cs-waiting-btn--call {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--cs-radius-xs);
     background: linear-gradient(145deg, rgba(var(--cs-success-rgb), 0.14), rgba(var(--cs-success-rgb), 0.06));
     color: var(--cs-success);
     border: 1px solid rgba(var(--cs-success-rgb), 0.16);
@@ -1264,6 +1264,42 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
     color: #fff;
     box-shadow: 0 0 16px rgba(var(--cs-error-rgb), 0.25);
     transform: scale(1.1);
+}
+
+/* ── دکمه کپی تکی فیلدهای بیمار ── */
+.cs-ticket-patient__field {
+    position: relative;
+    padding-left: 28px !important;
+}
+.cs-ticket-copy-btn {
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(14,165,233,0.1);
+    color: var(--cs-primary, #0ea5e9);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+.cs-ticket-copy-btn:hover {
+    background: var(--cs-primary, #0ea5e9);
+    color: #fff;
+}
+.cs-ticket-copy-btn.copied {
+    background: var(--cs-success, #22c55e);
+    color: #fff;
+}
+.cs-ticket-copy-btn svg {
+    width: 13px; height: 13px;
 }
 
 .cs-reset-btn--danger {
@@ -1961,39 +1997,7 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--moon { display: none; }
 .cs-modal-btn--confirm:active { transform: translateY(0) scale(0.98); }
 
 /* ══════════════════════════════════════════════════════════════
-   TOAST (Light)
-   ══════════════════════════════════════════════════════════════ */
-.cs-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    padding: 12px 28px;
-    border-radius: var(--cs-radius-pill);
-    font: var(--c-fw-bold) 0.82rem var(--c-font);
-    color: #fff;
-    z-index: 10000;
-    opacity: 0;
-    transition: all 0.4s var(--c-ease);
-    pointer-events: none;
-    white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-.cs-toast--success {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95));
-    box-shadow: 0 8px 28px rgba(var(--cs-success-rgb), 0.25);
-}
-
-.cs-toast--error {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
-    box-shadow: 0 8px 28px rgba(var(--cs-error-rgb), 0.25);
-}
-
-.cs-toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-}
+   /* Toast moved to toast.css — removed legacy cs-toast styles */
 
 /* ══════════════════════════════════════════════════════════════
    LIVE PREVIEW CARD (Light)

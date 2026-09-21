@@ -34,14 +34,30 @@
     };
 
 
-    /* ── Toast ── */
-    function showToast(msg, type) {
-        var el = document.getElementById('csToast');
-        if (!el) return;
-        el.textContent = msg;
-        el.className = 'cs-toast cs-toast--' + (type || 'success') + ' show';
-        clearTimeout(el._timer);
-        el._timer = setTimeout(function () { el.className = 'cs-toast'; }, 3000);
+    /* ── کپی متن (سازگار با HTTP و HTTPS) ── */
+    function copyTextToClipboard(text) {
+        return new Promise(function (resolve, reject) {
+            // روش اول: clipboard API (فقط HTTPS)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(resolve).catch(reject);
+                return;
+            }
+            // روش دوم: textarea + execCommand (HTTP هم کار می‌کنه)
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                var ok = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                ok ? resolve() : reject(new Error('copy failed'));
+            } catch (err) {
+                document.body.removeChild(textarea);
+                reject(err);
+            }
+        });
     }
 
     /* ── Format time ── */
@@ -419,8 +435,8 @@
         .catch(function () {});
     }
 
-    function clearCallHistory() {
-        if (!window.confirm('آیا از پاک کردن کامل تاریخچه فراخوان‌ها مطمئن هستید؟')) return;
+    async function clearCallHistory() {
+        if (!await HastamaUX.confirm({ title: 'پاک کردن تاریخچه', message: 'آیا از پاک کردن کامل تاریخچه فراخوان‌ها مطمئن هستید؟', confirmText: 'پاک کردن', danger: true })) return;
         fetch('/api/calls/recent', { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
@@ -1067,6 +1083,29 @@
                 value.textContent = field[1];
                 detail.appendChild(label);
                 detail.appendChild(value);
+                // دکمه کپی تکی
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'cs-ticket-copy-btn';
+                copyBtn.title = 'کپی ' + field[0];
+                copyBtn.setAttribute('aria-label', 'کپی ' + field[0]);
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+                (function (fieldValue, fieldName, btn) {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        copyTextToClipboard(String(fieldValue)).then(function () {
+                            btn.classList.add('copied');
+                            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+                            showToast(fieldName + ' کپی شد.', 'success');
+                            setTimeout(function () {
+                                btn.classList.remove('copied');
+                                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+                            }, 1500);
+                        }).catch(function () {
+                            showToast('خطا در کپی.', 'error');
+                        });
+                    });
+                })(field[1], field[0], copyBtn);
+                detail.appendChild(copyBtn);
                 details.appendChild(detail);
             });
             var detailsToggle = document.createElement('span');
@@ -1154,8 +1193,8 @@
         .catch(function () { showToast('خطا در اتصال به سرور', 'error'); });
     }
 
-    function deleteQueueTicket(id, number) {
-        if (!window.confirm('آیا از حذف نوبت ' + number + ' از صف مطمئن هستید؟')) return;
+    async function deleteQueueTicket(id, number) {
+        if (!await HastamaUX.confirm({ title: 'حذف نوبت', message: 'آیا از حذف نوبت ' + number + ' از صف مطمئن هستید؟', confirmText: 'حذف', danger: true })) return;
         fetch('/api/queue/' + encodeURIComponent(id), { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
@@ -1166,8 +1205,8 @@
             .catch(function (err) { showToast(err.message || 'خطا در حذف نوبت.', 'error'); });
     }
 
-    function deleteAllWaitingTickets() {
-        if (!window.confirm('آیا از حذف همه نوبت‌های در انتظار مطمئن هستید؟')) return;
+    async function deleteAllWaitingTickets() {
+        if (!await HastamaUX.confirm({ title: 'حذف همه نوبت‌ها', message: 'آیا از حذف همه نوبت‌های در انتظار مطمئن هستید؟', confirmText: 'حذف همه', danger: true })) return;
         fetch('/api/queue', { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (res) {

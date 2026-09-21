@@ -11,18 +11,9 @@
   const labelPrinterLink = document.querySelector('.ma-sidebar-left a[href="/master-admin/label-printer"]');
   if (labelPrinterLink && SECTION === 'label-printer') labelPrinterLink.classList.add('active');
 
-  // ── Toast ────────────────────────────────────────────────
+  // ── Toast (from toast.js) ────────────────────────────────
   function showToast(msg, type = 'success') {
-    let t = document.getElementById('maToast');
-    if (!t) {
-      t = document.createElement('div');
-      t.id = 'maToast';
-      t.className = 'ma-toast';
-      document.body.appendChild(t);
-    }
-    t.className = `ma-toast ma-toast--${type} is-visible`;
-    t.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span><span>${msg}</span>`;
-    setTimeout(() => t.classList.remove('is-visible'), 4000);
+    window.showToast(msg, type);
   }
 
   function maConfirm({ title, msg, confirmText = 'تأیید', cancelText = 'انصراف', type = 'danger' } = {}) {

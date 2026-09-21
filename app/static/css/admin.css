@@ -36,6 +36,7 @@ html, body {
     align-items: center;
 }
 
+/* هدر باکس‌دار (مثل master-admin) — کلاس ma-header-box ظاهر نهایی رو تعیین می‌کنه */
 .admin-topbar-modern {
     position: fixed;
     top: 6px;
@@ -46,6 +47,20 @@ html, body {
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
+}
+
+/* وقتی هدر حالت باکس‌دار ma-header-box دارد، ظاهر آن مثل صفحه master-admin می‌شود */
+.admin-topbar-modern.ma-header-box {
+    position: sticky;
+    top: 12px;
+    left: auto;
+    right: auto;
+    margin: 12px 20px 0;
+    pointer-events: auto;
+    /* page-shell حالت flex دارد و فرزندان جمع می‌شوند — باید تمام عرض بگیرد */
+    align-self: stretch;
+    width: auto;
+    max-width: none;
 }
 
 .admin-topbar-modern .topbar-actions {

@@ -767,10 +767,11 @@ async def master_admin_root(request: Request):
 async def master_admin_page(request: Request, section: str = "dashboard"):
     username = request.session.get('username')
     is_ma = request.session.get('is_master_admin') is True
-    is_admin = request.session.get('is_admin') is True
     if not username:
         return RedirectResponse(url="/login", status_code=303)
-    if not (is_ma or is_admin):
+    # فقط master admin — ادمین معمولی نمی‌تواند صفحات کنترل‌پنل را باز کند
+    # (APIهای /master-admin/api/* هم فقط is_master_admin را قبول می‌کنند)
+    if not is_ma:
         return RedirectResponse(url="/admin", status_code=303)
     return templates.TemplateResponse(request, "master-admin.html", {
         "request": request,

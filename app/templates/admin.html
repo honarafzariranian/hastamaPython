@@ -8,6 +8,7 @@
     <title>پنل مدیریت</title>
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', path='css/master-admin.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/responsive-mobile.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/responsive-tables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/tables.css') }}">
@@ -23,12 +24,27 @@
 
 <body data-notification-role="admin" data-notification-actor="{{ request.session.get('username') or 'admin' }}">
     <div class="page-shell">
-        <header class="topbar admin-topbar-modern">
-            <button type="button" class="mobile-menu-toggle" aria-label="باز کردن منو" aria-controls="mainSidebar" aria-expanded="false" onclick="toggleSidebar(event)">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
+        <header class="topbar admin-topbar-modern ma-header-box">
+            <div class="ma-header-left">
+                <button type="button" class="mobile-menu-toggle" aria-label="باز کردن منو" aria-controls="mainSidebar" aria-expanded="false" onclick="toggleSidebar(event)">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div class="sidebar-top-card ma-header-brand">
+                    <div class="sidebar-top-card-content">
+                        <div class="sidebar-top-card-mark">
+                            <img src="/static/images/newlogo.png" alt="لوگوی هستما" class="sidebar-top-card-image">
+                        </div>
+                        <div class="sidebar-top-card-text">
+                            <span class="sidebar-top-card-title">سامانه هستما</span>
+                            <span class="sidebar-top-card-sub">پنل مدیریت | سامانه هوشمند حضور و غیاب</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="topbar-actions">
                 <div class="topbar-clock-pill" id="adminTopbarClockBadge" aria-live="polite">
                     <span class="topbar-clock-date" id="adminTopbarDateText">--</span>
@@ -147,17 +163,6 @@
         <div class="mobile-sidebar-overlay" onclick="closeMobileSidebar()" aria-hidden="true"></div>
 
         <div class="navarha">
-            <div class="sidebar-top-card">
-                <div class="sidebar-top-card-content">
-                    <div class="sidebar-top-card-mark">
-                        <img src="/static/images/newlogo.png" alt="لوگوی هستما" class="sidebar-top-card-image">
-                    </div>
-                    <div class="sidebar-top-card-text">
-                        <span class="sidebar-top-card-title">سامانه هستما</span>
-                        <span class="sidebar-top-card-sub">پنل مدیریت | سامانه هوشمند حضور و غیاب</span>
-                    </div>
-                </div>
-            </div>
 
                         <!-- سایدبار یکپارچه سمت راست — ست آیکون گرافیکی گرادیانی (Premium 2026) -->
             <aside class="sidebar-right rightSidebar" id="mainSidebar">
@@ -1946,17 +1951,17 @@
                     <table class="hozoorUsersReport-table" id="hozoorUsersReportTable">
                         <thead>
                             <tr>
-                                <th class="mjmoo-hozoor-gzrsh">مجموع حضور</th>
-                                <th class="ezafe-hozoor-gzrsh">اضافه کاری</th>
-                                <th class="khorojzd-hozoor-gzrsh">خروج زود</th>
-                                <th class="shorozd-hozoor-gzrsh">شروع زود</th>
-                                <th class="takhir-hozoor-gzrsh">تاخیر</th>
-                                <th class="zmnkhrj2-hozoor-gzrsh">خروج ۲</th>
-                                <th class="zmnvrd2-hozoor-gzrsh">ورود ۲</th>
-                                <th class="zmnkhrj-hozoor-gzrsh">خروج</th>
-                                <th class="zmnvrd-hozoor-gzrsh">ورود</th>
-                                <th class="hfte-hozoor-gzrsh">روز هفته</th>
                                 <th class="sbt-hozoor-gzrsh">تاریخ ثبت</th>
+                                <th class="hfte-hozoor-gzrsh">روز هفته</th>
+                                <th class="zmnvrd-hozoor-gzrsh">ورود</th>
+                                <th class="zmnkhrj-hozoor-gzrsh">خروج</th>
+                                <th class="zmnvrd2-hozoor-gzrsh">ورود ۲</th>
+                                <th class="zmnkhrj2-hozoor-gzrsh">خروج ۲</th>
+                                <th class="takhir-hozoor-gzrsh">تاخیر</th>
+                                <th class="shorozd-hozoor-gzrsh">شروع زود</th>
+                                <th class="khorojzd-hozoor-gzrsh">خروج زود</th>
+                                <th class="ezafe-hozoor-gzrsh">اضافه کاری</th>
+                                <th class="mjmoo-hozoor-gzrsh">مجموع حضور</th>
                             </tr>
                         </thead>
                         <tbody>
