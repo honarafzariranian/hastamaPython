@@ -37,6 +37,31 @@
 - Tests: `tests/test_dark_theme.py` (coverage) and `tests/test_dark_theme_dom.py`
   → `tests/js/theme.dom.test.js` (behavior).
 
+## Dashboard Layer (Admin)
+
+- `app/static/css/dashboard-modern.css` + `app/static/js/dashboard-modern.js` own the
+  ENTIRE look and motion of `#dashboardBox.hx-dashboard`; the legacy dashboard card
+  rules were removed from `admin.css`. Do not re-add dashboard visuals there.
+- Load order matters: `dashboard-modern.css` comes AFTER `admin.css` and BEFORE
+  `dark-theme.css` (dark must keep the last word). Dark rules for the new surfaces
+  live in `dark-theme.css` under `body.dark-mode #dashboardBox …`.
+- `#dashboardBox` must never set `display` in CSS — `toggleBox()` shows/hides every
+  section through inline `style.display`.
+- JS only supplies motion (counters, bar/ring/share widths, reveal, pointer halo);
+  every value is already rendered server-side, so the dashboard stays complete
+  without JS. Respect `prefers-reduced-motion`.
+- Server contract (`app/main.py` → `admin.html`): the dashboard reads existing keys
+  plus `subscription_days_left` / `subscription_end_date` /
+  `subscription_remaining_percent`; adding a card means updating both sides.
+- Legacy hook classes (`.dashboard-card`, `.dashboard-chart-card`,
+  `.dashboard-table-card`, `.dashboard-quick-card`, `.dashboard-table`, `.bar-*`,
+  `.card-title/.card-value/.card-meta`) are kept on the new markup so the dark-theme
+  and responsive-table suites stay green.
+- Docs & preview: `docs/dashboard/design-system.md`, `python preview/render.py`
+  (offline render with mock data, no SQL Server needed).
+- Tests: `tests/test_dashboard_modern.py` (static contract) and
+  `tests/test_dashboard_modern_dom.py` → `tests/js/dashboard-modern.dom.test.js`.
+
 ## Responsive Tables Layer
 
 - `app/static/js/responsive-tables.js` + `app/static/css/responsive-tables.css` are the

@@ -1,0 +1,1594 @@
+/* =============================================================================
+   dashboard-modern.css — بازطراحی کامل داشبورد مدیریت (نسخهٔ ۱۴۰۵)
+   -----------------------------------------------------------------------------
+   این فایل «فقط» روی باکس داشبورد (#dashboardBox.hx-dashboard) اثر می‌گذارد و
+   بعد از admin.css بارگذاری می‌شود؛ بنابراین ظاهر کارتی قدیمی داشبورد را
+   کاملاً بازنویسی می‌کند بدون آنکه سایر بخش‌های پنل مدیریت تغییر کنند.
+
+   اصول طراحی:
+     • هوشمند و مدرن: سطوح شیشه‌ای (glassmorphism)، گرادیان‌های نرم، سایه‌های
+       چندلایه و گوشه‌های بزرگ (۱۸–۲۶px).
+     • حرکتی: ورود پله‌ای کارت‌ها (reveal)، شمارش اعداد، رشد میله‌ها و گیج‌ها،
+       درخشش دنبال‌کنندهٔ نشانگر روی کارت‌ها و هالهٔ متحرک در کارت قهرمان.
+     • راست‌به‌چپ کامل؛ همهٔ فاصله‌ها منطقی‌اند (inline-start/end).
+     • رنگ‌ها از توکن‌های محلی (--hx-*) می‌آیند. نسخهٔ تیره در dark-theme.css
+       و در انتهای همان فایل تعریف شده است؛ هیچ رنگ تیره‌ای در این فایل نیست.
+     • دسترس‌پذیری: focus-visible، نقش‌های ARIA و احترام کامل به
+       prefers-reduced-motion.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   ۱) توکن‌های طراحی
+   -------------------------------------------------------------------------- */
+#dashboardBox.hx-dashboard {
+    --hx-ink: #0b1220;
+    --hx-ink-2: #56708d;
+    --hx-ink-3: #8698ae;
+
+    --hx-bg: #f4f7fc;
+    --hx-surface: rgba(255, 255, 255, 0.78);
+    --hx-surface-strong: rgba(255, 255, 255, 0.94);
+    --hx-surface-soft: rgba(255, 255, 255, 0.55);
+    --hx-border: rgba(16, 42, 82, 0.08);
+    --hx-border-strong: rgba(16, 42, 82, 0.14);
+
+    --hx-blue: #4f8dff;
+    --hx-violet: #7c5cff;
+    --hx-teal: #10b9a6;
+    --hx-amber: #f5a524;
+    --hx-cyan: #22a9e0;
+    --hx-indigo: #6d6bff;
+    --hx-rose: #f4587a;
+    --hx-green: #18b877;
+    --hx-slate: #94a8c0;
+
+    --hx-radius-xl: 26px;
+    --hx-radius-lg: 20px;
+    --hx-radius-md: 15px;
+    --hx-radius-sm: 11px;
+
+    --hx-shadow-xs: 0 1px 2px rgba(13, 35, 71, 0.05);
+    --hx-shadow-sm: 0 1px 2px rgba(13, 35, 71, 0.05), 0 8px 20px -12px rgba(13, 35, 71, 0.22);
+    --hx-shadow-md: 0 2px 4px rgba(13, 35, 71, 0.05), 0 22px 45px -26px rgba(13, 35, 71, 0.38);
+    --hx-shadow-lg: 0 40px 80px -40px rgba(13, 35, 71, 0.5);
+
+    --hx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --hx-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+    --hx-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --hx-gap: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   ۲) ریست باکس داشبورد — حذف قاب، ارتفاع محدود و اسکرول داخلی قدیمی
+      (محتوا در جریان عادی صفحه قرار می‌گیرد تا اسکرول صفحه طبیعی باشد)
+   -------------------------------------------------------------------------- */
+#dashboardBox.hx-dashboard {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    /* نکته: display دست‌کاری نمی‌شود تا منطق موجود toggleBox()
+       (نمایش/پنهان‌کردن بخش‌ها با style.display) دست‌نخورده بماند. */
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    /* .page-shell با align-items:center چیده شده؛ برای پر کردن عرض میان دو
+       حاشیه، کشیده‌شدن در محور عرض لازم است. */
+    align-self: stretch !important;
+    /* فاصلهٔ منطقی: سمت شروع (راست در RTL) برای سایدبار و سمت پایان برای نفس‌گیری */
+    margin-block: 0 34px !important;
+    margin-inline-start: calc(clamp(64px, 6vw, 78px) + 1.15rem) !important;
+    margin-inline-end: 1.6rem !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    contain: none;
+    gap: 0 !important;
+}
+
+/* فقط وقتی داشبورد فعال است، فاصلهٔ بالای آن تنظیم می‌شود */
+#dashboardBox.hx-dashboard.is-visible {
+    animation: hx-box-in 0.55s var(--hx-ease) both;
+}
+
+@keyframes hx-box-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.hx-dash {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    color: var(--hx-ink);
+    font-family: 'Vazir', 'Vazirmatn', Tahoma, sans-serif;
+}
+
+/* آستری نرم پشت کل داشبورد تا کارت‌های شیشه‌ای عمق بگیرند */
+.hx-dash::before {
+    content: "";
+    position: absolute;
+    inset: -20px -22px -24px;
+    border-radius: 40px;
+    background:
+        radial-gradient(120% 90% at 100% 0%, rgba(79, 141, 255, 0.12), transparent 58%),
+        radial-gradient(110% 85% at 0% 100%, rgba(124, 92, 255, 0.1), transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.28));
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--hx-shadow-sm);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.hx-dash > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   ۳) انیمیشن ورود (reveal) — کارت‌ها با تأخیر پله‌ای بالا می‌آیند
+   -------------------------------------------------------------------------- */
+.hx-reveal {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    transition:
+        opacity 0.7s var(--hx-ease),
+        transform 0.75s var(--hx-ease);
+    transition-delay: calc(var(--hx-i, 0) * 55ms);
+    will-change: opacity, transform;
+}
+
+#dashboardBox.hx-dashboard.is-in .hx-reveal,
+.hx-reveal.is-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   ۴) هدر داشبورد
+   -------------------------------------------------------------------------- */
+.hx-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 2px 4px;
+}
+
+.hx-head__title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.hx-head__mark {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    color: #fff;
+    background: linear-gradient(140deg, var(--hx-blue), var(--hx-violet));
+    box-shadow: 0 14px 26px -14px rgba(79, 141, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    flex: none;
+}
+
+.hx-head__mark svg {
+    width: 24px;
+    height: 24px;
+}
+
+.hx-head__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.hx-head__text h2 {
+    margin: 0;
+    font-size: clamp(17px, 1.3vw, 21px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--hx-ink);
+}
+
+.hx-head__text p {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+}
+
+.hx-head__side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid var(--hx-border);
+    background: var(--hx-surface-strong);
+    color: var(--hx-ink-2);
+    box-shadow: var(--hx-shadow-xs);
+}
+
+.hx-chip--soft {
+    background: rgba(255, 255, 255, 0.62);
+    color: var(--hx-ink-3);
+}
+
+.hx-chip--live {
+    color: var(--hx-green);
+    background: rgba(24, 184, 119, 0.1);
+    border-color: rgba(24, 184, 119, 0.24);
+}
+
+.hx-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--hx-green);
+    box-shadow: 0 0 0 0 rgba(24, 184, 119, 0.55);
+    animation: hx-pulse 2.4s var(--hx-ease-soft) infinite;
+}
+
+@keyframes hx-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(24, 184, 119, 0.5); }
+    70%  { box-shadow: 0 0 0 9px rgba(24, 184, 119, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(24, 184, 119, 0); }
+}
+
+/* --------------------------------------------------------------------------
+   ۵) کارت قهرمان — وضعیت اشتراک
+   -------------------------------------------------------------------------- */
+.hx-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 26px;
+    padding: 30px 34px;
+    border-radius: var(--hx-radius-xl);
+    color: #fff;
+    background:
+        radial-gradient(120% 140% at 88% 10%, rgba(126, 231, 255, 0.32), transparent 55%),
+        radial-gradient(120% 160% at 8% 100%, rgba(160, 118, 255, 0.45), transparent 58%),
+        linear-gradient(118deg, #101a3a 0%, #1b2b62 42%, #2b3f8f 72%, #4b3bb0 100%);
+    box-shadow: var(--hx-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    isolation: isolate;
+}
+
+/* هاله‌های متحرک داخل کارت قهرمان */
+.hx-hero__aurora {
+    position: absolute;
+    inset: -40%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.hx-hero__aurora i {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    filter: blur(48px);
+    mix-blend-mode: screen;
+    animation: hx-aurora-drift 18s var(--hx-ease-soft) infinite alternate;
+}
+
+.hx-hero__aurora i:nth-child(1) {
+    width: 320px;
+    height: 320px;
+    top: 8%;
+    right: 6%;
+    background: rgba(94, 214, 255, 0.55);
+}
+
+.hx-hero__aurora i:nth-child(2) {
+    width: 280px;
+    height: 280px;
+    bottom: 4%;
+    right: 32%;
+    background: rgba(154, 108, 255, 0.6);
+    animation-delay: -6s;
+}
+
+.hx-hero__aurora i:nth-child(3) {
+    width: 240px;
+    height: 240px;
+    top: 22%;
+    left: 4%;
+    background: rgba(58, 242, 205, 0.42);
+    animation-delay: -11s;
+}
+
+@keyframes hx-aurora-drift {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-26px, 18px, 0) scale(1.12); }
+    100% { transform: translate3d(18px, -22px, 0) scale(1.04); }
+}
+
+/* برق افتان یک‌باره روی کارت قهرمان */
+.hx-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.17) 48%, transparent 62%);
+    transform: translateX(-120%);
+    animation: hx-sheen 1.5s 0.35s var(--hx-ease) 1;
+    pointer-events: none;
+}
+
+@keyframes hx-sheen {
+    to { transform: translateX(120%); }
+}
+
+.hx-hero__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.hx-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #eaf1ff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(6px);
+}
+
+.hx-hero__pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #6ef7c9;
+    box-shadow: 0 0 0 0 rgba(110, 247, 201, 0.6);
+    animation: hx-pulse-green 2.2s var(--hx-ease-soft) infinite;
+}
+
+@keyframes hx-pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(110, 247, 201, 0.65); }
+    70%  { box-shadow: 0 0 0 10px rgba(110, 247, 201, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(110, 247, 201, 0); }
+}
+
+.hx-hero__title {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.hx-hero__title .hx-num {
+    font-size: clamp(34px, 3.4vw, 52px);
+    letter-spacing: -0.02em;
+    text-shadow: 0 12px 32px rgba(8, 16, 44, 0.45);
+}
+
+.hx-hero__unit {
+    font-size: clamp(14px, 1.2vw, 17px);
+    font-weight: 700;
+    color: rgba(234, 241, 255, 0.88);
+}
+
+.hx-hero__meta {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(226, 235, 255, 0.78);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+.hx-hero__meta b {
+    color: #fff;
+    font-weight: 700;
+}
+
+.hx-hero__sep {
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.hx-hero__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.hx-hero__hint {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(219, 230, 255, 0.66);
+}
+
+/* دکمهٔ شیشه‌ای تمدید اشتراک */
+.quick-card-btn.hx-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 44px;
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0e1b3d;
+    cursor: pointer;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #dfe9ff 100%);
+    box-shadow: 0 18px 34px -18px rgba(6, 14, 40, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transition: transform 0.35s var(--hx-ease), box-shadow 0.35s var(--hx-ease), filter 0.35s var(--hx-ease);
+}
+
+.quick-card-btn.hx-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+.quick-card-btn.hx-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.85) 48%, transparent 66%);
+    transform: translateX(-130%);
+    transition: transform 0.7s var(--hx-ease);
+}
+
+.quick-card-btn.hx-btn:hover {
+    transform: translateY(-2px);
+    filter: saturate(1.06);
+    box-shadow: 0 24px 40px -18px rgba(6, 14, 40, 1);
+}
+
+.quick-card-btn.hx-btn:hover::after {
+    transform: translateX(130%);
+}
+
+.quick-card-btn.hx-btn:active {
+    transform: translateY(0) scale(0.985);
+}
+
+/* حلقهٔ پیشرفت دورهٔ اشتراک */
+.hx-hero__ring {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 148px;
+    height: 148px;
+    flex: none;
+}
+
+.hx-ring {
+    width: 148px;
+    height: 148px;
+    transform: rotate(-90deg);
+}
+
+.hx-ring__track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-width: 11;
+}
+
+.hx-ring__value {
+    fill: none;
+    stroke: url(#hxRingGradient);
+    stroke-width: 11;
+    stroke-linecap: round;
+    filter: drop-shadow(0 4px 12px rgba(124, 92, 255, 0.65));
+    transition: stroke-dashoffset 1.6s var(--hx-ease);
+}
+
+.hx-ring__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.hx-ring__center strong {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.hx-ring__center strong small {
+    font-size: 15px;
+    font-weight: 700;
+    opacity: 0.85;
+}
+
+.hx-ring__center span {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(226, 235, 255, 0.72);
+}
+
+/* --------------------------------------------------------------------------
+   ۶) سه ستارهٔ عملکرد
+   -------------------------------------------------------------------------- */
+.hx-spot-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--hx-gap);
+}
+
+.hx-spot {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px 16px;
+    border-radius: var(--hx-radius-lg);
+    background:
+        linear-gradient(155deg, color-mix(in srgb, var(--acc) 9%, #ffffff) 0%, rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.86) 100%);
+    border: 1px solid color-mix(in srgb, var(--acc) 18%, var(--hx-border));
+    box-shadow: var(--hx-shadow-sm);
+    backdrop-filter: blur(14px);
+    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
+}
+
+/* درخشش دنبال‌کنندهٔ نشانگر */
+.hx-spot::after,
+.hx-kpi::after,
+.hx-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(200px circle at var(--hx-mx, 50%) var(--hx-my, 0%), var(--hx-halo, rgba(79, 141, 255, 0.15)), transparent 68%);
+    opacity: 0;
+    transition: opacity 0.4s var(--hx-ease-soft);
+    pointer-events: none;
+}
+
+.hx-spot:hover::after,
+.hx-kpi:hover::after,
+.hx-card:hover::after {
+    opacity: 1;
+}
+
+.hx-spot:hover {
+    transform: translateY(-4px);
+    border-color: var(--hx-border-strong);
+    box-shadow: var(--hx-shadow-md);
+}
+
+/* نوار رنگی بالای کارت ستاره */
+.hx-spot::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--acc, var(--hx-blue)), transparent);
+    opacity: 0.85;
+}
+
+.hx-spot[data-accent="overtime"] { --acc: var(--hx-violet); --hx-halo: rgba(124, 92, 255, 0.16); }
+.hx-spot[data-accent="pass"]     { --acc: var(--hx-teal);   --hx-halo: rgba(16, 185, 166, 0.16); }
+.hx-spot[data-accent="dept"]     { --acc: var(--hx-amber);  --hx-halo: rgba(245, 165, 36, 0.16); }
+
+.hx-spot__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hx-spot__icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(140deg, var(--acc), color-mix(in srgb, var(--acc) 55%, #ffffff));
+    box-shadow: 0 12px 22px -12px var(--acc), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    flex: none;
+    transition: transform 0.5s var(--hx-ease-spring);
+}
+
+.hx-spot:hover .hx-spot__icon {
+    transform: rotate(-8deg) scale(1.06);
+}
+
+.hx-spot__icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.hx-spot__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--hx-ink-2);
+    line-height: 1.5;
+}
+
+.hx-spot__rank {
+    flex: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--acc);
+    background: color-mix(in srgb, var(--acc) 12%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--acc) 26%, #ffffff);
+}
+
+.hx-spot__body {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+}
+
+.hx-spot__avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: linear-gradient(140deg, var(--acc), color-mix(in srgb, var(--acc) 45%, #1b2440));
+    box-shadow: 0 16px 28px -16px var(--acc), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    text-transform: lowercase;
+}
+
+.hx-spot__who {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.hx-spot__name {
+    font-size: clamp(17px, 1.5vw, 21px);
+    font-weight: 800;
+    color: var(--hx-ink);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+}
+
+.hx-spot__time {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--hx-ink-3);
+    font-variant-numeric: tabular-nums;
+}
+
+.hx-spot__share {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.hx-spot__share-bar {
+    position: relative;
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(16, 42, 82, 0.07);
+    overflow: hidden;
+}
+
+.hx-spot__share-bar i {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--hx-w, 0%);
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--acc), color-mix(in srgb, var(--acc) 45%, #ffffff));
+    transition: width 1.2s var(--hx-ease) 0.25s;
+}
+
+.hx-spot__share-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+}
+
+/* --------------------------------------------------------------------------
+   ۷) شاخص‌های کلیدی (KPI)
+   -------------------------------------------------------------------------- */
+.hx-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+    padding: 0 4px;
+}
+
+.hx-section-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--hx-ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.hx-section-head h3::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--hx-blue), var(--hx-violet));
+}
+
+.hx-section-head__hint {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+}
+
+.hx-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--hx-gap);
+}
+
+.hx-kpi {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 17px 18px;
+    border-radius: var(--hx-radius-lg);
+    background: var(--hx-surface);
+    border: 1px solid var(--hx-border);
+    box-shadow: var(--hx-shadow-sm);
+    backdrop-filter: blur(14px);
+    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
+}
+
+.hx-kpi:hover {
+    transform: translateY(-5px);
+    border-color: color-mix(in srgb, var(--acc) 32%, #ffffff);
+    box-shadow: var(--hx-shadow-md);
+}
+
+/* گوشهٔ گرادیانی رنگی */
+.hx-kpi::before {
+    content: "";
+    position: absolute;
+    top: -34px;
+    inset-inline-end: -34px;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 70%, color-mix(in srgb, var(--acc) 32%, transparent), transparent 70%);
+    opacity: 0.75;
+    transition: opacity 0.45s var(--hx-ease), transform 0.6s var(--hx-ease);
+    pointer-events: none;
+}
+
+.hx-kpi:hover::before {
+    opacity: 1;
+    transform: scale(1.16);
+}
+
+.hx-kpi[data-accent="blue"]   { --acc: var(--hx-blue);   --hx-halo: rgba(79, 141, 255, 0.15); }
+.hx-kpi[data-accent="violet"] { --acc: var(--hx-violet); --hx-halo: rgba(124, 92, 255, 0.15); }
+.hx-kpi[data-accent="teal"]   { --acc: var(--hx-teal);   --hx-halo: rgba(16, 185, 166, 0.15); }
+.hx-kpi[data-accent="amber"]  { --acc: var(--hx-amber);  --hx-halo: rgba(245, 165, 36, 0.16); }
+.hx-kpi[data-accent="cyan"]   { --acc: var(--hx-cyan);   --hx-halo: rgba(34, 169, 224, 0.15); }
+.hx-kpi[data-accent="indigo"] { --acc: var(--hx-indigo); --hx-halo: rgba(109, 107, 255, 0.15); }
+.hx-kpi[data-accent="rose"]   { --acc: var(--hx-rose);   --hx-halo: rgba(244, 88, 122, 0.15); }
+.hx-kpi[data-accent="green"]  { --acc: var(--hx-green);  --hx-halo: rgba(24, 184, 119, 0.15); }
+
+.hx-kpi__icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    flex: none;
+    border-radius: 15px;
+    color: var(--acc);
+    background: linear-gradient(150deg, color-mix(in srgb, var(--acc) 24%, #ffffff), color-mix(in srgb, var(--acc) 11%, #ffffff));
+    border: 1px solid color-mix(in srgb, var(--acc) 30%, #ffffff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    transition: transform 0.5s var(--hx-ease-spring), color 0.35s var(--hx-ease), background 0.35s var(--hx-ease);
+}
+
+.hx-kpi:hover .hx-kpi__icon {
+    transform: translateY(-2px) scale(1.06);
+    color: #fff;
+    background: linear-gradient(150deg, var(--acc), color-mix(in srgb, var(--acc) 50%, #ffffff));
+    box-shadow: 0 14px 24px -14px var(--acc);
+}
+
+.hx-kpi__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.hx-kpi__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.hx-kpi__label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--hx-ink-2);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.hx-kpi__value {
+    font-size: clamp(20px, 1.7vw, 26px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.hx-kpi__meta {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+}
+
+/* --------------------------------------------------------------------------
+   ۸) کارت‌های تحلیلی (گیج + توزیع)
+   -------------------------------------------------------------------------- */
+.hx-insights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--hx-gap);
+}
+
+.hx-card {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--hx-radius-lg);
+    background: var(--hx-surface);
+    border: 1px solid var(--hx-border);
+    box-shadow: var(--hx-shadow-sm);
+    backdrop-filter: blur(14px);
+    transition: transform 0.45s var(--hx-ease), box-shadow 0.45s var(--hx-ease), border-color 0.45s var(--hx-ease);
+}
+
+.hx-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--hx-border-strong);
+    box-shadow: var(--hx-shadow-md);
+}
+
+.hx-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px 13px;
+    border-bottom: 1px solid rgba(16, 42, 82, 0.06);
+}
+
+.hx-card__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.hx-card__icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 11px;
+    color: var(--acc, var(--hx-blue));
+    background: color-mix(in srgb, var(--acc, var(--hx-blue)) 13%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--acc, var(--hx-blue)) 22%, #ffffff);
+}
+
+.hx-card__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.hx-card__icon[data-accent="blue"]   { --acc: var(--hx-blue); }
+.hx-card__icon[data-accent="violet"] { --acc: var(--hx-violet); }
+.hx-card__icon[data-accent="teal"]   { --acc: var(--hx-teal); }
+.hx-card__icon[data-accent="amber"]  { --acc: var(--hx-amber); }
+.hx-card__icon[data-accent="rose"]   { --acc: var(--hx-rose); }
+.hx-card__icon[data-accent="green"]  { --acc: var(--hx-green); }
+.hx-card__icon[data-accent="cyan"]   { --acc: var(--hx-cyan); }
+.hx-card__icon[data-accent="indigo"] { --acc: var(--hx-indigo); }
+
+.hx-card__head .card-title,
+.hx-card__head .table-title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--hx-ink);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.hx-card__body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 18px 18px;
+    min-height: 0;
+}
+
+/* گیج دایره‌ای */
+.hx-insight__body {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+}
+
+.hx-gauge {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 118px;
+    height: 118px;
+    flex: none;
+}
+
+.hx-gauge svg {
+    width: 118px;
+    height: 118px;
+    transform: rotate(-90deg);
+}
+
+.hx-gauge .hx-ring__track {
+    stroke: rgba(16, 42, 82, 0.08);
+    stroke-width: 10;
+}
+
+.hx-gauge .hx-ring__value {
+    stroke-width: 10;
+    stroke-linecap: round;
+    filter: none;
+    transition: stroke-dashoffset 1.5s var(--hx-ease) 0.15s;
+}
+
+.hx-gauge .hx-ring__center strong {
+    font-size: 22px;
+    color: var(--hx-ink);
+}
+
+.hx-gauge .hx-ring__center span {
+    color: var(--hx-ink-3);
+}
+
+.hx-insight__info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.hx-insight__value {
+    font-size: clamp(19px, 1.6vw, 24px);
+    font-weight: 800;
+    color: var(--hx-ink);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.hx-insight__caption {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--hx-ink-3);
+    line-height: 1.8;
+}
+
+/* نوار توزیع (کارکنان با/بدون اضافه‌کاری) */
+.hx-split {
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(16, 42, 82, 0.07);
+    gap: 3px;
+}
+
+.hx-split__seg {
+    position: relative;
+    height: 100%;
+    min-width: 6px;
+    transition: width 1.1s var(--hx-ease) 0.2s;
+}
+
+.hx-split__seg i {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--seg-1), var(--seg-2));
+    opacity: 0.92;
+}
+
+.hx-split__seg[data-accent="green"] { --seg-1: #17b981; --seg-2: #5ce0a8; }
+.hx-split__seg[data-accent="slate"] { --seg-1: #b9c6d8; --seg-2: #d7e0ec; }
+.hx-split__seg[data-accent="amber"] { --seg-1: #f5a524; --seg-2: #ffcf75; }
+.hx-split__seg[data-accent="rose"]  { --seg-1: #f4587a; --seg-2: #ff9db4; }
+
+.hx-legend {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hx-legend li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--hx-ink-2);
+}
+
+.hx-legend__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 4px;
+    flex: none;
+    background: linear-gradient(140deg, var(--seg-1), var(--seg-2));
+}
+
+.hx-legend__dot[data-accent="green"] { --seg-1: #17b981; --seg-2: #5ce0a8; }
+.hx-legend__dot[data-accent="slate"] { --seg-1: #b9c6d8; --seg-2: #d7e0ec; }
+
+.hx-legend li b {
+    margin-inline-start: auto;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--hx-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   ۹) کارت‌های نمودار ستونی
+   -------------------------------------------------------------------------- */
+.hx-charts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--hx-gap);
+}
+
+.hx-chart {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    height: 244px;
+    padding: 10px 8px 6px;
+    border-radius: var(--hx-radius-md);
+    background-image:
+        repeating-linear-gradient(to top, rgba(16, 42, 82, 0.045) 0 1px, transparent 1px 25%);
+    background-position: bottom;
+    overflow: hidden;
+}
+
+.hx-col {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.hx-col__value {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--hx-ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transition: color 0.35s var(--hx-ease), transform 0.45s var(--hx-ease);
+}
+
+.hx-col:hover .hx-col__value {
+    color: var(--hx-ink);
+    transform: translateY(-2px);
+}
+
+.hx-col__track {
+    position: relative;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 46px;
+    min-height: 0;
+    display: flex;
+    align-items: flex-end;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(16, 42, 82, 0.02), rgba(16, 42, 82, 0.055));
+    overflow: hidden;
+    transition: background 0.4s var(--hx-ease);
+}
+
+.hx-col:hover .hx-col__track {
+    background: linear-gradient(180deg, rgba(16, 42, 82, 0.05), rgba(16, 42, 82, 0.1));
+}
+
+.hx-col__fill {
+    display: block;
+    width: 100%;
+    height: var(--hx-h, 2%);
+    border-radius: 12px 12px 8px 8px;
+    background: linear-gradient(180deg, var(--bar-1) 0%, var(--bar-2) 100%);
+    box-shadow: 0 8px 18px -8px var(--bar-2), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: height 1.05s var(--hx-ease);
+    transition-delay: calc(var(--hx-i, 0) * 80ms);
+    position: relative;
+    overflow: hidden;
+}
+
+/* بازتاب نوری متحرک داخل میله */
+.hx-col__fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 55%);
+    opacity: 0.7;
+}
+
+.hx-col__fill[data-accent="blue"]  { --bar-1: #7fb0ff; --bar-2: #3f6fe4; }
+.hx-col__fill[data-accent="teal"]  { --bar-1: #5ce0c8; --bar-2: #0f9d8f; }
+.hx-col__fill[data-accent="amber"] { --bar-1: #ffcf75; --bar-2: #ef8f1a; }
+.hx-col__fill[data-accent="rose"]  { --bar-1: #ffa3ba; --bar-2: #e8466c; }
+.hx-col__fill[data-accent="violet"]{ --bar-1: #b9a4ff; --bar-2: #6d4be0; }
+
+.hx-col__name {
+    max-width: 100%;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--hx-ink-3);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.35s var(--hx-ease);
+}
+
+.hx-col:hover .hx-col__name {
+    color: var(--hx-ink);
+}
+
+/* --------------------------------------------------------------------------
+   ۱۰) جدول‌های لیدربورد
+   -------------------------------------------------------------------------- */
+.hx-tables {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--hx-gap);
+}
+
+.hx-table-card .hx-card__body {
+    padding: 8px 12px 14px;
+}
+
+/* نشانگرهای SVG مشترک */
+.hx-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.hx-table-card .dashboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 13px;
+}
+
+.hx-table-card .dashboard-table thead th {
+    padding: 9px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--hx-ink-3);
+    text-align: start;
+    background: transparent;
+    border-bottom: 1px solid rgba(16, 42, 82, 0.08);
+    white-space: nowrap;
+}
+
+.hx-table-card .dashboard-table tbody td {
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hx-ink);
+    background: transparent;
+    border-bottom: 1px solid rgba(16, 42, 82, 0.05);
+    font-variant-numeric: tabular-nums;
+    transition: background 0.3s var(--hx-ease-soft);
+}
+
+.hx-table-card .dashboard-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* خنثی‌سازی زبرا/هایلایت لایهٔ جدول‌های عمومی داخل کارت لیدربورد */
+.hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(even) td,
+.hx-table-card .dashboard-table tbody tr:not(.holiday-row):nth-child(odd) td {
+    background: transparent;
+}
+
+.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td {
+    background: rgba(79, 141, 255, 0.06);
+}
+
+.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td:first-child {
+    border-start-start-radius: 12px;
+    border-end-start-radius: 12px;
+}
+
+.hx-table-card .dashboard-table tbody tr:not(.holiday-row):hover td:last-child {
+    border-start-end-radius: 12px;
+    border-end-end-radius: 12px;
+}
+
+.hx-rank {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--hx-ink-2);
+    background: rgba(16, 42, 82, 0.06);
+    border: 1px solid rgba(16, 42, 82, 0.06);
+    transition: transform 0.4s var(--hx-ease-spring);
+}
+
+.dashboard-table tbody tr:hover .hx-rank {
+    transform: scale(1.08);
+}
+
+.hx-rank--1 {
+    color: #8a5a00;
+    background: linear-gradient(140deg, #ffe9a8, #ffc75f);
+    border-color: rgba(255, 190, 60, 0.6);
+    box-shadow: 0 8px 16px -10px rgba(224, 152, 12, 0.9);
+}
+
+.hx-rank--2 {
+    color: #4a5b70;
+    background: linear-gradient(140deg, #eef3f9, #cdd8e6);
+    border-color: rgba(150, 168, 190, 0.5);
+}
+
+.hx-rank--3 {
+    color: #7a4a1f;
+    background: linear-gradient(140deg, #ffe0c6, #f0b183);
+    border-color: rgba(224, 150, 90, 0.55);
+}
+
+.hx-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.hx-user__avatar {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: lowercase;
+    color: var(--avatar-ink, #23407a);
+    background: var(--avatar-bg, linear-gradient(140deg, #dce8ff, #b9cfff));
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 6px 14px -10px rgba(35, 64, 122, 0.9);
+}
+
+.hx-user__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hx-num-cell {
+    font-weight: 800 !important;
+    color: var(--hx-ink) !important;
+    text-align: end;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۱) حالت خالی
+   -------------------------------------------------------------------------- */
+.hx-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 132px;
+    padding: 18px;
+    border-radius: var(--hx-radius-md);
+    border: 1px dashed rgba(16, 42, 82, 0.14);
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--hx-ink-3);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.hx-empty svg {
+    width: 30px;
+    height: 30px;
+    opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۲) ریسپانسیو
+   -------------------------------------------------------------------------- */
+@media (max-width: 1400px) {
+    #dashboardBox.hx-dashboard {
+        --hx-gap: 14px;
+    }
+
+    .hx-kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1180px) {
+    /* ۸ شاخص در ۴ ستون = دو ردیف کامل؛ تا این عرض هنوز جا می‌شود، پس
+       ستون‌ها را کم نمی‌کنیم تا ردیف ناقص ساخته نشود. */
+    .hx-insights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hx-insights > :nth-child(3) {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 980px) {
+    #dashboardBox.hx-dashboard {
+        width: auto !important;
+        max-width: none !important;
+        margin-inline: 12px !important;
+        margin-block: 0 24px !important;
+    }
+
+    .hx-dash {
+        gap: 20px;
+    }
+
+    .hx-dash::before {
+        inset: -14px -12px -18px;
+        border-radius: 28px;
+    }
+
+    .hx-hero {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 24px 22px;
+        gap: 20px;
+    }
+
+    .hx-hero__ring {
+        justify-self: center;
+    }
+
+    .hx-spot-row,
+    .hx-insights,
+    .hx-charts,
+    .hx-tables {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hx-insights > :nth-child(3) {
+        grid-column: auto;
+    }
+
+    .hx-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* بین ۶۲۰ تا ۹۸۰ پیکسل، دو ستون خوانا است؛ کمتر از آن تک‌ستونی می‌شود. */
+@media (max-width: 620px) {
+    .hx-head {
+        align-items: flex-start;
+    }
+
+    /* عنوان قهرمان: عدد و واحد در یک خط بمانند */
+    .hx-hero__title {
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .hx-hero__title .hx-num {
+        font-size: 32px;
+        white-space: nowrap;
+    }
+
+    .hx-hero__unit {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .hx-head__mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+    }
+
+    .hx-kpi-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hx-kpi {
+        padding: 15px;
+    }
+
+    .hx-insight__body {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hx-chart {
+        height: 228px;
+        gap: 6px;
+    }
+
+    .hx-col__value {
+        font-size: 10.5px;
+    }
+
+    .hx-col__name {
+        font-size: 10.5px;
+    }
+
+    .hx-hero__actions .quick-card-btn.hx-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۳) دسترس‌پذیری و حرکت کمتر
+   -------------------------------------------------------------------------- */
+#dashboardBox.hx-dashboard :focus-visible {
+    outline: 3px solid rgba(79, 141, 255, 0.45);
+    outline-offset: 2px;
+    border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hx-reveal,
+    .hx-col__fill,
+    .hx-split__seg,
+    .hx-spot__share-bar i,
+    .hx-ring__value,
+    .hx-hero__aurora i,
+    .hx-hero::after,
+    .hx-live-dot,
+    .hx-hero__pulse {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .hx-reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .hx-spot:hover,
+    .hx-kpi:hover,
+    .hx-card:hover,
+    .quick-card-btn.hx-btn:hover {
+        transform: none;
+    }
+}
+
+/* در چاپ، داشبورد ساده و روشن چاپ می‌شود */
+@media print {
+    #dashboardBox.hx-dashboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .hx-dash::before,
+    .hx-hero__aurora,
+    .hx-hero::after,
+    .hx-spot::after,
+    .hx-kpi::after,
+    .hx-card::after {
+        display: none !important;
+    }
+
+    .hx-reveal,
+    .hx-col__fill,
+    .hx-split__seg {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+}

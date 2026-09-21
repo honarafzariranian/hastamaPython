@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/internal-automation.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/notification-system.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/vazir.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard-modern.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/hastama-ux.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/training.css') }}">
@@ -323,176 +324,482 @@
             </aside>
         </div>
 
-        <!-- باکس داشبورد کلی -->
-        <div class="management-box" id="dashboardBox">
+        <!-- باکس داشبورد کلی — بازطراحی مدرن (hx-dashboard) -->
+        {# دورهٔ اشتراک از سمت سرور می‌آید؛ مقادیر پیش‌فرض برای رندر مستقل قالب است. #}
+        {% set sub_days_left = subscription_days_left|default('۲۳۱') %}
+        {% set sub_end_date = subscription_end_date|default('۱۴۰۵/۱۲/۲۹') %}
+        {% set sub_remaining_percent = subscription_remaining_percent|default('۶۳') %}
+        <div class="management-box hx-dashboard" id="dashboardBox">
+            <div class="hx-dash">
 
-            <div class="dashboard-grid">
-                <div class="dashboard-quick-card dashboard-quick-card--accent">
-                    <span class="quick-card-title">اشتراک حرفه‌ای</span>
-                    <span class="quick-card-value">۲۳۱ روز باقی‌مانده</span>
-                    <span class="quick-card-meta">تا ۱۴۰۵/۱۲/۲۹</span>
-                    <button class="quick-card-btn" type="button">تمدید اشتراک</button>
-                </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">بیشترین اضافه‌کاری</span>
-                    <span class="card-value">{{ top_overtime_user.username if top_overtime_user else '-' }}</span>
-                    <span class="card-meta">{{ top_overtime_user.total_ezafe_time if top_overtime_user else '-' }}</span>
-                </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">پاس ساعتی برتر</span>
-                    <span class="card-value">{{ top_pass_user.username if top_pass_user else '-' }}</span>
-                    <span class="card-meta">{{ top_pass_user.total_pass_time if top_pass_user else '-' }}</span>
-                </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">دپارتمان برتر</span>
-                    <span class="card-value">{{ top_department_name }}</span>
-                    <span class="card-meta">{{ top_department_count }} نفر</span> 
-                </div>
-            </div>
+                <!-- گرادیان‌های مشترک SVG (حلقه‌های اشتراک و نسبت‌ها) -->
+                <svg class="hx-defs" width="0" height="0" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="hxRingGradient" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#9df6ff"/>
+                            <stop offset="55%" stop-color="#7c5cff"/>
+                            <stop offset="100%" stop-color="#c8a3ff"/>
+                        </linearGradient>
+                        <linearGradient id="hxRingGradientViolet" x1="1" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#8f7bff"/>
+                            <stop offset="100%" stop-color="#3fb6ff"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
 
-
-            <div class="dashboard-grid dashboard-grid--two-row">
-                <div class="dashboard-card">
-                    <span class="card-title">کل پرسنل فعال</span>
-                    <span class="card-value">{{ total_users }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">کل اضافه‌کاری ماه</span>
-                    <span class="card-value">{{ total_overtime_time }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">پاس ساعتی کل</span>
-                    <span class="card-value">{{ total_pass_time }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">کل مرخصی استفاده‌شده</span>
-                    <span class="card-value">{{ total_leave_taken }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">درخواست‌های مرخصی</span>
-                    <span class="card-value">{{ total_leave_requests }}</span>
-                    <span class="card-meta">تعداد کل</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">دپارتمان‌های فعال</span>
-                    <span class="card-value">{{ unique_departments }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">میانگین اضافه‌کاری</span>
-                    <span class="card-value">{{ average_overtime_per_user }}</span>
-                    <span class="card-meta">برای هر کاربر</span>
-                </div>
-            </div>
-
-            <div class="dashboard-grid dashboard-grid--two-row">
-                <div class="dashboard-card">
-                    <span class="card-title">میانگین پاس</span>
-                    <span class="card-value">{{ average_pass_per_user }}</span>
-                    <span class="card-meta">برای هر کاربر</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">کارکنان با اضافه‌کاری</span>
-                    <span class="card-value">{{ overtime_user_count }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">بدون اضافه‌کاری</span>
-                    <span class="card-value">{{ no_overtime_users }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">دپارتمان برتر</span>
-                    <span class="card-value">{{ top_department_name }}</span>
-                    <span class="card-meta">{{ top_department_count }} نفر</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">درخواست‌های مرخصی</span>
-                    <span class="card-value">{{ total_leave_requests }}</span>
-                    <span class="card-meta">تعداد کل</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">دپارتمان‌های فعال</span>
-                    <span class="card-value">{{ unique_departments }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">نسبت پاس</span>
-                    <span class="card-value">{{ pass_percent }}%</span>
-                </div>
-            </div>
-
-            <div class="dashboard-chart-row">
-                <div class="dashboard-chart-card">
-                    <div class="card-title">نمودار پاس ساعتی - کاربران برتر</div>
-                    <div class="dashboard-chart">
-                        {% for row in pass_chart_data %}
-                        <div class="chart-bar">
-                            <span class="bar-number">{{ row.display }}</span>
-                            <div class="bar-fill">
-                                <div class="bar-value" data-percent="{{ row.percent }}"></div>
-                            </div>
-                            <span class="bar-label">{{ row.username }}</span>
+                <!-- سربرگ داشبورد -->
+                <header class="hx-head hx-reveal" style="--hx-i:0">
+                    <div class="hx-head__title">
+                        <span class="hx-head__mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-8"/><path d="M15 7h6v6"/><path d="M3 21h18"/></svg>
+                        </span>
+                        <div class="hx-head__text">
+                            <h2>داشبورد مدیریت</h2>
+                            <p>نمای زندهٔ عملکرد پرسنل، اضافه‌کاری و پاس ساعتی</p>
                         </div>
-                        {% endfor %}
                     </div>
-                </div>
+                    <div class="hx-head__side">
+                        <span class="hx-chip hx-chip--live"><i class="hx-live-dot" aria-hidden="true"></i><span>داده‌های زنده</span></span>
+                        <span class="hx-chip hx-chip--soft" id="hxLiveClock">—</span>
+                    </div>
+                </header>
 
-                <div class="dashboard-chart-card">
-                    <div class="card-title">نمودار اضافه‌کاری - کاربران برتر</div>
-                    <div class="dashboard-chart">
-                        {% for row in overtime_chart_data %}
-                        <div class="chart-bar">
-                            <span class="bar-number">{{ row.display }}</span>
-                            <div class="bar-fill">
-                                <div class="bar-value overtime" data-percent="{{ row.percent }}"></div>
-                            </div>
-                            <span class="bar-label">{{ row.username }}</span>
+                <!-- کارت قهرمان: وضعیت اشتراک -->
+                <section class="hx-hero hx-reveal dashboard-quick-card" style="--hx-i:1" aria-labelledby="hxHeroTitle">
+                    <span class="hx-hero__aurora" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <div class="hx-hero__content">
+                        <span class="hx-hero__eyebrow"><i class="hx-hero__pulse" aria-hidden="true"></i>اشتراک حرفه‌ای</span>
+                        <h3 class="hx-hero__title" id="hxHeroTitle">
+                            <span class="hx-num" data-hx-count>{{ sub_days_left }}</span>
+                            <span class="hx-hero__unit">روز باقی‌مانده</span>
+                        </h3>
+                        <p class="hx-hero__meta">
+                            اعتبار تا <b>{{ sub_end_date }}</b>
+                            <span class="hx-hero__sep" aria-hidden="true"></span>
+                            بدون محدودیت کاربر
+                        </p>
+                        <div class="hx-hero__actions">
+                            <button class="quick-card-btn hx-btn" type="button" data-panel="subscription">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5V9h-4.5"/></svg>
+                                <span>تمدید اشتراک</span>
+                            </button>
+                            <span class="hx-hero__hint">پشتیبانی: پاسخ‌گویی کمتر از ۲۴ ساعت</span>
                         </div>
-                        {% endfor %}
                     </div>
-                </div>
-            </div>
 
-            <div class="dashboard-grid">
-                <div class="dashboard-table-card">
-                    <div class="table-title">جدول پاس‌های برتر</div>
-                    <table class="dashboard-table">
-                        <thead>
-                            <tr>
-                                <th>ردیف</th>
-                                <th>کاربر</th>
-                                <th>پاس کل</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in pass_chart_data %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ row.username }}</td>
-                                <td>{{ row.display }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="dashboard-table-card">
-                    <div class="table-title">جدول اضافه‌کاری برتر</div>
-                    <table class="dashboard-table">
-                        <thead>
-                            <tr>
-                                <th>ردیف</th>
-                                <th>کاربر</th>
-                                <th>اضافه‌کاری کل</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in overtime_chart_data %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ row.username }}</td>
-                                <td>{{ row.display }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="hx-hero__ring" role="img" aria-label="{{ sub_remaining_percent }} درصد از دورهٔ اشتراک باقی مانده است">
+                        <svg class="hx-ring" viewBox="0 0 148 148" aria-hidden="true">
+                            <circle class="hx-ring__track" cx="74" cy="74" r="60"/>
+                            <circle class="hx-ring__value" cx="74" cy="74" r="60" data-hx-ring="{{ sub_remaining_percent }}"/>
+                        </svg>
+                        <div class="hx-ring__center">
+                            <strong><span data-hx-count>{{ sub_remaining_percent }}</span><small>٪</small></strong>
+                            <span>از دوره</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ستاره‌های عملکرد ماه -->
+                <section class="hx-spot-row">
+                    <article class="hx-spot hx-reveal dashboard-card dashboard-card--highlight" style="--hx-i:2" data-accent="overtime">
+                        <header class="hx-spot__head">
+                            <span class="hx-spot__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c3.9 0 6-2.6 6-5.8 0-4.4-4.4-6.6-4.4-10.2 0 0-3.1 1.6-3.1 5.1 0-1.6-1.5-3.1-1.5-3.1S7 10.2 7 14.2C7 18.2 8.1 22 12 22Z"/></svg>
+                            </span>
+                            <span class="hx-spot__label card-title">بیشترین اضافه‌کاری</span>
+                            <span class="hx-spot__rank">نفر برتر</span>
+                        </header>
+                        <div class="hx-spot__body">
+                            <span class="hx-spot__avatar" aria-hidden="true">{{ ((top_overtime_user.username if top_overtime_user else '-')|trim)[:2] }}</span>
+                            <span class="hx-spot__who">
+                                <span class="hx-spot__name card-value">{{ (top_overtime_user.username if top_overtime_user else '-')|trim }}</span>
+                                <span class="hx-spot__time card-meta">{{ top_overtime_user.total_ezafe_time if top_overtime_user else '-' }}</span>
+                            </span>
+                        </div>
+                        <div class="hx-spot__share" data-hx-share data-hx-part="{{ top_overtime_user.total_ezafe_time if top_overtime_user else '0' }}" data-hx-whole="{{ total_overtime_time }}">
+                            <span class="hx-spot__share-bar"><i></i></span>
+                            <span class="hx-spot__share-text">سهم از کل اضافه‌کاری ماه</span>
+                        </div>
+                    </article>
+
+                    <article class="hx-spot hx-reveal dashboard-card dashboard-card--highlight" style="--hx-i:3" data-accent="pass">
+                        <header class="hx-spot__head">
+                            <span class="hx-spot__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="3.2"/><path d="M8.5 5.5v13"/><path d="M15.5 10.5h3"/><path d="M15.5 13.8h3"/></svg>
+                            </span>
+                            <span class="hx-spot__label card-title">پاس ساعتی برتر</span>
+                            <span class="hx-spot__rank">نفر برتر</span>
+                        </header>
+                        <div class="hx-spot__body">
+                            <span class="hx-spot__avatar" aria-hidden="true">{{ ((top_pass_user.username if top_pass_user else '-')|trim)[:2] }}</span>
+                            <span class="hx-spot__who">
+                                <span class="hx-spot__name card-value">{{ (top_pass_user.username if top_pass_user else '-')|trim }}</span>
+                                <span class="hx-spot__time card-meta">{{ top_pass_user.total_pass_time if top_pass_user else '-' }}</span>
+                            </span>
+                        </div>
+                        <div class="hx-spot__share" data-hx-share data-hx-part="{{ top_pass_user.total_pass_time if top_pass_user else '0' }}" data-hx-whole="{{ total_pass_time }}">
+                            <span class="hx-spot__share-bar"><i></i></span>
+                            <span class="hx-spot__share-text">سهم از کل پاس ساعتی</span>
+                        </div>
+                    </article>
+
+                    <article class="hx-spot hx-reveal dashboard-card dashboard-card--highlight" style="--hx-i:4" data-accent="dept">
+                        <header class="hx-spot__head">
+                            <span class="hx-spot__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 21h17"/><path d="M6 21V5.2A1.7 1.7 0 0 1 7.7 3.5h5.1A1.7 1.7 0 0 1 14.5 5.2V21"/><path d="M14.5 9.5h3.8a1.7 1.7 0 0 1 1.7 1.7V21"/><path d="M9 7.5h2.5M9 11h2.5M9 14.5h2.5"/></svg>
+                            </span>
+                            <span class="hx-spot__label card-title">دپارتمان برتر</span>
+                            <span class="hx-spot__rank">بیشترین نفرات</span>
+                        </header>
+                        <div class="hx-spot__body">
+                            <span class="hx-spot__avatar" aria-hidden="true">{{ (top_department_name if top_department_name else '-')|trim|list|first|default('-') }}</span>
+                            <span class="hx-spot__who">
+                                <span class="hx-spot__name card-value">{{ top_department_name }}</span>
+                                <span class="hx-spot__time card-meta">{{ top_department_count }} نفر</span>
+                            </span>
+                        </div>
+                        <div class="hx-spot__share" data-hx-share data-hx-part="{{ top_department_count }}" data-hx-whole="{{ total_users }}">
+                            <span class="hx-spot__share-bar"><i></i></span>
+                            <span class="hx-spot__share-text">سهم از پرسنل فعال</span>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- شاخص‌های کلیدی -->
+                <section class="hx-kpis">
+                    <header class="hx-section-head hx-reveal" style="--hx-i:5">
+                        <h3>شاخص‌های کلیدی ماه</h3>
+                        <span class="hx-section-head__hint">مرور سریع وضعیت سازمان</span>
+                    </header>
+                    <div class="hx-kpi-grid">
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:6" data-accent="blue">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">کل پرسنل فعال</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ total_users }}</span>
+                                <span class="hx-kpi__meta card-meta">کاربر در چرخهٔ استخدام</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:7" data-accent="violet">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3.1 1.9"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">کل اضافه‌کاری ماه</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ total_overtime_time }}</span>
+                                <span class="hx-kpi__meta card-meta">مجموع تاییدشده</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:8" data-accent="teal">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="3.2"/><path d="M8.5 5.5v13"/><path d="M15.5 10.5h3"/><path d="M15.5 13.8h3"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">پاس ساعتی کل</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ total_pass_time }}</span>
+                                <span class="hx-kpi__meta card-meta">مجموع تاییدشده</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:9" data-accent="amber">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3.4"/><path d="M8 3v4M16 3v4M3 11h18"/><path d="m9.6 16 1.7 1.7 3.2-3.4"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">کل مرخصی استفاده‌شده</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ total_leave_taken }}</span>
+                                <span class="hx-kpi__meta card-meta">روز ثبت‌شده</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:10" data-accent="cyan">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-5.5l-1.8 3h-5.4l-1.8-3H2"/><path d="M5.6 5.6h12.8l3.6 6.4v5.6a2.4 2.4 0 0 1-2.4 2.4H4.4A2.4 2.4 0 0 1 2 17.6V12z"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">درخواست‌های مرخصی</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ total_leave_requests }}</span>
+                                <span class="hx-kpi__meta card-meta">تعداد کل</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:11" data-accent="indigo">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 21h17"/><path d="M6 21V5.2A1.7 1.7 0 0 1 7.7 3.5h5.1A1.7 1.7 0 0 1 14.5 5.2V21"/><path d="M14.5 9.5h3.8a1.7 1.7 0 0 1 1.7 1.7V21"/><path d="M17.6 17.6h2.4"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">دپارتمان‌های فعال</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ unique_departments }}</span>
+                                <span class="hx-kpi__meta card-meta">دپارتمان ثبت‌شده</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:12" data-accent="rose">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17.2 6.2-6.2 3.9 3.9L21 6.7"/><path d="M15.2 6.7H21v5.8"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">میانگین اضافه‌کاری</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ average_overtime_per_user }}</span>
+                                <span class="hx-kpi__meta card-meta">برای هر کاربر</span>
+                            </span>
+                        </article>
+
+                        <article class="hx-kpi hx-reveal dashboard-card" style="--hx-i:13" data-accent="green">
+                            <span class="hx-kpi__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3.6l2.6 7 4.2-14 2.6 7H21"/></svg>
+                            </span>
+                            <span class="hx-kpi__text">
+                                <span class="hx-kpi__label card-title">میانگین پاس</span>
+                                <span class="hx-kpi__value card-value" data-hx-count>{{ average_pass_per_user }}</span>
+                                <span class="hx-kpi__meta card-meta">برای هر کاربر</span>
+                            </span>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- تحلیل‌های تصویری -->
+                <section class="hx-insights">
+                    <article class="hx-card hx-reveal dashboard-card" style="--hx-i:14">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="teal" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M12 3v9h9A9 9 0 0 0 12 3z" opacity=".5"/></svg>
+                                </span>
+                                <h3 class="card-title">نسبت پاس ساعتی</h3>
+                            </div>
+                            <span class="hx-chip hx-chip--soft">ماه جاری</span>
+                        </header>
+                        <div class="hx-card__body hx-insight__body">
+                            <div class="hx-gauge" role="img" aria-label="{{ pass_percent }} درصد از ظرفیت ماهانه به پاس ساعتی اختصاص یافته است">
+                                <svg viewBox="0 0 118 118" aria-hidden="true">
+                                    <circle class="hx-ring__track" cx="59" cy="59" r="48"/>
+                                    <circle class="hx-ring__value" cx="59" cy="59" r="48" stroke="url(#hxRingGradient)" data-hx-ring="{{ pass_percent }}"/>
+                                </svg>
+                                <div class="hx-ring__center">
+                                    <strong><span data-hx-count>{{ pass_percent }}</span><small>٪</small></strong>
+                                    <span>از ظرفیت</span>
+                                </div>
+                            </div>
+                            <div class="hx-insight__info">
+                                <span class="hx-insight__value">{{ total_pass_time }}</span>
+                                <span class="hx-insight__caption">سهم پاس ساعتی تاییدشده از ظرفیت ماهانهٔ پرسنل فعال</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="hx-card hx-reveal dashboard-card" style="--hx-i:15">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="violet" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3.1 1.9"/></svg>
+                                </span>
+                                <h3 class="card-title">نسبت اضافه‌کاری</h3>
+                            </div>
+                            <span class="hx-chip hx-chip--soft">ماه جاری</span>
+                        </header>
+                        <div class="hx-card__body hx-insight__body">
+                            <div class="hx-gauge" role="img" aria-label="{{ overtime_percent }} درصد از ظرفیت ماهانه به اضافه‌کاری اختصاص یافته است">
+                                <svg viewBox="0 0 118 118" aria-hidden="true">
+                                    <circle class="hx-ring__track" cx="59" cy="59" r="48"/>
+                                    <circle class="hx-ring__value" cx="59" cy="59" r="48" stroke="url(#hxRingGradientViolet)" data-hx-ring="{{ overtime_percent }}"/>
+                                </svg>
+                                <div class="hx-ring__center">
+                                    <strong><span data-hx-count>{{ overtime_percent }}</span><small>٪</small></strong>
+                                    <span>از ظرفیت</span>
+                                </div>
+                            </div>
+                            <div class="hx-insight__info">
+                                <span class="hx-insight__value">{{ total_overtime_time }}</span>
+                                <span class="hx-insight__caption">سهم اضافه‌کاری تاییدشده از ظرفیت ماهانهٔ پرسنل فعال</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="hx-card hx-reveal dashboard-card" style="--hx-i:16">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="amber" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V9.8M10 19.5V4.5M16 19.5v-6.3M22 19.5v-3"/></svg>
+                                </span>
+                                <h3 class="card-title">ترکیب کارکنان</h3>
+                            </div>
+                            <span class="hx-chip hx-chip--soft">{{ total_users }} کاربر</span>
+                        </header>
+                        <div class="hx-card__body">
+                            <div class="hx-split" data-hx-split data-hx-total="{{ total_users }}" role="img" aria-label="{{ overtime_user_count }} کاربر با اضافه‌کاری و {{ no_overtime_users }} کاربر بدون اضافه‌کاری">
+                                <span class="hx-split__seg" data-accent="green" data-hx-part="{{ overtime_user_count }}" style="width: 0%"><i></i></span>
+                                <span class="hx-split__seg" data-accent="slate" data-hx-part="{{ no_overtime_users }}" style="width: 0%"><i></i></span>
+                            </div>
+                            <ul class="hx-legend">
+                                <li><i class="hx-legend__dot" data-accent="green" aria-hidden="true"></i><span>کارکنان با اضافه‌کاری</span><b data-hx-count>{{ overtime_user_count }}</b></li>
+                                <li><i class="hx-legend__dot" data-accent="slate" aria-hidden="true"></i><span>بدون اضافه‌کاری</span><b data-hx-count>{{ no_overtime_users }}</b></li>
+                            </ul>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- نمودارهای ستونی -->
+                <section class="hx-charts">
+                    <article class="hx-card hx-chart-card hx-reveal dashboard-chart-card" style="--hx-i:17">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="blue" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20.5V11M12 20.5V3.5M17 20.5v-6.4"/><path d="M3 20.5h18"/></svg>
+                                </span>
+                                <h3 class="card-title">نمودار پاس ساعتی — کاربران برتر</h3>
+                            </div>
+                            {% if pass_chart_data %}<span class="hx-chip hx-chip--soft">{{ pass_chart_data|length }} نفر برتر</span>{% endif %}
+                        </header>
+                        <div class="hx-card__body">
+                            {% if pass_chart_data %}
+                            <div class="hx-chart dashboard-chart">
+                                {% for row in pass_chart_data %}
+                                <div class="hx-col chart-bar" style="--hx-i:{{ loop.index0 }}">
+                                    <span class="hx-col__value bar-number">{{ row.display }}</span>
+                                    <span class="hx-col__track bar-fill">
+                                        <span class="hx-col__fill bar-value" data-accent="blue" data-percent="{{ row.percent }}"></span>
+                                    </span>
+                                    <span class="hx-col__name bar-label" title="{{ row.username }}">{{ row.username|trim }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="hx-empty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20.5V11M12 20.5V3.5M17 20.5v-6.4"/><path d="M3 20.5h18"/></svg>
+                                <span>هنوز داده‌ای برای نمایش نیست</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </article>
+
+                    <article class="hx-card hx-chart-card hx-reveal dashboard-chart-card" style="--hx-i:18">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="amber" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20.5V11M12 20.5V3.5M17 20.5v-6.4"/><path d="M3 20.5h18"/></svg>
+                                </span>
+                                <h3 class="card-title">نمودار اضافه‌کاری — کاربران برتر</h3>
+                            </div>
+                            {% if overtime_chart_data %}<span class="hx-chip hx-chip--soft">{{ overtime_chart_data|length }} نفر برتر</span>{% endif %}
+                        </header>
+                        <div class="hx-card__body">
+                            {% if overtime_chart_data %}
+                            <div class="hx-chart dashboard-chart">
+                                {% for row in overtime_chart_data %}
+                                <div class="hx-col chart-bar" style="--hx-i:{{ loop.index0 }}">
+                                    <span class="hx-col__value bar-number">{{ row.display }}</span>
+                                    <span class="hx-col__track bar-fill">
+                                        <span class="hx-col__fill bar-value overtime" data-accent="amber" data-percent="{{ row.percent }}"></span>
+                                    </span>
+                                    <span class="hx-col__name bar-label" title="{{ row.username }}">{{ row.username|trim }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="hx-empty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20.5V11M12 20.5V3.5M17 20.5v-6.4"/><path d="M3 20.5h18"/></svg>
+                                <span>هنوز داده‌ای برای نمایش نیست</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                </section>
+
+                <!-- جدول‌های برترین‌ها -->
+                <section class="hx-tables">
+                    <article class="hx-card hx-table-card hx-reveal dashboard-table-card" style="--hx-i:19">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="blue" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 14.7 9l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.9 9.3 9z"/></svg>
+                                </span>
+                                <h3 class="table-title">جدول پاس‌های برتر</h3>
+                            </div>
+                            <span class="hx-chip hx-chip--soft">پاس کل</span>
+                        </header>
+                        <div class="hx-card__body">
+                            {% if pass_chart_data %}
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ردیف</th>
+                                        <th scope="col">کاربر</th>
+                                        <th scope="col">پاس کل</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in pass_chart_data %}
+                                    <tr>
+                                        <td><span class="hx-rank hx-rank--{{ loop.index }}" data-hx-fa>{{ loop.index }}</span></td>
+                                        <td>
+                                            <span class="hx-user">
+                                                <span class="hx-user__avatar" aria-hidden="true">{{ row.username|trim|truncate(2, true, '') }}</span>
+                                                <span class="hx-user__name">{{ row.username|trim }}</span>
+                                            </span>
+                                        </td>
+                                        <td class="hx-num-cell">{{ row.display }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="hx-empty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 14.7 9l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.9 9.3 9z"/></svg>
+                                <span>هنوز پاس ساعتی تاییدشده‌ای ثبت نشده است</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </article>
+
+                    <article class="hx-card hx-table-card hx-reveal dashboard-table-card" style="--hx-i:20">
+                        <header class="hx-card__head">
+                            <div class="hx-card__title-wrap">
+                                <span class="hx-card__icon" data-accent="violet" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 14.7 9l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.9 9.3 9z"/></svg>
+                                </span>
+                                <h3 class="table-title">جدول اضافه‌کاری برتر</h3>
+                            </div>
+                            <span class="hx-chip hx-chip--soft">اضافه‌کاری کل</span>
+                        </header>
+                        <div class="hx-card__body">
+                            {% if overtime_chart_data %}
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ردیف</th>
+                                        <th scope="col">کاربر</th>
+                                        <th scope="col">اضافه‌کاری کل</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in overtime_chart_data %}
+                                    <tr>
+                                        <td><span class="hx-rank hx-rank--{{ loop.index }}" data-hx-fa>{{ loop.index }}</span></td>
+                                        <td>
+                                            <span class="hx-user">
+                                                <span class="hx-user__avatar" aria-hidden="true">{{ row.username|trim|truncate(2, true, '') }}</span>
+                                                <span class="hx-user__name">{{ row.username|trim }}</span>
+                                            </span>
+                                        </td>
+                                        <td class="hx-num-cell">{{ row.display }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="hx-empty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 14.7 9l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.9 9.3 9z"/></svg>
+                                <span>هنوز اضافه‌کاری تاییدشده‌ای ثبت نشده است</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                </section>
             </div>
         </div>
 
@@ -2626,6 +2933,7 @@
 <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
 <script>window.__modernTicketing = true;</script>
 <script src="{{ url_for('static', path='js/admin.js') }}?v=2"></script>
+<script src="{{ url_for('static', path='js/dashboard-modern.js') }}?v=2"></script>
 <script>window.__notificationToastReady = true;</script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/internal-automation-admin.js') }}"></script>

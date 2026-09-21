@@ -2329,6 +2329,15 @@ async def _render_admin_page(request: Request):
                 'total_pass_time': convert_to_persian_numbers(f"{top_pass_row[1] // 3600:02}:{(top_pass_row[1] % 3600) // 60:02}")
             })
 
+        # دورهٔ اشتراک — تا اتصال منبع واقعی اشتراک، همان مقادیری که پنل
+        # پروفایل نمایش می‌دهد استفاده می‌شود تا داشبورد و پروفایل هم‌خوان بمانند.
+        subscription_total_days = 365
+        subscription_days_left = 231
+        subscription_end_date = "1405/12/29"
+        subscription_remaining_percent = min(
+            100, max(0, round(subscription_days_left * 100 / max(1, subscription_total_days)))
+        )
+
         total_users = len(users)
         total_seconds_capacity = max(1, total_users * 3600)
         pass_percent = min(100, int((total_pass_seconds / total_seconds_capacity) * 100))
@@ -2365,6 +2374,9 @@ async def _render_admin_page(request: Request):
             "top_department_count": convert_to_persian_numbers(top_department_count),
             "top_overtime_user": top_overtime_user,
             "top_pass_user": top_pass_user,
+            "subscription_days_left": convert_to_persian_numbers(subscription_days_left),
+            "subscription_end_date": convert_to_persian_numbers(subscription_end_date),
+            "subscription_remaining_percent": convert_to_persian_numbers(subscription_remaining_percent),
             "pass_percent": convert_to_persian_numbers(pass_percent),
             "overtime_percent": convert_to_persian_numbers(overtime_percent),
             "pass_chart_data": pass_chart_data,

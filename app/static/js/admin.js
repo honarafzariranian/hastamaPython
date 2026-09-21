@@ -92,18 +92,10 @@ function updateTopbarClock() {
     if (timeEl.textContent !== timeText) timeEl.textContent = timeText;
 }
 
-function renderDashboardBarHeights() {
-    document.querySelectorAll('.dashboard-chart .bar-value').forEach(bar => {
-        const percent = parseInt(bar.dataset.percent, 10);
-        if (!isNaN(percent)) {
-            bar.style.height = `${percent}%`;
-        }
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     updateTopbarClock();
-    renderDashboardBarHeights();
+    /* ارتفاع میله‌های نمودار داشبورد در js/dashboard-modern.js مدیریت می‌شود
+       (انیمیشن پله‌ای + متغیر --hx-h) و دیگر اینجا دست‌کاری نمی‌شود. */
 
     document.querySelectorAll('[data-panel]').forEach(function(button) {
         button.addEventListener('click', function(event) {
