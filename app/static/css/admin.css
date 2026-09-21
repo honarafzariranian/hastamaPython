@@ -31,7 +31,6 @@ html, body {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 20px;
     min-height: 100vh;
     align-items: center;
 }
@@ -4151,35 +4150,39 @@ form button:active {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
-    align-items: start;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 10px;
+    margin-bottom: 0;
 }
 
 .dashboard-grid--two-row {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, 1fr);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .dashboard-grid--two-row {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (max-width: 900px) {
+    .dashboard-grid,
+    .dashboard-grid--two-row {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     }
 }
 
 .dashboard-card {
     background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
     border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 20px;
-    padding: 16px 18px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-    min-height: 118px;
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 6px;
-    height: stretch;
+    gap: 2px;
 }
 
 .dashboard-card--highlight {
@@ -4224,22 +4227,22 @@ form button:active {
 
 .dashboard-chart-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
-    min-height: 0;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    gap: 10px;
+    margin-bottom: 0;
 }
 
 .dashboard-chart-card {
     background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
     border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 22px;
-    padding: 16px 18px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-    min-height: 0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
 }
 
 .dashboard-chart-card .card-title {
@@ -4251,11 +4254,13 @@ form button:active {
 
 .dashboard-chart {
     display: grid;
-    grid-template-columns: repeat(3, minmax(60px, 1fr));
-    gap: 8px;
-    align-items: end;
-    min-height: 120px;
-    height: 100%;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    gap: 6px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    height: auto;
     width: 100%;
 }
 
@@ -4264,48 +4269,46 @@ form button:active {
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
-    height: 100%;
-    min-height: 110px;
+    gap: 4px;
+    min-height: 0;
 }
 
 .dashboard-table-card {
     background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
     border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 20px;
-    padding: 10px 12px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     overflow-x: auto;
-    overflow-y: visible;
-    min-height: 200px;
-    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 #dashboardBox {
     display: flex;
     flex-direction: column;
-    height: auto !important;
-    overflow: visible;
-    margin-top: 3.5% !important;
-    padding: 4px 2px 8px;
+    margin-top: 0 !important;
+    padding: 0;
+    gap: 8px;
 }
 
 .dashboard-quick-panels {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-    margin: 6px 0 14px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 0;
 }
 
 .dashboard-quick-card {
     background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
     border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 20px;
-    padding: 16px 18px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .dashboard-quick-card--accent {
@@ -4347,14 +4350,10 @@ form button:active {
     margin-bottom: 6px;
 }
 
-#dashboardBox > .dashboard-chart-row,
-#dashboardBox > .dashboard-grid:last-of-type {
-    flex: none;
-    min-height: auto;
-}
-
-#dashboardBox > .dashboard-grid:not(:last-of-type) {
-    flex: none;
+#dashboardBox > .dashboard-grid,
+#dashboardBox > .dashboard-chart-row {
+    flex: 1 1 0;
+    min-height: 0;
 }
 
 
@@ -4362,25 +4361,26 @@ form button:active {
 @media screen and (min-width: 769px) {
     #dashboardBox {
         position: sticky !important;
-        top: 12.5% !important;
-        margin-top: 5% !important;
+        top: 8rem !important;
+        height: calc(100vh - 8rem - 12px) !important;
+        margin: 0 !important;
+        padding: 0;
+        gap: 8px;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        padding: 12px 16px 0px;
     }
 
     #dashboardBox .dashboard-grid,
     #dashboardBox .dashboard-chart-row {
-        gap: 14px;
-        margin-bottom: 14px;
+        gap: 8px;
+        margin-bottom: 0;
     }
 
     #dashboardBox .dashboard-card,
     #dashboardBox .dashboard-quick-card {
-        min-height: 108px;
-        padding: 15px 16px;
-        border-radius: 18px;
-        gap: 6px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        gap: 2px;
     }
 
     #dashboardBox .dashboard-card .card-title,
@@ -4409,33 +4409,34 @@ form button:active {
     }
 
     #dashboardBox .dashboard-chart-card {
-        padding: 14px 16px;
-        border-radius: 18px;
+        padding: 10px 12px;
+        border-radius: 12px;
     }
 
     #dashboardBox .dashboard-chart-card .card-title {
-        margin-bottom: 7px;
-        font-size: 0.86rem;
+        margin-bottom: 4px;
+        font-size: 0.82rem;
+        flex: none;
     }
 
     #dashboardBox .dashboard-chart {
-        min-height: 120px;
+        flex: 1;
+        min-height: 0;
     }
 
     #dashboardBox .chart-bar {
-        min-height: 108px;
-        gap: 7px;
+        min-height: 0;
+        gap: 2px;
     }
 
     #dashboardBox .bar-fill {
-        height: 88px;
-        min-height: 88px;
+        flex: 1;
+        min-height: 0;
     }
 
     #dashboardBox .dashboard-table-card {
-        min-height: 164px;
-        padding: 12px 14px;
-        border-radius: 18px;
+        padding: 8px 10px;
+        border-radius: 12px;
     }
 }
 
