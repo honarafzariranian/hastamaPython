@@ -57,7 +57,7 @@
 - **هیچ‌چیز در حالت پایه پنهان نمی‌شود**: انیمیشن‌ها فقط با کلاس `is-in` (که
   IntersectionObserver اضافه می‌کند) شروع می‌شوند؛ پس بدون JS هم داشبورد کامل است.
   قلاب‌های مقدار: `data-hx-count` (شمارش عدد)، `data-hx-bar` + `data-percent`
-  (رشد ستون)، `data-hx-ring` (جاروی حلقه)، `data-hx-meter` / `data-hx-share`
+  (رشد ستون)، `data-hx-ring` (جاروی حلقه)، `data-hx-meter` (نام قدیمی `data-hx-share` هم پذیرفته می‌شود)
   (نوار سهم)، `data-hx-split` (نوار توزیع)، `data-hx-fa` (ارقام فارسی)،
   `data-hx-spot` (هالهٔ نشانگر).
 - متغیرهای انیمیت‌شدنی با `@property` ثبت شده‌اند (`--hx-p`, `--hx-h`, `--hx-w`،
