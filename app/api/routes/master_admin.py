@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
+from decimal import Decimal
 from typing import Optional
 
 import pyodbc
@@ -91,9 +92,91 @@ def _serialize(row: dict) -> dict:
     for key in row:
         if isinstance(row[key], datetime):
             row[key] = row[key].isoformat()
+        elif isinstance(row[key], date):
+            row[key] = row[key].isoformat()
+        elif isinstance(row[key], Decimal):
+            row[key] = float(row[key])
         elif isinstance(row[key], bytes):
             row[key] = row[key].hex() if row[key] else None
     return row
+
+
+def _subscription_table_ready(cur) -> bool:
+    """Return whether the optional subscriptions migration has been installed."""
+    cur.execute("SELECT OBJECT_ID(N'dbo.customer_subscriptions', N'U')")
+    return cur.fetchone()[0] is not None
+
+
+def _subscription_empty(*, setup_needed: bool = True) -> JSONResponse:
+    return JSONResponse(content={
+        "success": True,
+        "setup_needed": setup_needed,
+        "data": [],
+        "total": 0,
+        "page": 1,
+        "per_page": 0,
+        "pages": 1,
+    })
+
+
+def _subscription_value(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+        except ValueError:
+            return None
+    return None
+
+
+def _subscription_status(row: dict, today: date) -> tuple[str, int | None]:
+    start = _subscription_value(row.get("starts_at"))
+    expires = _subscription_value(row.get("expires_at"))
+    if not expires:
+        return "unknown", None
+    remaining = (expires - today).days
+    if start and today < start:
+        return "upcoming", remaining
+    if remaining < 0:
+        return "expired", remaining
+    return "active", remaining
+
+
+def _subscription_seat_usage(cur, row: dict, user_columns: set[str] | None = None) -> int:
+    """Best-effort active-user count for installations that link users to customers."""
+    try:
+        if user_columns is None:
+            cur.execute(
+                "SELECT LOWER(COLUMN_NAME) FROM INFORMATION_SCHEMA.COLUMNS "
+                "WHERE TABLE_NAME = 'user_table'"
+            )
+            user_columns = {str(r[0]).lower() for r in cur.fetchall()}
+        identity_columns = [
+            c for c in ("customer_code", "customer_id", "customer_name", "email", "phone")
+            if c in user_columns
+        ]
+        value = str(row.get("customer_code") or row.get("customer_id") or "").strip()
+        if not identity_columns or not value:
+            return 0
+        predicates = " OR ".join("LTRIM(RTRIM(COALESCE({0}, ''))) = ?".format(c) for c in identity_columns)
+        params = [value] * len(identity_columns)
+        active = " AND ISNULL(is_active, 'active') = 'active'" if "is_active" in user_columns else ""
+        cur.execute("SELECT COUNT(*) FROM user_table WHERE ({0}){1}".format(predicates, active), params)
+        return int(cur.fetchone()[0] or 0)
+    except Exception:
+        return 0
+
+
+def _subscription_row(cur, row: dict, today: date, user_columns: set[str] | None = None) -> dict:
+    status, remaining = _subscription_status(row, today)
+    row["computed_status"] = status
+    row["status"] = status
+    row["remaining_days"] = remaining
+    row["seats_used"] = _subscription_seat_usage(cur, row, user_columns)
+    return _serialize(row)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -180,6 +263,126 @@ async def dashboard_activity(request: Request, limit: int = Query(50, ge=1, le=2
         return JSONResponse(content={"success": True, "data": [_serialize(r) for r in rows]})
     except Exception as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+# ══════════════════════════════════════════════════════════════
+# CUSTOMER SUBSCRIPTIONS (optional migration)
+# ══════════════════════════════════════════════════════════════
+
+_SUBSCRIPTION_COLUMNS = """id, customer_id, customer_code, customer_name, contact_name,
+    contact_email, contact_phone, plan_name, subscription_status, purchased_at, starts_at,
+    expires_at, max_users, price, currency, payment_method, payment_reference,
+    invoice_number, notes, created_at, updated_at"""
+
+
+@router.get("/subscriptions/summary")
+async def subscriptions_summary(request: Request):
+    _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        if not _subscription_table_ready(cur):
+            return JSONResponse(content={
+                "success": True, "setup_needed": True,
+                "data": {
+                    "total_customers": 0, "active_subscriptions": 0,
+                    "expiring_soon": 0, "total_seats_used": 0, "total_seats": 0,
+                },
+            })
+        cur.execute("SELECT " + _SUBSCRIPTION_COLUMNS + " FROM dbo.customer_subscriptions")
+        today = datetime.now(timezone.utc).date()
+        rows = _dict_rows(cur)
+        prepared = [_subscription_row(cur, row, today) for row in rows]
+        active = [r for r in prepared if r["status"] == "active"]
+        return JSONResponse(content={
+            "success": True, "setup_needed": False,
+            "data": {
+                "total_customers": len({r.get("customer_code") or r.get("customer_id") or r.get("customer_name") for r in prepared}),
+                "active_subscriptions": len(active),
+                "expiring_soon": sum(0 <= (r.get("remaining_days") or -1) <= 30 for r in active),
+                "total_seats_used": sum(r.get("seats_used") or 0 for r in prepared),
+                "total_seats": sum(r.get("max_users") or 0 for r in prepared),
+            },
+        })
+    except Exception as e:
+        logger.error("Error loading subscription summary: %s: %s", type(e).__name__, e)
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.get("/subscriptions")
+async def list_subscriptions(
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+):
+    _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        if not _subscription_table_ready(cur):
+            return _subscription_empty()
+        cur.execute("SELECT " + _SUBSCRIPTION_COLUMNS + " FROM dbo.customer_subscriptions ORDER BY expires_at DESC, id DESC")
+        today = datetime.now(timezone.utc).date()
+        rows = [_subscription_row(cur, row, today) for row in _dict_rows(cur)]
+        if search:
+            needle = search.casefold()
+            rows = [r for r in rows if needle in " ".join(
+                str(r.get(k) or "") for k in ("customer_name", "customer_code", "customer_id", "plan_name", "contact_email")
+            ).casefold()]
+        if status:
+            normalized_status = status.casefold()
+            if normalized_status == "expiring":
+                rows = [
+                    r for r in rows
+                    if r["status"] == "active"
+                    and 0 <= (r.get("remaining_days") or -1) <= 30
+                ]
+            else:
+                rows = [r for r in rows if r["status"].casefold() == normalized_status]
+        total = len(rows)
+        offset = (page - 1) * per_page
+        rows = rows[offset:offset + per_page]
+        return JSONResponse(content={
+            "success": True, "setup_needed": False, "data": rows, "total": total,
+            "page": page, "per_page": per_page,
+            "pages": max(1, (total + per_page - 1) // per_page),
+        })
+    except Exception as e:
+        logger.error("Error loading subscriptions: %s: %s", type(e).__name__, e)
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.get("/subscriptions/{subscription_id}")
+async def get_subscription_detail(request: Request, subscription_id: int):
+    _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        if not _subscription_table_ready(cur):
+            return JSONResponse(content={"success": True, "setup_needed": True, "data": None})
+        cur.execute(
+            "SELECT " + _SUBSCRIPTION_COLUMNS +
+            " FROM dbo.customer_subscriptions WHERE id = ?", (subscription_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="اشتراک یافت نشد.")
+        data = _subscription_row(cur, dict(zip([c[0] for c in cur.description], row)),
+                                 datetime.now(timezone.utc).date())
+        return JSONResponse(content={"success": True, "setup_needed": False, "data": data})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error loading subscription detail: %s: %s", type(e).__name__, e)
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()

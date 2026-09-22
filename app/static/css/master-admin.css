@@ -15,6 +15,45 @@
 .rightSidebar .icon-container[data-accent="ma-ticket"]       { --tile-from:#F43F5E; --tile-to:#EC4899; --acc:#F43F5E; --tint:rgba(244,63,94,.10);   --glow:rgba(244,63,94,.42); }
 .rightSidebar .icon-container[data-accent="ma-admin-actions"]{ --tile-from:#8B5CF6; --tile-to:#A855F7; --acc:#8B5CF6; --tint:rgba(139,92,246,.12);  --glow:rgba(139,92,246,.45); }
 .rightSidebar .icon-container[data-accent="ma-settings"]     { --tile-from:#64748B; --tile-to:#475569; --acc:#64748B; --tint:rgba(100,116,139,.12); --glow:rgba(100,116,139,.42); }
+.rightSidebar .icon-container[data-accent="ma-subscriptions"] { --tile-from:#ec4899; --tile-to:#8b5cf6; --acc:#db2777; --tint:rgba(219,39,119,.12); --glow:rgba(219,39,119,.45); }
+
+/* ── Customer subscriptions ─────────────────────────────── */
+.ma-subscriptions-page { min-width: 0; }
+.ma-subscriptions-eyebrow { color: #db2777; font-size: .66rem; font-weight: 900; letter-spacing: .12em; }
+.ma-subscriptions-intro { margin: 4px 0 0; color: #64748b; font-size: .8rem; }
+.ma-subscription-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+.ma-subscription-stat { min-height: 104px; padding: 18px; border: 1px solid rgba(148,163,184,.18); border-radius: 18px; background: linear-gradient(145deg, #fff, #f8fafc); box-shadow: 0 10px 26px rgba(15,23,42,.06); }
+.ma-subscription-stat__label { display: block; color: #64748b; font-size: .75rem; font-weight: 800; }
+.ma-subscription-stat__value { display: block; margin-top: 8px; color: #0f172a; font-size: 1.55rem; font-weight: 950; }
+.ma-subscription-stat__meta { display: block; margin-top: 3px; color: #94a3b8; font-size: .68rem; }
+.ma-subscription-filters { margin-bottom: 14px; }
+.ma-subscription-table-note { color: #94a3b8; font-size: .68rem; }
+.ma-subscription-customer { display: flex; flex-direction: column; gap: 2px; min-width: 150px; }
+.ma-subscription-customer strong { color: #0f172a; font-size: .82rem; }
+.ma-subscription-customer small { color: #94a3b8; font-size: .68rem; direction: ltr; text-align: right; }
+.ma-subscription-progress { min-width: 116px; }
+.ma-subscription-progress__track { height: 6px; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+.ma-subscription-progress__fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ec4899, #8b5cf6); }
+.ma-subscription-progress__label { display: flex; justify-content: space-between; margin-top: 4px; color: #64748b; font-size: .66rem; }
+.ma-subscription-days { font-weight: 900; white-space: nowrap; }
+.ma-subscription-days--urgent { color: #d97706; }
+.ma-subscription-days--expired { color: #dc2626; }
+body.dark-theme .ma-subscriptions-intro,
+body.dark-theme .ma-subscription-table-note,
+body.dark-theme .ma-subscription-customer small,
+body.dark-theme .ma-subscription-progress__label { color: #94a3b8; }
+body.dark-theme .ma-subscription-stat { border-color: rgba(148,163,184,.16); background: linear-gradient(145deg, #172033, #111827); }
+body.dark-theme .ma-subscription-stat__value,
+body.dark-theme .ma-subscription-customer strong { color: #f8fafc; }
+body.dark-theme .ma-subscription-progress__track { background: #334155; }
+@media (max-width: 900px) {
+    .ma-subscription-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+    .ma-subscription-stats { grid-template-columns: minmax(0, 1fr); }
+    .ma-subscriptions-page .ma-section-header { align-items: flex-start; flex-direction: column; }
+    .ma-subscription-table-note { display: none; }
+}
 
 /* ── Base Overrides ──────────────────────────────────────── */
 body {

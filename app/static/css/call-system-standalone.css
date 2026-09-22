@@ -533,12 +533,23 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--sun { display: block; }
 .cs-waiting-select {
     cursor: pointer;
     appearance: none;
-    padding-inline-start: 38px;
-    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
-        linear-gradient(135deg, currentColor 50%, transparent 50%);
-    background-position: calc(0% + 18px) calc(50% + 1px), calc(0% + 23px) calc(50% + 1px);
-    background-size: 5px 5px, 5px 5px;
+    -webkit-appearance: none;
+    padding-left: 38px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%2364778b' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: left 14px center;
+    background-size: 12px 12px;
     background-repeat: no-repeat;
+    transition: border-color var(--cs-transition-fast), background-color var(--cs-transition-fast);
+}
+
+.cs-call-select:focus,
+.cs-waiting-select:focus {
+    box-shadow: inset 0 0 0 1px rgba(var(--cs-accent-rgb), .16);
+}
+
+body.dark-mode .cs-call-select,
+body.dark-mode .cs-waiting-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%2394a3b8' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .cs-btn {
@@ -1479,7 +1490,10 @@ body.dark-mode .cs-theme-toggle .cs-theme-icon--sun { display: block; }
 /* ── ۱۸) نشان اتصال شناور ─────────────────────────────────────────────── */
 .cs-conn-float {
     position: fixed;
-    inset: auto auto 18px 18px !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: 18px !important;
+    left: 18px !important;
     inset-inline-start: auto !important;
     inset-inline-end: auto !important;
     z-index: 40;
@@ -1743,7 +1757,10 @@ body.dark-mode .cs-waiting-select { background: var(--cs-surface-2); }
     .cs-ticket-side { flex-direction: row; align-items: center; }
     .cs-modal-actions { grid-template-columns: minmax(0, 1fr); }
     .cs-conn-float {
-        inset: auto auto 12px 12px !important;
+        top: auto !important;
+        right: auto !important;
+        bottom: 12px !important;
+        left: 12px !important;
         inset-inline-start: auto !important;
         inset-inline-end: auto !important;
         width: fit-content;
@@ -1767,6 +1784,114 @@ body.dark-mode .cs-waiting-select { background: var(--cs-surface-2); }
     .cs-queue-grid { grid-template-columns: minmax(0, 1fr); }
     .cs-queue-slot--hero { grid-column: span 1; }
     .cs-waiting-item { flex-wrap: wrap; }
+}
+
+/* ── Compact live-preview tab ─────────────────────────────────────────── */
+.cs-col--right:has(#cs-tab-preview.cs-tab-content--active) {
+    overflow: hidden;
+}
+
+#cs-tab-preview.cs-tab-content--active {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    gap: 10px;
+    overflow: hidden;
+}
+
+#cs-tab-preview .cs-card--preview {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px;
+}
+
+#cs-tab-preview .cs-card--preview .cs-card-header {
+    flex: 0 0 auto;
+    gap: 7px 9px;
+    margin-bottom: 9px;
+}
+
+#cs-tab-preview .cs-preview-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    aspect-ratio: auto;
+}
+
+#cs-tab-preview .cs-card--display-status {
+    flex: 0 0 auto;
+    padding: 10px 12px;
+}
+
+#cs-tab-preview .cs-card--display-status .cs-card-header {
+    gap: 7px 9px;
+    margin-bottom: 8px;
+}
+
+#cs-tab-preview .cs-display-status-body {
+    min-height: 52px;
+    padding: 8px 10px;
+    gap: 10px;
+}
+
+#cs-tab-preview .cs-display-status-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+}
+
+#cs-tab-preview .cs-display-status-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+#cs-tab-preview .cs-display-status-label {
+    font-size: var(--cs-fs-sm);
+}
+
+#cs-tab-preview .cs-display-status-sub {
+    font-size: .66rem;
+}
+
+@media (max-width: 768px) {
+    .cs-col--right:has(#cs-tab-preview.cs-tab-content--active) {
+        overflow-y: auto;
+    }
+
+    #cs-tab-preview.cs-tab-content--active {
+        height: auto;
+        overflow: visible;
+    }
+
+    #cs-tab-preview .cs-card--preview {
+        min-height: 0;
+    }
+
+    #cs-tab-preview .cs-preview-wrap {
+        aspect-ratio: 16 / 9;
+        flex: 0 0 auto;
+    }
+}
+
+/* The badge is a direct body child; keep its physical screen edge explicit
+   so RTL direction cannot reinterpret its horizontal position. */
+body.cs-page > #csConnBadge {
+    position: fixed !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: 18px !important;
+    left: 18px !important;
+    margin: 0 !important;
+    direction: ltr;
+}
+
+@media (max-width: 768px) {
+    body.cs-page > #csConnBadge {
+        bottom: 12px !important;
+        left: 12px !important;
+    }
 }
 
 /* ── ۲۳) کاهش حرکت ────────────────────────────────────────────────────── */

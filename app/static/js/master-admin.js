@@ -494,6 +494,53 @@
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری کاربران</div></div>'; }
   }
 
+  // ── Customer subscriptions ──────────────────────────────
+  async function loadSubscriptions() {
+    const container = document.getElementById('maSubscriptionTable');
+    const pagEl = document.getElementById('maSubscriptionPagination');
+    if (!container) return;
+    const fa = value => String(value ?? 0).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    const date = value => value ? new Date(value).toLocaleDateString('fa-IR') : '—';
+    const params = new URLSearchParams({ page: state.page, per_page: state.perPage });
+    const search = document.getElementById('subscriptionSearch');
+    const status = document.getElementById('subscriptionStatus');
+    if (search && search.value.trim()) params.set('search', search.value.trim());
+    if (status && status.value) params.set('status', status.value);
+    try {
+      const [summaryRes, listRes] = await Promise.all([
+        api('/subscriptions/summary'),
+        api(`/subscriptions?${params}`),
+      ]);
+      const summary = summaryRes.data || {};
+      const stats = document.getElementById('maSubscriptionStats');
+      if (stats) {
+        const cards = [
+          ['کل مشتریان', summary.total_customers, 'ثبت‌شده در سامانه'],
+          ['اشتراک‌های فعال', summary.active_subscriptions, 'در حال استفاده'],
+          ['در آستانه تمدید', summary.expiring_soon, 'کمتر از ۳۰ روز'],
+          ['ظرفیت کاربران', summary.total_seats_used + ' / ' + summary.total_seats, 'کاربر فعال / ظرفیت'],
+        ];
+        stats.innerHTML = cards.map(c => `<div class="ma-subscription-stat"><span class="ma-subscription-stat__label">${esc(c[0])}</span><strong class="ma-subscription-stat__value">${esc(fa(c[1] ?? '—'))}</strong><span class="ma-subscription-stat__meta">${esc(c[2])}</span></div>`).join('');
+      }
+      const cols = [
+        { key: 'customer_name', label: 'مشتری', render: (v, r) => `<div class="ma-subscription-customer"><strong>${esc(v || 'بدون نام')}</strong><small>${esc(r.customer_code || r.contact || '—')}</small></div>` },
+        { key: 'plan_name', label: 'طرح', render: v => esc(v || '—') },
+        { key: 'status', label: 'وضعیت', render: (v, r) => badge(v || r.computed_status || 'unknown') },
+        { key: 'purchased_at', label: 'تاریخ خرید', render: v => date(v) },
+        { key: 'expires_at', label: 'تاریخ پایان', render: v => date(v) },
+        { key: 'remaining_days', label: 'زمان باقی‌مانده', render: (v, r) => `<span class="ma-subscription-days ${Number(v) >= 0 && Number(v) <= 30 ? 'ma-subscription-days--urgent' : ''} ${Number(v) < 0 ? 'ma-subscription-days--expired' : ''}">${Number(v) < 0 ? 'منقضی شده' : esc(fa(v)) + ' روز'}</span>` },
+        { key: 'seats_used', label: 'کاربران', render: (v, r) => {
+          const used = Number(v) || 0, total = Number(r.max_users) || 0, pct = total ? Math.min(100, Math.round(used * 100 / total)) : 0;
+          return `<div class="ma-subscription-progress"><div class="ma-subscription-progress__track"><div class="ma-subscription-progress__fill" style="width:${pct}%"></div></div><div class="ma-subscription-progress__label"><span>${esc(fa(used))} فعال</span><span>${esc(fa(total))} ظرفیت</span></div></div>`;
+        }},
+      ];
+      renderTable(container, cols, listRes.data || [], 'اشتراک ثبت‌شده‌ای یافت نشد');
+      renderPagination(pagEl, listRes.total || 0, listRes.pages || 1, loadSubscriptions);
+    } catch (e) {
+      container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">اطلاعات اشتراک‌ها در دسترس نیست؛ ابتدا مهاجرت پایگاه‌داده را اجرا کنید.</div></div>';
+    }
+  }
+
   // ── Sessions ─────────────────────────────────────────────
   async function loadSessions() {
     const container = document.getElementById('maTableContainer');
@@ -1147,6 +1194,7 @@
     dashboard: loadDashboard,
     'audit-logs': loadAuditLogs,
     users: loadUsers,
+    subscriptions: loadSubscriptions,
     'user-detail': loadUserDetail,
     sessions: loadSessions,
     'password-resets': loadPasswordResets,
@@ -1158,6 +1206,21 @@
     'system-settings': loadSystemSettings,
     'label-printer': initLabelStudio,
   };
+
+  const subscriptionApply = document.getElementById('subscriptionApplyFilters');
+  if (subscriptionApply) subscriptionApply.addEventListener('click', () => {
+    state.page = 1;
+    loadSubscriptions();
+  });
+  const subscriptionRefresh = document.getElementById('maSubscriptionsRefresh');
+  if (subscriptionRefresh) subscriptionRefresh.addEventListener('click', loadSubscriptions);
+  const subscriptionSearch = document.getElementById('subscriptionSearch');
+  if (subscriptionSearch) subscriptionSearch.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      state.page = 1;
+      loadSubscriptions();
+    }
+  });
 
   // ── Expose filter setter for inline onclick handlers ─────
   window.__maSetFilters = function(f) {
