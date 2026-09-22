@@ -92,18 +92,154 @@ function updateTopbarClock() {
     if (timeEl.textContent !== timeText) timeEl.textContent = timeText;
 }
 
-function renderDashboardBarHeights() {
+/* ── جلوه‌های حرکتی داشبورد ─────────────────────────────────────────────────
+   فقط ظاهر: ارتفاع ستون‌ها، حلقه‌های درصد، شمارش اعداد و نورافکن نشانگر ماوس.
+   هر خطا اینجا نادیده گرفته می‌شود تا آرایش داشبورد هرگز پنل را از کار نیندازد.
+   ------------------------------------------------------------------------- */
+function persianDigitsToEnglish(value) {
+    var persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    return String(value === null || value === undefined ? '' : value)
+        .replace(/[۰-۹]/g, function (character) {
+            return persianDigits.indexOf(character);
+        });
+}
+
+function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+/* شمارش نرم اعداد فارسی (فقط برای کارت‌هایی که مقدار عددی دارند). */
+function animateDashboardCounter(element) {
+    var target = parseInt(persianDigitsToEnglish(element.dataset.countTo), 10);
+    if (isNaN(target)) return;
+
+    if (target === 0 || prefersReducedMotion() || !window.requestAnimationFrame) {
+        element.textContent = convertToPersianNumbers(target);
+        return;
+    }
+
+    var duration = 850;
+    var startedAt = null;
+    element.textContent = convertToPersianNumbers(0);
+
+    function step(timestamp) {
+        if (startedAt === null) startedAt = timestamp;
+        var progress = Math.min(1, (timestamp - startedAt) / duration);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        element.textContent = convertToPersianNumbers(Math.round(target * eased));
+        if (progress < 1) window.requestAnimationFrame(step);
+    }
+
+    window.requestAnimationFrame(step);
+}
+
+/* حلقه‌های درصدی: شعاع هر حلقه از خود SVG خوانده می‌شود، نه عدد ثابت. */
+function paintDashboardRing(circle, replay) {
+    var percent = parseFloat(persianDigitsToEnglish(circle.dataset.ring));
+    if (isNaN(percent)) return;
+    percent = Math.max(0, Math.min(100, percent));
+
+    var radius = parseFloat(circle.getAttribute('r')) || 0;
+    if (!radius) return;
+    var circumference = 2 * Math.PI * radius;
+    var target = circumference * (1 - percent / 100);
+
+    circle.style.transition = 'none';
+    circle.style.strokeDasharray = circumference.toFixed(2);
+    circle.style.strokeDashoffset = circumference.toFixed(2);
+
+    if (!replay || prefersReducedMotion()) {
+        circle.style.transition = '';
+        circle.style.strokeDashoffset = target.toFixed(2);
+        return;
+    }
+
+    void circle.getBoundingClientRect();
+    circle.style.transition = '';
+    window.requestAnimationFrame(function () {
+        circle.style.strokeDashoffset = target.toFixed(2);
+    });
+}
+
+/* نورافکن ملایم که نشانگر ماوس را روی سطح کارت دنبال می‌کند. */
+function attachDashboardSpotlight(card) {
+    card.addEventListener('pointermove', function (event) {
+        var rect = card.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        card.style.setProperty('--mx', ((event.clientX - rect.left) / rect.width * 100).toFixed(1) + '%');
+        card.style.setProperty('--my', ((event.clientY - rect.top) / rect.height * 100).toFixed(1) + '%');
+    });
+}
+
+function renderDashboardBarHeights(replay) {
     document.querySelectorAll('.dashboard-chart .bar-value').forEach(bar => {
         const percent = parseInt(bar.dataset.percent, 10);
-        if (!isNaN(percent)) {
-            bar.style.height = `${percent}%`;
+        if (isNaN(percent)) return;
+
+        const ratio = Math.max(0, Math.min(100, percent)) / 100;
+
+        if (replay && !prefersReducedMotion()) {
+            bar.style.setProperty('--p', '0');
+            void bar.offsetHeight;
         }
+
+        bar.style.setProperty('--p', String(ratio));
     });
+}
+
+/* بازپخش حرکت‌ها وقتی کاربر به تب داشبورد برمی‌گردد. */
+function replayDashboardMotion(box) {
+    try {
+        renderDashboardBarHeights(true);
+        box.querySelectorAll('[data-ring]').forEach(function (circle) {
+            paintDashboardRing(circle, true);
+        });
+        var animated = box.querySelectorAll('.dash-anim');
+        animated.forEach(function (element) { element.style.animation = 'none'; });
+        void box.offsetHeight;
+        animated.forEach(function (element) { element.style.animation = ''; });
+    } catch (error) {
+        /* ظاهر داشبورد هرگز نباید خطا پرت کند. */
+    }
+}
+
+function watchDashboardVisibility(box) {
+    if (!window.MutationObserver) return;
+    var wasVisible = box.classList.contains('is-visible');
+
+    var observer = new MutationObserver(function () {
+        var isVisible = box.classList.contains('is-visible') && box.style.display !== 'none';
+        if (isVisible && !wasVisible) replayDashboardMotion(box);
+        wasVisible = isVisible;
+    });
+
+    observer.observe(box, { attributes: true, attributeFilter: ['class', 'style'] });
+}
+
+function initDashboardMotion() {
+    try {
+        var box = document.getElementById('dashboardBox');
+        if (!box) return;
+
+        renderDashboardBarHeights();
+        box.querySelectorAll('[data-count-to]').forEach(animateDashboardCounter);
+        box.querySelectorAll('[data-ring]').forEach(function (circle) {
+            paintDashboardRing(circle, true);
+        });
+
+        if (!prefersReducedMotion() && window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+            box.querySelectorAll('.dashboard-card').forEach(attachDashboardSpotlight);
+        }
+
+        watchDashboardVisibility(box);
+    } catch (error) {
+        if (window.console && console.warn) console.warn('dashboard motion skipped', error);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     updateTopbarClock();
-    renderDashboardBarHeights();
+    initDashboardMotion();
 
     document.querySelectorAll('[data-panel]').forEach(function(button) {
         button.addEventListener('click', function(event) {

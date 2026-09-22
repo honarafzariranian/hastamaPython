@@ -326,101 +326,235 @@
         <!-- باکس داشبورد کلی -->
         <div class="management-box" id="dashboardBox">
 
-            <div class="dashboard-grid">
-                <div class="dashboard-quick-card dashboard-quick-card--accent">
-                    <span class="quick-card-title">اشتراک حرفه‌ای</span>
-                    <span class="quick-card-value">۲۳۱ روز باقی‌مانده</span>
-                    <span class="quick-card-meta">تا ۱۴۰۵/۱۲/۲۹</span>
-                    <button class="quick-card-btn" type="button">تمدید اشتراک</button>
+            <!-- سرصفحهٔ داشبورد -->
+            <header class="dash-head dash-anim" style="--i: 0">
+                <div class="dash-head__main">
+                    <span class="dash-head__badge">نمای کلی سازمان</span>
+                    <h2 class="dash-head__title">داشبورد مدیریت</h2>
+                    <p class="dash-head__sub">تصویر زندهٔ کارکرد، پاس ساعتی، اضافه‌کاری و مرخصی کارکنان</p>
                 </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">بیشترین اضافه‌کاری</span>
-                    <span class="card-value">{{ top_overtime_user.username if top_overtime_user else '-' }}</span>
-                    <span class="card-meta">{{ top_overtime_user.total_ezafe_time if top_overtime_user else '-' }}</span>
+                <div class="dash-head__stats">
+                    <span class="dash-chip dash-chip--live"><i aria-hidden="true"></i>دادهٔ زنده</span>
+                    <span class="dash-chip">{{ total_users }} پرسنل فعال</span>
+                    <span class="dash-chip">{{ unique_departments }} دپارتمان</span>
                 </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">پاس ساعتی برتر</span>
-                    <span class="card-value">{{ top_pass_user.username if top_pass_user else '-' }}</span>
-                    <span class="card-meta">{{ top_pass_user.total_pass_time if top_pass_user else '-' }}</span>
-                </div>
-                <div class="dashboard-card dashboard-card--highlight">
-                    <span class="card-title">دپارتمان برتر</span>
-                    <span class="card-value">{{ top_department_name }}</span>
-                    <span class="card-meta">{{ top_department_count }} نفر</span> 
-                </div>
-            </div>
+            </header>
 
+            <!-- کارت‌های شاخص -->
+            <section class="dash-bento">
 
-            <div class="dashboard-grid dashboard-grid--two-row">
-                <div class="dashboard-card">
+                <article class="dashboard-quick-card dash-anim" style="--i: 1">
+                    <span class="dash-orb dash-orb--a" aria-hidden="true"></span>
+                    <span class="dash-orb dash-orb--b" aria-hidden="true"></span>
+                    <div class="quick-card-head">
+                        <span class="quick-card-title">اشتراک حرفه‌ای</span>
+                        <span class="dash-pill">فعال</span>
+                    </div>
+                    <div class="quick-card-ring">
+                        <svg viewBox="0 0 120 120" role="img" aria-label="اشتراک حرفه‌ای فعال است">
+                            <defs>
+                                <linearGradient id="dashHeroRing" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#5eead4"></stop>
+                                    <stop offset="1" stop-color="#7dd3fc"></stop>
+                                </linearGradient>
+                            </defs>
+                            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+                            <circle class="ring-value" cx="60" cy="60" r="52" data-ring="63"></circle>
+                        </svg>
+                        <div class="quick-card-ring-text">
+                            <strong>۲۳۱</strong>
+                            <span>روز باقی‌مانده</span>
+                        </div>
+                    </div>
+                    <span class="quick-card-meta">اعتبار تا ۱۴۰۵/۱۲/۲۹</span>
+                    <button class="quick-card-btn" type="button">
+                        <span>تمدید اشتراک</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+                    </button>
+                </article>
+
+                <article class="dashboard-card dashboard-card--blue dash-anim" style="--i: 2">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.4 19c.2-3.1 2.6-5.2 5.6-5.2s5.4 2.1 5.6 5.2"></path><path d="M16.4 5.6a3 3 0 0 1 0 5.8"></path><path d="M17.8 19c-.1-2.1-.8-3.8-1.9-4.9"></path></svg>
+                    </span>
                     <span class="card-title">کل پرسنل فعال</span>
-                    <span class="card-value">{{ total_users }}</span>
-                </div>
-                <div class="dashboard-card">
+                    <span class="card-value" data-count-to="{{ total_users }}">{{ total_users }}</span>
+                    <span class="card-meta">کارکنان فعال سامانه</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--indigo dash-anim" style="--i: 3">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4.5 20V6.6c0-.8.7-1.5 1.5-1.5h5.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M13 10.5h4.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M2.8 20h18.4"></path><path d="M7.5 9h3M7.5 12.5h3M7.5 16h3M16 14h.8M16 17h.8"></path></svg>
+                    </span>
+                    <span class="card-title">دپارتمان‌های فعال</span>
+                    <span class="card-value" data-count-to="{{ unique_departments }}">{{ unique_departments }}</span>
+                    <span class="card-meta">واحد سازمانی فعال</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--teal dash-anim" style="--i: 4">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.4"></circle><path d="M12 9.6V13l2.4 1.9"></path><path d="M9.6 3.2h4.8"></path></svg>
+                    </span>
+                    <span class="card-title">کارکنان با اضافه‌کاری</span>
+                    <span class="card-value" data-count-to="{{ overtime_user_count }}">{{ overtime_user_count }}</span>
+                    <span class="card-meta">دارای ثبت اضافه‌کاری</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--green dash-anim" style="--i: 5">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.6 10.7z"></path></svg>
+                    </span>
+                    <span class="card-title">بدون اضافه‌کاری</span>
+                    <span class="card-value" data-count-to="{{ no_overtime_users }}">{{ no_overtime_users }}</span>
+                    <span class="card-meta">بدون ثبت اضافه‌کاری</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--amber dash-anim" style="--i: 6">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3.5 16.8l5.2-5.2 3.4 3.4 6.4-6.6"></path><path d="M14.2 8.4h5.1v5.1"></path></svg>
+                    </span>
                     <span class="card-title">کل اضافه‌کاری ماه</span>
                     <span class="card-value">{{ total_overtime_time }}</span>
-                </div>
-                <div class="dashboard-card">
+                    <span class="card-meta">مجموع ثبت‌شدهٔ ماه</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--sky dash-anim" style="--i: 7">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7.5 3.6h9M7.5 20.4h9"></path><path d="M8.6 3.6v3.1c0 2 3.4 3.5 3.4 5.3s-3.4 3.3-3.4 5.3v3.1"></path><path d="M15.4 3.6v3.1c0 2-3.4 3.5-3.4 5.3s3.4 3.3 3.4 5.3v3.1"></path></svg>
+                    </span>
                     <span class="card-title">پاس ساعتی کل</span>
                     <span class="card-value">{{ total_pass_time }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">کل مرخصی استفاده‌شده</span>
-                    <span class="card-value">{{ total_leave_taken }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">درخواست‌های مرخصی</span>
-                    <span class="card-value">{{ total_leave_requests }}</span>
-                    <span class="card-meta">تعداد کل</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">دپارتمان‌های فعال</span>
-                    <span class="card-value">{{ unique_departments }}</span>
-                </div>
-                <div class="dashboard-card">
+                    <span class="card-meta">مجموع پاس تأییدشده</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--violet dash-anim" style="--i: 8">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M17.5 5.4H7l5.2 6.6L7 18.6h10.5"></path></svg>
+                    </span>
                     <span class="card-title">میانگین اضافه‌کاری</span>
                     <span class="card-value">{{ average_overtime_per_user }}</span>
                     <span class="card-meta">برای هر کاربر</span>
-                </div>
-            </div>
+                </article>
 
-            <div class="dashboard-grid dashboard-grid--two-row">
-                <div class="dashboard-card">
+                <article class="dashboard-card dashboard-card--rose dash-anim" style="--i: 9">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3.6 12.6h4L10 6.2l3.4 11.6 2.4-5.2h4.6"></path></svg>
+                    </span>
                     <span class="card-title">میانگین پاس</span>
                     <span class="card-value">{{ average_pass_per_user }}</span>
                     <span class="card-meta">برای هر کاربر</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">کارکنان با اضافه‌کاری</span>
-                    <span class="card-value">{{ overtime_user_count }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">بدون اضافه‌کاری</span>
-                    <span class="card-value">{{ no_overtime_users }}</span>
-                </div>
-                <div class="dashboard-card">
+                </article>
+            </section>
+
+
+            <!-- سکوی برترین‌های ماه -->
+            <section class="dash-row dash-row--podium">
+
+                <article class="dashboard-card dashboard-card--highlight dash-anim"
+                    style="--i: 10; --tint: var(--dash-amber); --tint-soft: rgba(217, 119, 6, .18); --tint-glow: rgba(217, 119, 6, .16)">
+                    <span class="dash-medal" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3.5s4.5 4 4.5 8.2a4.5 4.5 0 0 1-9 0c0-1.6.8-3.1 1.7-4.1.3 1.2 1 2 1.9 2.3.5-2 .9-3.9.9-6.4z"></path></svg>
+                    </span>
+                    <span class="card-title">بیشترین اضافه‌کاری</span>
+                    <span class="card-value">{{ top_overtime_user.username if top_overtime_user else '-' }}</span>
+                    <span class="card-meta">{{ top_overtime_user.total_ezafe_time if top_overtime_user else '-' }}</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--highlight dash-anim"
+                    style="--i: 11; --tint: var(--dash-violet); --tint-soft: rgba(124, 58, 237, .16); --tint-glow: rgba(124, 58, 237, .16)">
+                    <span class="dash-medal" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3.7l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6L3.3 10.1l6-.9z"></path></svg>
+                    </span>
+                    <span class="card-title">پاس ساعتی برتر</span>
+                    <span class="card-value">{{ top_pass_user.username if top_pass_user else '-' }}</span>
+                    <span class="card-meta">{{ top_pass_user.total_pass_time if top_pass_user else '-' }}</span>
+                </article>
+
+                <article class="dashboard-card dashboard-card--highlight dash-anim"
+                    style="--i: 12; --tint: var(--dash-teal); --tint-soft: rgba(13, 148, 136, .18); --tint-glow: rgba(13, 148, 136, .16)">
+                    <span class="dash-medal" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4.5 20V6.6c0-.8.7-1.5 1.5-1.5h5.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M13 10.5h4.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M2.8 20h18.4"></path><path d="M7.5 9h3M7.5 12.5h3M7.5 16h3M16 14h.8M16 17h.8"></path></svg>
+                    </span>
                     <span class="card-title">دپارتمان برتر</span>
                     <span class="card-value">{{ top_department_name }}</span>
                     <span class="card-meta">{{ top_department_count }} نفر</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">درخواست‌های مرخصی</span>
-                    <span class="card-value">{{ total_leave_requests }}</span>
-                    <span class="card-meta">تعداد کل</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">دپارتمان‌های فعال</span>
-                    <span class="card-value">{{ unique_departments }}</span>
-                </div>
-                <div class="dashboard-card">
-                    <span class="card-title">نسبت پاس</span>
-                    <span class="card-value">{{ pass_percent }}%</span>
-                </div>
-            </div>
+                </article>
+            </section>
 
-            <div class="dashboard-chart-row">
-                <div class="dashboard-chart-card">
-                    <div class="card-title">نمودار پاس ساعتی - کاربران برتر</div>
+            <!-- شاخص‌های تحلیلی -->
+            <section class="dash-row dash-row--insight">
+
+                <article class="dashboard-card dashboard-card--panel dashboard-card--teal dash-anim" style="--i: 13">
+                    <div class="dash-panel-head">
+                        <span class="dash-panel-title">شاخص‌های بهره‌وری</span>
+                        <span class="dash-tag">ظرفیت ساعتی ماه</span>
+                    </div>
+                    <div class="dash-rings">
+                        <div class="dash-ring">
+                            <div class="dash-ring__visual">
+                                <svg viewBox="0 0 100 100" role="img" aria-label="نسبت پاس ساعتی">
+                                    <circle class="dash-ring__track" cx="50" cy="50" r="44"></circle>
+                                    <circle class="dash-ring__value" cx="50" cy="50" r="44" data-ring="{{ pass_percent }}"></circle>
+                                </svg>
+                                <div class="dash-ring__text">
+                                    <strong><span data-count-to="{{ pass_percent }}">{{ pass_percent }}</span>%</strong>
+                                </div>
+                            </div>
+                            <span class="dash-ring__label">نسبت پاس</span>
+                        </div>
+                        <div class="dash-ring"
+                            style="--tint: var(--dash-amber); --tint-soft: rgba(217, 119, 6, .14); --tint-glow: rgba(217, 119, 6, .3)">
+                            <div class="dash-ring__visual">
+                                <svg viewBox="0 0 100 100" role="img" aria-label="نسبت اضافه‌کاری">
+                                    <circle class="dash-ring__track" cx="50" cy="50" r="44"></circle>
+                                    <circle class="dash-ring__value" cx="50" cy="50" r="44" data-ring="{{ overtime_percent }}"></circle>
+                                </svg>
+                                <div class="dash-ring__text">
+                                    <strong><span data-count-to="{{ overtime_percent }}">{{ overtime_percent }}</span>%</strong>
+                                </div>
+                            </div>
+                            <span class="dash-ring__label">نسبت اضافه‌کاری</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="dashboard-card dashboard-card--panel dashboard-card--rose dash-anim" style="--i: 14">
+                    <div class="dash-panel-head">
+                        <span class="dash-panel-title">مرخصی کارکنان</span>
+                        <span class="dash-tag">جمع کل</span>
+                    </div>
+                    <div class="dash-stat-list">
+                        <div class="dash-stat">
+                            <span class="card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M6.2 5.2h11.6c.9 0 1.6.7 1.6 1.6v11.6c0 .9-.7 1.6-1.6 1.6H6.2c-.9 0-1.6-.7-1.6-1.6V6.8c0-.9.7-1.6 1.6-1.6z"></path><path d="M4.6 9.8h14.8"></path><path d="M8.4 3.2v3.6M15.6 3.2v3.6"></path></svg>
+                            </span>
+                            <span>
+                                <span class="card-title">کل مرخصی استفاده‌شده</span>
+                                <span class="card-value" data-count-to="{{ total_leave_taken }}">{{ total_leave_taken }}</span>
+                            </span>
+                            <span class="dash-stat__unit">روز</span>
+                        </div>
+                        <div class="dash-stat">
+                            <span class="card-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"></circle><path d="M12 7.6V12l3 1.9"></path></svg>
+                            </span>
+                            <span>
+                                <span class="card-title">درخواست‌های مرخصی</span>
+                                <span class="card-value" data-count-to="{{ total_leave_requests }}">{{ total_leave_requests }}</span>
+                            </span>
+                            <span class="dash-stat__unit">درخواست</span>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dash-row dash-row--charts">
+
+                <article class="dashboard-chart-card dash-anim" style="--i: 15">
+                    <div class="dash-card-head">
+                        <span class="card-title">نمودار پاس ساعتی — کاربران برتر</span>
+                        <span class="dash-tag">۵ نفر برتر</span>
+                    </div>
                     <div class="dashboard-chart">
                         {% for row in pass_chart_data %}
                         <div class="chart-bar">
@@ -428,14 +562,19 @@
                             <div class="bar-fill">
                                 <div class="bar-value" data-percent="{{ row.percent }}"></div>
                             </div>
-                            <span class="bar-label">{{ row.username }}</span>
+                            <span class="bar-label" title="{{ row.username }}">{{ row.username }}</span>
                         </div>
+                        {% else %}
+                        <p class="dash-empty">هنوز پاس ساعتی تأییدشده‌ای ثبت نشده است.</p>
                         {% endfor %}
                     </div>
-                </div>
+                </article>
 
-                <div class="dashboard-chart-card">
-                    <div class="card-title">نمودار اضافه‌کاری - کاربران برتر</div>
+                <article class="dashboard-chart-card dashboard-chart-card--overtime dash-anim" style="--i: 16">
+                    <div class="dash-card-head">
+                        <span class="card-title">نمودار اضافه‌کاری — کاربران برتر</span>
+                        <span class="dash-tag">۵ نفر برتر</span>
+                    </div>
                     <div class="dashboard-chart">
                         {% for row in overtime_chart_data %}
                         <div class="chart-bar">
@@ -443,16 +582,23 @@
                             <div class="bar-fill">
                                 <div class="bar-value overtime" data-percent="{{ row.percent }}"></div>
                             </div>
-                            <span class="bar-label">{{ row.username }}</span>
+                            <span class="bar-label" title="{{ row.username }}">{{ row.username }}</span>
                         </div>
+                        {% else %}
+                        <p class="dash-empty">هنوز اضافه‌کاری‌ای برای این ماه ثبت نشده است.</p>
                         {% endfor %}
                     </div>
-                </div>
-            </div>
+                </article>
+            </section>
 
-            <div class="dashboard-grid">
-                <div class="dashboard-table-card">
-                    <div class="table-title">جدول پاس‌های برتر</div>
+            <section class="dash-row dash-row--tables">
+
+                <article class="dashboard-table-card dash-anim" style="--i: 17">
+                    <div class="dash-card-head">
+                        <span class="table-title">جدول پاس‌های برتر</span>
+                        <span class="dash-tag">پاس کل</span>
+                    </div>
+                    {% if pass_chart_data %}
                     <table class="dashboard-table">
                         <thead>
                             <tr>
@@ -471,9 +617,17 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-                <div class="dashboard-table-card">
-                    <div class="table-title">جدول اضافه‌کاری برتر</div>
+                    {% else %}
+                    <p class="dash-empty">داده‌ای برای نمایش نیست.</p>
+                    {% endif %}
+                </article>
+
+                <article class="dashboard-table-card dashboard-table-card--overtime dash-anim" style="--i: 18">
+                    <div class="dash-card-head">
+                        <span class="table-title">جدول اضافه‌کاری برتر</span>
+                        <span class="dash-tag">اضافه‌کاری کل</span>
+                    </div>
+                    {% if overtime_chart_data %}
                     <table class="dashboard-table">
                         <thead>
                             <tr>
@@ -492,8 +646,11 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-            </div>
+                    {% else %}
+                    <p class="dash-empty">داده‌ای برای نمایش نیست.</p>
+                    {% endif %}
+                </article>
+            </section>
         </div>
 
         <!-- باکس مدیریت کارکنان با تب‌ها -->

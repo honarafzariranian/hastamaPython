@@ -963,6 +963,20 @@
                 localStorage.setItem('cs-theme', isDark ? 'dark' : 'light');
             });
         }
+
+        /* ── نورافکن کارت‌ها: متغیرهای --cs-mx/--cs-my را با نشانگر همراه می‌کند ── */
+        var canHover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (canHover && !reduceMotion) {
+            document.querySelectorAll('.cs-card').forEach(function (card) {
+                card.addEventListener('pointermove', function (event) {
+                    var rect = card.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return;
+                    card.style.setProperty('--cs-mx', ((event.clientX - rect.left) / rect.width * 100).toFixed(1) + '%');
+                    card.style.setProperty('--cs-my', ((event.clientY - rect.top) / rect.height * 100).toFixed(1) + '%');
+                });
+            });
+        }
     }
 
     if (document.readyState === 'loading') {

@@ -2653,6 +2653,1108 @@ form button:hover {background-color: #506bff;}
 
 #viray-gap {gap: 2px;}
 
+/* ==========================================================================
+   داشبورد مدیریت — بازطراحی کامل · Aurora / Bento
+   --------------------------------------------------------------------------
+   • همهٔ قواعد به #dashboardBox محدود شده‌اند؛ هیچ بخش دیگری از پنل تغییر نمی‌کند.
+   • رنگ‌ها «توکن»‌اند: تم تیره فقط مقادیر توکن را بازنویسی می‌کند، نه هر قاعده را.
+   • ورود کارت‌ها با انیمیشن پله‌ای (--i) و easing فنری انجام می‌شود.
+   • prefers-reduced-motion رعایت شده است.
+   • ساختار: بوم → هدر → کارت بنتو → سکوی برترین‌ها → شاخص‌ها → نمودار → جدول
+   ========================================================================== */
+
+/* ── ۱) بوم داشبورد: خروج از حالت «پنجرهٔ چسبان و اسکرول‌دار» ─────────────── */
+#dashboardBox {
+    --dash-ink: #0f2438;
+    --dash-ink-2: #3b5470;
+    --dash-muted: #6b8095;
+    --dash-faint: #9aacbd;
+    --dash-line: rgba(15, 42, 67, .085);
+    --dash-line-2: rgba(15, 42, 67, .05);
+    --dash-surface: #ffffff;
+    --dash-surface-2: #f6fafd;
+    --dash-panel: rgba(255, 255, 255, .78);
+    --dash-teal: #0d9488;
+    --dash-teal-2: #2dd4bf;
+    --dash-sky: #0ea5e9;
+    --dash-blue: #2563eb;
+    --dash-indigo: #4f46e5;
+    --dash-violet: #7c3aed;
+    --dash-amber: #d97706;
+    --dash-rose: #e11d48;
+    --dash-green: #10b981;
+    --dash-shadow-1: 0 1px 2px rgba(15, 42, 67, .04), 0 10px 24px -16px rgba(15, 42, 67, .22);
+    --dash-shadow-2: 0 2px 6px rgba(15, 42, 67, .06), 0 30px 54px -26px rgba(15, 42, 67, .38);
+    --dash-r: 22px;
+    --dash-r-sm: 16px;
+    --dash-r-xs: 12px;
+    --dash-ease: cubic-bezier(.22, 1, .36, 1);
+    --dash-ease-soft: cubic-bezier(.4, 0, .2, 1);
+
+    position: relative !important;
+    inset: auto !important;
+    /* نمایش باکس با style اینلاین روی display:flex تنظیم می‌شود؛ پس جهت را
+       اینجا ستون می‌کنیم تا کارت‌ها زیر هم بچینند (نه در یک ردیف). */
+    display: flex;
+    flex-direction: column;
+    gap: clamp(13px, 1.2vw, 20px);
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 28px auto 4px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    contain: none;
+    transform: none !important;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    color: var(--dash-ink);
+}
+
+/* هالهٔ رنگی پشت کارت‌ها — داخل مرزهای خودِ باکس می‌ماند تا سرریز نشود. */
+#dashboardBox::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    z-index: 0;
+    border-radius: calc(var(--dash-r) + 8px);
+    background:
+        radial-gradient(90% 58% at 100% 0%, rgba(14, 165, 233, .10), transparent 62%),
+        radial-gradient(72% 52% at 0% 100%, rgba(13, 148, 136, .10), transparent 60%);
+    pointer-events: none;
+}
+
+#dashboardBox > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ── ۲) هدر داشبورد ─────────────────────────────────────────────────────── */
+#dashboardBox .dash-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 18px;
+    padding: clamp(16px, 1.5vw, 24px) clamp(18px, 1.7vw, 26px);
+    border: 1px solid var(--dash-line);
+    border-radius: var(--dash-r);
+    background: var(--dash-panel);
+    box-shadow: var(--dash-shadow-1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+}
+
+#dashboardBox .dash-head__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(13, 148, 136, .14), rgba(14, 165, 233, .14));
+    color: var(--dash-teal);
+    font-size: .68rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+}
+
+#dashboardBox .dash-head__title {
+    margin: 9px 0 5px;
+    color: var(--dash-ink);
+    font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+    font-weight: 900;
+    letter-spacing: -.015em;
+}
+
+#dashboardBox .dash-head__sub {
+    margin: 0;
+    color: var(--dash-muted);
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.9;
+}
+
+#dashboardBox .dash-head__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#dashboardBox .dash-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border: 1px solid var(--dash-line);
+    border-radius: 999px;
+    background: var(--dash-surface);
+    color: var(--dash-ink-2);
+    font-size: .74rem;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: transform .35s var(--dash-ease), border-color .35s var(--dash-ease-soft),
+        box-shadow .35s var(--dash-ease-soft);
+}
+
+#dashboardBox .dash-chip:hover {
+    transform: translateY(-2px);
+    border-color: rgba(13, 148, 136, .35);
+    box-shadow: var(--dash-shadow-1);
+}
+
+#dashboardBox .dash-chip--live i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dash-green);
+    animation: dashLivePulse 2.4s var(--dash-ease-soft) infinite;
+}
+
+@keyframes dashLivePulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .5); }
+    70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ── ۳) ورود پله‌ای کارت‌ها ────────────────────────────────────────────── */
+#dashboardBox .dash-anim {
+    animation: dashEnter .72s var(--dash-ease) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+@keyframes dashEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── ۴) شبکه‌بندی چیدمان ───────────────────────────────────────────────── */
+#dashboardBox .dash-bento,
+#dashboardBox .dash-row {
+    display: grid;
+    gap: clamp(12px, 1.1vw, 18px);
+    align-items: stretch;
+}
+
+/* ستون‌ها قطعی‌اند (نه auto-fit) تا کارت قهرمان دقیقاً دو اسلات و
+   هشت کارت شاخص دو ردیف کامل بسازند و هیچ سوراخی در شبکه نماند. */
+#dashboardBox .dash-bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+#dashboardBox .dash-row--podium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#dashboardBox .dash-row--insight,
+#dashboardBox .dash-row--charts,
+#dashboardBox .dash-row--tables {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ── ۵) پایهٔ کارت‌ها: شیشهٔ نرم + ظرفیت حرکت ─────────────────────────── */
+#dashboardBox .dashboard-card,
+#dashboardBox .dashboard-quick-card,
+#dashboardBox .dashboard-chart-card,
+#dashboardBox .dashboard-table-card {
+    position: relative;
+    isolation: isolate;
+    min-width: 0;
+    border: 1px solid var(--dash-line);
+    border-radius: var(--dash-r);
+    background: linear-gradient(150deg, var(--dash-surface) 0%, var(--dash-surface-2) 100%);
+    box-shadow: var(--dash-shadow-1);
+    transition: transform .5s var(--dash-ease), box-shadow .5s var(--dash-ease),
+        border-color .4s var(--dash-ease-soft);
+}
+
+#dashboardBox .dashboard-card:hover,
+#dashboardBox .dashboard-quick-card:hover,
+#dashboardBox .dashboard-chart-card:hover,
+#dashboardBox .dashboard-table-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--tint-soft, rgba(14, 165, 233, .34));
+    box-shadow: var(--dash-shadow-2);
+}
+
+/* خط موییِ بالای کارت که در هاور باز می‌شود. */
+#dashboardBox .dashboard-card::before,
+#dashboardBox .dashboard-chart-card::before,
+#dashboardBox .dashboard-table-card::before {
+    content: '';
+    position: absolute;
+    inset-inline: 16px;
+    inset-block-start: 0;
+    height: 2px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(90deg, transparent, var(--tint, var(--dash-sky)), transparent);
+    opacity: 0;
+    transform: scaleX(.35);
+    transition: opacity .4s var(--dash-ease-soft), transform .55s var(--dash-ease);
+    pointer-events: none;
+}
+
+#dashboardBox .dashboard-card:hover::before,
+#dashboardBox .dashboard-chart-card:hover::before,
+#dashboardBox .dashboard-table-card:hover::before {
+    opacity: .95;
+    transform: scaleX(1);
+}
+
+/* نورافکن دنبال‌کنندهٔ نشانگر ماوس (متغیرها با JS تنظیم می‌شوند). */
+#dashboardBox .dashboard-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%),
+        var(--tint-glow, rgba(14, 165, 233, .16)), transparent 68%);
+    opacity: 0;
+    transition: opacity .45s var(--dash-ease-soft);
+    pointer-events: none;
+}
+
+#dashboardBox .dashboard-card:hover::after {
+    opacity: 1;
+}
+
+/* ── ۶) کارت‌های شاخص (بنتو) ──────────────────────────────────────────── */
+#dashboardBox .dashboard-card {
+    --tint: var(--dash-sky);
+    --tint-soft: rgba(14, 165, 233, .18);
+    --tint-glow: rgba(14, 165, 233, .18);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 13px;
+    padding: clamp(14px, 1.3vw, 18px) clamp(15px, 1.4vw, 20px);
+}
+
+#dashboardBox .dashboard-card--sky { --tint: var(--dash-sky); --tint-soft: rgba(14, 165, 233, .18); --tint-glow: rgba(14, 165, 233, .18); }
+#dashboardBox .dashboard-card--teal { --tint: var(--dash-teal); --tint-soft: rgba(13, 148, 136, .18); --tint-glow: rgba(13, 148, 136, .18); }
+#dashboardBox .dashboard-card--blue { --tint: var(--dash-blue); --tint-soft: rgba(37, 99, 235, .16); --tint-glow: rgba(37, 99, 235, .16); }
+#dashboardBox .dashboard-card--violet { --tint: var(--dash-violet); --tint-soft: rgba(124, 58, 237, .16); --tint-glow: rgba(124, 58, 237, .16); }
+#dashboardBox .dashboard-card--amber { --tint: var(--dash-amber); --tint-soft: rgba(217, 119, 6, .18); --tint-glow: rgba(217, 119, 6, .16); }
+#dashboardBox .dashboard-card--rose { --tint: var(--dash-rose); --tint-soft: rgba(225, 29, 72, .16); --tint-glow: rgba(225, 29, 72, .14); }
+#dashboardBox .dashboard-card--green { --tint: var(--dash-green); --tint-soft: rgba(16, 185, 129, .18); --tint-glow: rgba(16, 185, 129, .16); }
+#dashboardBox .dashboard-card--indigo { --tint: var(--dash-indigo); --tint-soft: rgba(79, 70, 229, .16); --tint-glow: rgba(79, 70, 229, .16); }
+
+#dashboardBox .dashboard-card .card-icon {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, var(--tint-soft), rgba(255, 255, 255, .5));
+    color: var(--tint);
+    box-shadow: inset 0 0 0 1px var(--tint-soft);
+    transition: transform .5s var(--dash-ease), box-shadow .5s var(--dash-ease);
+}
+
+#dashboardBox .dashboard-card:hover .card-icon {
+    transform: translateY(-2px) rotate(-4deg) scale(1.06);
+    box-shadow: inset 0 0 0 1px var(--tint-soft), 0 10px 20px -12px var(--tint);
+}
+
+#dashboardBox .dashboard-card .card-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#dashboardBox .dashboard-card .card-title {
+    color: var(--dash-muted);
+    font-size: .74rem;
+    font-weight: 800;
+    line-height: 1.7;
+}
+
+#dashboardBox .dashboard-card .card-value {
+    color: var(--dash-ink);
+    font-size: clamp(1.18rem, 1.45vw, 1.5rem);
+    font-weight: 900;
+    line-height: 1.25;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .dashboard-card .card-meta {
+    color: var(--dash-faint);
+    font-size: .68rem;
+    font-weight: 700;
+    line-height: 1.7;
+}
+
+
+/* ── ۷) کارت قهرمان: اشتراک حرفه‌ای ─────────────────────────────────────── */
+#dashboardBox .dashboard-quick-card {
+    grid-column: span 2;
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: clamp(18px, 1.6vw, 26px);
+    border: 0;
+    overflow: hidden;
+    color: #fff;
+    background:
+        radial-gradient(120% 130% at 100% 0%, rgba(45, 212, 191, .5), transparent 58%),
+        linear-gradient(150deg, #0f2438 0%, #0e4f63 48%, #0d9488 100%);
+    box-shadow: 0 20px 44px -22px rgba(13, 148, 136, .6), var(--dash-shadow-1);
+}
+
+#dashboardBox .dashboard-quick-card:hover {
+    border-color: transparent;
+    transform: translateY(-6px) scale(1.006);
+    box-shadow: 0 32px 62px -28px rgba(13, 148, 136, .75);
+}
+
+#dashboardBox .quick-card-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#dashboardBox .dashboard-quick-card .quick-card-title {
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 900;
+}
+
+#dashboardBox .dash-pill {
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+    font-size: .66rem;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+}
+
+#dashboardBox .dash-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+#dashboardBox .dash-orb--a {
+    inset-block-start: -76px;
+    inset-inline-start: -46px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(94, 234, 212, .42), transparent 68%);
+    animation: dashFloat 11s ease-in-out infinite;
+}
+
+#dashboardBox .dash-orb--b {
+    inset-block-end: -92px;
+    inset-inline-end: -34px;
+    width: 232px;
+    height: 232px;
+    background: radial-gradient(circle, rgba(56, 189, 248, .32), transparent 70%);
+    animation: dashFloat 15s ease-in-out infinite reverse;
+}
+
+@keyframes dashFloat {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(-12px, 14px, 0); }
+}
+
+#dashboardBox .quick-card-ring {
+    position: relative;
+    z-index: 1;
+    width: clamp(114px, 9.5vw, 140px);
+    margin: 6px auto 2px;
+    aspect-ratio: 1 / 1;
+}
+
+#dashboardBox .quick-card-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+#dashboardBox .quick-card-ring .ring-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, .2);
+    stroke-width: 9;
+}
+
+#dashboardBox .quick-card-ring .ring-value {
+    fill: none;
+    stroke: #7dd3fc;
+    stroke: url(#dashHeroRing);
+    stroke-width: 9;
+    stroke-linecap: round;
+    stroke-dasharray: 326.73;
+    stroke-dashoffset: 326.73;
+    filter: drop-shadow(0 2px 7px rgba(125, 211, 252, .55));
+    transition: stroke-dashoffset 1.35s var(--dash-ease);
+}
+
+#dashboardBox .quick-card-ring-text {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 2px;
+}
+
+#dashboardBox .quick-card-ring-text strong {
+    color: #fff;
+    font-size: clamp(1.6rem, 2.4vw, 2.05rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .quick-card-ring-text span {
+    color: rgba(255, 255, 255, .78);
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+#dashboardBox .dashboard-quick-card .quick-card-meta {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    color: rgba(255, 255, 255, .82);
+    font-size: .74rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+#dashboardBox .quick-card-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid rgba(255, 255, 255, .34);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-family: 'Vazir', sans-serif;
+    font-size: .78rem;
+    font-weight: 900;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background .4s var(--dash-ease-soft), box-shadow .4s var(--dash-ease-soft);
+}
+
+#dashboardBox .quick-card-btn::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: -60%;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .4), transparent);
+    transform: skewX(-18deg);
+    transition: inset-inline-start .7s var(--dash-ease);
+    pointer-events: none;
+}
+
+#dashboardBox .quick-card-btn:hover {
+    background: rgba(255, 255, 255, .26);
+    box-shadow: 0 16px 30px -16px rgba(0, 0, 0, .75);
+}
+
+#dashboardBox .quick-card-btn:hover::after {
+    inset-inline-start: 118%;
+}
+
+#dashboardBox .quick-card-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform .4s var(--dash-ease);
+}
+
+#dashboardBox .quick-card-btn:hover svg {
+    transform: translateX(-4px);
+}
+
+/* ── ۸) سکوی برترین‌های ماه ─────────────────────────────────────────────── */
+#dashboardBox .dashboard-card--highlight {
+    --tint: var(--dash-amber);
+    --tint-soft: rgba(217, 119, 6, .18);
+    --tint-glow: rgba(217, 119, 6, .16);
+
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 3px;
+    padding: clamp(15px, 1.4vw, 20px) clamp(16px, 1.5vw, 22px);
+    background:
+        linear-gradient(120deg, var(--tint-soft), transparent 68%),
+        linear-gradient(150deg, var(--dash-surface) 0%, var(--dash-surface-2) 100%);
+}
+
+#dashboardBox .dashboard-card--highlight .dash-medal {
+    position: absolute;
+    inset-block-start: clamp(14px, 1.4vw, 18px);
+    inset-inline-end: clamp(14px, 1.4vw, 18px);
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, var(--tint), var(--tint-2, var(--dash-teal-2)));
+    color: #fff;
+    box-shadow: 0 16px 28px -16px var(--tint);
+    transition: transform .55s var(--dash-ease);
+}
+
+#dashboardBox .dashboard-card--highlight:hover .dash-medal {
+    transform: translateY(-3px) rotate(6deg) scale(1.06);
+}
+
+#dashboardBox .dash-medal svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#dashboardBox .dashboard-card--highlight .card-title {
+    padding-inline-end: 56px;
+    color: var(--dash-muted);
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+#dashboardBox .dashboard-card--highlight .card-value {
+    max-width: 100%;
+    padding-inline-end: 56px;
+    overflow: hidden;
+    color: var(--dash-ink);
+    font-size: clamp(1.2rem, 1.6vw, 1.5rem);
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#dashboardBox .dashboard-card--highlight .card-meta {
+    justify-self: start;
+    margin-top: 8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--tint-soft);
+    color: var(--tint);
+    font-size: .74rem;
+    font-weight: 900;
+}
+
+/* ── ۹) کارت‌های تحلیلی: حلقه‌ها و آمار نواری ───────────────────────────── */
+#dashboardBox .dashboard-card--panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    align-content: start;
+    padding: clamp(16px, 1.5vw, 22px);
+}
+
+#dashboardBox .dash-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#dashboardBox .dash-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--dash-ink);
+    font-size: .86rem;
+    font-weight: 900;
+}
+
+#dashboardBox .dash-panel-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--tint-2, var(--dash-teal-2)), var(--tint, var(--dash-teal)));
+}
+
+#dashboardBox .dash-rings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+#dashboardBox .dash-ring {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 14px 10px 16px;
+    border-radius: var(--dash-r-sm);
+    background: linear-gradient(150deg, var(--tint-soft), transparent 88%);
+}
+
+#dashboardBox .dash-ring__visual {
+    position: relative;
+    width: clamp(96px, 8.5vw, 118px);
+    aspect-ratio: 1 / 1;
+}
+
+#dashboardBox .dash-ring__visual svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+#dashboardBox .dash-ring__track {
+    fill: none;
+    stroke: var(--dash-line);
+    stroke-width: 10;
+}
+
+#dashboardBox .dash-ring__value {
+    fill: none;
+    stroke: var(--tint, var(--dash-teal));
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 276.46;
+    stroke-dashoffset: 276.46;
+    filter: drop-shadow(0 3px 7px var(--tint-glow, rgba(13, 148, 136, .3)));
+    transition: stroke-dashoffset 1.45s var(--dash-ease);
+}
+
+#dashboardBox .dash-ring__text {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 1px;
+}
+
+#dashboardBox .dash-ring__text strong {
+    color: var(--dash-ink);
+    font-size: clamp(1.05rem, 1.3vw, 1.3rem);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .dash-ring__text span {
+    color: var(--dash-faint);
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+#dashboardBox .dash-ring__label {
+    color: var(--dash-ink-2);
+    font-size: .76rem;
+    font-weight: 800;
+}
+
+#dashboardBox .dash-stat-list {
+    display: grid;
+    gap: 10px;
+}
+
+#dashboardBox .dash-stat {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--dash-r-sm);
+    background: linear-gradient(120deg, var(--tint-soft), transparent 82%);
+    transition: transform .45s var(--dash-ease), background .45s var(--dash-ease-soft);
+}
+
+#dashboardBox .dash-stat:hover {
+    transform: translateX(-4px);
+}
+
+#dashboardBox .dash-stat .card-icon {
+    grid-column: auto;
+    grid-row: auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+}
+
+#dashboardBox .dash-stat .card-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+#dashboardBox .dash-stat .card-title,
+#dashboardBox .dash-stat .card-value {
+    display: block;
+}
+
+#dashboardBox .dash-stat .card-value {
+    font-size: clamp(1.05rem, 1.25vw, 1.3rem);
+}
+
+#dashboardBox .dash-stat__unit {
+    color: var(--dash-muted);
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+/* ── ۱۰) نمودارهای ستونی ────────────────────────────────────────────────── */
+#dashboardBox .dashboard-chart-card {
+    --tint: var(--dash-teal);
+    --tint-2: var(--dash-teal-2);
+    --tint-soft: rgba(13, 148, 136, .16);
+    --tint-glow: rgba(13, 148, 136, .34);
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: clamp(16px, 1.5vw, 22px);
+}
+
+#dashboardBox .dashboard-chart-card--overtime {
+    --tint: var(--dash-violet);
+    --tint-2: #a78bfa;
+    --tint-soft: rgba(124, 58, 237, .16);
+    --tint-glow: rgba(124, 58, 237, .34);
+}
+
+#dashboardBox .dash-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#dashboardBox .dashboard-chart-card .card-title,
+#dashboardBox .table-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    color: var(--dash-ink);
+    font-size: .86rem;
+    font-weight: 900;
+}
+
+#dashboardBox .dashboard-chart-card .card-title::before,
+#dashboardBox .table-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--tint-2, var(--dash-teal-2)), var(--tint, var(--dash-teal)));
+}
+
+#dashboardBox .dash-tag {
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--tint-soft, rgba(14, 165, 233, .14));
+    color: var(--tint, var(--dash-sky));
+    font-size: .66rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+#dashboardBox .dashboard-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-evenly;
+    gap: clamp(12px, 1.5vw, 30px);
+    min-height: clamp(170px, 16vw, 220px);
+    padding: 2px 2px 0;
+}
+
+#dashboardBox .chart-bar {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    min-width: 0;
+    max-width: 96px;
+}
+
+#dashboardBox .bar-number {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--dash-surface);
+    color: var(--dash-ink);
+    font-size: .7rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    box-shadow: var(--dash-shadow-1);
+    transition: transform .45s var(--dash-ease), color .45s var(--dash-ease-soft),
+        box-shadow .45s var(--dash-ease-soft);
+}
+
+#dashboardBox .chart-bar:hover .bar-number {
+    transform: translateY(-5px);
+    color: var(--tint, var(--dash-teal));
+    box-shadow: var(--dash-shadow-2);
+}
+
+#dashboardBox .bar-fill {
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+    max-width: 54px;
+    flex: 0 0 auto;
+    height: clamp(140px, 14vw, 190px);
+    padding: 4px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(15, 42, 67, .05), rgba(15, 42, 67, .012));
+    box-shadow: inset 0 1px 2px var(--dash-line-2);
+}
+
+/* پر شدن ستون با جابه‌جایی (transform) انجام می‌شود، نه با ارتفاع درصدی:
+   ارتفاع درصدی داخل فلکس‌باکس در برخی موتورها حل نمی‌شود و ستون خالی می‌ماند.
+   ظرف overflow:hidden دارد و میلهٔ تمام‌قد به اندازهٔ سهمش پایین می‌رود. */
+#dashboardBox .bar-value {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--tint-2, #5eead4), var(--tint, #0d9488));
+    box-shadow: 0 10px 22px -12px var(--tint-glow, rgba(13, 148, 136, .6));
+    transform: translateY(calc((1 - var(--p, 0)) * 100%));
+    transition: transform 1.1s var(--dash-ease);
+}
+
+#dashboardBox .bar-value.overtime {
+    background: linear-gradient(180deg, #a78bfa, #6d28d9);
+    box-shadow: 0 10px 22px -12px rgba(109, 40, 217, .6);
+}
+
+#dashboardBox .bar-label {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--dash-muted);
+    font-size: .72rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── ۱۱) جدول‌های برتر ─────────────────────────────────────────────────── */
+#dashboardBox .dashboard-table-card {
+    --tint: var(--dash-blue);
+    --tint-2: #60a5fa;
+    --tint-soft: rgba(37, 99, 235, .12);
+    --tint-glow: rgba(37, 99, 235, .3);
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(16px, 1.5vw, 20px);
+}
+
+#dashboardBox .dashboard-table-card--overtime {
+    --tint: var(--dash-violet);
+    --tint-2: #a78bfa;
+    --tint-soft: rgba(124, 58, 237, .12);
+    --tint-glow: rgba(124, 58, 237, .3);
+}
+
+#dashboardBox .dashboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+}
+
+#dashboardBox .dashboard-table thead th {
+    padding: 0 12px 2px;
+    border: 0;
+    color: var(--dash-faint);
+    font-size: .68rem;
+    font-weight: 900;
+    text-align: right;
+    white-space: nowrap;
+}
+
+#dashboardBox .dashboard-table tbody td {
+    padding: 11px 12px;
+    border: 0;
+    background: var(--dash-surface-2);
+    color: var(--dash-ink);
+    font-size: .76rem;
+    font-weight: 700;
+    text-align: right;
+    transition: background .4s var(--dash-ease-soft), color .4s var(--dash-ease-soft);
+}
+
+#dashboardBox .dashboard-table tbody td:first-child {
+    width: 1%;
+    border-radius: 0 var(--dash-r-xs) var(--dash-r-xs) 0;
+    color: var(--dash-muted);
+    font-weight: 900;
+}
+
+#dashboardBox .dashboard-table tbody td:last-child {
+    border-radius: var(--dash-r-xs) 0 0 var(--dash-r-xs);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+#dashboardBox .dashboard-table tbody tr:hover td {
+    background: var(--tint-soft);
+}
+
+#dashboardBox .dashboard-table tbody tr:hover td:first-child {
+    color: var(--tint);
+}
+
+/* حالت خالی نمودار/جدول */
+#dashboardBox .dash-empty {
+    width: 100%;
+    margin: 0;
+    padding: 28px 14px;
+    border: 1px dashed var(--dash-line);
+    border-radius: var(--dash-r-sm);
+    color: var(--dash-faint);
+    font-size: .8rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+/* ── ۱۲) تم تیره: فقط توکن‌ها بازنویسی می‌شوند ──────────────────────────── */
+body.dark-mode #dashboardBox,
+body.dark-theme #dashboardBox {
+    --dash-ink: #e8eef6;
+    --dash-ink-2: #b7c6d6;
+    --dash-muted: #93a5b8;
+    --dash-faint: #728698;
+    --dash-line: rgba(226, 237, 247, .12);
+    --dash-line-2: rgba(226, 237, 247, .06);
+    --dash-surface: #16202e;
+    --dash-surface-2: #1b2738;
+    --dash-panel: rgba(22, 32, 46, .82);
+    --dash-shadow-1: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 26px -18px rgba(0, 0, 0, .7);
+    --dash-shadow-2: 0 2px 8px rgba(0, 0, 0, .4), 0 30px 54px -26px rgba(0, 0, 0, .85);
+}
+
+body.dark-mode #dashboardBox::before,
+body.dark-theme #dashboardBox::before {
+    opacity: .5;
+}
+
+body.dark-mode #dashboardBox .bar-fill,
+body.dark-theme #dashboardBox .bar-fill {
+    background: linear-gradient(180deg, rgba(226, 237, 247, .07), rgba(226, 237, 247, .02));
+}
+
+/* ── ۱۳) واکنش‌گرایی ────────────────────────────────────────────────────── */
+@media (max-width: 1400px) {
+    #dashboardBox .dash-bento {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #dashboardBox .dashboard-quick-card {
+        grid-column: span 4;
+        grid-row: auto;
+    }
+}
+
+@media (max-width: 1100px) {
+    #dashboardBox .dash-row--podium {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    #dashboardBox .dash-bento {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #dashboardBox .dashboard-quick-card {
+        grid-column: span 2;
+        grid-row: auto;
+    }
+
+    #dashboardBox .dash-row--insight,
+    #dashboardBox .dash-row--charts,
+    #dashboardBox .dash-row--tables {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 620px) {
+    #dashboardBox .dash-bento {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #dashboardBox .dashboard-quick-card {
+        grid-column: auto;
+    }
+
+    #dashboardBox .dash-rings {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #dashboardBox .dashboard-card:hover,
+    #dashboardBox .dashboard-quick-card:hover,
+    #dashboardBox .dashboard-chart-card:hover,
+    #dashboardBox .dashboard-table-card:hover {
+        transform: none;
+    }
+}
+
+/* ── ۱۴) کاهش حرکت ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    #dashboardBox .dash-anim,
+    #dashboardBox .dash-orb,
+    #dashboardBox .dash-chip--live i {
+        animation: none;
+    }
+
+    #dashboardBox .dashboard-card,
+    #dashboardBox .dashboard-quick-card,
+    #dashboardBox .dashboard-chart-card,
+    #dashboardBox .dashboard-table-card,
+    #dashboardBox .dash-stat,
+    #dashboardBox .bar-value,
+    #dashboardBox .bar-number,
+    #dashboardBox .quick-card-ring .ring-value,
+    #dashboardBox .dash-ring__value {
+        transition: none;
+    }
+
+    #dashboardBox .dashboard-card:hover,
+    #dashboardBox .dashboard-quick-card:hover,
+    #dashboardBox .dashboard-chart-card:hover,
+    #dashboardBox .dashboard-table-card:hover,
+    #dashboardBox .dash-stat:hover {
+        transform: none;
+    }
+}
+
 /* Legacy overrides — keep for shift popup compatibility */
 .form-container {
     display: flex;
@@ -4142,377 +5244,6 @@ form button:active {
     color: #000;
     cursor: pointer;
     width: 20px;
-}
-
-/*  --- = داشبورد ---  */
-/*  --- = داشبورد ---  */
-/*  --- = داشبورد ---  */
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 1fr;
-    gap: 10px;
-    margin-bottom: 0;
-}
-
-.dashboard-grid--two-row {
-    grid-template-columns: repeat(7, 1fr);
-}
-
-@media (max-width: 1400px) {
-    .dashboard-grid--two-row {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-@media (max-width: 900px) {
-    .dashboard-grid,
-    .dashboard-grid--two-row {
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    }
-}
-
-.dashboard-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 14px;
-    padding: 12px 14px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 2px;
-}
-
-.dashboard-card--highlight {
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 45%, #0ea5e9 100%);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.2);
-}
-
-.dashboard-card .card-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-    line-height: 1.4;
-    color: #475569;
-}
-
-.dashboard-card--highlight .card-title {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.dashboard-card .card-value {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-}
-
-.dashboard-card--highlight .card-value {
-    color: #ffffff;
-}
-
-.dashboard-card .card-meta {
-    color: #64748b;
-    font-size: 0.78rem;
-    font-weight: 600;
-}
-
-.dashboard-card--highlight .card-meta {
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.dashboard-chart-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 1fr;
-    gap: 10px;
-    margin-bottom: 0;
-}
-
-.dashboard-chart-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
-    border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 14px;
-    padding: 12px 14px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-}
-
-.dashboard-chart-card .card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #0f172a;
-}
-
-.dashboard-chart {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 1fr;
-    gap: 6px;
-    align-items: stretch;
-    flex: 1;
-    min-height: 0;
-    height: auto;
-    width: 100%;
-}
-
-.chart-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-    min-height: 0;
-}
-
-.dashboard-table-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f7fbff 100%);
-    border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 14px;
-    padding: 10px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    overflow-x: auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-#dashboardBox {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0 !important;
-    padding: 0;
-    gap: 8px;
-}
-
-.dashboard-quick-panels {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin: 0;
-}
-
-.dashboard-quick-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid rgba(14, 165, 233, 0.16);
-    border-radius: 14px;
-    padding: 14px 16px;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.dashboard-quick-card--accent {
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 45%, #0ea5e9 100%);
-    color: #fff;
-    border-color: transparent;
-}
-
-.quick-card-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-}
-
-.quick-card-value {
-    font-size: 1.1rem;
-    font-weight: 800;
-}
-
-.quick-card-meta {
-    font-size: 0.8rem;
-    opacity: 0.9;
-}
-
-.quick-card-btn {
-    margin-top: 6px;
-    border: none;
-    border-radius: 999px;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.2);
-    color: inherit;
-    cursor: pointer;
-    font-family: 'Vazir', sans-serif;
-    font-size: 0.86rem;
-    font-weight: 700;
-}
-
-#dashboardBox > h2 {
-    flex: none;
-    margin-bottom: 6px;
-}
-
-#dashboardBox > .dashboard-grid,
-#dashboardBox > .dashboard-chart-row {
-    flex: 1 1 0;
-    min-height: 0;
-}
-
-
-
-@media screen and (min-width: 769px) {
-    #dashboardBox {
-        position: sticky !important;
-        top: 8rem !important;
-        height: calc(100vh - 8rem - 12px) !important;
-        margin: 0 !important;
-        padding: 0;
-        gap: 8px;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-    }
-
-    #dashboardBox .dashboard-grid,
-    #dashboardBox .dashboard-chart-row {
-        gap: 8px;
-        margin-bottom: 0;
-    }
-
-    #dashboardBox .dashboard-card,
-    #dashboardBox .dashboard-quick-card {
-        padding: 10px 12px;
-        border-radius: 12px;
-        gap: 2px;
-    }
-
-    #dashboardBox .dashboard-card .card-title,
-    #dashboardBox .dashboard-quick-card .quick-card-title {
-        font-size: 0.84rem;
-        line-height: 1.4;
-    }
-
-    #dashboardBox .dashboard-card .card-value {
-        font-size: 1.15rem;
-    }
-
-    #dashboardBox .dashboard-card .card-meta,
-    #dashboardBox .dashboard-quick-card .quick-card-meta {
-        font-size: 0.72rem;
-    }
-
-    #dashboardBox .dashboard-quick-card .quick-card-value {
-        font-size: 1rem;
-    }
-
-    #dashboardBox .quick-card-btn {
-        margin-top: 4px;
-        padding: 5px 9px;
-        font-size: 0.74rem;
-    }
-
-    #dashboardBox .dashboard-chart-card {
-        padding: 10px 12px;
-        border-radius: 12px;
-    }
-
-    #dashboardBox .dashboard-chart-card .card-title {
-        margin-bottom: 4px;
-        font-size: 0.82rem;
-        flex: none;
-    }
-
-    #dashboardBox .dashboard-chart {
-        flex: 1;
-        min-height: 0;
-    }
-
-    #dashboardBox .chart-bar {
-        min-height: 0;
-        gap: 2px;
-    }
-
-    #dashboardBox .bar-fill {
-        flex: 1;
-        min-height: 0;
-    }
-
-    #dashboardBox .dashboard-table-card {
-        padding: 8px 10px;
-        border-radius: 12px;
-    }
-}
-
-.table-title {
-    font-size: 0.76rem;
-    font-weight: 700;
-    margin-bottom: 6px;
-    color: #0f172a;
-}
-
-.dashboard-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.dashboard-table th,
-.dashboard-table td {
-    padding: 3px 5px;
-    text-align: right;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.66rem;
-    color: #334155;
-}
-
-.dashboard-table th {
-    color: #0f172a;
-    font-weight: 700;
-}
-
-.dashboard-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.bar-fill {
-    width: 100%;
-    max-width: 52px;
-    height: 92px;
-    min-height: 92px;
-    background: linear-gradient(180deg, rgba(14, 165, 233, 0.12) 0%, rgba(15, 118, 110, 0.08) 100%);
-    border-radius: 16px;
-    padding: 3px;
-    display: flex;
-    align-items: flex-end;
-    overflow: hidden;
-    flex: 0 0 auto;
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.bar-value {
-    width: 100%;
-    height: 100%;
-    display: block;
-    background: linear-gradient(180deg, #0ea5e9 0%, #2563eb 100%);
-    border-radius: 12px 12px 0 0;
-    transition: height 0.2s ease;
-}
-
-.bar-value.overtime {
-    background: linear-gradient(180deg, #38bdf8 0%, #0f766e 100%);
-}
-
-.bar-value.users {
-    background: linear-gradient(180deg, #2dd4bf 0%, #10b981 100%);
-}
-
-.bar-number {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.bar-label {
-    font-size: 0.68rem;
-    color: #475569;
-    text-align: center;
-    line-height: 1.3;
 }
 
 /* استایل برای پاپ‌آپ ورود */
@@ -6035,14 +6766,9 @@ form button:active {
 .page-shell.sidebar-expanded #internalAutomationAdminBox,
 .page-shell.sidebar-expanded #hozoorbox,
 .page-shell.sidebar-expanded #payrollBox,
-.page-shell.sidebar-expanded #shiftBox {
+.page-shell.sidebar-expanded #shiftBox,
+.page-shell.sidebar-expanded #dashboardBox {
     transform: none !important;
-}
-
-.page-shell.sidebar-expanded .management-box .dashboard-grid,
-.page-shell.sidebar-expanded .management-box .dashboard-chart-row {
-    transform: none;
-    opacity: 1;
 }
 
 .management-box table {
