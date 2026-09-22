@@ -378,12 +378,97 @@ async def get_subscription_detail(request: Request, subscription_id: int):
             raise HTTPException(status_code=404, detail="اشتراک یافت نشد.")
         data = _subscription_row(cur, dict(zip([c[0] for c in cur.description], row)),
                                  datetime.now(timezone.utc).date())
+        try:
+            cur.execute(
+                """SELECT id, username, name, last_name, department, role, is_active, last_login
+                   FROM user_table WHERE LTRIM(RTRIM(customer_id)) = ?
+                   ORDER BY name, last_name, username""",
+                (str(data.get("customer_id") or "").strip(),),
+            )
+            data["users"] = [_serialize(user) for user in _dict_rows(cur)]
+        except Exception:
+            data["users"] = []
         return JSONResponse(content={"success": True, "setup_needed": False, "data": data})
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Error loading subscription detail: %s: %s", type(e).__name__, e)
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.patch("/subscriptions/{subscription_id}")
+async def update_subscription(request: Request, subscription_id: int):
+    _master_admin(request)
+    data = await request.json()
+    allowed = {
+        "customer_id", "customer_code", "customer_name", "contact_name", "contact_email",
+        "contact_phone", "plan_name", "subscription_status", "starts_at", "expires_at",
+        "max_users", "price", "currency", "payment_method", "payment_reference",
+        "invoice_number", "notes",
+    }
+    updates = {key: data[key] for key in allowed if key in data}
+    if not updates:
+        raise HTTPException(status_code=400, detail="اطلاعاتی برای ویرایش ارسال نشده است.")
+    for key in ("customer_id", "customer_name", "plan_name", "starts_at", "expires_at"):
+        if key in updates and not str(updates[key] or "").strip():
+            raise HTTPException(status_code=400, detail=f"فیلد {key} الزامی است.")
+    if "max_users" in updates:
+        try:
+            updates["max_users"] = int(updates["max_users"])
+            if updates["max_users"] < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="ظرفیت کاربران معتبر نیست.")
+    for key in ("starts_at", "expires_at"):
+        if key in updates:
+            try:
+                updates[key] = date.fromisoformat(str(updates[key])[:10])
+            except ValueError:
+                raise HTTPException(status_code=400, detail="تاریخ واردشده معتبر نیست.")
+    if "price" in updates and updates["price"] not in (None, ""):
+        try:
+            updates["price"] = Decimal(str(updates["price"]))
+        except Exception:
+            raise HTTPException(status_code=400, detail="مبلغ واردشده معتبر نیست.")
+
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        if not _subscription_table_ready(cur):
+            raise HTTPException(status_code=409, detail="جدول مشتریان آماده نیست.")
+        cur.execute(
+            "SELECT customer_id, customer_name FROM dbo.customer_subscriptions WHERE id = ?",
+            (subscription_id,),
+        )
+        previous = cur.fetchone()
+        if not previous:
+            raise HTTPException(status_code=404, detail="اشتراک یافت نشد.")
+        assignments = ", ".join(f"{key} = ?" for key in updates)
+        cur.execute(
+            f"UPDATE dbo.customer_subscriptions SET {assignments}, updated_at = SYSUTCDATETIME() WHERE id = ?",
+            list(updates.values()) + [subscription_id],
+        )
+        old_customer_id, old_customer_name = (str(previous[0] or "").strip(), str(previous[1] or "").strip())
+        new_customer_id = str(updates.get("customer_id", old_customer_id)).strip()
+        new_customer_name = str(updates.get("customer_name", old_customer_name)).strip()
+        try:
+            cur.execute(
+                "UPDATE user_table SET customer_id = ?, customer_name = ? WHERE LTRIM(RTRIM(customer_id)) = ?",
+                (new_customer_id, new_customer_name, old_customer_id),
+            )
+        except Exception:
+            logger.warning("Could not synchronize subscription users for id %s", subscription_id)
+        conn.commit()
+        return JSONResponse(content={"success": True, "message": "اطلاعات مشتری ذخیره شد."})
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        logger.error("Error updating subscription: %s: %s", type(e).__name__, e)
+        return JSONResponse(content={"success": False, "message": "ذخیره اطلاعات مشتری ناموفق بود."}, status_code=500)
     finally:
         conn.close()
 

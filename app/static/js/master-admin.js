@@ -535,11 +535,164 @@
         }},
       ];
       renderTable(container, cols, listRes.data || [], 'اشتراک ثبت‌شده‌ای یافت نشد');
+      container.querySelectorAll('tbody tr').forEach((row, index) => {
+        const customer = listRes.data[index];
+        if (customer) {
+          row.classList.add('ma-subscription-row');
+          row.addEventListener('click', () => window.ma_viewSubscription(customer.id));
+        }
+      });
       renderPagination(pagEl, listRes.total || 0, listRes.pages || 1, loadSubscriptions);
     } catch (e) {
       container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">اطلاعات اشتراک‌ها در دسترس نیست؛ ابتدا مهاجرت پایگاه‌داده را اجرا کنید.</div></div>';
     }
   }
+
+  function closeSubscriptionDetail() {
+    const overlay = document.getElementById('maSubscriptionDetailOverlay');
+    if (!overlay) return;
+    document.querySelectorAll('.ma-customer-date-picker').forEach(picker => picker.remove());
+    overlay.classList.remove('is-visible');
+    setTimeout(() => overlay.remove(), 220);
+  }
+
+  function maPersianParts(dateValue) {
+    const parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC' }).formatToParts(dateValue);
+    const values = Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+    const digits = value => Number(String(value).replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)));
+    return { year: digits(values.year), month: digits(values.month), day: digits(values.day) };
+  }
+
+  function maPersianToGregorian(year, month, day) {
+    let low = Date.UTC(2000, 0, 1), high = Date.UTC(2050, 0, 1), target = year * 10000 + month * 100 + day;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const current = maPersianParts(new Date(mid));
+      const key = current.year * 10000 + current.month * 100 + current.day;
+      if (key === target) return new Date(mid);
+      if (key < target) low = mid + 86400000;
+      else high = mid - 86400000;
+    }
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  function maAttachDatePicker(form, displayName, hiddenName, isoValue) {
+    const input = form.querySelector(`[data-date-display="${displayName}"]`);
+    const hidden = form.querySelector(`input[name="${hiddenName}"]`);
+    if (!input || !hidden) return;
+    const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    const dayNames = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+    const selected = isoValue ? maPersianParts(new Date(`${isoValue}T00:00:00Z`)) : maPersianParts(new Date());
+    const state = { year: selected.year, month: selected.month, day: selected.day };
+    let picker = document.querySelector(`.ma-customer-date-picker[data-input-id="${input.id || displayName}"]`);
+    if (!picker) {
+      picker = document.createElement('div');
+      picker.className = 'leave-date-picker ma-customer-date-picker';
+      picker.hidden = true;
+      picker.setAttribute('role', 'dialog');
+      picker.setAttribute('aria-label', 'انتخاب تاریخ');
+      document.body.appendChild(picker);
+    }
+    const digits = value => String(value).replace(/[0-9]/g, digit => '۰۱۲۳۴۵۶۷۸۹'[digit]);
+    const monthLength = (year, month) => month <= 6 ? 31 : month <= 11 ? 30 : (((year * 8 + 13) % 33) < 8 ? 30 : 29);
+    const render = () => {
+      const weekday = maPersianToGregorian(state.year, state.month, 1).getUTCDay();
+      const offset = weekday === 6 ? 0 : weekday + 1;
+      const cells = Array.from({ length: offset }, () => '<div class="leave-date-picker-day is-empty"></div>');
+      for (let day = 1; day <= monthLength(state.year, state.month); day += 1) cells.push(`<button type="button" class="leave-date-picker-day${state.day === day ? ' is-selected' : ''}" data-action="select-day" data-day="${day}">${digits(day)}</button>`);
+      const remainder = (7 - (cells.length % 7)) % 7;
+      for (let index = 0; index < remainder; index += 1) cells.push('<div class="leave-date-picker-day is-empty"></div>');
+      picker.innerHTML = `<div class="leave-date-picker-header"><button type="button" class="leave-date-picker-nav" data-action="prev-month">‹</button><div class="leave-date-picker-controls"><select id="${picker.dataset.inputId}-month" name="${picker.dataset.inputId}-month" class="leave-date-picker-month" data-action="month-change">${monthNames.map((name, i) => `<option value="${i + 1}" ${state.month === i + 1 ? 'selected' : ''}>${name}</option>`).join('')}</select><select id="${picker.dataset.inputId}-year" name="${picker.dataset.inputId}-year" class="leave-date-picker-year" data-action="year-change">${Array.from({ length: 21 }, (_, i) => state.year - 10 + i).map(year => `<option value="${year}" ${state.year === year ? 'selected' : ''}>${digits(year)}</option>`).join('')}</select></div><button type="button" class="leave-date-picker-nav" data-action="next-month">›</button></div><div class="leave-date-picker-weekdays">${dayNames.map(name => `<div class="leave-date-picker-weekday">${name}</div>`).join('')}</div><div class="leave-date-picker-days">${cells.join('')}</div>`;
+      picker.querySelector('[data-action="prev-month"]').onclick = () => { state.month -= 1; if (state.month < 1) { state.month = 12; state.year -= 1; } render(); };
+      picker.querySelector('[data-action="next-month"]').onclick = () => { state.month += 1; if (state.month > 12) { state.month = 1; state.year += 1; } render(); };
+      picker.querySelector('.leave-date-picker-month').onchange = event => { state.month = Number(event.target.value); render(); };
+      picker.querySelector('.leave-date-picker-year').onchange = event => { state.year = Number(event.target.value); render(); };
+      picker.querySelectorAll('[data-day]').forEach(button => { button.onclick = () => { state.day = Number(button.dataset.day); hidden.value = maPersianToGregorian(state.year, state.month, state.day).toISOString().slice(0, 10); input.value = `${digits(state.year)}/${digits(String(state.month).padStart(2, '0'))}/${digits(String(state.day).padStart(2, '0'))}`; picker.hidden = true; }; });
+    };
+    picker.dataset.inputId = input.id || displayName;
+    input.dataset.datePickerBound = 'true';
+    input.value = `${digits(state.year)}/${digits(String(state.month).padStart(2, '0'))}/${digits(String(state.day).padStart(2, '0'))}`;
+    input.onclick = event => {
+      event.stopPropagation();
+      const rect = input.getBoundingClientRect();
+      const pickerWidth = 320;
+      const left = Math.max(8, Math.min(rect.right - pickerWidth, window.innerWidth - pickerWidth - 8));
+      picker.style.top = `${rect.bottom + 6}px`;
+      picker.style.left = `${left}px`;
+      picker.style.transform = '';
+      picker.hidden = false;
+      render();
+    };
+    input.onfocus = input.onclick;
+    render();
+  }
+
+  window.ma_viewSubscription = async function (id) {
+    closeSubscriptionDetail();
+    const overlay = document.createElement('div');
+    overlay.id = 'maSubscriptionDetailOverlay';
+    overlay.className = 'ma-detail-overlay';
+    overlay.innerHTML = `
+      <section class="ma-detail-modal" role="dialog" aria-modal="true" aria-labelledby="maSubscriptionDetailTitle">
+        <button type="button" class="ma-detail-modal__close" aria-label="بستن">×</button>
+        <div class="ma-detail-modal__body"><div class="ma-detail-loading">در حال بارگذاری اطلاعات مشتری...</div></div>
+      </section>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-visible'));
+    overlay.querySelector('.ma-detail-modal__close').onclick = closeSubscriptionDetail;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeSubscriptionDetail(); });
+    try {
+      const res = await api(`/subscriptions/${encodeURIComponent(id)}`);
+      const d = res.data || {};
+      const fa = value => String(value ?? '—').replace(/[0-9]/g, n => '۰۱۲۳۴۵۶۷۸۹'[n]);
+      const date = value => value ? new Date(value).toLocaleDateString('fa-IR') : '—';
+      const val = key => esc(d[key] ?? '');
+      const day = key => esc(d[key] ? String(d[key]).slice(0, 10) : '');
+      const users = (d.users || []).map(user => `<li><strong>${esc(`${user.name || ''} ${user.last_name || ''}`.trim() || user.username)}</strong><span>${esc(user.department || user.role || '—')}</span></li>`).join('');
+      overlay.querySelector('.ma-detail-modal__body').innerHTML = `
+        <div class="ma-detail-modal__eyebrow">CUSTOMER PROFILE</div>
+        <h2 id="maSubscriptionDetailTitle">ویرایش اطلاعات مشتری</h2>
+        <form class="ma-detail-form" id="maSubscriptionDetailForm">
+          <label>شناسه مشتری<input name="customer_id" value="${val('customer_id')}" required></label>
+          <label>کد مشتری<input name="customer_code" value="${val('customer_code')}"></label>
+          <label>نام مشتری<input name="customer_name" value="${val('customer_name')}" required></label>
+          <label>نام رابط<input name="contact_name" value="${val('contact_name')}"></label>
+          <label>ایمیل<input type="email" name="contact_email" value="${val('contact_email')}"></label>
+          <label>تلفن<input name="contact_phone" value="${val('contact_phone')}"></label>
+          <label>طرح<input name="plan_name" value="${val('plan_name')}" required></label>
+          <label>وضعیت<select name="subscription_status"><option value="active" ${d.subscription_status === 'active' ? 'selected' : ''}>فعال</option><option value="suspended" ${d.subscription_status === 'suspended' ? 'selected' : ''}>متوقف</option><option value="expired" ${d.subscription_status === 'expired' ? 'selected' : ''}>منقضی</option></select></label>
+          <label>تاریخ شروع<div class="date-input-shell"><input type="text" data-date-display="starts_at" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" readonly required><input type="hidden" name="starts_at" value="${day('starts_at')}"><div class="leave-date-picker" hidden></div></div></label>
+          <label>تاریخ پایان<div class="date-input-shell"><input type="text" data-date-display="expires_at" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" readonly required><input type="hidden" name="expires_at" value="${day('expires_at')}"><div class="leave-date-picker" hidden></div></div></label>
+          <label>ظرفیت کاربران<input type="number" min="0" name="max_users" value="${val('max_users')}"></label>
+          <label>مبلغ<input type="number" min="0" step="0.01" name="price" value="${val('price')}"></label>
+          <label>واحد پول<input name="currency" value="${val('currency')}"></label>
+          <label>روش پرداخت<input name="payment_method" value="${val('payment_method')}"></label>
+          <label>شماره فاکتور<input name="invoice_number" value="${val('invoice_number')}"></label>
+          <label class="ma-detail-form__wide">یادداشت<textarea name="notes" rows="3">${val('notes')}</textarea></label>
+          <div class="ma-detail-form__actions"><button type="submit" class="ma-btn ma-btn--primary">ذخیره تغییرات</button><span class="ma-detail-users-count">کاربران زیرمجموعه: ${fa((d.users || []).length)}</span></div>
+        </form>
+        <div class="ma-detail-users"><h3>کاربران زیرمجموعه</h3>${users ? `<ul>${users}</ul>` : '<p>کاربر ثبت‌شده‌ای برای این مشتری پیدا نشد.</p>'}</div>`;
+      const form = overlay.querySelector('#maSubscriptionDetailForm');
+      maAttachDatePicker(form, 'starts_at', 'starts_at', day('starts_at'));
+      maAttachDatePicker(form, 'expires_at', 'expires_at', day('expires_at'));
+      overlay.querySelector('#maSubscriptionDetailForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        payload.max_users = payload.max_users === '' ? 0 : Number(payload.max_users);
+        payload.price = payload.price === '' ? null : payload.price;
+        try {
+          await api(`/subscriptions/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload });
+          showToast('اطلاعات مشتری ذخیره شد');
+          closeSubscriptionDetail();
+          loadSubscriptions();
+        } catch (e) { /* toast shown */ }
+      });
+    } catch (e) {
+      const body = overlay.querySelector('.ma-detail-modal__body');
+      if (body) body.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">اطلاعات مشتری در دسترس نیست.</div></div>';
+    }
+  };
 
   // ── Sessions ─────────────────────────────────────────────
   async function loadSessions() {

@@ -29,6 +29,8 @@
 .ma-subscription-filters { margin-bottom: 14px; }
 .ma-subscription-table-note { color: #94a3b8; font-size: .68rem; }
 .ma-subscription-customer { display: flex; flex-direction: column; gap: 2px; min-width: 150px; }
+.ma-subscription-row { cursor: pointer; }
+.ma-subscription-row:hover td { background: #f0f9ff !important; }
 .ma-subscription-customer strong { color: #0f172a; font-size: .82rem; }
 .ma-subscription-customer small { color: #94a3b8; font-size: .68rem; direction: ltr; text-align: right; }
 .ma-subscription-progress { min-width: 116px; }
@@ -46,6 +48,55 @@ body.dark-theme .ma-subscription-stat { border-color: rgba(148,163,184,.16); bac
 body.dark-theme .ma-subscription-stat__value,
 body.dark-theme .ma-subscription-customer strong { color: #f8fafc; }
 body.dark-theme .ma-subscription-progress__track { background: #334155; }
+
+.ma-detail-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.5); backdrop-filter: blur(6px); opacity: 0; transition: opacity .2s ease; }
+.ma-detail-overlay.is-visible { opacity: 1; }
+.ma-detail-modal { position: relative; width: min(760px, 100%); max-height: min(86vh, 780px); overflow: auto; border: 1px solid #e2e8f0; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px rgba(15,23,42,.25); transform: translateY(14px) scale(.98); transition: transform .22s ease; }
+.ma-detail-overlay.is-visible .ma-detail-modal { transform: translateY(0) scale(1); }
+.ma-detail-modal__body { padding: 28px; }
+.ma-detail-modal__close { position: absolute; top: 12px; left: 14px; z-index: 1; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f1f5f9; color: #475569; cursor: pointer; font-size: 1.35rem; line-height: 1; }
+.ma-detail-modal__eyebrow { color: #db2777; font-size: .65rem; font-weight: 900; letter-spacing: .12em; }
+.ma-detail-modal h2 { margin: 5px 0 22px; color: #0f172a; font-size: 1.35rem; }
+.ma-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ma-detail-field { min-width: 0; padding: 11px 13px; border: 1px solid #eef2f7; border-radius: 10px; background: #f8fafc; }
+.ma-detail-field span { display: block; color: #64748b; font-size: .68rem; }
+.ma-detail-field strong { display: block; margin-top: 3px; overflow-wrap: anywhere; color: #0f172a; font-size: .8rem; }
+.ma-detail-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ma-detail-form label { display: flex; flex-direction: column; gap: 5px; color: #64748b; font-size: .7rem; }
+.ma-detail-form input, .ma-detail-form select, .ma-detail-form textarea { width: 100%; padding: 9px 10px; border: 1px solid #dbe3ef; border-radius: 9px; background: #fff; color: #0f172a; font: inherit; font-size: .78rem; }
+.ma-detail-form .date-input-shell { position: relative; }
+.ma-detail-form .leave-date-picker { position: absolute; top: calc(100% + 6px); right: 0; z-index: 1105; width: min(320px, calc(100vw - 32px)); padding: 12px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; box-shadow: 0 14px 40px rgba(15,23,42,.16); direction: rtl; }
+.ma-detail-form .leave-date-picker[hidden] { display: none; }
+.ma-detail-form .leave-date-picker-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ma-detail-form .leave-date-picker-controls { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+.ma-detail-form .leave-date-picker-controls select { min-width: 0; padding: 6px 8px; }
+.ma-detail-form .leave-date-picker-controls .leave-date-picker-month { flex: 1 1 auto; width: auto; }
+.ma-detail-form .leave-date-picker-controls .leave-date-picker-year { flex: 0 0 92px; width: 92px; }
+.ma-detail-form .leave-date-picker-nav { flex: 0 0 28px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 999px; background: #e0f2fe; color: #0369a1; cursor: pointer; font-size: 14px; line-height: 28px; }
+.ma-detail-form .leave-date-picker-weekdays, .ma-detail-form .leave-date-picker-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; direction: rtl; }
+.ma-detail-form .leave-date-picker-weekday, .ma-detail-form .leave-date-picker-day { padding: 6px 0; border-radius: 8px; text-align: center; font-size: 12px; }
+.ma-detail-form .leave-date-picker-weekday { color: #64748b; font-weight: 700; }
+.ma-detail-form .leave-date-picker-day { min-width: 0; border: 0; background: #f8fafc; color: #0f172a; cursor: pointer; font: inherit; }
+.ma-detail-form .leave-date-picker-day:hover, .ma-detail-form .leave-date-picker-day.is-selected { background: #0ea5e9; color: #fff; }
+.ma-detail-form .leave-date-picker-day.is-empty { background: transparent; cursor: default; pointer-events: none; }
+.ma-detail-form textarea { resize: vertical; }
+.ma-detail-form__wide { grid-column: 1 / -1; }
+.ma-detail-form__actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.ma-detail-users-count { color: #64748b; font-size: .72rem; }
+.ma-detail-users { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+.ma-detail-users h3 { margin: 0 0 10px; color: #0f172a; font-size: .9rem; }
+.ma-detail-users ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 0; list-style: none; }
+.ma-detail-users li { display: flex; justify-content: space-between; gap: 8px; padding: 9px 11px; border-radius: 9px; background: #f8fafc; font-size: .75rem; }
+.ma-detail-users li span { color: #64748b; }
+.ma-detail-users p, .ma-detail-loading { color: #64748b; font-size: .8rem; }
+body.dark-theme .ma-detail-modal { border-color: #334155; background: #111827; }
+body.dark-theme .ma-detail-modal h2, body.dark-theme .ma-detail-field strong, body.dark-theme .ma-detail-users h3 { color: #f8fafc; }
+body.dark-theme .ma-detail-field, body.dark-theme .ma-detail-users li { border-color: #334155; background: #1e293b; }
+body.dark-theme .ma-detail-form input, body.dark-theme .ma-detail-form select, body.dark-theme .ma-detail-form textarea { border-color: #334155; background: #1e293b; color: #f8fafc; }
+body.dark-theme .ma-detail-form .leave-date-picker { border-color: #334155; background: #111827; }
+body.dark-theme .ma-detail-form .leave-date-picker-day { background: #1e293b; color: #f8fafc; }
+body.dark-theme .ma-detail-modal__close { background: #334155; color: #cbd5e1; }
+@media (max-width: 560px) { .ma-detail-grid, .ma-detail-users ul { grid-template-columns: minmax(0, 1fr); } .ma-detail-modal__body { padding: 24px 16px; } }
 @media (max-width: 900px) {
     .ma-subscription-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -651,6 +702,9 @@ body.dark-theme .ma-sidebar-left .icon-container:last-child:hover .icon-label {
 }
 .ma-sidebar-left .icon-container[data-accent="ma-label-printer"] {
     --tile-from:#8B5CF6; --tile-to:#EC4899; --acc:#8B5CF6; --tint:rgba(139,92,246,.14); --glow:rgba(139,92,246,.48);
+}
+.ma-sidebar-left .icon-container[data-accent="ma-subscriptions"] {
+    --tile-from:#ec4899; --tile-to:#8b5cf6; --acc:#db2777; --tint:rgba(219,39,119,.12); --glow:rgba(219,39,119,.45);
 }
 
 /* تایل گرادیانی (کپی از نسخه‌ی سایدبار راست) */
