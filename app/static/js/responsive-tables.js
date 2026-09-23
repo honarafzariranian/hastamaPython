@@ -1157,6 +1157,14 @@
       visibleFrom: ['از تاریخ', 'تا تاریخ', 'تعداد روزها', 'جانشین'],
       detailsTitle: 'جزئیات درخواست مرخصی'
     },
+    /* درخواست‌های ثبت‌نام کاربر جدید → کارت (Pattern A) */
+    {
+      sel: '.reg-table', pattern: 'cards',
+      titleFrom: ['نام و نام خانوادگی'], statusFrom: ['وضعیت'], actionsFrom: ['عملیات'],
+      primary: '.reg-action-btn--view',
+      visibleFrom: ['نام کاربری', 'بخش', 'زمان درخواست'],
+      detailsTitle: 'جزئیات درخواست ثبت‌نام'
+    },
     /* شیفت‌ها: همانند درخواست‌های مرخصی، هر بازه یک کارت مستقل در موبایل */
     {
       sel: '#shiftsTable', pattern: 'cards',

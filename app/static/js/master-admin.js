@@ -205,16 +205,26 @@
     const timeEl = document.getElementById('maPreviewTime');
     const nameRow = document.getElementById('maPreviewNameRow');
     const hintEl = document.getElementById('maPreviewHint');
+    const rotateToggle = document.getElementById('maPrintRotate');
+
+    // ── Label geometry ────────────────────────────────────────
+    // لیبل پیش‌فرض «عمودی» است (ارتفاع > عرض). دلیل: ویندوز/درایور چاپ صفحهٔ
+    // افقی (عرض > ارتفاع) را ۹۰ درجه می‌چرخاند و لیبل روی کاغذ افقی می‌افتد.
+    // v4: لیبل پیش‌فرض ۸۰×۸۰ (اندازه‌ای که روی چاپگر EPSON آزمایش و تأیید شد)
+    const LABEL_LAYOUT_VERSION = 4;
+    const DEFAULT_LABEL_W = 80;
+    const DEFAULT_LABEL_H = 80;
+    const TOGGLE_IDS = ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview', 'maPrintRotate'];
 
     const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
     [width, height, template].forEach(el => { if (el && stored[el.id] != null) el.value = stored[el.id]; });
-    if (!stored.maLabelLayoutVersion) {
-      width.value = 55;
-      height.value = 50;
-      stored.maLabelLayoutVersion = 2;
+    if (Number(stored.maLabelLayoutVersion || 0) < LABEL_LAYOUT_VERSION) {
+      width.value = DEFAULT_LABEL_W;
+      height.value = DEFAULT_LABEL_H;
+      stored.maLabelLayoutVersion = LABEL_LAYOUT_VERSION;
       localStorage.setItem('hastama-label-settings', JSON.stringify(stored));
     }
-    ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].forEach(id => {
+    TOGGLE_IDS.forEach(id => {
       const el = document.getElementById(id);
       if (el && stored[id] != null) el.checked = stored[id];
     });
@@ -230,20 +240,76 @@
       return `${now.toLocaleDateString('fa-IR')} - ${now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`;
     }
 
-    // اگر محتوا از فضای پیش‌نمایش (عرض یا ارتفاع) تجاوز کند، کل لیبل را کوچک می‌کند (فقط مرورگر)
+    // ── مقیاس طرح لیبل ───────────────────────────────────────
+    // طرح لیبل در label-print.css برای یک لیبل کوچک (≈۵۰×۵۵ میلی‌متر) با
+    // اندازه‌های مطلق پیکسلی تنظیم شده است.  روی لیبل بزرگ‌تر این طرح ریز و
+    // خالی می‌ماند، پس کل محتوا با --lbl-zoom مقیاس می‌گیرد (متن‌ها، جعبه‌ها،
+    // حاشیه‌ها و آیکون‌ها یک‌جا و به یک نسبت).
+    const PX_PER_MM = 3.7795; // ۹۶ نقطه بر اینچ: همان مقداری که label-print.css استفاده می‌کند
+    const LABEL_REF_W_MM = 50; // طرح برای لیبلی با این عرض طراحی شده است
+    const ZOOM_MIN = 0.8;
+    const ZOOM_MAX = 1.8;
+
+    // اندازهٔ طبیعی محتوا در حالت مقیاس ۱ (همان روش fitLabelPreview)
+    function naturalContentSize(content) {
+      const previousHeight = content.style.height;
+      const previousFlex = content.style.flex;
+      const previousTransform = content.style.transform;
+      content.style.transform = 'none';
+      content.style.height = 'auto';
+      content.style.flex = 'none';
+      const size = { w: content.scrollWidth, h: content.scrollHeight };
+      content.style.height = previousHeight;
+      content.style.flex = previousFlex;
+      content.style.transform = previousTransform;
+      return size;
+    }
+
+    // مقیاس را روی خود لیبل تنظیم می‌کند و مقدارش را برمی‌گرداند.
+    // اندازه‌گیری در ابعاد فیزیکی واقعی لیبل انجام می‌شود (نه ابعاد پیش‌نمایش،
+    // چون جعبهٔ پیش‌نمایش روی صفحه با مقیاس دیگری رسم می‌شود) تا همان مقداری
+    // که در چاپ استفاده می‌شود درست باشد.
+    function applyLabelZoom(wmm, hmm) {
+      const content = preview.querySelector('.lbl__content');
+      if (!content) return 1;
+      // روی صفحه، اندازهٔ لیبل با transition عوض می‌شود؛ برای اندازه‌گیری دقیق
+      // باید پرش بین دو اندازه موقتی غیرفعال شود
+      const previousTransition = preview.style.transition;
+      preview.style.transition = 'none';
+      preview.style.setProperty('--lbl-zoom', '1');
+      preview.style.setProperty('width', `${(wmm * PX_PER_MM).toFixed(2)}px`, 'important');
+      preview.style.setProperty('height', `${(hmm * PX_PER_MM).toFixed(2)}px`, 'important');
+      const natural = naturalContentSize(content);
+      preview.style.transition = previousTransition;
+      const boxH = hmm * PX_PER_MM;
+      // سقف مقیاس از دو طرف می‌آید:
+      //   ۱) ارتفاع: محتوا باید در ارتفاع لیبل جا شود
+      //   ۲) عرض: طرح نباید از عرض مرجع (۵۰ میلی‌متر) باریک‌تر شود، وگرنه
+      //      متن‌های یک‌خطی بریده (…) می‌شوند
+      const widthRoom = wmm / LABEL_REF_W_MM;
+      const heightRoom = boxH / Math.max(1, natural.h);
+      const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(widthRoom, heightRoom) * 0.97));
+      preview.style.setProperty('--lbl-zoom', zoom.toFixed(3));
+      return zoom;
+    }
+
+    // تور نجات مقیاس: اگر بعد از zoom هم محتوا جا نشد (مثلاً zoom روی کف خود
+    // گیر کرده باشد) در فضای بدون zoom جمع می‌کند. جای محاسبه در همان فضای
+    // بدون zoom است تا با مقیاس طرح قاطی نشود.
     function fitLabelPreview() {
       const content = preview.querySelector('.lbl__content');
       if (!content) return;
-      const previousHeight = content.style.height;
-      content.style.transform = 'scale(1)';
-      content.style.height = 'auto';
-      content.style.flex = 'none';
-      const naturalW = content.scrollWidth;
-      const naturalH = content.scrollHeight;
-      const availableW = preview.clientWidth - 4;
-      const availableH = preview.clientHeight - 4;
-      const scale = Math.min(1, availableW / Math.max(1, naturalW), availableH / Math.max(1, naturalH));
-      content.style.height = previousHeight || '100%';
+      const zoomValue = preview.style.getPropertyValue('--lbl-zoom') || '1';
+      preview.style.setProperty('--lbl-zoom', '1');
+      const natural = naturalContentSize(content);
+      preview.style.setProperty('--lbl-zoom', zoomValue);
+      const zoom = parseFloat(zoomValue) || 1;
+      // فقط ارتفاع سنجیده می‌شود: عرض محتوا همیشه ۱۰۰٪ لیبل است، پس مقایسهٔ
+      // عرضی همیشه حدود ۱ در می‌آید و مقدار واقعی را خراب می‌کند.
+      const availableH = preview.clientHeight / zoom - 4;
+      const scale = Math.min(1, availableH / Math.max(1, natural.h));
+      if (scale >= 0.995) { content.style.transform = ''; return; }
+      content.style.height = '100%';
       content.style.flex = '';
       content.style.transformOrigin = 'top center';
       content.style.transform = `scale(${Math.max(.58, scale)})`;
@@ -267,25 +333,28 @@
       const stageWidth = stage ? Math.max(180, stage.clientWidth - 48) : 420;
       const stageHeight = stage ? Math.max(160, stage.clientHeight - 48) : 280;
       const pxPerMm = Math.min(4, stageWidth / w, stageHeight / h);
+      // مقیاس طرح باید قبل از چیدن جعبهٔ پیش‌نمایش حساب شود (این تابع خودش
+      // اندازهٔ جعبه را موقتاً روی مقدار فیزیکی می‌گذارد)
+      applyLabelZoom(w, h);
       preview.style.setProperty('width', `${Math.max(120, Math.round(w * pxPerMm))}px`, 'important');
       preview.style.setProperty('height', `${Math.max(80, Math.round(h * pxPerMm))}px`, 'important');
       preview.style.aspectRatio = `${w} / ${h}`;
       preview.dataset.template = (template && template.value) || 'queue';
       fitLabelPreview();
       fitQueueNumber();
-      if (readout) readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر`;
+      if (readout) readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر — ${h >= w ? 'عمودی' : 'افقی'}`;
       if (ratio) ratio.textContent = `نسبت ${fa((w / h).toFixed(2)).replace('.', '٫')}`;
       if (timeEl && timeEl.querySelector('.lbl__datetime-value')) timeEl.querySelector('.lbl__datetime-value').textContent = printedAt();
       if (nameRow) nameRow.hidden = !document.getElementById('maShowName').checked;
       if (timeEl) timeEl.hidden = !document.getElementById('maShowTime').checked;
       if (hintEl) hintEl.hidden = !document.getElementById('maShowHint').checked;
       preview.classList.toggle('is-thermal', document.getElementById('maThermalPreview').checked);
-      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: (template && template.value) || 'queue' };
-      ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].forEach(id => { settings[id] = document.getElementById(id).checked; });
+      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: (template && template.value) || 'queue', maLabelLayoutVersion: LABEL_LAYOUT_VERSION };
+      TOGGLE_IDS.forEach(id => { settings[id] = document.getElementById(id).checked; });
       localStorage.setItem('hastama-label-settings', JSON.stringify(settings));
     }
 
-    [width, height, template, ...['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview'].map(id => document.getElementById(id))]
+    [width, height, template, ...TOGGLE_IDS.map(id => document.getElementById(id))]
       .filter(Boolean)
       .forEach(el => {
         el.addEventListener('input', refresh);
@@ -293,79 +362,248 @@
       });
     refresh();
     if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage || preview);
+    // اندازه‌گیری قبل از بارگذاری فونت وب انجام می‌شود؛ بعد از آماده‌شدن فونت‌ها
+    // یک‌بار دیگر مقیاس و جاگیری حساب می‌شود تا چاپ دقیق باشد.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { refresh(); });
 
     document.getElementById('maResetLabelBtn').addEventListener('click', function () {
-      width.value = 55; height.value = 50; template.value = 'queue';
+      width.value = DEFAULT_LABEL_W; height.value = DEFAULT_LABEL_H; template.value = 'queue';
       ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { document.getElementById(id).checked = true; });
       document.getElementById('maThermalPreview').checked = false;
+      if (rotateToggle) rotateToggle.checked = false;
       refresh();
       showToast('تنظیمات لیبل بازنشانی شد', 'success');
     });
 
-    document.getElementById('maCheckPrinterBtn').addEventListener('click', async function () {
-      const status = document.getElementById('maPrinterStatus');
-      const text = status.querySelector('.ma-printer-status__text');
-      let connected = false;
+    // ── Printer discovery ──────────────────────────────────────
+    // WebUSB / WebSerial can never see this printer: the LAN build is served
+    // over plain HTTP (no secure context) and the label queue is usually a
+    // *network* printer, which those APIs never expose. The spooler of the
+    // machine running the server is the source of truth, so we read it from
+    // GET /master-admin/api/printers and let the admin pick the label queue.
+    const statusPill = document.getElementById('maPrinterStatus');
+    const statusText = statusPill ? statusPill.querySelector('.ma-printer-status__text') : null;
+    const printerListEl = document.getElementById('maPrinterList');
+    const targetNameEl = document.getElementById('maPrinterTargetName');
+    const PRINTER_STATE_LABEL = { ready: 'آماده', busy: 'در حال چاپ', paused: 'متوقف', offline: 'آفلاین', unknown: 'نامشخص' };
+    let printerInfo = null;
+    let targetPrinter = '';
+    try { targetPrinter = localStorage.getItem('hastama-label-target-printer') || ''; } catch (_) {}
+
+    function setPrinterStatus(state, message) {
+      if (statusPill) statusPill.dataset.state = state;
+      if (statusText) statusText.textContent = message;
+    }
+
+    function updateTargetInfo() {
+      if (targetNameEl) targetNameEl.textContent = targetPrinter || '—';
+      const rows = (printerInfo && printerInfo.printers) || [];
+      const row = rows.find(p => p.name === targetPrinter);
+      if (!printerInfo || !printerInfo.enumerated) {
+        setPrinterStatus('disconnected', 'چاپگری روی سرور شناسایی نشد');
+        return;
+      }
+      if (row && row.is_label) {
+        const offline = row.status === 'offline';
+        setPrinterStatus(offline ? 'warning' : 'connected',
+          (offline ? 'چاپگر لیبل آفلاین است: ' : 'چاپگر لیبل آماده است: ') + targetPrinter);
+      } else if (row) {
+        setPrinterStatus('warning', 'چاپگر انتخابی چاپگر لیبل نیست: ' + targetPrinter);
+      } else {
+        setPrinterStatus('warning', 'چاپگر لیبل پیدا نشد؛ از فهرست زیر انتخاب کنید');
+      }
+    }
+
+    function renderPrinters(info) {
+      printerInfo = info || null;
+      if (!printerListEl) return;
+      printerListEl.setAttribute('aria-busy', 'false');
+      const rows = (info && info.printers) || [];
+      if (!rows.length) {
+        printerListEl.innerHTML = '<div class="ma-printer-empty">هیچ چاپگری روی سرور نصب نیست.</div>';
+        updateTargetInfo();
+        return;
+      }
+      if (!targetPrinter || !rows.some(p => p.name === targetPrinter)) {
+        targetPrinter = info.label_printer || info.default_printer || rows[0].name;
+      }
+      printerListEl.innerHTML = rows.map(p => {
+        const badges = [];
+        if (p.is_label) badges.push('<span class="ma-printer-badge ma-printer-badge--label">لیبل</span>');
+        if (p.is_default) badges.push('<span class="ma-printer-badge ma-printer-badge--default">پیش‌فرض</span>');
+        if (p.is_virtual) badges.push('<span class="ma-printer-badge ma-printer-badge--virtual">مجازی</span>');
+        const meta = (PRINTER_STATE_LABEL[p.status] || p.status) + (p.port ? ' · ' + p.port : '');
+        return '<button type="button" role="listitem" class="ma-printer-row'
+          + (p.name === targetPrinter ? ' is-selected' : '') + (p.is_label ? ' is-label' : '') + '"'
+          + ' data-printer-name="' + esc(p.name) + '" title="' + esc(p.driver || p.name) + '">'
+          + '<span class="ma-printer-row__dot" data-state="' + esc(p.status) + '"></span>'
+          + '<span class="ma-printer-row__body"><span class="ma-printer-row__name">' + esc(p.name) + '</span>'
+          + '<span class="ma-printer-row__meta">' + esc(meta) + '</span></span>'
+          + '<span class="ma-printer-row__badges">' + badges.join('') + '</span>'
+          + '</button>';
+      }).join('');
+      printerListEl.querySelectorAll('.ma-printer-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          targetPrinter = btn.getAttribute('data-printer-name') || '';
+          try { localStorage.setItem('hastama-label-target-printer', targetPrinter); } catch (_) {}
+          printerListEl.querySelectorAll('.ma-printer-row').forEach(other => other.classList.toggle('is-selected', other === btn));
+          updateTargetInfo();
+        });
+      });
+      updateTargetInfo();
+    }
+
+    async function detectPrinters(force) {
+      setPrinterStatus('unknown', 'در حال بررسی چاپگرهای سرور…');
+      if (printerListEl) printerListEl.setAttribute('aria-busy', 'true');
       try {
-        if (navigator.usb && navigator.usb.getDevices) connected = (await navigator.usb.getDevices()).length > 0;
-        if (!connected && navigator.serial && navigator.serial.getPorts) connected = (await navigator.serial.getPorts()).length > 0;
-      } catch (_) { connected = false; }
-      status.dataset.state = connected ? 'connected' : 'disconnected';
-      text.textContent = connected ? 'چاپگر متصل و آماده' : 'چاپگر قابل شناسایی نیست';
-      showToast(connected ? 'چاپگر آماده استفاده است' : 'چاپگر متصل شناسایی نشد', connected ? 'success' : 'error');
+        const res = await api('/printers' + (force ? '?refresh=true' : ''));
+        renderPrinters(res.data);
+        return res.data;
+      } catch (_) {
+        setPrinterStatus('disconnected', 'خواندن فهرست چاپگرهای سرور ناموفق بود');
+        if (printerListEl) {
+          printerListEl.setAttribute('aria-busy', 'false');
+          printerListEl.innerHTML = '<div class="ma-printer-empty">ارتباط با سرور برقرار نشد.</div>';
+        }
+        return null;
+      }
+    }
+
+    document.getElementById('maCheckPrinterBtn').addEventListener('click', async function () {
+      const info = await detectPrinters(true);
+      if (!info) return;
+      if (!info.enumerated) { showToast('چاپگری روی سرور شناسایی نشد', 'error'); return; }
+      showToast(
+        info.label_printer ? 'چاپگر لیبل: ' + info.label_printer : 'چاپگر لیبل روی سرور پیدا نشد',
+        info.label_printer ? 'success' : 'error'
+      );
     });
 
-    // چاپ: پنجرهٔ چاپ اختصاصی با ابعاد دقیق بر حسب میلی‌متر و شیووریت چاپ اختصاصی
-    function openPrintWindow() {
-      const w = Math.round(clampMm(Number(width.value), 30, 150));
-      const h = Math.round(clampMm(Number(height.value), 20, 100));
-      const contentEl = preview.querySelector('.lbl__content');
-      if (!contentEl) return;
+    // فهرست چاپگرها به‌محض باز شدن صفحه خوانده می‌شود تا کارمند منتظر نماند
+    detectPrinters(false);
 
+    // ── Printing ───────────────────────────────────────────────
+    // چاپ از طریق دیالوگ مرورگر انجام می‌شود، پس روی چاپگرهای «همین رایانه»
+    // چاپ می‌کند. هر دارایی ارجاع‌شده در صفحهٔ چاپ مطلق‌سازی می‌شود و اگر
+    // پاپ‌آپ مسدود باشد، از یک iframe پنهان چاپ می‌کنیم.
+    const LABEL_PRINT_CSS = window.location.origin + '/static/css/label-print.css';
+    const LABEL_FONT_CSS = window.location.origin + '/static/css/vazir.css';
+
+    // اگر محتوا از فضای لیبل کوچک‌تر/بزرگ‌تر بود، در صفحهٔ چاپ هم مقیاس می‌شود
+    // مقیاس و جاگیری در خود سند چاپ و بر اساس ابعاد فیزیکی لیبل حساب می‌شود
+    // (--lbl-zoom روی ریشهٔ .lbl).  قبل از باز شدن پنجرهٔ چاپ یک‌بار دیگر با
+    // فونت‌های بارگذاری‌شده صدا زده می‌شود.
+    const FIT_GUARD = 'window.__lblFit=function(){try{'
+      + 'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
+      + 'r.style.setProperty("--lbl-zoom","1");'
+      + 'var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;'
+      + 'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
+      + 'var cw=c.scrollWidth,ch=c.scrollHeight;'
+      + 'c.style.height=ph;c.style.flex=pf;c.style.transform=pt;'
+      // ۱۸۸٫۹۸ = عرض مرجع طرح (۵۰ میلی‌متر) بر حسب پیکسل ۹۶dpi
+      + 'var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;'
+      + 'z=Math.max(0.8,Math.min(1.8,z));'
+      + 'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
+      + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
+      + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||26;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
+      + '}catch(e){}};window.__lblFit();';
+
+    function buildPrintRoot(w, h, rotated) {
+      const contentEl = preview.querySelector('.lbl__content');
+      if (!contentEl) return '';
       // کلون بدون استایل درون‌خطی (مقیاس پیش‌نمایش به چاپ نشت نکند)
       const clone = contentEl.cloneNode(true);
       clone.removeAttribute('style');
       const root = document.createElement('div');
-      root.className = 'lbl lbl--print';
+      root.className = 'lbl lbl--print' + (rotated ? ' is-rotated' : '');
       root.setAttribute('data-template', preview.dataset.template || 'queue');
       root.style.setProperty('--lbl-mm-w', String(w));
       root.style.setProperty('--lbl-mm-h', String(h));
       root.appendChild(clone);
+      // سند about:blank فقط در بعضی مرورگرها base خود را ارث می‌برد: مسیرها را مطلق کن
+      root.querySelectorAll('[src]').forEach(node => {
+        const value = node.getAttribute('src') || '';
+        if (value.charAt(0) === '/') node.setAttribute('src', window.location.origin + value);
+      });
+      return root.outerHTML;
+    }
 
-      const win = window.open('', '_blank', 'width=560,height=700');
-      if (!win) { showToast('پنجره چاپ توسط مرورگر مسدود شد', 'error'); return; }
-
-      const fitGuard = '(function(){try{var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
-        + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
-        + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||26;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
-        + 'var h=c.style.height;c.style.height="auto";c.style.flex="none";var cw=c.scrollWidth,ch=c.scrollHeight;c.style.height=h||"100%";c.style.flex="";'
-        + 'var sx=(r.clientWidth-4)/Math.max(1,cw);var sy=(r.clientHeight-4)/Math.max(1,ch);var s=Math.min(1,sx,sy);'
-        + 'if(s<0.995){c.style.transformOrigin="top center";c.style.transform="scale("+Math.max(0.5,s).toFixed(3)+")";}}catch(e){}})();';
-      win.document.write([
-        '<!doctype html>',
-        '<html lang="fa" dir="rtl"><head><meta charset="utf-8">',
-        '<title>چاپ لیبل نوبت — ' + fa(w) + ' × ' + fa(h) + ' میلی‌متر</title>',
-        '<style>@page{size:' + w + 'mm ' + h + 'mm;margin:0}</style>',
-        '<link rel="stylesheet" href="/static/css/vazir.css">',
-        '<link rel="stylesheet" href="/static/css/label-print.css">',
-        '</head><body class="lbl-print-page">',
-        root.outerHTML,
-        '<script>' + fitGuard + '<\/script>',
-        '</body></html>'
-      ].join(''));
-      win.document.close();
-      win.focus();
-
-      // صبر برای آماده‌شدن فونت و لوگوها و سپس باز کردن دیالوگ چاپ
+    // پس از آماده‌شدن فونت‌ها و لوگوها دیالوگ چاپ باز می‌شود
+    function printWhenReady(win, doc) {
       let printed = false;
-      const doPrint = () => { if (printed) return; printed = true; try { win.print(); } catch (e) {} };
-      const readyJobs = Array.prototype.slice.call(win.document.images)
+      const doPrint = () => {
+        if (printed) return;
+        printed = true;
+        try {
+          // آخرین کالیبراسیون: با فونت‌ها و لوگوهای بارگذاری‌شده
+          if (win.__lblFit) win.__lblFit();
+          win.focus();
+          win.print();
+        } catch (_) {}
+      };
+      const jobs = Array.prototype.slice.call(doc.images || [])
         .map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }));
-      if (win.document.fonts && win.document.fonts.ready) readyJobs.push(win.document.fonts.ready);
-      Promise.all(readyJobs).then(doPrint);
+      if (doc.fonts && doc.fonts.ready) jobs.push(doc.fonts.ready);
+      Promise.all(jobs).then(doPrint);
       setTimeout(doPrint, 2500);
     }
 
+    function openPrintWindow() {
+      const w = Math.round(clampMm(Number(width.value), 30, 150));
+      const h = Math.round(clampMm(Number(height.value), 20, 100));
+      const rotated = !!(rotateToggle && rotateToggle.checked);
+      // صفحهٔ فیزیکی چاپ: در حالت چرخش، عرض و ارتفاع جابه‌جا می‌شوند تا محتوا
+      // پس از چرخیدن ۹۰ درجه دقیقاً روی کاغذ بنشیند.
+      const pageW = rotated ? h : w;
+      const pageH = rotated ? w : h;
+      const markup = buildPrintRoot(w, h, rotated);
+      if (!markup) return;
+      const html = [
+        '<!doctype html>',
+        '<html lang="fa" dir="rtl"><head><meta charset="utf-8">',
+        '<title>چاپ لیبل نوبت — ' + fa(w) + ' × ' + fa(h) + ' میلی‌متر</title>',
+        '<style>@page{size:' + pageW + 'mm ' + pageH + 'mm;margin:0}',
+        '.lbl-page{position:relative;width:' + pageW + 'mm;height:' + pageH + 'mm;overflow:hidden}',
+        // left/right صریح لازم است: در جهت RTL باکس با margin:0 از لبهٔ راست چیده
+        // میشود و چرخش ۹۰ درجه از لبهٔ چپ، محتوا را از کاغذ بیرون میبرد.
+        '.lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;'
+          + 'transform:translateY(calc(var(--lbl-mm-w,55) * 1mm)) rotate(-90deg);transform-origin:top left}',
+        '</style>',
+        '<link rel="stylesheet" href="' + LABEL_FONT_CSS + '">',
+        '<link rel="stylesheet" href="' + LABEL_PRINT_CSS + '">',
+        '</head><body class="lbl-print-page"><div class="lbl-page">',
+        markup,
+        '</div>',
+        '<script>' + FIT_GUARD + '<\/script>',
+        '</body></html>',
+      ].join('');
+
+      const win = window.open('', '_blank', 'width=560,height=700');
+      if (win && win.document) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        printWhenReady(win, win.document);
+      } else {
+        // پاپ‌آپ مسدود شده است: چاپ از یک iframe پنهان انجام می‌شود (مسدود نمی‌شود)
+        const frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.setAttribute('tabindex', '-1');
+        frame.style.cssText = 'position:fixed;top:0;left:-10000px;width:700px;height:900px;border:0;';
+        document.body.appendChild(frame);
+        const doc = frame.contentWindow.document;
+        doc.open(); doc.write(html); doc.close();
+        printWhenReady(frame.contentWindow, doc);
+        setTimeout(() => frame.remove(), 60000);
+      }
+      showToast(
+        targetPrinter
+          ? 'در پنجرهٔ چاپ، چاپگر «' + targetPrinter + '» را انتخاب کنید'
+          : 'در پنجرهٔ چاپ، چاپگر لیبل را انتخاب کنید',
+        'success'
+      );
+    }
     document.getElementById('maPrintLabelBtn').addEventListener('click', openPrintWindow);
   }
 
@@ -464,6 +702,7 @@
         { key: 'severity', label: 'اولویت', render: v => badge(v) },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
         { key: 'ip_address', label: 'IP' },
+        { key: 'event_id', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteAuditLog" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'لاگ حسابرسی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadAuditLogs);
@@ -500,7 +739,12 @@
     const pagEl = document.getElementById('maSubscriptionPagination');
     if (!container) return;
     const fa = value => String(value ?? 0).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-    const date = value => value ? new Date(value).toLocaleDateString('fa-IR') : '—';
+    const date = value => {
+      if (!value || !String(value).trim()) return '—';
+      const raw = String(value).trim();
+      const parsed = new Date(raw.includes(' ') && !raw.includes('T') ? raw.replace(' ', 'T') : raw);
+      return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('fa-IR');
+    };
     const params = new URLSearchParams({ page: state.page, per_page: state.perPage });
     const search = document.getElementById('subscriptionSearch');
     const status = document.getElementById('subscriptionStatus');
@@ -526,7 +770,7 @@
         { key: 'customer_name', label: 'مشتری', render: (v, r) => `<div class="ma-subscription-customer"><strong>${esc(v || 'بدون نام')}</strong><small>${esc(r.customer_code || r.contact || '—')}</small></div>` },
         { key: 'plan_name', label: 'طرح', render: v => esc(v || '—') },
         { key: 'status', label: 'وضعیت', render: (v, r) => badge(v || r.computed_status || 'unknown') },
-        { key: 'purchased_at', label: 'تاریخ خرید', render: v => date(v) },
+        { key: 'starts_at', label: 'تاریخ شروع', render: v => date(v) },
         { key: 'expires_at', label: 'تاریخ پایان', render: v => date(v) },
         { key: 'remaining_days', label: 'زمان باقی‌مانده', render: (v, r) => `<span class="ma-subscription-days ${Number(v) >= 0 && Number(v) <= 30 ? 'ma-subscription-days--urgent' : ''} ${Number(v) < 0 ? 'ma-subscription-days--expired' : ''}">${Number(v) < 0 ? 'منقضی شده' : esc(fa(v)) + ' روز'}</span>` },
         { key: 'seats_used', label: 'کاربران', render: (v, r) => {
@@ -645,7 +889,12 @@
       const res = await api(`/subscriptions/${encodeURIComponent(id)}`);
       const d = res.data || {};
       const fa = value => String(value ?? '—').replace(/[0-9]/g, n => '۰۱۲۳۴۵۶۷۸۹'[n]);
-      const date = value => value ? new Date(value).toLocaleDateString('fa-IR') : '—';
+      const date = value => {
+        if (!value || !String(value).trim()) return '—';
+        const raw = String(value).trim();
+        const parsed = new Date(raw.includes(' ') && !raw.includes('T') ? raw.replace(' ', 'T') : raw);
+        return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('fa-IR');
+      };
       const val = key => esc(d[key] ?? '');
       const day = key => esc(d[key] ? String(d[key]).slice(0, 10) : '');
       const users = (d.users || []).map(user => `<li><strong>${esc(`${user.name || ''} ${user.last_name || ''}`.trim() || user.username)}</strong><span>${esc(user.department || user.role || '—')}</span></li>`).join('');
@@ -664,9 +913,7 @@
           <label>تاریخ شروع<div class="date-input-shell"><input type="text" data-date-display="starts_at" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" readonly required><input type="hidden" name="starts_at" value="${day('starts_at')}"><div class="leave-date-picker" hidden></div></div></label>
           <label>تاریخ پایان<div class="date-input-shell"><input type="text" data-date-display="expires_at" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" readonly required><input type="hidden" name="expires_at" value="${day('expires_at')}"><div class="leave-date-picker" hidden></div></div></label>
           <label>ظرفیت کاربران<input type="number" min="0" name="max_users" value="${val('max_users')}"></label>
-          <label>مبلغ<input type="number" min="0" step="0.01" name="price" value="${val('price')}"></label>
-          <label>واحد پول<input name="currency" value="${val('currency')}"></label>
-          <label>روش پرداخت<input name="payment_method" value="${val('payment_method')}"></label>
+          <label>روش پرداخت<select name="payment_method"><option value="cash" ${d.payment_method === 'cash' ? 'selected' : ''}>نقدی</option><option value="check" ${d.payment_method === 'check' ? 'selected' : ''}>چکی</option><option value="installment" ${d.payment_method === 'installment' ? 'selected' : ''}>اقساطی</option></select></label>
           <label>شماره فاکتور<input name="invoice_number" value="${val('invoice_number')}"></label>
           <label class="ma-detail-form__wide">یادداشت<textarea name="notes" rows="3">${val('notes')}</textarea></label>
           <div class="ma-detail-form__actions"><button type="submit" class="ma-btn ma-btn--primary">ذخیره تغییرات</button><span class="ma-detail-users-count">کاربران زیرمجموعه: ${fa((d.users || []).length)}</span></div>
@@ -680,7 +927,6 @@
         const form = event.currentTarget;
         const payload = Object.fromEntries(new FormData(form).entries());
         payload.max_users = payload.max_users === '' ? 0 : Number(payload.max_users);
-        payload.price = payload.price === '' ? null : payload.price;
         try {
           await api(`/subscriptions/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload });
           showToast('اطلاعات مشتری ذخیره شد');
@@ -708,7 +954,7 @@
         { key: 'login_at', label: 'زمان ورود', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'last_activity', label: 'آخرین فعالیت', render: v => v ? new Date(v).toLocaleString('fa-IR') : '—' },
         { key: 'is_active', label: 'وضعیت', render: v => v ? badge('active') : badge('disabled') },
-        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="terminateSession" data-ma-id="${esc(v)}">خاتمه</button>` },
+        { key: 'session_key', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="terminateSession" data-ma-id="${esc(v)}">خاتمه</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteSession" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'نشست فعالی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSessions);
@@ -731,7 +977,7 @@
         { key: 'ip_address', label: 'IP' },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
         { key: 'code_attempts', label: 'تلاش‌ها' },
-        { key: 'request_id', label: 'عملیات', render: (v, r) => r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="approveReset" data-ma-id="${esc(v)}">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="rejectReset" data-ma-id="${esc(v)}">رد</button>` : '—' },
+        { key: 'request_id', label: 'عملیات', render: (v, r) => `${r.status === 'pending' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="approveReset" data-ma-id="${esc(v)}">تأیید</button> <button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="rejectReset" data-ma-id="${esc(v)}">رد</button> ` : ''}<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteReset" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'درخواست بازیابی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadPasswordResets);
@@ -756,7 +1002,7 @@
         { key: 'username', label: 'کاربر' },
         { key: 'description', label: 'توضیحات', render: v => (v || '').substring(0, 80) },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
-        { key: 'event_id', label: 'عملیات', render: (v, r) => r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="resolveSecurity" data-ma-id="${esc(v)}">بررسی شد</button>` : '—' },
+        { key: 'event_id', label: 'عملیات', render: (v, r) => `${r.status === 'open' ? `<button class="ma-btn ma-btn--primary ma-btn--sm" data-ma-action="resolveSecurity" data-ma-id="${esc(v)}">بررسی شد</button> ` : ''}<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteSecurity" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'رویداد امنیتی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSecurity);
@@ -782,11 +1028,24 @@
         { key: 'username', label: 'کاربر' },
         { key: 'occurrences', label: 'تعداد' },
         { key: 'status', label: 'وضعیت', render: v => badge(v) },
+        { key: 'error_id', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteError" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'خطایی ثبت نشده است');
       renderPagination(pagEl, res.total, res.pages, loadErrors);
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری خطاها</div></div>'; }
   }
+
+  window.maDeleteError = async function (id) {
+    const yes = await maConfirm({ title: 'حذف رکورد خطای سیستم', msg: 'آیا از حذف دائمی این رکورد اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/errors/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد خطای سیستم حذف شد');
+      loadErrors();
+    } else {
+      showToast('رکورد خطا پیدا نشد یا حذف نشد', 'error');
+    }
+  };
 
   // ── User Detail (360 View) ──────────────────────────────
   var _viewingUser = null;
@@ -910,11 +1169,24 @@
         { key: 'action', label: 'عملیات' },
         { key: 'target_username', label: 'هدف' },
         { key: 'description', label: 'توضیحات', render: v => (v || '').substring(0, 80) },
+        { key: 'action_id', label: 'عملیات', render: v => `<button class="ma-btn ma-btn--danger ma-btn--sm" data-ma-action="deleteAdminAction" data-ma-id="${esc(v)}">حذف رکورد</button>` },
       ];
       renderTable(container, cols, res.data, 'عملیات مدیریتی ثبت نشده است');
       renderPagination(pagEl, res.total, res.pages, loadAdminActions);
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری عملیات</div></div>'; }
   }
+
+  window.maDeleteAdminAction = async function (id) {
+    const yes = await maConfirm({ title: 'حذف رکورد عملیات مدیریتی', msg: 'آیا از حذف دائمی این رکورد اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/admin-actions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد عملیات مدیریتی حذف شد');
+      loadAdminActions();
+    } else {
+      showToast('رکورد عملیات مدیریتی پیدا نشد یا حذف نشد', 'error');
+    }
+  };
 
   // ── System Settings ─────────────────────────────────────
   async function loadSystemSettings() {
@@ -1312,12 +1584,24 @@
   };
 
   // ── Global Actions ───────────────────────────────────────
-  window.maTerminateSession = async function (key) {
+  window.ma_terminateSession = async function (key) {
     const yes = await maConfirm({ title: 'خاتمه نشست', msg: 'آیا از خاتمه این نشست اطمینان دارید؟', confirmText: 'خاتمه یابد', type: 'danger' });
     if (!yes) return;
     await api(`/sessions/${key}/terminate`, { method: 'POST' });
     showToast('نشست خاتمه یافت');
     loadSessions();
+  };
+
+  window.ma_deleteSession = async function (key) {
+    const yes = await maConfirm({ title: 'حذف رکورد نشست', msg: 'آیا از حذف دائمی رکورد این نشست اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/sessions/${encodeURIComponent(key)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد نشست حذف شد');
+      loadSessions();
+    } else {
+      showToast('رکورد نشست پیدا نشد یا حذف نشد', 'error');
+    }
   };
 
   window.maApproveReset = async function (id) {
@@ -1336,10 +1620,46 @@
     loadPasswordResets();
   };
 
+  window.maDeleteReset = async function (id) {
+    const yes = await maConfirm({ title: 'حذف رکورد درخواست بازیابی', msg: 'آیا از حذف دائمی این رکورد اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/password-resets/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد درخواست بازیابی حذف شد');
+      loadPasswordResets();
+    } else {
+      showToast('رکورد درخواست بازیابی پیدا نشد یا حذف نشد', 'error');
+    }
+  };
+
   window.maResolveSecurity = async function (id) {
     await api(`/security/${id}/resolve`, { method: 'POST', body: { status: 'resolved' } });
     showToast('رویداد بررسی شد');
     loadSecurity();
+  };
+
+  window.maDeleteSecurity = async function (id) {
+    const yes = await maConfirm({ title: 'حذف رکورد رویداد امنیتی', msg: 'آیا از حذف دائمی این رکورد اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/security/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد رویداد امنیتی حذف شد');
+      loadSecurity();
+    } else {
+      showToast('رکورد رویداد امنیتی پیدا نشد یا حذف نشد', 'error');
+    }
+  };
+
+  window.maDeleteAuditLog = async function (id) {
+    const yes = await maConfirm({ title: 'حذف رکورد لاگ حسابرسی', msg: 'آیا از حذف دائمی این رکورد اطمینان دارید؟ این عملیات قابل بازگشت نیست.', confirmText: 'حذف شود', type: 'danger' });
+    if (!yes) return;
+    const res = await api(`/audit-logs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (res.success) {
+      showToast('رکورد لاگ حسابرسی حذف شد');
+      loadAuditLogs();
+    } else {
+      showToast('رکورد لاگ پیدا نشد یا حذف نشد', 'error');
+    }
   };
 
   // ── Section Loader ───────────────────────────────────────
@@ -1490,8 +1810,23 @@ window.ma_approveReset = async function(id) {
 window.ma_rejectReset = async function(id) {
   if (typeof window.maRejectReset === 'function') window.maRejectReset(id);
 };
+window.ma_deleteReset = async function(id) {
+  if (typeof window.maDeleteReset === 'function') window.maDeleteReset(id);
+};
 window.ma_resolveSecurity = async function(id) {
   if (typeof window.maResolveSecurity === 'function') window.maResolveSecurity(id);
+};
+window.ma_deleteSecurity = function(id) {
+  if (typeof window.maDeleteSecurity === 'function') window.maDeleteSecurity(id);
+};
+window.ma_deleteError = function(id) {
+  if (typeof window.maDeleteError === 'function') window.maDeleteError(id);
+};
+window.ma_deleteAdminAction = function(id) {
+  if (typeof window.maDeleteAdminAction === 'function') window.maDeleteAdminAction(id);
+};
+window.ma_deleteAuditLog = async function(id) {
+  if (typeof window.maDeleteAuditLog === 'function') window.maDeleteAuditLog(id);
 };
 window.ma_viewTicket = function(id) {
   window.location.href = '/master-admin/ticket-detail?t=' + id;

@@ -1,0 +1,2773 @@
+/* ============================================================================
+   HASTAMA ADMIN — MOBILE EXPERIENCE LAYER
+   ----------------------------------------------------------------------------
+   این فایل «فقط» تجربهٔ موبایل پنل مدیریت را می‌سازد.
+   اصل معماری:
+     • تمام قواعد داخل @media (max-width: 768px) هستند → رندر دسکتاپ دست‌نخورده.
+     • زبان طراحی با دسکتاپ یکی است: همان توکن‌های رنگ برند (teal/sky)، همان
+       شعاع‌ها (22px)، همان easing فنری (--dash-ease) و همان آیکون‌گرافی
+       گرادیانی سایدبار. یعنی موبایل «نسخهٔ جمع‌شدهٔ دسکتاپ» است، نه یک اپ دیگر.
+     • الگوی UX مخصوص موبایل: اپ‌شل با هدر شیشه‌ای چسبان + Bottom Tab Bar +
+       برگه‌های کشویی (Bottom Sheet) + نوار تب اسکرولی چسبان.
+   ساختار فایل:
+     ۱) توکن‌ها و پایه          ۸) تب‌ها و سگمنت‌ها
+     ۲) اپ‌شل و هدر             ۹) فرم‌ها و کنترل‌ها
+     ۳) Bottom Tab Bar         ۱۰) جدول‌ها
+     ۴) کشوی سایدبار           ۱۱) فهرست‌ها (تیکت، ثبت‌نام، اعلان، اتوماسیون)
+     ۵) پوستهٔ بخش‌ها           ۱۲) نمودارها
+     ۶) هدر بخش (Hero)         ۱۳) مودال‌ها و برگه‌ها
+     ۷) کارت‌ها و آمار         ۱۴) تم تیره + اصلاحات ریزی
+    ========================================================================== */
+
+.adm-drawer-head {
+     display: none;
+}
+
+@media screen and (max-width: 768px) {
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱) توکن‌ها و پایه
+       ══════════════════════════════════════════════════════════════════ */
+
+    :root {
+        --adm-brand: #0d9488;
+        --adm-brand-2: #0ea5e9;
+        --adm-brand-3: #6366f1;
+
+        --adm-bg: #eef2f8;
+        --adm-bg-2: #f7fafc;
+        --adm-surface: #ffffff;
+        --adm-surface-2: #f6f9fc;
+        /* شیشه به‌قدری مات هست که حتی بدون پشتیبانی backdrop-filter هم
+           خوانا و روشن بماند؛ بلور فقط یک لایهٔ زیبایی اضافه است. */
+        --adm-glass: rgba(255, 255, 255, .90);
+        --adm-glass-strong: rgba(255, 255, 255, .96);
+
+        --adm-ink: #0f2438;
+        --adm-ink-2: #36506b;
+        --adm-muted: #6b8095;
+        --adm-faint: #93a6b8;
+
+        --adm-line: rgba(15, 42, 67, .09);
+        --adm-line-2: rgba(15, 42, 67, .055);
+        --adm-line-strong: rgba(15, 42, 67, .16);
+
+        --adm-r-xl: 26px;
+        --adm-r: 20px;
+        --adm-r-sm: 14px;
+        --adm-r-xs: 10px;
+
+        --adm-shadow-1: 0 1px 2px rgba(15, 42, 67, .04), 0 10px 24px -18px rgba(15, 42, 67, .28);
+        --adm-shadow-2: 0 2px 6px rgba(15, 42, 67, .05), 0 18px 40px -22px rgba(15, 42, 67, .34);
+        --adm-shadow-3: 0 4px 10px rgba(8, 30, 50, .08), 0 30px 60px -28px rgba(8, 30, 50, .45);
+
+        --adm-ease: cubic-bezier(.22, 1, .36, 1);
+        --adm-ease-spring: cubic-bezier(.34, 1.42, .64, 1);
+        --adm-ease-soft: cubic-bezier(.4, 0, .2, 1);
+
+        --adm-header-h: 60px;
+        --adm-tab-h: 64px;
+        --adm-safe-b: env(safe-area-inset-bottom, 0px);
+        --adm-safe-t: env(safe-area-inset-top, 0px);
+
+        /* لهجهٔ رنگی هر بخش (هم‌نام با data-accent سایدبار دسکتاپ) */
+        --adm-accent: #0d9488;
+        --adm-accent-2: #0ea5e9;
+        --adm-accent-soft: rgba(13, 148, 136, .12);
+        --adm-accent-glow: rgba(13, 148, 136, .30);
+    }
+
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+        min-width: 0;
+        overflow-x: hidden;
+        /* scroll-behavior عمداً smooth نیست: منطق اسکرول فعلی اپ دست‌نخورده بماند */
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        min-width: 0;
+        overflow-x: hidden;
+        overscroll-behavior-y: none;
+        background:
+            radial-gradient(115% 55% at 100% 0%, rgba(13, 148, 136, .10), transparent 58%),
+            radial-gradient(95% 50% at 0% 6%, rgba(14, 165, 233, .10), transparent 56%),
+            linear-gradient(180deg, #f8fbfd 0%, var(--adm-bg) 46%, #e8eff7 100%);
+        background-attachment: fixed;
+        color: var(--adm-ink);
+        font-family: 'Vazir', 'Vazirmatn', Tahoma, sans-serif;
+    }
+
+    .page-shell {
+        width: 100%;
+        max-width: none;
+        /* min-height در موبایل صفر می‌شود: برخی بخش‌ها (حقوق، حضور، تیکت، ...)
+           بیرون از این باکس در DOM قرار دارند و در غیر این صورت یک صفحه
+           فاصلهٔ خالی قبل از محتوا ظاهر می‌شد. */
+        min-height: 0 !important;
+        padding: 0 !important;
+        overflow: visible;
+        align-items: stretch;
+    }
+
+    /* دکمه‌ها و لینک‌ها: بازخورد لمسی نرم به‌جای hover دسکتاپ */
+    .management-box button:active,
+    .management-box .btn:active,
+    .management-box .attendance-panel__btn:active,
+    .adm-tab:active,
+    .rightSidebar .icon-container:active {
+        transform: scale(.965);
+    }
+
+    /* ── صفحه‌آرایی: جلوگیری از سرریز افقی در همهٔ عمق‌ها ─────────────── */
+    .page-shell *,
+    .page-shell *::before,
+    .page-shell *::after {
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+
+    .management-box img,
+    .management-box svg,
+    .management-box video,
+    .management-box canvas {
+        max-width: 100%;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۲) اپ‌شل و هدر
+       ══════════════════════════════════════════════════════════════════ */
+
+    .admin-topbar-modern,
+    .admin-topbar-modern.ma-header-box {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 700;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        height: calc(var(--adm-header-h) + var(--adm-safe-t));
+        margin: 0 !important;
+        padding: calc(var(--adm-safe-t) + 8px) 12px 8px;
+        border: 0;
+        border-radius: 0;
+        background: linear-gradient(180deg, var(--adm-glass-strong), var(--adm-glass));
+        -webkit-backdrop-filter: blur(20px) saturate(1.35);
+        backdrop-filter: blur(20px) saturate(1.35);
+        box-shadow: 0 1px 0 var(--adm-line), 0 12px 30px -22px rgba(8, 30, 50, .45);
+        transition: transform .42s var(--adm-ease), box-shadow .3s var(--adm-ease-soft);
+        will-change: auto;
+    }
+
+    /* خط مویی گرادیانی زیر هدر — امضای بصری مشترک با کارت‌های دسکتاپ */
+    .admin-topbar-modern::after {
+        content: '';
+        position: absolute;
+        inset-inline: 0;
+        bottom: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--adm-brand), var(--adm-brand-2), transparent);
+        opacity: .5;
+        pointer-events: none;
+    }
+
+    /* هدر در اسکرول به پایین جمع می‌شود تا فضای محتوا بیشتر شود */
+    .page-shell.is-header-hidden .admin-topbar-modern {
+        transform: translateY(calc(-100% - 4px));
+    }
+
+    .page-shell.is-scrolled .admin-topbar-modern {
+        height: calc(54px + var(--adm-safe-t));
+        padding-top: calc(var(--adm-safe-t) + 6px);
+        padding-bottom: 6px;
+        box-shadow: 0 1px 0 var(--adm-line), 0 18px 34px -24px rgba(8, 30, 50, .5);
+    }
+
+    .ma-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .mobile-menu-toggle {
+        display: inline-flex;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 0;
+        border: 1px solid var(--adm-line);
+        border-radius: 14px;
+        background: var(--adm-surface);
+        box-shadow: var(--adm-shadow-1);
+        color: var(--adm-brand);
+        transition: transform .3s var(--adm-ease-spring), box-shadow .3s var(--adm-ease-soft),
+            background .3s var(--adm-ease-soft);
+    }
+
+    .mobile-menu-toggle span {
+        width: 17px;
+        height: 2px;
+        border-radius: 2px;
+        background: currentColor;
+        transition: transform .35s var(--adm-ease-spring), width .3s var(--adm-ease-soft),
+            opacity .25s linear;
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] {
+        background: linear-gradient(135deg, var(--adm-brand), var(--adm-brand-2));
+        color: #fff;
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; width: 0; }
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .ma-header-brand.ma-header-brand,
+    .ma-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .ma-header-brand .sidebar-top-card-content {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+    }
+
+    .ma-header-brand .sidebar-top-card-mark {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        padding: 4px;
+        border-radius: 13px;
+        background: linear-gradient(140deg, #ffffff, #eef6fb);
+        border: 1px solid var(--adm-line);
+        box-shadow: var(--adm-shadow-1);
+        overflow: hidden;
+    }
+
+    .ma-header-brand .sidebar-top-card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .ma-header-brand .sidebar-top-card-text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.35;
+    }
+
+    .ma-header-brand .sidebar-top-card-title {
+        font-size: .82rem;
+        font-weight: 900;
+        color: var(--adm-ink);
+        letter-spacing: -.01em;
+    }
+
+    .ma-header-brand .sidebar-top-card-sub {
+        display: none;
+    }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 7px;
+        flex: 0 0 auto;
+        min-width: 0;
+        flex-direction: row;
+    }
+
+    .topbar-clock-pill {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        min-width: 0;
+        max-width: 92px;
+        padding: 5px 9px;
+        border: 1px solid var(--adm-line);
+        border-radius: 13px;
+        background: var(--adm-surface);
+        box-shadow: var(--adm-shadow-1);
+        color: var(--adm-ink);
+        font-size: .78rem;
+        font-weight: 800;
+        line-height: 1.25;
+        white-space: nowrap;
+        transition: padding .3s var(--adm-ease-soft), opacity .25s linear;
+    }
+
+    .topbar-clock-date {
+        overflow: hidden;
+        max-width: 100%;
+        color: var(--adm-muted);
+        font-size: .58rem;
+        font-weight: 700;
+        text-overflow: ellipsis;
+    }
+
+    .topbar-clock-time {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+    }
+
+    .page-shell.is-scrolled .topbar-clock-date {
+        display: none;
+    }
+
+    .topbar-icon-btn,
+    .theme-toggle {
+        display: inline-flex;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid var(--adm-line);
+        border-radius: 13px;
+        background: var(--adm-surface);
+        box-shadow: var(--adm-shadow-1);
+        color: var(--adm-ink-2);
+        transition: transform .3s var(--adm-ease-spring), color .25s linear, background .25s linear;
+    }
+
+    .topbar-icon-btn svg,
+    .theme-toggle svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .topbar-icon-btn:active,
+    .theme-toggle:active {
+        transform: scale(.92);
+    }
+
+    .notification-bell {
+        position: relative;
+    }
+
+    .notification-bell.has-unread {
+        color: var(--adm-brand-2);
+    }
+
+    .topbar-badge {
+        position: absolute;
+        top: -5px;
+        inset-inline-start: -5px;
+        min-width: 19px;
+        height: 19px;
+        padding: 0 5px;
+        border: 2px solid var(--adm-surface);
+        border-radius: 999px;
+        background: linear-gradient(135deg, #f43f5e, #e11d48);
+        color: #fff;
+        font-size: .58rem;
+        font-weight: 900;
+        line-height: 15px;
+        text-align: center;
+    }
+
+    .topbar-user {
+        flex: 0 0 auto;
+        gap: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 999px;
+    }
+
+    .topbar-user-info,
+    .topbar-user .chevron-icon {
+        display: none;
+    }
+
+    .topbar-avatar-wrap,
+    .topbar-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .topbar-avatar {
+        border: 2px solid var(--adm-surface);
+        box-shadow: 0 0 0 1px var(--adm-line), var(--adm-shadow-1);
+    }
+
+    .topbar-user:active .topbar-avatar {
+        transform: scale(.94);
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۳) Bottom Tab Bar (لاستیک‌محور، فقط موبایل — با JS ساخته می‌شود)
+       ══════════════════════════════════════════════════════════════════ */
+
+    .adm-tabbar {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 690;
+        display: block;
+        padding: 0 10px calc(var(--adm-safe-b) + 8px);
+        pointer-events: none;
+        transform: translateY(140%);
+        transition: transform .5s var(--adm-ease-spring), opacity .3s linear;
+        opacity: 0;
+    }
+
+    .adm-tabbar.is-ready {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .adm-tabbar__inner {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: 2px;
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 7px 8px;
+        border: 1px solid var(--adm-line);
+        border-radius: 24px;
+        background: linear-gradient(180deg, var(--adm-glass-strong), var(--adm-glass));
+        -webkit-backdrop-filter: blur(22px) saturate(1.4);
+        backdrop-filter: blur(22px) saturate(1.4);
+        box-shadow: var(--adm-shadow-3);
+        pointer-events: auto;
+        overflow: hidden;
+    }
+
+    /* هالهٔ لغزان پشت آیتم فعال — مکان از offsetLeft محاسبه و انتقال می‌یابد،
+       پس در RTL و LTR یکسان کار می‌کند. */
+    .adm-tabbar__glow {
+        position: absolute;
+        top: 7px;
+        bottom: 7px;
+        left: 0;
+        width: var(--adm-tab-w, 69px);
+        border-radius: 18px;
+        background: linear-gradient(140deg, var(--adm-accent-soft), rgba(14, 165, 233, .10));
+        box-shadow: inset 0 0 0 1px var(--adm-line-2);
+        transform: translateX(var(--adm-tab-x, 0px));
+        transition: transform .48s var(--adm-ease-spring), width .35s var(--adm-ease-soft),
+            background .35s var(--adm-ease-soft);
+        pointer-events: none;
+    }
+
+    .adm-tab {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex: 1 1 0;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 7px 4px 5px;
+        border: 0;
+        border-radius: 18px;
+        background: transparent;
+        color: var(--adm-muted);
+        font: 700 .62rem/1.2 'Vazir', sans-serif;
+        cursor: pointer;
+        transition: color .3s var(--adm-ease-soft), transform .35s var(--adm-ease-spring);
+    }
+
+    .adm-tab__icon {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 9px;
+        color: currentColor;
+        transition: transform .4s var(--adm-ease-spring), color .3s var(--adm-ease-soft);
+    }
+
+    .adm-tab__icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .adm-tab__label {
+        max-width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .adm-tab.is-active {
+        color: var(--adm-accent);
+    }
+
+    .adm-tab.is-active .adm-tab__icon {
+        transform: translateY(-2px) scale(1.06);
+        color: var(--adm-accent);
+        filter: drop-shadow(0 6px 10px var(--adm-accent-glow));
+    }
+
+    .adm-tab:active .adm-tab__icon {
+        transform: scale(.9);
+    }
+
+    /* نشان اعلان روی تب «بیشتر» */
+    .adm-tab__dot {
+        position: absolute;
+        top: 5px;
+        inset-inline-start: 50%;
+        margin-inline-start: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #f43f5e;
+        box-shadow: 0 0 0 2px var(--adm-surface);
+        animation: admPulse 2.4s var(--adm-ease-soft) infinite;
+    }
+
+    @keyframes admPulse {
+        0% { box-shadow: 0 0 0 2px var(--adm-surface), 0 0 0 0 rgba(244, 63, 94, .5); }
+        70% { box-shadow: 0 0 0 2px var(--adm-surface), 0 0 0 8px rgba(244, 63, 94, 0); }
+        100% { box-shadow: 0 0 0 2px var(--adm-surface), 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
+    /* وقتی مودال/برگهٔ تمام‌صفحه باز است، نوار پایین کنار می‌رود */
+    body.adm-sheet-open .adm-tabbar {
+        transform: translateY(150%);
+        opacity: 0;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۴) کشوی سایدبار (Drawer) — نسخهٔ موبایلی همان سایدبار دسکتاپ
+       ══════════════════════════════════════════════════════════════════ */
+
+    .navarha {
+        position: static;
+        min-height: 0;
+        width: 0;
+        height: 0;
+        overflow: visible;
+    }
+
+    .rightSidebar {
+        position: fixed !important;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: auto !important;
+        z-index: 800;
+        display: flex !important;
+        width: min(88vw, 344px) !important;
+        height: 100dvh !important;
+        max-height: none !important;
+        flex-direction: column;
+        gap: 6px !important;
+        padding: calc(var(--adm-safe-t) + 14px) 14px calc(var(--adm-safe-b) + 18px) !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 0 !important;
+        border-inline-start: 1px solid var(--adm-line) !important;
+        border-radius: 28px 0 0 28px !important;
+        background: var(--adm-glass-strong) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        backdrop-filter: blur(24px) saturate(1.4);
+        box-shadow: -30px 0 70px -30px rgba(8, 30, 50, .55) !important;
+        transform: translateX(105%);
+        transition: transform .46s var(--adm-ease);
+        will-change: transform;
+        overscroll-behavior: contain;
+    }
+
+    .rightSidebar.open,
+    .rightSidebar:hover {
+        width: min(88vw, 344px) !important;
+        transform: translateX(0);
+    }
+
+    .rightSidebar .mobile-sidebar-close {
+        position: absolute;
+        top: calc(var(--adm-safe-t) + 12px);
+        inset-inline-start: 14px;
+        display: inline-flex;
+        width: 38px;
+        height: 38px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid var(--adm-line);
+        border-radius: 13px;
+        background: var(--adm-surface);
+        box-shadow: var(--adm-shadow-1);
+        color: var(--adm-muted);
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+
+    /* عنوان کشو (با JS اضافه می‌شود) */
+    .adm-drawer-head {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin: 2px 52px 10px 0;
+        padding: 10px 12px;
+        border: 1px solid var(--adm-line);
+        border-radius: 18px;
+        background: linear-gradient(140deg, rgba(13, 148, 136, .10), rgba(14, 165, 233, .10));
+    }
+
+    .adm-drawer-head__mark {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 14px;
+        background: linear-gradient(140deg, var(--adm-brand), var(--adm-brand-2));
+        color: #fff;
+        box-shadow: 0 12px 22px -12px var(--adm-accent-glow);
+    }
+
+    .adm-drawer-head__mark svg { width: 22px; height: 22px; }
+
+    .adm-drawer-head__text { display: flex; flex-direction: column; min-width: 0; }
+    .adm-drawer-head__title { font-size: .84rem; font-weight: 900; color: var(--adm-ink); }
+    .adm-drawer-head__sub   { font-size: .66rem; font-weight: 700; color: var(--adm-muted); }
+
+    .rightSidebar .icon-container,
+    .rightSidebar.open .icon-container,
+    .rightSidebar:hover .icon-container {
+        position: relative;
+        display: flex;
+        width: 100% !important;
+        min-height: 56px;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 4px !important;
+        padding: 8px 11px !important;
+        border: 1px solid transparent;
+        border-radius: 18px !important;
+        background: transparent;
+        overflow: hidden;
+        transition: background .35s var(--adm-ease-soft), border-color .35s var(--adm-ease-soft),
+            transform .35s var(--adm-ease-spring), box-shadow .35s var(--adm-ease-soft);
+    }
+
+    .rightSidebar .icon-container::before {
+        content: '';
+        position: absolute;
+        inset-inline-start: 0;
+        top: 50%;
+        width: 3px;
+        height: 0;
+        border-radius: 0 3px 3px 0;
+        background: linear-gradient(180deg, var(--tile-from, var(--adm-brand)), var(--tile-to, var(--adm-brand-2)));
+        transform: translateY(-50%);
+        transition: height .4s var(--adm-ease-spring);
+    }
+
+    .rightSidebar .icon-container.active {
+        border-color: var(--adm-line);
+        background: linear-gradient(120deg, var(--tint, rgba(13, 148, 136, .10)), rgba(255, 255, 255, .55));
+        box-shadow: var(--adm-shadow-1);
+    }
+
+    .rightSidebar .icon-container.active::before {
+        height: 56%;
+    }
+
+    .rightSidebar .sidebar-icon-tile,
+    .rightSidebar.open .sidebar-icon-tile {
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+        border-radius: 13px !important;
+    }
+
+    .rightSidebar .icon-label,
+    .rightSidebar.open .icon-label,
+    .rightSidebar:hover .icon-label {
+        display: block;
+        width: auto;
+        max-width: none;
+        flex: 1 1 auto;
+        opacity: 1;
+        visibility: visible;
+        overflow: hidden;
+        color: var(--acc, var(--adm-ink-2));
+        font-size: .84rem;
+        font-weight: 800;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .rightSidebar .icon-container.active .icon-label {
+        color: var(--adm-ink);
+        font-weight: 900;
+    }
+
+    /* جداکنندهٔ «خروج» */
+    .rightSidebar .sidebar-divider {
+        margin: 8px 4px !important;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--adm-line-strong), transparent);
+    }
+
+    .rightSidebar .icon-container[data-accent="exit"] {
+        border-color: rgba(244, 63, 94, .18);
+        background: rgba(244, 63, 94, .06);
+    }
+
+    .rightSidebar .icon-container[data-accent="exit"] .icon-label {
+        color: #e11d48;
+    }
+
+    /* پنهان‌سازی اسکرول‌بار کشو */
+    .rightSidebar::-webkit-scrollbar { width: 0; height: 0; }
+
+    .mobile-sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 790;
+        display: block;
+        border: 0;
+        background: radial-gradient(120% 90% at 100% 0%, rgba(8, 30, 50, .18), rgba(8, 20, 34, .55));
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .34s var(--adm-ease-soft), visibility .34s linear;
+    }
+
+    body.mobile-sidebar-open .mobile-sidebar-overlay {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    body.mobile-sidebar-open {
+        overflow: hidden;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۵) پوستهٔ بخش‌ها (management-box + frame)
+       ══════════════════════════════════════════════════════════════════ */
+
+    .management-box,
+    #dashboardBox,
+    #coworkerBox,
+    #regRequestsBox,
+    #notificationAdminBox,
+    #shiftBox,
+    #vacationBox,
+    #overtimeBox,
+    #hourlyPassBox,
+    #ticketBox,
+    #internalAutomationAdminBox,
+    #hozoorbox,
+    #natigehHozoor,
+    #attendancePanelsRow,
+    #sabtdst,
+    #payrollBox {
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 14px !important;
+        overflow: visible !important;
+        transform: none !important;
+        contain: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        gap: 14px !important;
+    }
+
+    .management-box {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* فضای هدر/نوار تب — با انتخابگر id+class تا قواعد قدیمی‌ترِ
+       admin.css (مثل #ticketBox.ticketing-panel) آن را بازنویسی نکنند. */
+    #dashboardBox.management-box,
+    #coworkerBox.management-box,
+    #regRequestsBox.management-box,
+    #notificationAdminBox.management-box,
+    #shiftBox.management-box,
+    #vacationBox.management-box,
+    #overtimeBox.management-box,
+    #hourlyPassBox.management-box,
+    #ticketBox.management-box,
+    #internalAutomationAdminBox.management-box,
+    #hozoorbox.management-box,
+    #natigehHozoor.management-box,
+    #attendancePanelsRow.management-box,
+    #sabtdst.management-box,
+    #payrollBox.management-box,
+    .management-box.management-box {
+        padding: calc(var(--adm-header-h) + var(--adm-safe-t) + 14px) var(--adm-pad-x, 14px) calc(var(--adm-tab-h) + var(--adm-safe-b) + 26px) !important;
+    }
+
+    /* بخش‌های تودرتوی حضور و غیاب زیر بخش اصلی‌اند، پس فاصلهٔ هدر/پایین نمی‌خواهند */
+    #natigehHozoor.management-box,
+    #attendancePanelsRow.management-box,
+    #sabtdst.management-box {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* ورود بخش با انیمیشن نرم (بدون جابه‌جایی محتوا در دسکتاپ) */
+    .management-box.is-visible {
+        animation: admSectionIn .55s var(--adm-ease) both;
+    }
+
+    @keyframes admSectionIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: none; }
+    }
+
+    .management-box > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* ورود پله‌ای محتوای بخش هنگام جابه‌جایی (کلاس با JS افزوده می‌شود) */
+    .management-box > .adm-stagger {
+        animation: admStaggerIn .5s var(--adm-ease) both;
+        animation-delay: calc(var(--adm-i, 0) * 42ms);
+    }
+
+    @keyframes admStaggerIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: none; }
+    }
+
+    /* قاب‌های داخلی بخش‌ها → کارت‌های مستقل و تمام‌عرض */
+    .coworker-frame,
+    .shift-frame,
+    .vacation-frame,
+    .overtime-frame,
+    .hourlyPass-frame,
+    .attendance-frame,
+    .payroll-frame,
+    .reg-requests-panel .reg-table-wrap,
+    .internal-automation-admin-content,
+    .helpdesk-layout {
+        display: flex;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex-direction: column;
+        gap: 12px;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* تب‌کانتنت‌ها کارت شیشه‌ای می‌شوند */
+    .coworker-tab-content,
+    .shift-tab-content,
+    .vacation-tab-content,
+    .overtime-tab-content,
+    .hourlyPass-tab-content,
+    .attendance-tab-content,
+    .payroll-tab-content,
+    .internal-automation-admin-tab-content,
+    .helpdesk-view {
+        position: relative;
+        width: 100%;
+        padding: 14px !important;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r) !important;
+        background: var(--adm-glass-strong) !important;
+        box-shadow: var(--adm-shadow-1) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(1.2);
+        backdrop-filter: blur(14px) saturate(1.2);
+    }
+
+    .coworker-tab-content.active,
+    .shift-tab-content.active,
+    .vacation-tab-content.active,
+    .overtime-tab-content.active,
+    .hourlyPass-tab-content.active,
+    .attendance-tab-content.active,
+    .payroll-tab-content.active,
+    .internal-automation-admin-tab-content.active {
+        animation: admTabIn .45s var(--adm-ease) both;
+    }
+
+    @keyframes admTabIn {
+        from { opacity: 0; transform: translateY(10px) scale(.995); }
+        to { opacity: 1; transform: none; }
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۶) هدر بخش (Hero) — همان لهجهٔ رنگی دسکتاپ، جمع‌شده برای موبایل
+       ══════════════════════════════════════════════════════════════════ */
+
+    .section-hero {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        padding: 15px 16px !important;
+        overflow: hidden;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r) !important;
+        background:
+            radial-gradient(120% 170% at 92% -40%, var(--hero-glow-1, rgba(14, 165, 233, .16)), transparent 58%),
+            radial-gradient(95% 150% at 4% 140%, var(--hero-glow-2, rgba(20, 184, 166, .14)), transparent 58%),
+            linear-gradient(135deg, var(--adm-surface) 0%, var(--adm-surface-2) 100%) !important;
+        box-shadow: var(--adm-shadow-1);
+    }
+
+    .section-hero::after {
+        content: '';
+        position: absolute;
+        inset-inline: 16px;
+        top: 0;
+        height: 2px;
+        border-radius: 0 0 4px 4px;
+        background: linear-gradient(90deg, transparent, var(--hero-accent, var(--adm-brand)), transparent);
+        opacity: .7;
+    }
+
+    .section-hero__icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 15px;
+        box-shadow: 0 12px 24px -12px var(--hero-shadow, var(--adm-accent-glow));
+        animation: none;
+    }
+
+    .section-hero__icon svg {
+        width: 23px;
+        height: 23px;
+    }
+
+    .section-hero__text { min-width: 0; }
+
+    .section-hero__text h1,
+    .section-hero__text h2,
+    .section-hero__text h3 {
+        margin: 0 0 3px;
+        color: var(--hero-ink, var(--adm-ink)) !important;
+        font-size: .98rem !important;
+        font-weight: 900 !important;
+        line-height: 1.6;
+        letter-spacing: -.01em;
+    }
+
+    .section-hero__text p {
+        margin: 0;
+        color: var(--hero-muted, var(--adm-muted)) !important;
+        font-size: .7rem !important;
+        font-weight: 600;
+        line-height: 1.85;
+    }
+
+    .section-hero__glow { display: none; }
+
+    /* هدرهای جایگزین (داشبورد و اعلان‌ها) */
+    .dash-head,
+    .notification-page-head,
+    .reg-hero,
+    .panel-header,
+    .box-header,
+    .userInfo-header {
+        display: block;
+        padding: 15px 16px !important;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r) !important;
+        background: linear-gradient(150deg, var(--adm-surface) 0%, var(--adm-surface-2) 100%) !important;
+        box-shadow: var(--adm-shadow-1);
+    }
+
+    .dash-head__badge,
+    .notification-kicker,
+    .reg-hero__kicker {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, rgba(13, 148, 136, .14), rgba(14, 165, 233, .14));
+        color: var(--adm-brand);
+        font-size: .62rem;
+        font-weight: 900;
+    }
+
+    .dash-head__title,
+    .notification-page-head h2,
+    .reg-hero__text h2 {
+        margin: 8px 0 4px !important;
+        font-size: 1.02rem !important;
+        font-weight: 900 !important;
+        line-height: 1.6;
+        color: var(--adm-ink) !important;
+    }
+
+    .dash-head__sub,
+    .reg-hero__text p {
+        margin: 0 !important;
+        color: var(--adm-muted) !important;
+        font-size: .72rem !important;
+        font-weight: 600;
+        line-height: 1.9;
+    }
+
+    .dash-head__stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+    }
+
+    .dash-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border: 1px solid var(--adm-line);
+        border-radius: 999px;
+        background: var(--adm-surface);
+        color: var(--adm-ink-2);
+        font-size: .66rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .dash-chip--live i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: admPulseGreen 2.4s var(--adm-ease-soft) infinite;
+    }
+
+    @keyframes admPulseGreen {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .5); }
+        70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۷) کارت‌ها، آمار و خلاصه‌ها
+       ══════════════════════════════════════════════════════════════════ */
+
+    .dashboard-card,
+    .dashboard-quick-card,
+    .dashboard-chart-card,
+    .dashboard-table-card,
+    .stat-card,
+    .summary-card,
+    .reg-stat-card,
+    .notification-stats > *,
+    .attendance-stat,
+    .attendance-panel,
+    .shift-active-card,
+    .shift-table-card,
+    .ticket-card,
+    .notification-card,
+    .panel-card,
+    .management-card,
+    .report-card,
+    .karaneh-summary-card,
+    .payroll-summary-card,
+    .payroll-config-item,
+    .vacation-config-item,
+    .overtime-config-item,
+    .hourlyPass-config-item,
+    .hooroor-config-item {
+        position: relative;
+        min-width: 0;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r) !important;
+        background: linear-gradient(150deg, var(--adm-surface) 0%, var(--adm-surface-2) 100%) !important;
+        box-shadow: var(--adm-shadow-1) !important;
+        overflow: hidden;
+    }
+
+    /* خط رنگی بالای کارت — هم‌خانوادهٔ کارت‌های داشبورد دسکتاپ */
+    .attendance-panel::before,
+    .shift-table-card::before,
+    .karaneh-summary-card::before,
+    .payroll-summary-card::before {
+        content: '';
+        position: absolute;
+        inset-inline: 14px;
+        top: 0;
+        height: 2px;
+        border-radius: 0 0 4px 4px;
+        background: linear-gradient(90deg, transparent, var(--adm-accent), transparent);
+        opacity: .45;
+    }
+
+    /* شبکهٔ کارت‌های شاخص داشبورد: دو ستونی مثل بنتوی دسکتاپ */
+    #dashboardBox .dash-bento,
+    #dashboardBox .dash-row--podium,
+    #dashboardBox .dash-row--insight,
+    #dashboardBox .dash-row--charts,
+    #dashboardBox .dash-row--tables,
+    .notification-stats,
+    .reg-stats,
+    .attendance-stats,
+    .karaneh-summary-grid,
+    .payroll-summary-grid,
+    .shift-active-cards {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 11px !important;
+        width: 100% !important;
+        align-items: stretch;
+    }
+
+    /* کارت‌های متنی بلند تک‌ستونی می‌شوند */
+    #dashboardBox .dashboard-chart-card,
+    #dashboardBox .dashboard-table-card,
+    #dashboardBox .dashboard-card--panel,
+    #dashboardBox .dashboard-quick-card,
+    .attendance-panel,
+    .shift-table-card {
+        grid-column: 1 / -1;
+    }
+
+    #dashboardBox .dash-anim {
+        animation: admCardIn .62s var(--adm-ease) both;
+        animation-delay: calc(var(--i, 0) * 42ms);
+    }
+
+    @keyframes admCardIn {
+        from { opacity: 0; transform: translateY(14px) scale(.985); }
+        to { opacity: 1; transform: none; }
+    }
+
+    /* کارت‌های شاخص فشرده: آیکون در ستون دوم، متن در ستون اول
+       (کارت‌های «برترین‌ها» و «تحلیلی» تک‌ستونی می‌مانند) */
+    #dashboardBox .dashboard-card:not(.dashboard-card--highlight):not(.dashboard-card--panel) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 3px 10px;
+        padding: 13px 13px 12px;
+    }
+
+    #dashboardBox .dashboard-card--highlight,
+    #dashboardBox .dashboard-card--panel {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+        padding: 14px 14px 13px;
+    }
+
+    #dashboardBox .dashboard-card--panel {
+        gap: 12px;
+    }
+
+    #dashboardBox .dashboard-card--highlight .card-title,
+    #dashboardBox .dashboard-card--highlight .card-value {
+        padding-inline-end: 52px;
+    }
+
+    #dashboardBox .dashboard-card--highlight .card-value {
+        font-size: 1.02rem;
+    }
+
+    #dashboardBox .dashboard-card--highlight .card-meta {
+        margin-top: 6px;
+        font-size: .68rem;
+    }
+
+    #dashboardBox .dashboard-card--highlight .dash-medal {
+        inset-block-start: 12px;
+        inset-inline-end: 12px;
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+    }
+
+    #dashboardBox .dashboard-card--highlight .dash-medal svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    #dashboardBox .dashboard-card .card-icon {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+    }
+
+    #dashboardBox .dashboard-card .card-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    #dashboardBox .dashboard-card .card-title {
+        font-size: .66rem;
+        line-height: 1.6;
+    }
+
+    #dashboardBox .dashboard-card .card-value {
+        font-size: 1.06rem;
+        line-height: 1.35;
+    }
+
+    #dashboardBox .dashboard-card .card-meta {
+        font-size: .6rem;
+        line-height: 1.6;
+    }
+
+    /* کارت اشتراک (قهرمان داشبورد) */
+    #dashboardBox .dashboard-quick-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 16px;
+        background:
+            radial-gradient(120% 150% at 100% 0%, rgba(45, 212, 191, .28), transparent 60%),
+            linear-gradient(150deg, #0b3b46 0%, #0f766e 55%, #115e59 100%) !important;
+        border-color: rgba(255, 255, 255, .16) !important;
+        color: #eafaf7;
+    }
+
+    #dashboardBox .dashboard-quick-card .quick-card-head {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    #dashboardBox .dashboard-quick-card .quick-card-title {
+        color: #eafaf7;
+        font-size: .88rem;
+        font-weight: 900;
+    }
+
+    #dashboardBox .dashboard-quick-card .dash-pill {
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        font-size: .62rem;
+        font-weight: 900;
+    }
+
+    #dashboardBox .quick-card-ring {
+        width: 148px;
+        height: 148px;
+        margin: 4px auto 0;
+    }
+
+    #dashboardBox .quick-card-ring-text strong { font-size: 1.5rem; color: #fff; }
+    #dashboardBox .quick-card-ring-text span { color: rgba(234, 250, 247, .78); font-size: .62rem; }
+
+    #dashboardBox .dashboard-quick-card .quick-card-meta {
+        color: rgba(234, 250, 247, .82);
+        font-size: .66rem;
+    }
+
+    #dashboardBox .dashboard-quick-card .quick-card-btn {
+        display: flex;
+        width: 100%;
+        min-height: 46px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, .28) !important;
+        border-radius: var(--adm-r-sm) !important;
+        background: rgba(255, 255, 255, .14);
+        color: #fff;
+        font-size: .8rem;
+        font-weight: 800;
+    }
+
+    #dashboardBox .dashboard-quick-card .quick-card-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* کارت‌های تحلیلی داشبورد */
+    #dashboardBox .dash-panel-head,
+    #dashboardBox .dash-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    #dashboardBox .dash-panel-title,
+    #dashboardBox .card-title,
+    #dashboardBox .table-title {
+        font-size: .78rem;
+        font-weight: 900;
+        line-height: 1.6;
+    }
+
+    #dashboardBox .dash-tag {
+        flex: 0 0 auto;
+        padding: 3px 9px;
+        border: 1px solid var(--adm-line);
+        border-radius: 999px;
+        background: var(--adm-surface);
+        color: var(--adm-muted);
+        font-size: .6rem;
+        font-weight: 800;
+    }
+
+    #dashboardBox .dash-rings {
+        display: flex;
+        gap: 10px;
+        justify-content: space-around;
+    }
+
+    #dashboardBox .dash-ring { min-width: 0; flex: 1 1 0; }
+    #dashboardBox .dash-ring__visual { width: 96px; height: 96px; margin: 0 auto; }
+    #dashboardBox .dash-ring__text strong { font-size: .92rem; }
+    #dashboardBox .dash-ring__label { font-size: .64rem; }
+
+    #dashboardBox .dash-stat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    #dashboardBox .dash-stat {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 11px;
+        border: 1px solid var(--adm-line-2);
+        border-radius: var(--adm-r-sm);
+        background: var(--adm-surface);
+    }
+
+    #dashboardBox .dash-stat .card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+    }
+
+    #dashboardBox .dash-stat .dash-stat__unit {
+        font-size: .62rem;
+        font-weight: 800;
+        color: var(--adm-muted);
+    }
+
+    /* قاب اسکرول جدول داخل کارت‌های داشبورد، بدون قاب تودرتو */
+    .dashboard-table-card .rt-scroll-wrap,
+    .dashboard-chart-card .rt-scroll-wrap,
+    .dashboard-card .rt-scroll-wrap,
+    .dashboard-table-card .table-responsive,
+    .dashboard-card .table-responsive {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* آمار حضور و غیاب */
+    .attendance-stat {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px !important;
+    }
+
+    .attendance-stat__icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        border-radius: 13px;
+    }
+
+    .attendance-stat__value { font-size: 1rem !important; font-weight: 900; }
+    .attendance-stat__label { font-size: .66rem !important; color: var(--adm-muted); font-weight: 700; }
+
+    .attendance-panel { padding: 14px !important; }
+    .attendance-panel__head { gap: 10px !important; margin-bottom: 12px; }
+    .attendance-panel__icon { width: 40px !important; height: 40px !important; border-radius: 13px !important; }
+    .attendance-panel__title { font-size: .86rem !important; font-weight: 900; }
+    .attendance-panel__subtitle { font-size: .66rem !important; color: var(--adm-muted); }
+    .attendance-panel__footer { display: flex; flex-wrap: wrap; gap: 8px; }
+    .attendance-panel__btn { min-height: 46px !important; flex: 1 1 46%; border-radius: var(--adm-r-sm) !important; }
+
+    .reg-stat-card { padding: 13px !important; }
+    .reg-stat-card__icon { width: 36px; height: 36px; border-radius: 12px; }
+    .reg-stat-card__body { gap: 2px; }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۸) تب‌ها و کنترل‌های سگمنتی
+       ══════════════════════════════════════════════════════════════════ */
+
+    .coworker-tabs,
+    .shift-tabs,
+    .vacation-tabs,
+    .overtime-tabs,
+    .hourlyPass-tabs,
+    .attendance-tabs,
+    .payroll-tabs,
+    .internal-automation-admin-tabs,
+    .helpdesk-views,
+    .tabs {
+        position: sticky;
+        top: calc(var(--adm-header-h) + var(--adm-safe-t) + 8px);
+        z-index: 40;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 5px !important;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 !important;
+        padding: 6px !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: 18px !important;
+        background: var(--adm-glass-strong) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.35);
+        backdrop-filter: blur(18px) saturate(1.35);
+        box-shadow: var(--adm-shadow-1) !important;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+        mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    }
+
+    .coworker-tabs::-webkit-scrollbar,
+    .shift-tabs::-webkit-scrollbar,
+    .vacation-tabs::-webkit-scrollbar,
+    .overtime-tabs::-webkit-scrollbar,
+    .hourlyPass-tabs::-webkit-scrollbar,
+    .attendance-tabs::-webkit-scrollbar,
+    .payroll-tabs::-webkit-scrollbar,
+    .internal-automation-admin-tabs::-webkit-scrollbar,
+    .helpdesk-views::-webkit-scrollbar,
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .coworker-tabs > *,
+    .shift-tabs > *,
+    .vacation-tabs > *,
+    .overtime-tabs > *,
+    .hourlyPass-tabs > *,
+    .attendance-tabs > *,
+    .payroll-tabs > *,
+    .internal-automation-admin-tabs > *,
+    .helpdesk-views > *,
+    .tabs > * {
+        position: relative;
+        display: inline-flex;
+        flex: 0 0 auto;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 15px !important;
+        scroll-snap-align: center;
+        border: 1px solid transparent !important;
+        border-radius: 13px !important;
+        background: transparent !important;
+        color: var(--adm-muted) !important;
+        font: 700 .76rem/1.2 'Vazir', sans-serif !important;
+        white-space: nowrap;
+        box-shadow: none !important;
+        transition: color .3s var(--adm-ease-soft), background .3s var(--adm-ease-soft),
+            transform .35s var(--adm-ease-spring), box-shadow .3s var(--adm-ease-soft);
+    }
+
+    .coworker-tabs > * svg,
+    .shift-tabs > * svg,
+    .vacation-tabs > * svg,
+    .overtime-tabs > * svg,
+    .hourlyPass-tabs > * svg,
+    .attendance-tabs > * svg,
+    .payroll-tabs > * svg { width: 15px; height: 15px; flex: 0 0 15px; }
+
+    .coworker-tabs > .active,
+    .shift-tabs > .active,
+    .vacation-tabs > .active,
+    .overtime-tabs > .active,
+    .hourlyPass-tabs > .active,
+    .attendance-tabs > .active,
+    .payroll-tabs > .active,
+    .internal-automation-admin-tabs > .active,
+    .helpdesk-views > .active,
+    .tabs > .active {
+        border-color: var(--adm-line) !important;
+        background: linear-gradient(140deg, #ffffff, #f2f8fb) !important;
+        color: var(--adm-ink) !important;
+        box-shadow: 0 8px 18px -12px rgba(8, 30, 50, .45) !important;
+    }
+
+    .coworker-tabs > .active::after,
+    .shift-tabs > .active::after,
+    .vacation-tabs > .active::after,
+    .overtime-tabs > .active::after,
+    .hourlyPass-tabs > .active::after,
+    .attendance-tabs > .active::after,
+    .payroll-tabs > .active::after,
+    .internal-automation-admin-tabs > .active::after,
+    .helpdesk-views > .active::after,
+    .tabs > .active::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        inset-inline: 30%;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, transparent, var(--adm-brand), transparent);
+    }
+
+    .coworker-tabs > *:active,
+    .shift-tabs > *:active,
+    .vacation-tabs > *:active,
+    .overtime-tabs > *:active,
+    .hourlyPass-tabs > *:active,
+    .attendance-tabs > *:active,
+    .payroll-tabs > *:active,
+    .internal-automation-admin-tabs > *:active,
+    .helpdesk-views > *:active {
+        transform: scale(.96);
+    }
+
+    /* زیرتب‌ها (شیفت روزها/بازه‌ها) */
+    .shift-active-header,
+    .shift-details-form__title-row,
+    .reg-toolbar,
+    .notification-toolbar,
+    .ticket-toolbar,
+    .vacation-report-toolbar,
+    .overtime-report-toolbar,
+    .hourlyPass-report-toolbar,
+    .payroll-save-actions,
+    .form-actions,
+    .action-buttons,
+    .modal-buttons,
+    .shift-popup-actions,
+    .sabt-ticket-actions,
+    .internal-automation-admin-form-footer,
+    .notification-confirm-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .reg-toolbar > *,
+    .notification-toolbar > *,
+    .ticket-toolbar > *,
+    .vacation-report-toolbar > *,
+    .overtime-report-toolbar > *,
+    .hourlyPass-report-toolbar > * {
+        flex: 1 1 100%;
+    }
+
+    .form-actions > *,
+    .action-buttons > *,
+    .modal-buttons > *,
+    .shift-popup-actions > *,
+    .sabt-ticket-actions > *,
+    .notification-confirm-actions > * {
+        flex: 1 1 46%;
+        min-width: 0;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۹) فرم‌ها و کنترل‌ها — هدف لمسی ۴۸px
+       ══════════════════════════════════════════════════════════════════ */
+
+    .management-box input,
+    .management-box select,
+    .management-box textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 48px;
+        padding: 12px 13px !important;
+        border: 1px solid var(--adm-line-strong) !important;
+        border-radius: var(--adm-r-sm) !important;
+        background: var(--adm-surface) !important;
+        color: var(--adm-ink) !important;
+        font-family: inherit !important;
+        font-size: .86rem !important;
+        box-shadow: inset 0 1px 2px rgba(8, 30, 50, .03);
+        transition: border-color .28s var(--adm-ease-soft), box-shadow .28s var(--adm-ease-soft);
+    }
+
+    .management-box textarea {
+        min-height: 104px;
+        line-height: 1.9;
+    }
+
+    .management-box input:focus,
+    .management-box select:focus,
+    .management-box textarea:focus {
+        outline: 0;
+        border-color: var(--adm-brand) !important;
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, .14);
+    }
+
+    .management-box input::placeholder,
+    .management-box textarea::placeholder {
+        color: var(--adm-faint);
+        font-size: .8rem;
+    }
+
+    .management-box label,
+    .management-box .attendance-form__label,
+    .management-box .payroll-column-title,
+    .management-box .vacation-config-title,
+    .management-box .overtime-config-title,
+    .management-box .hourlyPass-config-title,
+    .management-box .hooroor-config-title {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--adm-ink-2) !important;
+        font-size: .74rem !important;
+        font-weight: 800 !important;
+        line-height: 1.7;
+    }
+
+    .management-box button,
+    .management-box .btn,
+    .management-box a.btn {
+        min-height: 46px;
+        padding: 11px 15px;
+        border-radius: var(--adm-r-sm);
+        font-family: inherit;
+        font-size: .8rem;
+        font-weight: 800;
+        transition: transform .3s var(--adm-ease-spring), box-shadow .3s var(--adm-ease-soft),
+            filter .25s linear;
+    }
+
+    .management-box button:not(.coworker-tab-btn):not(.shift-tab-btn):not(.vacation-tab-btn):not(.overtime-tab-btn):not(.hourlyPass-tab-btn):not(.attendance-tab-btn):not(.payroll-tab-btn),
+    .management-box .btn {
+        background-image: linear-gradient(135deg, var(--adm-brand) 0%, var(--adm-brand-2) 100%);
+        box-shadow: 0 14px 26px -16px var(--adm-accent-glow);
+    }
+
+    /* فرم‌های چندستونی → تک‌ستونی */
+    .form-krbrjadid,
+    .form-row-krbrjadid,
+    .shift-details-form,
+    .attendance-form__row,
+    .attendance-form__times,
+    .vacation-config-grid,
+    .overtime-config-grid,
+    .hourlyPass-config-grid,
+    .hooroor-config-grid,
+    .payroll-config,
+    .payroll-config-grid,
+    .notification-form-grid,
+    .internal-automation-admin-create-form,
+    .nu-section,
+    .helpdesk-layout,
+    .attendance-form-wrap {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .form-row-krbrjadid > *,
+    .attendance-form__row > *,
+    .attendance-form__times > * {
+        grid-column: 1 / -1 !important;
+    }
+
+    /* بخش‌های فرم کاربر جدید */
+    .nu-section {
+        padding: 13px !important;
+        border: 1px solid var(--adm-line-2) !important;
+        border-radius: var(--adm-r-sm) !important;
+        background: var(--adm-surface) !important;
+    }
+
+    .nu-section h3,
+    .nu-section h4 {
+        font-size: .84rem !important;
+        font-weight: 900;
+        margin-bottom: 10px;
+    }
+
+    /* ساعت‌ها و انتخابگرها */
+    .time-container,
+    .time-section,
+    .time-btn {
+        min-height: 46px;
+        border-radius: var(--adm-r-sm) !important;
+    }
+
+    .days-column,
+    .shift-schedule-grid,
+    .schedule-container,
+    .week-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .day-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 46px;
+        padding: 9px 12px;
+        border: 1px solid var(--adm-line-2);
+        border-radius: var(--adm-r-sm);
+        background: var(--adm-surface);
+        font-size: .76rem;
+        font-weight: 700;
+    }
+
+    .day-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* دسته‌بندی خلاصه اعداد */
+    .numBox,
+    .numBoxInput,
+    .numBoxEzafeh {
+        width: auto !important;
+        height: auto !important;
+        min-height: 46px;
+        padding: 8px 11px !important;
+        border-radius: var(--adm-r-sm) !important;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱۰) جدول‌ها — اسکرول کنترل‌شده داخل قاب، هرگز برای کل صفحه
+       ══════════════════════════════════════════════════════════════════ */
+
+    .user-table-scroll,
+    .shift-table-scroll,
+    .payroll-table-scroll,
+    .hourly-payroll-table-scroll,
+    .overtime-payroll-table-scroll,
+    .reg-table-wrap,
+    .notification-table-wrap,
+    .hooroor-table-wrap,
+    .hozoor-table-wrap,
+    #hozoorbox .hozoor-table-wrap,
+    #natigehHozoor .hozoor-table-wrap,
+    .holdings-table-wrap,
+    .rt-scroll-wrap,
+    .rt-scroll,
+    .management-box .table-wrapper,
+    .management-box .table-scroll,
+    .management-box .table-responsive,
+    .management-box .report-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r) !important;
+        background: var(--adm-surface) !important;
+        box-shadow: var(--adm-shadow-1);
+        scrollbar-width: none;
+    }
+
+    .user-table-scroll::-webkit-scrollbar,
+    .shift-table-scroll::-webkit-scrollbar,
+    .payroll-table-scroll::-webkit-scrollbar,
+    .hourly-payroll-table-scroll::-webkit-scrollbar,
+    .overtime-payroll-table-scroll::-webkit-scrollbar,
+    .reg-table-wrap::-webkit-scrollbar,
+    .notification-table-wrap::-webkit-scrollbar,
+    .hooroor-table-wrap::-webkit-scrollbar { display: none; }
+
+    .management-box table {
+        width: 100%;
+        min-width: 640px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: .74rem;
+        table-layout: auto;
+    }
+
+    .management-box thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        padding: 11px 10px !important;
+        border-bottom: 1px solid var(--adm-line-strong) !important;
+        background: linear-gradient(180deg, #f2f8fa, #eaf3f7) !important;
+        color: var(--adm-ink-2) !important;
+        font-size: .68rem !important;
+        font-weight: 900 !important;
+        white-space: nowrap;
+    }
+
+    .management-box tbody td {
+        padding: 11px 10px !important;
+        border-bottom: 1px solid var(--adm-line-2) !important;
+        color: var(--adm-ink) !important;
+        font-size: .72rem !important;
+        line-height: 1.8;
+        vertical-align: middle;
+        background: var(--adm-surface);
+    }
+
+    .management-box tbody tr:nth-child(even) td {
+        background: #fbfdff;
+    }
+
+    .management-box tbody tr:last-child td {
+        border-bottom: 0 !important;
+    }
+
+    /* ستون اول چسبان: هویت رکورد در حین اسکرول دیده می‌ماند */
+    .management-box thead th:first-child,
+    .management-box tbody td:first-child {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 2;
+        background: #f4fafb !important;
+        box-shadow: inset -1px 0 0 var(--adm-line-2);
+    }
+
+    .management-box thead th:first-child {
+        z-index: 4;
+        background: linear-gradient(180deg, #eef6f8, #e6f1f5) !important;
+    }
+
+    .management-box tbody tr:nth-child(even) td:first-child {
+        background: #f1f8fa !important;
+    }
+
+    /* دکمه‌های عملیات داخل جدول */
+    .management-box .edit-btn,
+    .management-box .trash-icon,
+    .management-box .manual-checkout-btn,
+    .management-box .attendance-action-btn {
+        display: inline-flex;
+        min-width: 40px;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        margin: 0 !important;
+        border-radius: 12px !important;
+    }
+
+    .management-box .tooltip-text-table,
+    .management-box .tooltip-text-table-att,
+    .management-box .tooltip-text-table-del {
+        display: none;
+    }
+
+    /* نمای کارتی ریسپانسیو (responsive-tables) — هم‌رنگ با سیستم جدید */
+    .rt-view { margin: 0 0 4px; }
+
+    .rt-card {
+        border-radius: var(--adm-r) !important;
+        border-color: var(--adm-line) !important;
+        background: linear-gradient(150deg, var(--adm-surface), var(--adm-surface-2)) !important;
+        box-shadow: var(--adm-shadow-1) !important;
+    }
+
+    .rt-card__head {
+        padding: 12px 14px 10px;
+        background: linear-gradient(120deg, rgba(13, 148, 136, .06), rgba(14, 165, 233, .05));
+    }
+
+    .rt-card__title { font-size: .86rem; }
+
+    .rt-field__label { font-size: .7rem; color: var(--adm-muted); }
+    .rt-field__value { font-size: .76rem; color: var(--adm-ink); }
+
+    .rt-badge {
+        font-size: .68rem;
+        padding: 5px 10px;
+        border-radius: 999px;
+    }
+
+    .rt-scroll-hint {
+        border-radius: 999px;
+        background: var(--adm-glass-strong);
+        box-shadow: var(--adm-shadow-1);
+        font-size: .64rem;
+    }
+
+    /* نمای فهرستی (Pattern C) — ردیف‌های لمسی و خوانا */
+    .rt-list {
+        gap: 9px;
+    }
+
+    .rt-list__row {
+        min-height: 58px;
+        padding: 11px 13px !important;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: var(--adm-r-sm) !important;
+        background: linear-gradient(150deg, var(--adm-surface), var(--adm-surface-2)) !important;
+        box-shadow: var(--adm-shadow-1);
+        transition: transform .3s var(--adm-ease-spring), box-shadow .3s var(--adm-ease-soft);
+    }
+
+    .rt-list__row:active {
+        transform: scale(.985);
+        background: var(--adm-surface-2) !important;
+    }
+
+    /* آواتار حرف‌اول با همان گرادیان کاشی‌های سایدبار دسکتاپ */
+    .rt-list__avatar {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 14px;
+        background: linear-gradient(140deg, var(--adm-brand), var(--adm-brand-2)) !important;
+        color: #fff !important;
+        font-size: .92rem !important;
+        font-weight: 900 !important;
+        text-shadow: 0 1px 2px rgba(6, 40, 50, .25);
+    }
+
+    .rt-list__title {
+        font-size: .8rem !important;
+        font-weight: 900 !important;
+    }
+
+    .rt-list__meta {
+        font-size: .68rem !important;
+        color: var(--adm-muted) !important;
+        gap: 4px 10px !important;
+    }
+
+    .rt-card__body {
+        padding: 10px 13px 8px;
+    }
+
+    .rt-field {
+        padding: 4px 0;
+        border-bottom: 1px dashed var(--adm-line-2);
+    }
+
+    .rt-field:last-child {
+        border-bottom: 0;
+    }
+
+    .rt-sheet {
+        border-radius: 26px 26px 0 0 !important;
+    }
+
+    /* خالی‌بودن جدول‌ها */
+    .hozoor-table-empty .hozoor-table-empty__state {
+        min-width: 240px;
+        padding: 16px 12px !important;
+    }
+
+    .hozoor-table-empty .hozoor-table-empty__state p {
+        font-size: .74rem !important;
+        line-height: 1.95;
+    }
+
+    .dash-empty,
+    .hozoor-table-empty,
+    .reg-empty-state,
+    .shifts-empty-row,
+    .ticket-context-empty {
+        display: block;
+        padding: 18px 14px;
+        border: 1px dashed var(--adm-line-strong);
+        border-radius: var(--adm-r-sm);
+        background: rgba(255, 255, 255, .6);
+        color: var(--adm-muted);
+        font-size: .76rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱۱) فهرست‌ها: تیکت، ثبت‌نام، اعلان، اتوماسیون
+       ══════════════════════════════════════════════════════════════════ */
+
+    .helpdesk-layout { display: flex !important; flex-direction: column; gap: 12px; }
+    .helpdesk-list-pane,
+    .helpdesk-view {
+        width: 100% !important;
+        padding: 13px !important;
+    }
+
+    .helpdesk-pane-head,
+    .helpdesk-views-head,
+    .ticket-panel-kicker {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: .76rem !important;
+        font-weight: 900;
+    }
+
+    .helpdesk-head-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .helpdesk-head-actions > * { flex: 1 1 46%; }
+
+    .helpdesk-ticket-list { display: flex; flex-direction: column; gap: 9px; }
+
+    .internal-automation-admin-list,
+    .internal-automation-admin-open-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .internal-automation-admin-note {
+        padding: 12px 13px;
+        border-inline-start: 3px solid var(--adm-brand);
+        border-radius: var(--adm-r-sm);
+        background: rgba(13, 148, 136, .07);
+        font-size: .72rem;
+        line-height: 1.9;
+    }
+
+    .line-separator { height: 1px; background: var(--adm-line); }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱۲) نمودارها
+       ══════════════════════════════════════════════════════════════════ */
+
+    .dashboard-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+        padding: 0;
+    }
+
+    .chart-bar {
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr) 76px;
+        align-items: center;
+        gap: 9px;
+        min-height: 34px;
+    }
+
+    .chart-bar .bar-number {
+        font-size: .66rem;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .chart-bar .bar-fill {
+        height: 12px !important;
+        border-radius: 999px !important;
+    }
+
+    .chart-bar .bar-value {
+        border-radius: 999px !important;
+    }
+
+    .chart-bar .bar-label {
+        font-size: .66rem;
+        font-weight: 700;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱۳) مودال‌ها، پاپ‌آپ‌ها و پیام‌ها → برگه‌های کشویی (Bottom Sheet)
+       ══════════════════════════════════════════════════════════════════ */
+
+    /* توجه: هیچ‌جا display این لایه‌ها را تغییر نمی‌دهیم؛ باز/بسته بودن آن‌ها
+       همچنان با منطق فعلی (inline style / صفت hidden / کلاس is-open) اداره
+       می‌شود. ما فقط ظاهر و هندسه را در حالت «باز» طراحی می‌کنیم. */
+    .modal,
+    .modal-virayesh,
+    .modal-hazf,
+    .MoshahedeOverlay,
+    .popup-overlay,
+    .popupHozoor-overlay,
+    .morakhaci-sabt,
+    .shift-popup-overlay,
+    .reg-detail-modal,
+    .notification-dialog,
+    .notification-detail {
+        z-index: 1200 !important;
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: 100dvh !important;
+        max-height: none !important;
+        transform: none !important;
+        overflow-x: hidden;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: radial-gradient(120% 80% at 50% 0%, rgba(8, 30, 50, .32), rgba(6, 18, 30, .62)) !important;
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+        animation: admOverlayIn .3s var(--adm-ease-soft) both;
+    }
+
+    .ticket-conversation-overlay {
+        background: radial-gradient(120% 80% at 50% 0%, rgba(11, 42, 59, .36), rgba(6, 18, 30, .66)) !important;
+    }
+
+    @keyframes admOverlayIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* کارت‌های دیالوگ → برگهٔ کشویی پایین‌چسب (Bottom Sheet)
+       کارت‌ها با position:fixed مستقل از نوع display لایهٔ پوشاننده پایین
+       صفحه می‌چسبند؛ بنابراین اگر منطق فعلی overlay را block یا flex کند،
+       نتیجه یکی است. خودِ کارت هم display ندارد تا حالت «بسته» حفظ شود. */
+    .modal-content,
+    .modal-content-checkout,
+    .confirm-delete-popup,
+    .popup-content-virayesh,
+    .modal-content-hazfPopup,
+    .modal-content-sabtTicket,
+    .ticket-status-box,
+    .popupHozoor-content,
+    .sabt-ticket-dialog,
+    .shift-popup-content,
+    .shift-popup,
+    .modaleSabteTicket.sabt-ticket-wrap,
+    .reg-detail-modal__card,
+    .notification-dialog-card,
+    .MoshahdePopup,
+    .ticket-conversation-dialog,
+    /* همان زنجیره‌های انتخابگر لایه‌های قدیمی‌تر، تا قواعد قبلی موبایل
+       (responsive-mobile.css و ticketing.css) روی این کارت‌ها غالب نشوند. */
+    .page-shell .modal .modal-content,
+    .page-shell .modal-virayesh .popup-content-virayesh,
+    .page-shell .modal-hazf .modal-content-hazfPopup,
+    .page-shell .modaleSabteTicket .modal-content-sabtTicket,
+    .modal-hazf .modal-content-hazfPopup,
+    .popup-overlay .ticket-status-box,
+    .popupHozoor-overlay .popupHozoor-content,
+    .morakhaci-sabt .modal .modal-content,
+    .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap,
+    .morakhaci-sabt .modal-content-sabtTicket.sabt-ticket-dialog,
+    .shift-popup-overlay .shift-popup,
+    .MoshahdePopup,
+    .ticket-conversation-overlay ~ .ticket-conversation-dialog {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 92dvh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: 26px 26px 0 0 !important;
+        background: var(--adm-surface) !important;
+        box-shadow: 0 -20px 60px -20px rgba(4, 16, 28, .55) !important;
+        transform: none !important;
+        animation: admSheetIn .46s var(--adm-ease-spring) both;
+        padding-bottom: var(--adm-safe-b) !important;
+    }
+
+    /* کارت‌هایی که چیدمان داخلی‌شان ستونی است، در حالت باز هم ستونی می‌مانند */
+    :is(.ticket-conversation-dialog, .notification-dialog-card, .reg-detail-modal__card):is([style*="display: flex"], [style*="display:flex"], [style*="display: block"], [style*="display:block"]) {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    @keyframes admSheetIn {
+        from { opacity: .4; transform: translateY(24%) scale(.99); }
+        to { opacity: 1; transform: none; }
+    }
+
+    /* دستگیرهٔ کشیدن برگه — چسبان تا همیشه در دید بماند */
+    .modal-content::before,
+    .confirm-delete-popup::before,
+    .popup-content-virayesh::before,
+    .modal-content-hazfPopup::before,
+    .modal-content-sabtTicket::before,
+    .ticket-status-box::before,
+    .popupHozoor-content::before,
+    .sabt-ticket-dialog::before,
+    .shift-popup::before,
+    .reg-detail-modal__card::before,
+    .notification-dialog-card::before,
+    .MoshahdePopup::before,
+    .ticket-conversation-dialog::before {
+        content: '';
+        position: sticky;
+        top: 6px;
+        z-index: 6;
+        display: block;
+        width: 46px;
+        height: 4px;
+        margin: 6px auto -4px;
+        border-radius: 999px;
+        background: var(--adm-line-strong);
+        pointer-events: none;
+    }
+
+    /* بدنهٔ اسکرول‌شوندهٔ برگه */
+    .modal-content > *,
+    .popup-content-virayesh > *,
+    .modal-content-hazfPopup > *,
+    .modal-content-sabtTicket > *,
+    .ticket-status-box > *,
+    .popupHozoor-content > *,
+    .sabt-ticket-dialog > *,
+    .shift-popup-content > * {
+        max-width: 100%;
+    }
+
+    .modal-content form,
+    .popup-content-virayesh form,
+    .sabt-ticket-dialog form {
+        padding: 16px 15px !important;
+    }
+
+    .modal-content h2,
+    .popup-content-virayesh h2,
+    .modal-content-hazfPopup h2,
+    .modal-content-sabtTicket h2,
+    .ticket-status-box h2,
+    .popupHozoor-content h2,
+    .profile-panel-title {
+        margin: 0 !important;
+        padding: 20px 16px 12px !important;
+        border-bottom: 1px solid var(--adm-line-2);
+        font-size: .92rem !important;
+        font-weight: 900 !important;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .modal-content p,
+    .modal-content-hazfPopup p,
+    .popupHozoor-content p {
+        font-size: .78rem;
+        line-height: 1.95;
+    }
+
+    .modal-buttons,
+    .form-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        padding: 12px 15px calc(12px + var(--adm-safe-b)) !important;
+        background: var(--adm-surface-2);
+        border-top: 1px solid var(--adm-line-2);
+    }
+
+    .confirm-delete-header,
+    .confirm-delete-body,
+    .confirm-delete-footer,
+    .modal-content > p,
+    .modal-content > h2 {
+        padding-inline: 16px;
+    }
+
+    .confirm-delete-footer,
+    .ok-btn {
+        padding-bottom: calc(12px + var(--adm-safe-b)) !important;
+    }
+
+    .confirm-delete-footer > * {
+        flex: 1 1 46%;
+        min-width: 0;
+        min-height: 46px;
+    }
+
+    /* گفتگوی تیکت: تمام‌صفحه برای خوانایی مکالمه */
+    .ticket-conversation-dialog,
+    .ticket-conversation-overlay .ticket-conversation-dialog {
+        max-height: 96dvh !important;
+        border-radius: 26px 26px 0 0 !important;
+    }
+
+    .ticket-conversation-head {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        padding: 20px 15px 12px !important;
+        border-bottom: 1px solid var(--adm-line-2);
+        background: var(--adm-surface);
+    }
+
+    .ticket-reply-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 4;
+        display: flex;
+        gap: 8px;
+        padding: 10px 12px calc(10px + var(--adm-safe-b)) !important;
+        border-top: 1px solid var(--adm-line-2);
+        background: var(--adm-surface-2);
+    }
+
+    .ticket-reply-bar > * { min-width: 0; }
+    .ticket-reply-bar input,
+    .ticket-reply-bar textarea { flex: 1 1 auto; min-height: 46px; }
+
+    /* پیام موفقیت و توست‌ها */
+    .success-message,
+    .toast-stack {
+        position: fixed !important;
+        inset-inline: 12px !important;
+        bottom: calc(var(--adm-tab-h) + var(--adm-safe-b) + 12px) !important;
+        top: auto !important;
+        left: 12px !important;
+        right: 12px !important;
+        z-index: 1200;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 34vh;
+        padding: 13px 38px 13px 15px !important;
+        overflow-y: auto;
+        border: 1px solid var(--adm-line) !important;
+        border-radius: 18px !important;
+        background: var(--adm-glass-strong) !important;
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+        box-shadow: var(--adm-shadow-3) !important;
+        font-size: .78rem !important;
+        transform: translateY(140%);
+        transition: transform .5s var(--adm-ease-spring);
+    }
+
+    .success-message.show,
+    .toast-stack.show {
+        transform: translateY(0);
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════════
+       ۱۴) منوی پروفایل، تم تیره و اصلاحات ریزی
+       ══════════════════════════════════════════════════════════════════ */
+
+    .profile-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        inset-inline: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 88dvh;
+        margin: 0 !important;
+        padding: 8px 14px calc(16px + var(--adm-safe-b)) !important;
+        overflow-y: auto;
+        border: 0 !important;
+        border-radius: 26px 26px 0 0 !important;
+        background: var(--adm-surface) !important;
+        box-shadow: 0 -24px 60px -24px rgba(4, 16, 28, .5) !important;
+        z-index: 1000 !important;
+        animation: admSheetIn .46s var(--adm-ease-spring) both;
+    }
+
+    .profile-dropdown::before {
+        content: '';
+        display: block;
+        width: 46px;
+        height: 4px;
+        margin: 4px auto 10px;
+        border-radius: 999px;
+        background: var(--adm-line-strong);
+    }
+
+    .pd-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 13px;
+        border: 1px solid var(--adm-line);
+        border-radius: var(--adm-r) !important;
+        background: linear-gradient(120deg, rgba(13, 148, 136, .10), rgba(14, 165, 233, .08));
+    }
+
+    .pd-header__avatar img { width: 46px; height: 46px; border-radius: 50%; }
+    .pd-header__name { font-size: .88rem; font-weight: 900; }
+    .pd-header__role { font-size: .66rem; color: var(--adm-muted); }
+
+    .pd-section__label {
+        margin: 14px 4px 8px;
+        color: var(--adm-faint);
+        font-size: .62rem;
+        font-weight: 900;
+        letter-spacing: .02em;
+    }
+
+    .pd-item {
+        display: flex;
+        width: 100%;
+        min-height: 52px;
+        align-items: center;
+        gap: 11px;
+        padding: 9px 11px;
+        margin-bottom: 6px;
+        border: 1px solid var(--adm-line-2);
+        border-radius: 16px;
+        background: var(--adm-surface);
+        text-align: start;
+        transition: transform .3s var(--adm-ease-spring), background .3s var(--adm-ease-soft);
+    }
+
+    .pd-item:active { transform: scale(.975); background: var(--adm-surface-2); }
+    .pd-item__icon { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 13px; }
+    .pd-item__text { flex: 1 1 auto; font-size: .8rem; font-weight: 800; }
+    .pd-item__arrow { width: 16px; height: 16px; color: var(--adm-faint); }
+
+    .profile-panel {
+        position: fixed !important;
+        inset: auto 0 0 0 !important;
+        max-height: 92dvh !important;
+    }
+
+    .profile-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 18px 15px 12px;
+        border-bottom: 1px solid var(--adm-line-2);
+    }
+
+    .profile-panel-title { font-size: .9rem !important; padding: 0 !important; border: 0 !important; }
+    .profile-panel-subtitle { font-size: .68rem; color: var(--adm-muted); }
+    .profile-panel-body { padding: 14px 15px calc(16px + var(--adm-safe-b)); overflow-y: auto; }
+    .profile-panel-close {
+        display: inline-flex;
+        width: 38px;
+        height: 38px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--adm-line);
+        border-radius: 13px;
+        background: var(--adm-surface-2);
+        color: var(--adm-muted);
+    }
+
+    /* آیکون‌های داخل گریدها اندازهٔ لمس‌پذیر */
+    .management-box .card-icon,
+    .management-box .attendance-panel__icon,
+    .management-box .stat-icon {
+        flex: 0 0 auto;
+    }
+
+    /* اسکلت و لودینگ */
+    .ticket-loading-state,
+    .notification-loading {
+        padding: 18px;
+        color: var(--adm-muted);
+        font-size: .74rem;
+        text-align: center;
+    }
+
+    .ticket-loading-state::after,
+    .notification-loading::after {
+        content: '';
+        display: block;
+        width: 34px;
+        height: 3px;
+        margin: 12px auto 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, var(--adm-brand), transparent);
+        animation: admShimmer 1.4s var(--adm-ease-soft) infinite;
+    }
+
+    @keyframes admShimmer {
+        0% { transform: translateX(-14px) scaleX(.5); opacity: .35; }
+        50% { transform: translateX(0) scaleX(1); opacity: 1; }
+        100% { transform: translateX(14px) scaleX(.5); opacity: .35; }
+    }
+
+    /* اعلان‌های سرصفحه در مسیر اسکرول، جمع‌وجورتر می‌شوند */
+    .page-shell.is-scrolled .section-hero,
+    .page-shell.is-scrolled .dash-head {
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   تم تیره — فقط بازنویسی توکن‌ها، مطابق لایهٔ مشترک dark-theme.css
+   ══════════════════════════════════════════════════════════════════════ */
+@media screen and (max-width: 768px) {
+    body.dark-mode,
+    body.dark-theme {
+        --adm-bg: #0b1622;
+        --adm-bg-2: #0e1c2a;
+        --adm-surface: #16232f;
+        --adm-surface-2: #1a2a38;
+        --adm-glass: rgba(16, 30, 44, .90);
+        --adm-glass-strong: rgba(14, 26, 39, .96);
+
+        --adm-ink: #e9f1f8;
+        --adm-ink-2: #c3d3e2;
+        --adm-muted: #93a7ba;
+        --adm-faint: #74889a;
+
+        --adm-line: rgba(160, 190, 215, .16);
+        --adm-line-2: rgba(160, 190, 215, .09);
+        --adm-line-strong: rgba(160, 190, 215, .26);
+
+        --adm-shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 26px -20px rgba(0, 0, 0, .8);
+        --adm-shadow-2: 0 2px 8px rgba(0, 0, 0, .45), 0 22px 44px -24px rgba(0, 0, 0, .9);
+        --adm-shadow-3: 0 4px 14px rgba(0, 0, 0, .5), 0 30px 60px -26px rgba(0, 0, 0, .95);
+
+        background:
+            radial-gradient(115% 55% at 100% 0%, rgba(13, 148, 136, .20), transparent 58%),
+            radial-gradient(95% 50% at 0% 6%, rgba(14, 165, 233, .16), transparent 56%),
+            linear-gradient(180deg, #0d1a26 0%, var(--adm-bg) 50%, #091320 100%);
+    }
+
+    body.dark-mode .admin-topbar-modern,
+    body.dark-theme .admin-topbar-modern,
+    body.dark-mode .rightSidebar,
+    body.dark-theme .rightSidebar,
+    body.dark-mode .adm-tabbar__inner,
+    body.dark-theme .adm-tabbar__inner {
+        background: linear-gradient(180deg, rgba(18, 32, 47, .95), rgba(14, 26, 39, .88)) !important;
+    }
+
+    body.dark-mode .mobile-menu-toggle,
+    body.dark-theme .mobile-menu-toggle,
+    body.dark-mode .topbar-icon-btn,
+    body.dark-theme .topbar-icon-btn,
+    body.dark-mode .theme-toggle,
+    body.dark-theme .theme-toggle,
+    body.dark-mode .topbar-clock-pill,
+    body.dark-theme .topbar-clock-pill {
+        background: var(--adm-surface);
+        color: var(--adm-ink-2);
+    }
+
+    body.dark-mode .mobile-menu-toggle,
+    body.dark-theme .mobile-menu-toggle { color: #5eead4; }
+
+    body.dark-mode .management-box thead th,
+    body.dark-theme .management-box thead th {
+        background: linear-gradient(180deg, #1b3040, #16283a) !important;
+        color: var(--adm-ink-2) !important;
+    }
+
+    body.dark-mode .management-box tbody td,
+    body.dark-theme .management-box tbody td {
+        background: var(--adm-surface) !important;
+        color: var(--adm-ink) !important;
+    }
+
+    body.dark-mode .management-box tbody tr:nth-child(even) td,
+    body.dark-theme .management-box tbody tr:nth-child(even) td {
+        background: var(--adm-surface-2) !important;
+    }
+
+    body.dark-mode .management-box thead th:first-child,
+    body.dark-theme .management-box thead th:first-child,
+    body.dark-mode .management-box tbody td:first-child,
+    body.dark-theme .management-box tbody td:first-child {
+        background: #1a2b3a !important;
+    }
+
+    body.dark-mode .section-hero,
+    body.dark-theme .section-hero,
+    body.dark-mode .dash-head,
+    body.dark-theme .dash-head,
+    body.dark-mode .notification-page-head,
+    body.dark-theme .notification-page-head,
+    body.dark-mode .reg-hero,
+    body.dark-theme .reg-hero {
+        background: linear-gradient(150deg, var(--adm-surface), var(--adm-surface-2)) !important;
+    }
+
+    body.dark-mode .coworker-tabs > .active,
+    body.dark-theme .coworker-tabs > .active,
+    body.dark-mode .shift-tabs > .active,
+    body.dark-theme .shift-tabs > .active,
+    body.dark-mode .vacation-tabs > .active,
+    body.dark-theme .vacation-tabs > .active,
+    body.dark-mode .overtime-tabs > .active,
+    body.dark-theme .overtime-tabs > .active,
+    body.dark-mode .hourlyPass-tabs > .active,
+    body.dark-theme .hourlyPass-tabs > .active,
+    body.dark-mode .attendance-tabs > .active,
+    body.dark-theme .attendance-tabs > .active,
+    body.dark-mode .payroll-tabs > .active,
+    body.dark-theme .payroll-tabs > .active,
+    body.dark-mode .internal-automation-admin-tabs > .active,
+    body.dark-theme .internal-automation-admin-tabs > .active,
+    body.dark-mode .helpdesk-views > .active,
+    body.dark-theme .helpdesk-views > .active {
+        background: linear-gradient(140deg, #1e3444, #182a3a) !important;
+        color: #fff !important;
+    }
+
+    body.dark-mode .management-box .edit-btn,
+    body.dark-theme .management-box .edit-btn {
+        background: #1d3444 !important;
+    }
+
+    /* کاشی‌های آیکون در تم تیره نباید سفیدِ مات بگیرند */
+    body.dark-mode #dashboardBox .dashboard-card .card-icon,
+    body.dark-theme #dashboardBox .dashboard-card .card-icon {
+        background: linear-gradient(145deg, var(--tint-soft), rgba(255, 255, 255, .05)) !important;
+    }
+
+    body.dark-mode .dash-chip,
+    body.dark-theme .dash-chip,
+    body.dark-mode #dashboardBox .dash-tag,
+    body.dark-theme #dashboardBox .dash-tag {
+        background: var(--adm-surface-2) !important;
+        color: var(--adm-ink-2) !important;
+    }
+
+    body.dark-mode #dashboardBox .dash-stat,
+    body.dark-theme #dashboardBox .dash-stat {
+        background: var(--adm-surface-2) !important;
+        border-color: var(--adm-line) !important;
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   گوشی‌های کوچک و حالت افقی
+   ══════════════════════════════════════════════════════════════════════ */
+@media screen and (max-width: 400px) {
+    :root {
+        --adm-header-h: 56px;
+        --adm-tab-h: 60px;
+    }
+
+    .admin-topbar-modern,
+    .admin-topbar-modern.ma-header-box {
+        padding-inline: 9px;
+    }
+
+    .ma-header-brand .sidebar-top-card-text { display: none; }
+    .topbar-clock-pill { max-width: 74px; padding: 4px 7px; }
+    .topbar-clock-date { display: none; }
+    .topbar-icon-btn,
+    .theme-toggle { flex: 0 0 38px; width: 38px; height: 38px; }
+    .topbar-avatar-wrap,
+    .topbar-avatar { width: 38px; height: 38px; }
+
+    :root { --adm-pad-x: 10px; }
+
+    .management-box .table-responsive,
+    .management-box table { min-width: 560px; }
+
+    .form-actions > *,
+    .action-buttons > *,
+    .modal-buttons > *,
+    .shift-popup-actions > *,
+    .sabt-ticket-actions > *,
+    .notification-confirm-actions > *,
+    .helpdesk-head-actions > * {
+        flex: 1 1 100%;
+    }
+
+    .adm-tab { font-size: .58rem; }
+    .adm-tab__icon svg { width: 20px; height: 20px; }
+}
+
+/* در عرض‌های معمول گوشی (۳۶۱–۴۲۰px) خلاصه‌های مالی دوستونی می‌مانند */
+@media screen and (min-width: 361px) and (max-width: 420px) {
+    .karaneh-summary-grid,
+    .payroll-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media screen and (max-width: 768px) and (orientation: landscape) {
+    .modal-content,
+    .popup-content-virayesh,
+    .modal-content-hazfPopup,
+    .modal-content-sabtTicket,
+    .ticket-status-box,
+    .popupHozoor-content,
+    .sabt-ticket-dialog { max-height: 96dvh !important; }
+
+    .adm-tabbar { padding-bottom: calc(var(--adm-safe-b) + 4px); }
+    .adm-tab__label { display: none; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   احترام به حرکت کمتر
+   ══════════════════════════════════════════════════════════════════════ */
+@media screen and (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
+}

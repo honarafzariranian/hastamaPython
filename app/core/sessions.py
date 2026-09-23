@@ -266,6 +266,28 @@ def revoke_session(sid: str, by_username: str = "system") -> bool:
                 pass
 
 
+def delete_session_record(sid: str) -> bool:
+    """Delete one session record and invalidate any cached validation result."""
+    conn = None
+    try:
+        conn = _connect()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM dbo.user_sessions WHERE session_key = ?", (sid,))
+        changed = cur.rowcount or 0
+        conn.commit()
+        _cache_invalidate(sid)
+        return changed > 0
+    except Exception as exc:
+        logger.warning("session record deletion failed: %s", type(exc).__name__)
+        return False
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 def revoke_user_sessions(username: str, by_username: str = "system") -> int:
     """Terminate every active session of *username*.
 

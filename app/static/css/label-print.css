@@ -60,6 +60,11 @@
     padding: 7px 8px 0 8px;
     transform-origin: center center;
     will-change: transform;
+    /* کل طرح (متن‌ها، جعبه‌ها، حاشیه‌ها و آیکون‌ها) با اندازهٔ فیزیکی لیبل
+       مقیاس می‌گیرد: طرح برای ۵۰×۵۵ میلی‌متر تنظیم شده و روی لیبل بزرگ‌تر
+       (مثل ۸۰×۸۰) همه‌چیز به همان نسبت درشت و خواناتر چاپ می‌شود.
+       مقدار --lbl-zoom را جاوااسکریپت با اندازه‌گیری محتوا تعیین می‌کند. */
+    zoom: var(--lbl-zoom, 1);
 }
 
 /* ═══ 1 · Header — laboratory identity + date/time ═══════════ */
@@ -415,6 +420,40 @@
     }
     /* the browser preview fit-scale must never leak into print */
     .lbl__content { transform: none !important; }
+
+    /* ── کیفیت چاپ حرارتی ────────────────────────────────────
+       پس‌زمینهٔ تقریباً سفید روی کاغذ حرارتی به‌صورت نقطه‌چین خاکستری چاپ
+       می‌شود و متن را کدر می‌کند؛ در چاپ همه‌چیز سفید خالص می‌شود و تفکیک
+       بصری با ضخامت و رنگ خط‌ها ساخته می‌شود (نه با سایهٔ روشن). */
+    .lbl,
+    .lbl__record-group,
+    .lbl__record-group--insurance,
+    .lbl__datetime,
+    .lbl__number-box,
+    .lbl__service,
+    .lbl__message {
+        background: #fff !important;
+    }
+    /* خط‌چین‌های نازک روی کاغذ حرارتی شکسته چاپ می‌شوند؛ خط یکدست بهتر دیده می‌شود */
+    .lbl__record + .lbl__record {
+        border-top-style: solid !important;
+        border-top-color: var(--lbl-line-2) !important;
+    }
+    .lbl__header,
+    .lbl__footer,
+    .lbl__record-group,
+    .lbl__datetime,
+    .lbl__message,
+    .lbl__service {
+        border-color: var(--lbl-ink-2) !important;
+    }
+    /* متن‌های ریز با وزن بیشتر، روی چاپ حرارتی خیلی واضح‌تر دیده می‌شوند */
+    .lbl__slogan,
+    .lbl__record-label,
+    .lbl__message,
+    .lbl__brand-text span {
+        font-weight: 700 !important;
+    }
 
     /* no element may escape the label area */
     .lbl { overflow: hidden; }

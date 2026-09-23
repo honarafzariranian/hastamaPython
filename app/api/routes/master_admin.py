@@ -405,7 +405,7 @@ async def update_subscription(request: Request, subscription_id: int):
     allowed = {
         "customer_id", "customer_code", "customer_name", "contact_name", "contact_email",
         "contact_phone", "plan_name", "subscription_status", "starts_at", "expires_at",
-        "max_users", "price", "currency", "payment_method", "payment_reference",
+        "max_users", "payment_method", "payment_reference",
         "invoice_number", "notes",
     }
     updates = {key: data[key] for key in allowed if key in data}
@@ -432,6 +432,8 @@ async def update_subscription(request: Request, subscription_id: int):
             updates["price"] = Decimal(str(updates["price"]))
         except Exception:
             raise HTTPException(status_code=400, detail="مبلغ واردشده معتبر نیست.")
+    if "payment_method" in updates and updates["payment_method"] not in {"cash", "check", "installment"}:
+        raise HTTPException(status_code=400, detail="روش پرداخت معتبر نیست.")
 
     conn = db_connect()
     try:
@@ -571,6 +573,29 @@ async def get_audit_event(request: Request, event_id: str):
         return JSONResponse(content={"success": True, "data": _serialize(_dict_rows(cur)[0] if cur.description else {})})
     except HTTPException:
         raise
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.delete("/audit-logs/{event_id}")
+async def delete_audit_event(request: Request, event_id: str):
+    admin = _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM audit_logs WHERE event_id = ?", (event_id,))
+        deleted = (cur.rowcount or 0) > 0
+        conn.commit()
+        if deleted:
+            log_admin_action(
+                admin_username=admin, action="delete_audit_log",
+                target_type="audit_log", target_id=event_id,
+                description="حذف رکورد لاگ حسابرسی", ip_address=_client_ip(request),
+            )
+        return JSONResponse(content={"success": deleted})
     except Exception as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
@@ -830,6 +855,21 @@ async def terminate_user_session(request: Request, session_key: str):
     return JSONResponse(content={"success": ok})
 
 
+@router.delete("/sessions/{session_key}")
+async def delete_user_session(request: Request, session_key: str):
+    admin = _master_admin(request)
+    from app.core.sessions import delete_session_record
+
+    deleted = delete_session_record(session_key)
+    if deleted:
+        log_admin_action(
+            admin_username=admin, action="delete_session_record",
+            target_type="session", target_id=session_key,
+            description="حذف رکورد نشست", ip_address=_client_ip(request),
+        )
+    return JSONResponse(content={"success": deleted})
+
+
 # ══════════════════════════════════════════════════════════════
 # PASSWORD RESETS
 # ══════════════════════════════════════════════════════════════
@@ -900,6 +940,33 @@ async def reject_reset(request: Request, request_id: str):
     return JSONResponse(content={"success": ok})
 
 
+@router.delete("/password-resets/{request_id}")
+async def delete_password_reset(request: Request, request_id: str):
+    admin = _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM password_reset_requests WHERE request_id = ?",
+            (request_id,),
+        )
+        deleted = (cur.rowcount or 0) > 0
+        conn.commit()
+        if deleted:
+            log_admin_action(
+                admin_username=admin, action="delete_password_reset",
+                target_type="password_reset", target_id=request_id,
+                description="حذف رکورد درخواست بازیابی رمز عبور",
+                ip_address=_client_ip(request),
+            )
+        return JSONResponse(content={"success": deleted})
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
 # ══════════════════════════════════════════════════════════════
 # SECURITY EVENTS
 # ══════════════════════════════════════════════════════════════
@@ -965,6 +1032,29 @@ async def resolve_security_event(request: Request, event_id: str):
             description=f"تغییر وضعیت به {new_status}", ip_address=_client_ip(request),
         )
         return JSONResponse(content={"success": True})
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.delete("/security/{event_id}")
+async def delete_security_event(request: Request, event_id: str):
+    admin = _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM security_events WHERE event_id = ?", (event_id,))
+        deleted = (cur.rowcount or 0) > 0
+        conn.commit()
+        if deleted:
+            log_admin_action(
+                admin_username=admin, action="delete_security_event",
+                target_type="security_event", target_id=event_id,
+                description="حذف رکورد رویداد امنیتی", ip_address=_client_ip(request),
+            )
+        return JSONResponse(content={"success": deleted})
     except Exception as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
@@ -1047,6 +1137,29 @@ async def resolve_error(request: Request, error_id: str):
         conn.close()
 
 
+@router.delete("/errors/{error_id}")
+async def delete_error(request: Request, error_id: str):
+    admin = _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM system_errors WHERE error_id = ?", (error_id,))
+        deleted = (cur.rowcount or 0) > 0
+        conn.commit()
+        if deleted:
+            log_admin_action(
+                admin_username=admin, action="delete_system_error",
+                target_type="system_error", target_id=error_id,
+                description="حذف رکورد خطای سیستم", ip_address=_client_ip(request),
+            )
+        return JSONResponse(content={"success": deleted})
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
 # ══════════════════════════════════════════════════════════════
 # ADMIN ACTIONS LOG
 # ══════════════════════════════════════════════════════════════
@@ -1086,6 +1199,29 @@ async def list_admin_actions(
             "page": page, "per_page": per_page,
             "pages": max(1, (total + per_page - 1) // per_page),
         })
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
+    finally:
+        conn.close()
+
+
+@router.delete("/admin-actions/{action_id}")
+async def delete_admin_action(request: Request, action_id: str):
+    admin = _master_admin(request)
+    conn = db_connect()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM admin_actions WHERE action_id = ?", (action_id,))
+        deleted = (cur.rowcount or 0) > 0
+        conn.commit()
+        if deleted:
+            log_admin_action(
+                admin_username=admin, action="delete_admin_action",
+                target_type="admin_action", target_id=action_id,
+                description="حذف رکورد عملیات مدیریتی", ip_address=_client_ip(request),
+            )
+        return JSONResponse(content={"success": deleted})
     except Exception as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
@@ -1448,3 +1584,27 @@ async def update_config(request: Request):
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
+
+
+# ── Label printer discovery ───────────────────────────────────
+
+@router.get("/printers")
+async def get_printers(request: Request, refresh: bool = Query(False)):
+    """List the printer queues visible to the server's spooler.
+
+    The label studio cannot use WebUSB/WebSerial here: the LAN build is served
+    over plain HTTP (no secure context) and the label printer is usually a
+    *network* queue, which those APIs never expose.  The spooler of the machine
+    running the server is the source of truth — see ``app/services/printer.py``.
+    """
+    _master_admin(request)
+    from app.services.printer import describe_printers
+    try:
+        data = describe_printers(force=refresh)
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        return JSONResponse(
+            content={"success": False, "message": "خواندن فهرست چاپگرهای سرور ناموفق بود."},
+            status_code=500,
+        )
+    return JSONResponse(content={"success": True, "data": data})

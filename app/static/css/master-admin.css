@@ -253,6 +253,32 @@ body.dark-theme .ma-label-preview-stage { background:radial-gradient(circle at 5
 .ma-preview-dot { display:inline-block; width:7px; height:7px; margin-left:4px; border-radius:50%; vertical-align:middle; }.ma-preview-dot--accent { background:#6366f1; }
 .ma-label-controls { display:flex; flex-direction:column; gap:14px; }.ma-label-control-section { padding:14px; border:1px solid rgba(148,163,184,.18); border-radius:16px; background:rgba(255,255,255,.64); }.ma-label-control-section h3 { margin:0 0 11px; color:#334155; font-size:.78rem; }.ma-label-inputs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }.ma-label-inputs label,.ma-label-select { display:flex; flex-direction:column; gap:5px; color:#64748b; font-size:.63rem; font-weight:700; }.ma-label-inputs input,.ma-label-select select { width:100%; padding:8px 9px; border:1px solid #dbe3ef; border-radius:9px; background:#fff; color:#1e293b; font:inherit; }.ma-label-select { margin-top:10px; }
 .ma-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(148,163,184,.12); color:#475569; font-size:.7rem; }.ma-toggle-row:last-child { border-bottom:0; }.ma-toggle-row input { display:none; }.ma-toggle-row i { position:relative; width:34px; height:19px; border-radius:99px; background:#cbd5e1; cursor:pointer; }.ma-toggle-row i:after { content:''; position:absolute; top:3px; right:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.2s; }.ma-toggle-row input:checked+i { background:#6366f1; }.ma-toggle-row input:checked+i:after { transform:translateX(-15px); }.ma-label-actions { display:flex; gap:8px; flex-wrap:wrap; }.ma-label-actions .ma-btn { flex:1; min-width:130px; }.ma-printer-note { margin:0; color:#94a3b8; font-size:.62rem; line-height:1.7; }
+/* ── Printer discovery panel (label studio) ──────────────────── */
+.ma-printer-list { display:flex; flex-direction:column; gap:6px; max-height:216px; overflow:auto; }
+.ma-printer-empty { padding:10px; border:1px dashed #cbd5e1; border-radius:10px; color:#94a3b8; font-size:.66rem; text-align:center; }
+.ma-printer-row { display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; color:#1e293b; font:inherit; font-size:.68rem; text-align:right; cursor:pointer; transition:border-color .18s, box-shadow .18s, transform .18s, background .18s; }
+.ma-printer-row:hover { border-color:#a5b4fc; transform:translateY(-1px); }
+.ma-printer-row.is-selected { border-color:#6366f1; background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(99,102,241,.02)); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+.ma-printer-row__dot { flex:0 0 auto; width:9px; height:9px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.16); }
+.ma-printer-row__dot[data-state="ready"] { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.16); }
+.ma-printer-row__dot[data-state="busy"] { background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,.16); }
+.ma-printer-row__dot[data-state="offline"], .ma-printer-row__dot[data-state="paused"] { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.14); }
+.ma-printer-row__body { display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; }
+.ma-printer-row__name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; direction:ltr; text-align:right; }
+.ma-printer-row__meta { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#94a3b8; font-size:.58rem; direction:ltr; text-align:right; }
+.ma-printer-row__badges { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+.ma-printer-badge { padding:2px 6px; border-radius:999px; font-size:.53rem; font-weight:800; white-space:nowrap; }
+.ma-printer-badge--label { background:rgba(16,185,129,.14); color:#047857; }
+.ma-printer-badge--default { background:rgba(99,102,241,.14); color:#4338ca; }
+.ma-printer-badge--virtual { background:rgba(148,163,184,.18); color:#64748b; }
+.ma-printer-status[data-state="warning"] { color:#b45309; border-color:rgba(245,158,11,.28); }
+.ma-printer-status[data-state="warning"] .ma-printer-status__dot { background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,.16); }
+.ma-printer-status[data-state="unknown"] .ma-printer-status__dot { animation:maPrinterPulse 1.4s ease-in-out infinite; }
+@keyframes maPrinterPulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.4); opacity:.5; } }
+body.dark-theme .ma-printer-row { background:#0f172a; border-color:#1e293b; color:#e2e8f0; }
+body.dark-theme .ma-printer-row.is-selected { border-color:#818cf8; background:rgba(99,102,241,.16); }
+body.dark-theme .ma-printer-row__meta { color:#64748b; }
+body.dark-theme .ma-printer-empty { border-color:#334155; color:#64748b; }
 body.dark-theme .ma-label-studio { background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.9)); border-color:rgba(129,140,248,.22); }.dark-theme .ma-label-studio__head h2,.dark-theme .ma-label-control-section h3 { color:#e0e7ff; }.dark-theme .ma-label-studio__head p,.dark-theme .ma-label-preview-panel__top,.dark-theme .ma-label-preview-panel__foot { color:#94a3b8; }.dark-theme .ma-label-preview-panel,.dark-theme .ma-label-control-section { background:rgba(15,23,42,.5); border-color:rgba(148,163,184,.14); }.dark-theme .ma-label-inputs input,.dark-theme .ma-label-select select { background:#1e293b; border-color:#334155; color:#e2e8f0; }.dark-theme .ma-toggle-row { color:#cbd5e1; }
 .ma-glow-card {
     position: relative;
@@ -903,6 +929,12 @@ body.dark-theme .ma-sidebar-left .icon-label {
     .ma-sidebar-left:hover { width: 58px; }
     .ma-sidebar-left .icon-container { justify-content: center; padding: 8px 6px; }
     .ma-sidebar-left .icon-label { display: none; }
+
+    /* پنل چاپگرها: در موبایل نشان‌ها زیر نام چاپگر */
+    .ma-printer-list { max-height:264px; }
+    .ma-printer-row { flex-wrap:wrap; }
+    .ma-printer-row__body { flex:1 1 60%; }
+    .ma-printer-row__badges { flex-direction:row; justify-content:flex-end; width:100%; gap:4px; }
 }
 @media (max-width: 480px) {
     .ma-header-box { padding: 8px 10px; }
