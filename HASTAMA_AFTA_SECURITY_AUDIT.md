@@ -19,7 +19,7 @@ Hastama is a FastAPI-based employee management system handling attendance, leave
 The application has **multiple critical and high-severity vulnerabilities** that constitute hard-fail conditions. The most severe issues include:
 
 1. **Plaintext password storage** in the database (the `password` column stores raw passwords)
-2. **Hard-coded Access database credentials** in source code (`meyer#perko`)
+2. **Hard-coded Access database credentials** in source code (historical — value redacted)
 3. **Pervasive missing authorization** — dozens of admin/state-changing endpoints have no authentication or authorization checks
 4. **No CSRF protection** anywhere in the application
 5. **File upload path traversal** via unsanitized user-controlled filenames
@@ -73,7 +73,7 @@ Source-code-based static analysis combined with architecture review. Evidence is
 - Biometric attendance records (Access/MDB)
 - Admin session tokens
 - Database credentials
-- Access DB password (`meyer#perko`)
+- Access DB password (historical hardcoded value — redacted)
 
 ### Trust Boundaries
 - Browser ↔ Server (no TLS)
@@ -200,7 +200,7 @@ The admin panel also sends passwords in the template context via `password=str(u
 **Evidence:**
 ```python
 mdb_path = r"E:\Hastama\database\Arazdb.mdb"
-password = "meyer#perko"
+password = "<REDACTED>"  # historical hardcoded Access password (removed from source)
 conn_str = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};"
             rf"DBQ={mdb_path};"
             rf"PWD={password};")
@@ -523,7 +523,7 @@ The notification WebSocket endpoint (`/ws/notifications`) would need to be verif
 **Severity:** Medium
 **CWE:** CWE-319
 
-The Access/MDB connection is over local file access with a hard-coded password. While file-based, the password `meyer#perko` is trivially discoverable.
+The Access/MDB connection is over local file access with a hard-coded password (value redacted). While file-based, the password is trivially discoverable.
 
 ---
 

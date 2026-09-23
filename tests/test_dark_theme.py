@@ -25,7 +25,7 @@ JS_DIR = ROOT / "app" / "static" / "js"
 TPL_DIR = ROOT / "app" / "templates"
 
 TEMPLATES = [
-    "landing.html",
+    # landing.html removed — `/` now 301-redirects to `/login` (login-only).
     "login.html",
     "user-panel.html",
     "admin.html",
@@ -125,7 +125,7 @@ def test_theme_defaults_to_light() -> None:
     js = read(JS_DIR / "theme.js")
     assert "readStored() || LIGHT" in js
     assert "prefers-color-scheme" not in js
-    html = read(TPL_DIR / "landing.html")
+    html = read(TPL_DIR / "login.html")
     assert "setItem('hastama-theme', 'dark')" not in html
 
 

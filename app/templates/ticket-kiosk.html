@@ -2991,18 +2991,26 @@
         }
 
         /* ── چاپ لیبل نوبت ── */
+        function escText(v) {
+            return String(v === null || v === undefined ? '' : v)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
         function printTicket(ticket, patientData) {
             var w = window.open('', '_blank', 'width=320,height=450');
             var admissionHtml = '';
             if (patientData && patientData.admission_number) {
-                admissionHtml = '<div class="admission" style="font-size:10pt; margin:2mm 0; font-weight:bold;">شماره پذیرش: ' + (patientData.admission_number_persian || patientData.admission_number) + '</div>';
+                admissionHtml = '<div class="admission" style="font-size:10pt; margin:2mm 0; font-weight:bold;">شماره پذیرش: ' + escText(patientData.admission_number_persian || patientData.admission_number) + '</div>';
             }
             var nameHtml = '';
             if (patientData && patientData.name) {
-                nameHtml = '<div class="name" style="font-size:8pt; color:#333; margin:1mm 0;">' + patientData.name + '</div>';
+                nameHtml = '<div class="name" style="font-size:8pt; color:#333; margin:1mm 0;">' + escText(patientData.name) + '</div>';
             }
             w.document.write(
-                '<!DOCTYPE html><html><head><title>نوبت ' + (ticket.number || '') + '</title>' +
+                '<!DOCTYPE html><html><head><title>نوبت ' + escText(ticket.number || '') + '</title>' +
                 '<style>' +
                 '@page { size: 70mm 50mm; margin: 3mm; }' +
                 'body { font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: center; padding: 2mm; margin: 0; }' +
@@ -3012,10 +3020,10 @@
                 '.date { font-size: 7pt; color: #888; margin-top: 2mm; border-top: 1px dashed #333; padding-top: 2mm; }' +
                 '</style></head><body>' +
                 '<div class="header">آزمایشگاه تشخیص طبی دکتر امینی</div>' +
-                '<div class="service">' + (ticket.service || '') + '</div>' +
+                '<div class="service">' + escText(ticket.service || '') + '</div>' +
                 admissionHtml +
                 nameHtml +
-                '<div class="number">' + (ticket.persian_number || ticket.number || '') + '</div>' +
+                '<div class="number">' + escText(ticket.persian_number || ticket.number || '') + '</div>' +
                 '<div class="date">' + new Date().toLocaleDateString('fa-IR') + ' — ' + new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'}) + '</div>' +
                 '</body></html>'
             );

@@ -685,7 +685,12 @@ async def public_support_ticket(request: Request):
         if count >= 3:
             return JSONResponse({"success": False, "message": "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً تلاش کنید."}, status_code=429)
     except Exception:
-        pass  # If rate limit check fails, allow the request
+        # Fail closed: if the rate-limit store is unavailable, refuse the
+        # anonymous ticket rather than allowing unthrottled abuse.
+        return JSONResponse(
+            {"success": False, "message": "سرویس موقتاً در دسترس نیست. لطفاً کمی بعد تلاش کنید."},
+            status_code=503,
+        )
 
     subject = f"درخواست بازیابی اطلاعات ورود - {full_name}"
     ticket_body = (

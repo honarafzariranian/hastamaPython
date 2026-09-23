@@ -39,7 +39,7 @@ The remediation effort addressed **15 of 30 findings** (50%), including all **4 
 
 ### HST-SEC-002: Hard-Coded Access DB Credentials — **PARTIALLY FIXED** (Critical)
 **File:** `app/services/araz_connector.py`
-- **Before:** `meyer#perko` hardcoded in source (historical)
+- **Before:** historical hardcoded Access password (value redacted) in source
 - **After:** Password read from `ARAZ_ACCESS_PASSWORD` env var with empty-string fallback
 - **Residual risk:** The fallback is `""` — if the env var is missing, the connector will fail silently or use an empty password
 - **Recommendation:** Add a startup check that validates `ARAZ_ACCESS_PASSWORD` is set in production.

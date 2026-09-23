@@ -23,11 +23,14 @@ reviewer records evidence rather than an opinion.
 |---|---|---|---|
 | I-1 | Is the app port reachable from outside the LAN? | port scan from another subnet, `curl -k https://<public-ip>/login` | refused |
 | I-2 | Does the TLS certificate chain validate on a client machine? | open the site in a browser on a workstation | no warning |
-| I-3 | Is `/docs` closed in production? | `curl -k https://hastama.local/docs` | 404 |
-| I-4 | Are the security headers present? | `curl -kI https://hastama.local/login` | HSTS, `X-Content-Type-Options`, `Content-Security-Policy`, `X-Frame-Options`, no `Server` header |
+| I-3 | Is `/docs` closed in production? | `curl -k https://hastama.ir/docs` | 404 (**verified 2026-09-23**) |
+| I-4 | Are the security headers present? | `curl -kI https://hastama.ir/login` | HSTS, `X-Content-Type-Options`, `Content-Security-Policy`, `X-Frame-Options`, no app `Server` header (**verified 2026-09-23**; edge `Server: cloudflare` only) |
 | I-5 | Is the ACT/backup of the `.env` stored safely? | inspect the password vault / sealed envelope | stored separately from the backup of the DB |
 | I-6 | Which accounts can read `Arazdb.mdb`? | `icacls <path>` | only the service account + Administrators |
 | I-7 | Are the Araz vendor installers still needed on the server? | list `arazin/` and installed programs | only what the device integration needs |
+| I-8 | Does `/` redirect to `/login` without a loop? | `curl -sSI https://hastama.ir/` then follow once | 301 → `/login`, end 200 (**verified 2026-09-23 as 302; code switched to 301 after confirmation — confirm live shows 301 after redeploy**) |
+| I-9 | Does HTTP redirect to HTTPS and `www` to apex? | `curl -sSI http://hastama.ir/` and `https://www.hastama.ir/` | 301 chains to apex HTTPS (**verified 2026-09-23**) |
+| I-10 | Is the origin port reachable from outside the tunnel? | port scan / `curl` to origin IP:8000 | refused |
 
 ## Application tasks needing a browser
 

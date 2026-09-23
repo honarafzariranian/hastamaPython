@@ -112,13 +112,26 @@ CSRF_EXEMPT_PREFIXES = (
     "/api/display-queue",
     "/api/waiting-queue",
     "/api/queue/take",
+    # Kiosk edit-flow ticket PII read/write: browser kiosk has no session CSRF
+    # token path wired; guarded in-handler by same-site Origin/Referer + rate
+    # limit (_guard_queue_pii) instead.
+    "/api/queue/ticket",
     "/api/slides",
     "/api/ws/",
     "/login_user",
     "/forgot_password",
     "/reset_password",
     "/verify_recovery_code",
-    "/registration/",
+    # Pre-auth registration only.  Admin approve/reject lives under
+    # /registration/admin/... and must present the session-bound CSRF token
+    # (it already requires an admin session).
+    "/registration/submit",
+    "/registration/status/",
+    "/registration/check-username",
+    "/registration/check-national-id",
+    "/registration/departments",
+    "/registration/work-schedules",
+    "/registration/active-users",
     "/captcha/",
     # Machine-to-machine device bridge: authenticated with the shared
     # ARAZ_BRIDGE_SECRET (constant-time compare), never with a session cookie.
@@ -469,6 +482,10 @@ app.add_middleware(
     secret_key=_session_secret,
     same_site="lax",
     max_age=SESSION_MAX_AGE_SECONDS,
+    # Starlette 1.6 has no ``secure=`` kwarg; ``https_only=True`` forces the
+    # Secure flag.  ``_harden_cookies`` still re-applies Secure on TLS
+    # responses for defence in depth.
+    https_only=True,
 )
 app.add_middleware(
     _CSRFMiddleware, secret=_session_secret, session_max_age=SESSION_MAX_AGE_SECONDS
@@ -490,8 +507,11 @@ class _SecurityHeadersMiddleware:
         (b"cross-origin-opener-policy", b"same-origin"),
         (b"cross-origin-resource-policy", b"same-origin"),
         (b"x-permitted-cross-domain-policies", b"none"),
-        (b"content-security-policy",
-         b"default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss: https://cloudflareinsights.com; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
+         (b"content-security-policy",
+         # ``connect-src`` is deliberately tight: bare ``ws: wss:`` would let
+         # a script open WebSockets to any host (exfil).  Same-origin WS is
+         # allowed via ``'self'`` (CSP Level 3 maps ws/wss → same host).
+         b"default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
     ]
     _HSTS = (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
 
@@ -599,18 +619,20 @@ cursor = cursor_proxy()
 
 # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود
 # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود
-# Public marketing site. Authentication remains isolated at /login.
+# Private application portal: root is no longer a marketing landing page.
+# Company intro lives on the official corporate site; Hastama only serves
+# the authenticated application.  301 after external Phase 8 confirmation.
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def landing_page(request: Request):
-    return templates.TemplateResponse(request, "landing.html", {"request": request})
+    return RedirectResponse(url="/login", status_code=301)
 
 @app.get("/robots.txt", response_class=Response, include_in_schema=False)
 def robots_txt():
-    return Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /master-admin\nDisallow: /api/\nSitemap: https://hastama.ir/sitemap.xml\n", media_type="text/plain")
+    return Response("User-agent: *\nDisallow: /\nSitemap: https://hastama.ir/sitemap.xml\n", media_type="text/plain")
 
 @app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
 def sitemap_xml():
-    return Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://hastama.ir/</loc></url><url><loc>https://hastama.ir/login</loc></url></urlset>', media_type="application/xml")
+    return Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://hastama.ir/login</loc></url></urlset>', media_type="application/xml")
 
 @app.get("/login")
 async def home(request: Request):
@@ -1981,8 +2003,16 @@ async def upload_profile_image(request: Request, file: UploadFile = File(...)):
     if file_ext not in ALLOWED_EXTENSIONS:
         return RedirectResponse(url="/user_panel", status_code=303)
 
-    # Read and enforce size limit
-    contents = await file.read()
+    # Read and enforce size limit — stream with a hard cap so a huge upload
+    # cannot exhaust memory before the check (same pattern as ticket attach).
+    contents = b""
+    remaining = MAX_FILE_SIZE + 1
+    while remaining > 0:
+        chunk = await file.read(min(1024 * 1024, remaining))
+        if not chunk:
+            break
+        contents += chunk
+        remaining -= len(chunk)
     if len(contents) > MAX_FILE_SIZE:
         return RedirectResponse(url="/user_panel", status_code=303)
 
@@ -3256,6 +3286,9 @@ async def generate_individual_report(request: Request):
 
 @app.get("/leave_report_page", response_class=HTMLResponse)
 async def report_page(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     return templates.TemplateResponse(request, "leave_report_page.html", {"request": request})
 
 @app.get("/fetch_user_data")
@@ -3374,6 +3407,9 @@ async def change_hourly_pass_status(request: Request):
 
 @app.get("/hourlypass_Report_page", response_class=HTMLResponse)
 async def hourly_pass_report_page(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     return templates.TemplateResponse(request, "hourlypass_Report_page.html", {"request": request})
 
 @app.post("/get_hourly_pass_report")
@@ -3594,11 +3630,16 @@ async def update_overtime_indivisual_status(request: Request, data: OvertimeStat
 # رندر کردن صفحه گزارش اضافه‌کاری
 @app.get("/overtime_report_page", response_class=HTMLResponse)
 async def overtime_report_page(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     return templates.TemplateResponse(request, "overtime_report_page.html", {"request": request})
 
 @app.get("/overtime_report", response_class=HTMLResponse)
 async def overtime_report(request: Request):
-    auth_err = _require_auth(request)
+    # Org-wide overtime totals are admin-only (matches POST /get_overtime_report).
+    # Previously any logged-in user could read every employee's totals.
+    auth_err = _require_admin(request)
     if auth_err:
         return auth_err
     try:
@@ -3616,8 +3657,7 @@ async def overtime_report(request: Request):
         ]
 
         return templates.TemplateResponse(request, "overtime_report.html", {"request": request, "reports": reports})
-    except Exception as e:
-        print("Error:", e)
+    except Exception:
         return templates.TemplateResponse(request, "overtime_report.html", {"request": request, "reports": []})
 
 @app.post("/get_overtime_report")
@@ -4411,17 +4451,8 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
     try:
         conn.close()
     except Exception:
-        pass    # debug info into response
-    _dbg = {
-        "user": username,
-        "hozoor_num": hozoor_num,
-        "access_rows": len(rows),
-        "access_error": _access_error_msg,
-        "mdb_path": _mdb_path,
-        "attendance_days": len(attendance),
-        "non_zero_days": sum(1 for d in attendance.values() if d.get('EntryTime','0000') != '0000'),
-    }
-    return JSONResponse(content={"_debug": _dbg, "data": result})
+        pass
+    return JSONResponse(content={"data": result})
 
 # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن
 # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن # ثبت دستی ساعت زن
@@ -4828,11 +4859,17 @@ async def get_hozoor_today(request: Request):
 
 @app.get("/payroll_report_page", response_class=HTMLResponse)
 async def payroll_report_page(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     return templates.TemplateResponse(request, "payroll_report_page.html", {"request": request})
 
 
 @app.get("/final_report_page", response_class=HTMLResponse)
 async def final_report(request: Request):
+    auth_err = _require_auth(request)
+    if auth_err:
+        return auth_err
     MONTH_NAMES = [
         "", "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
         "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"

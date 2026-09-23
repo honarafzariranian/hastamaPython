@@ -36,6 +36,14 @@
   }
 
   /* ── Search ────────────────────────────────────────────────── */
+  function trEscape(value) {
+    return String(value === null || value === undefined ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
   const searchInput = document.getElementById('trSearchInput');
   const searchResults = document.getElementById('trSearchResults');
   let searchTimer = null;
@@ -55,11 +63,11 @@
               return;
             }
             searchResults.innerHTML = data.results.map(r => `
-              <a href="/training/lesson/${r.id}" class="tr-search__item">
-                <span class="tr-search__item-icon">${r.icon}</span>
+              <a href="/training/lesson/${encodeURIComponent(String(r.id))}" class="tr-search__item">
+                <span class="tr-search__item-icon">${trEscape(r.icon)}</span>
                 <div class="tr-search__item-info">
-                  <div class="tr-search__item-title">${r.title}</div>
-                  <div class="tr-search__item-cat">${r.category} — ${r.role === 'admin' ? 'مدیر' : r.role === 'user' ? 'کاربر' : 'عمومی'}</div>
+                  <div class="tr-search__item-title">${trEscape(r.title)}</div>
+                  <div class="tr-search__item-cat">${trEscape(r.category)} — ${r.role === 'admin' ? 'مدیر' : r.role === 'user' ? 'کاربر' : 'عمومی'}</div>
                 </div>
               </a>
             `).join('');

@@ -5741,13 +5741,13 @@ function loadActiveShifts() {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (!data.success) {
-                container.innerHTML = '<p class="shifts-empty-row">' + (data.message || 'خطا در دریافت اطلاعات') + '</p>';
+                container.innerHTML = '<p class="shifts-empty-row">' + esc(data.message || 'خطا در دریافت اطلاعات') + '</p>';
                 return;
             }
             var shifts = data.shifts || [];
             activeShiftsData = shifts;
             if (shifts.length === 0) {
-                container.innerHTML = '<p class="shifts-empty-row">هیچ شیفت فعالی برای امروز (روز ' + data.today + ' ماه ' + data.month + ' سال ' + data.year + ') یافت نشد</p>';
+                container.innerHTML = '<p class="shifts-empty-row">هیچ شیفت فعالی برای امروز (روز ' + esc(data.today) + ' ماه ' + esc(data.month) + ' سال ' + esc(data.year) + ') یافت نشد</p>';
                 return;
             }
             var dayNames = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'];

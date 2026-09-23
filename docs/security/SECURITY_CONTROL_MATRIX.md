@@ -17,14 +17,14 @@ Status legend: **IMPLEMENTED** (code present and tested in this assessment),
 | C-09 | Session id in a signed cookie + server-side registry | IMPLEMENTED | `app/core/sessions.py`, `_SessionRegistryMiddleware` | `TestSessionRevocation` |
 | C-10 | Session fixation defence (session cleared at login) | IMPLEMENTED | `auth.py` login | source + regression test |
 | C-11 | Session revocation (logout, password reset, admin action) | IMPLEMENTED | `sessions.revoke_session/revoke_user_sessions` | `test_revoke_user_sessions_targets_every_active_row` |
-| C-12 | Cookie flags: HttpOnly, SameSite=Lax, Secure behind TLS proxy | IMPLEMENTED | `SessionMiddleware(same_site="lax")` + `net.is_https` | `test_secure_flag_added_on_https` |
+| C-12 | Cookie flags: HttpOnly, SameSite=Lax, Secure / HTTPS-only | IMPLEMENTED | `SessionMiddleware(https_only=True, same_site="lax")` + `_harden_cookies` on TLS | `test_session_middleware_uses_https_only`; live `Set-Cookie: … Secure` |
 | C-13 | Idle/absolute session lifetime (default 8 h, configurable) | IMPLEMENTED | `SESSION_MAX_AGE_SECONDS` | read |
 | C-14 | CSRF: session-bound double-submit token on mutating methods | IMPLEMENTED | `_CSRFMiddleware` | `TestCSRFMiddleware` (14 tests) |
 | C-15 | CSRF exemptions narrow + Origin-checked + documented | IMPLEMENTED | `CSRF_EXEMPT_PREFIXES` | `TestCsrfExemptionIntegration` (10 tests) |
 | C-16 | Server-side authorization only (no client-supplied role) | IMPLEMENTED | `get_is_admin_from_session`, `_master_admin` | `TestMasterAdminAuthorization` |
 | C-17 | Master-admin control plane separated from admin | IMPLEMENTED | `master_admin._master_admin` (+ username allow-list) | `test_regular_admin_is_rejected` |
 | C-18 | Ownership checks on tickets/notifications/attendance | IMPLEMENTED | SQL WHERE clauses (`_ticket_accessible_row`, `_owned_update`, `_attendance_actor`) | service tests + code review |
-| C-19 | Employee report endpoints admin-only | IMPLEMENTED | `main.py` `/get_hourly_pass_report`, `/get_overtime_report` | `TestEmployeeReportAuthorization` |
+| C-19 | Employee report endpoints admin-only | IMPLEMENTED | `main.py` `/get_hourly_pass_report`, `/get_overtime_report`, **and** `GET /overtime_report` (HTML) | `TestEmployeeReportAuthorization`; live anon → 401 |
 | C-20 | Output escaping for DB values in JS renderers | IMPLEMENTED | `esc()` in `admin.js`/`master-admin.js`, `dom-escape.js` + report scripts | `TestTemplateOutputEscaping`, `TestStoredXssRendering` |
 | C-21 | Markup rejected on free-text write paths | IMPLEMENTED | `validation.reject_markup`, used by `/submit_leave`, `/submit_overtime` | `test_free_text_write_paths_reject_markup` |
 | C-22 | CSP without `object-src`, `base-uri 'none'`, `frame-ancestors 'self'` | PARTIAL | `_SecurityHeadersMiddleware` | header read; `'unsafe-inline'` still required |
@@ -37,10 +37,10 @@ Status legend: **IMPLEMENTED** (code present and tested in this assessment),
 | C-29 | Device batch caps / validation | IMPLEMENTED | `araz_api.bridge_sync` (`MAX_BATCH`) | `test_batch_size_is_capped` |
 | C-30 | PDF generation hardened (CVE-2025-26240) | IMPLEMENTED | `main.download_pdf` (from_file, no JS, no local files) | `TestPdfGenerationHardening` |
 | C-31 | WebSocket origin validation (TV display) | IMPLEMENTED | `call_system._ws_origin_allowed` | `TestCallSystemAuthorization` |
-| C-32 | Kiosk write endpoints origin-checked | IMPLEMENTED | `_CSRFMiddleware._origin_allowed` for exempt paths | `test_kiosk_write_guard_rejects_cross_site_origin` |
+| C-32 | Kiosk write endpoints origin-checked | IMPLEMENTED | `_guard_kiosk_write` + in-handler `origin_is_same_site` on every CSRF-exempt mutation | `test_kiosk_write_guard_rejects_cross_site_origin`; live cross-site POST → 403 |
 | C-33 | Audit logging of security events | IMPLEMENTED | `app/services/audit.py` (login, logout, CSRF, session, reset, admin actions) | code + table schema |
 | C-34 | Error messages do not leak internals | IMPLEMENTED | `_safe_error_message` (logger defined), JSON error shapes | `TestInternalErrorHandling` |
-| C-35 | API docs disabled in production | IMPLEMENTED | `HASTAMA_ENABLE_DOCS` gate on `/docs`, `/redoc`, `/openapi.json` | probe returns 404 |
+| C-35 | API docs disabled in production | IMPLEMENTED | `HASTAMA_ENABLE_DOCS` gate on `/docs`, `/redoc`, `/openapi.json` | live probe: `/docs` `/redoc` `/openapi.json` → 404 |
 | C-36 | Secrets fail closed when unset | IMPLEMENTED | session key, HMAC key, bridge secret, Access password | `TestBridgeSync`, recovery tests |
 | C-37 | Secrets documented for deployment | IMPLEMENTED | `.env.example` with generation commands | file read |
 | C-38 | Reverse proxy hardening (TLS, body cap, timeouts, header stripping, access log) | IMPLEMENTED | `Caddyfile` | file read |
@@ -53,4 +53,9 @@ Status legend: **IMPLEMENTED** (code present and tested in this assessment),
 | C-45 | Secret scanning in CI | NOT PRESENT | — | manual scan performed; recommend pre-commit hook |
 | C-46 | DB least privilege (app account, no DDL) | MANUAL | app runs schema migrations at startup (`ALTER TABLE` when a column is missing) | DBA task D-1 |
 | C-47 | Data-at-rest protection for the SQL Server and Access files | MANUAL | — | DBA task D-2 |
-| C-48 | Repo hygiene (no data exports, no vendor binaries) | PARTIAL | export quarantined + ignore rules; committed MDB/EXE files remain | F-01/F-02 |
+| C-48 | Repo hygiene (no data exports, no vendor binaries) | PARTIAL | `latest.sql` untracked + ignore tightened; `tempexport.py` removed; MDB/EXE remain | RR-02 / RR-19 |
+| C-49 | Login-only root (`/` → `/login`) | IMPLEMENTED | `app/main.py` `landing_page` → `RedirectResponse(301)`; landing assets deleted | `TestLoginOnlyRoot`; live `/` → 301 `/login` after redeploy (was 302 during Phase 8) |
+| C-50 | Public docs/sitemap do not advertise the app root as content | IMPLEMENTED | `robots.txt` `Disallow: /`; sitemap lists only `/login` | `test_robots_disallow_root_and_sitemap_has_no_landing`; live match |
+| C-51 | Call pages closed to direct entry | IMPLEMENTED | `_require_call_page_access` (master-admin + dashboard referer) | `TestCallPageEntryGate`; live `/call-display` → 303 login |
+| C-52 | Upload size enforced by bounded read (no full-buffer DoS) | IMPLEMENTED | profile image + slide upload stream with a hard cap | `test_profile_upload_is_size_bounded_before_buffer` |
+| C-53 | Slide upload magic-byte + Origin check | IMPLEMENTED | `upload_slide` (`origin_is_same_site` + extension↔magic) | source + live cross-site → 403 |

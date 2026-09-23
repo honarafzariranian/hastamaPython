@@ -22,66 +22,107 @@ stand-in for `pyodbc` before the application is imported.
 
 ## 1. Commands and results
 
+### Baseline (pre-change, 2026-09-23 morning)
+
 | # | Command | Result |
 |---|---|---|
-| E-1 | `SESSION_SECRET_KEY=x HASTAMA_HMAC_SECRET=y .venv/bin/python -m pytest tests -q` | **336 passed, 12 failed, 3 skipped** (3.8 s) |
-| E-2 | `… -m pytest tests/test_security_hardening.py tests/test_security_regressions.py -q` | **137 passed, 0 failed** (3.5 s) |
-| E-3 | `git archive HEAD(38ca85f) | tar -x -C /tmp/baseline` then the same full-suite command in `/tmp/baseline` | **217 passed, 17 failed, 3 skipped** (baseline, unmodified code) |
-| E-4 | `.venv/bin/bandit -r app -x app/static -f json` | 0 High, 33 Medium (all B608-style dynamic SQL — reviewed, see SQL review), 86 Low |
-| E-5 | `.venv/bin/ruff check app --select S --statistics` | S110 ×53, S608 ×32, S311 ×23, S105 ×3 |
-| E-6 | `.venv/bin/pip-audit` over `pyproject.toml` | 1 advisory: **PYSEC-2026-2860 / CVE-2025-26240** (pdfkit ≤ 1.0.0, High, no fix) |
-| E-7 | Anonymous route probe (`TestClient`, all 190 routes) | output = the "Anon probe" column of `ENDPOINT_AUTHORIZATION_MATRIX.md` |
-| E-8 | `node --check` on the four modified report scripts + `dom-escape.js` | syntax OK |
-| E-9 | Node harness for `escapeHtml` | `<img …>` → `&lt;img src&#61;x onerror&#61;alert(1)&gt;`; `null`/`undefined` → `""` |
-| E-10 | End-to-end `/download_pdf` with a stubbed `pdfkit` | temp file created → `from_file` called with `disable-javascript` + `disable-local-file-access` → temp file removed → 200 `application/pdf` |
+| B-1 | `python -m pytest -q` | **394 passed, 14 failed, 4 skipped** (4.2 s) |
+
+### After login-only + security remediation (2026-09-23)
+
+| # | Command | Result |
+|---|---|---|
+| E-1 | `python -m pytest -q` | **400 passed, 14 failed, 4 skipped** (5.0 s) |
+| E-2 | `python -m pytest tests/test_security_hardening.py tests/test_security_regressions.py -q` | **175 passed, 0 failed** (3.8 s) |
+| E-3 | `python -c "import app.main"` | import OK (no SyntaxError / missing kwarg) |
+| E-4 | Anonymous **live** probes against `https://hastama.ir` (curl, off-LAN) | see §5 below |
+| E-5 | Prior hardening suite (historical, 2026-09-19) | 137 passed at `38ca85f` + remediation |
+
+### Historical hardening evidence (2026-09-19 engagement)
+
+| # | Command | Result |
+|---|---|---|
+| H-1 | `bandit -r app -x app/static` | 0 High, 33 Medium (all B608-style dynamic SQL — reviewed), 86 Low |
+| H-2 | `pip-audit` over `pyproject.toml` | 1 advisory: **PYSEC-2026-2860 / CVE-2025-26240** (pdfkit ≤ 1.0.0, High, no fix) |
+| H-3 | Anonymous route probe (`TestClient`, 190 routes) | "Anon probe" column of `ENDPOINT_AUTHORIZATION_MATRIX.md` |
 
 ## 2. New vs baseline failures (no test was deleted or weakened)
 
-Baseline (unmodified `38ca85f`): 17 failures. After the hardening work: 12
-failures. Five baseline failures were fixed by the remediation work; eight
-pre-existing failures remain **and are reported as-is** — none of them is a
-security control failure, and none was rewritten to pass.
+**Baseline (2026-09-23):** 14 failures. **After this work:** the same 14 failures.
+None of them is caused by the login-only or security changes; none was rewritten
+to pass.
 
-| Test | Baseline | Now | Nature |
+| Test | Baseline | After | Nature |
 |---|---|---|---|
-| `test_attendance.py::test_checkout_succeeds` | Fail | **Pass** | real regression in night-shift checkout, fixed |
-| `::test_overnight_checkout_targets_active_record` | Fail | **Pass** | same fix |
-| `::test_overnight_duplicate_checkin_rejected` | Fail | **Pass** | same fix |
-| `::test_full_flow_reflects_in_status` | Fail | **Pass** | same fix |
-| `test_security_regressions.py::TestWebSocketSecurity::test_websocket_requires_session` | Fail | **Pass** | WebSocket origin/session guard added |
-| `test_dark_theme.py` ×8 | Fail | Fail | pre-existing UI/CSS-asset issues, untouched by the security work |
-| `test_responsive_tables.py::test_every_table_has_a_mobile_pattern` | Fail | Fail | pre-existing UI issue |
-| `test_user_panel_theme.py::test_user_panel_dark_mode_rules_cover_core_surfaces` | Fail | Fail | pre-existing UI issue |
-| `test_ticketing_service.py::test_closed_tickets_can_only_be_reopened` | Fail | Fail | **test expects a transition matrix that the code has never had** (`resolved → closed` is allowed); triage pending, not a security control |
-| `test_ticketing_service.py::test_actor_is_read_from_signed_session` | Fail | Fail | **test expects a 2-tuple**, code returns `(actor, is_admin, is_master_admin)`; the mismatch is the test's, not a security hole (the actor *is* read from the signed session) |
+| `test_dark_theme.py` ×4 (`…_is_last_stylesheet`) | Fail | Fail | pre-existing CSS order; unrelated |
+| `test_dark_theme.py` ×4 (dark rules coverage) | Fail | Fail | pre-existing CSS coverage gaps |
+| `test_final_report_print.py` | Fail | Fail | pre-existing print-layer assertion |
+| `test_label_printer_api.py` | Fail | Fail | pre-existing missing route registration |
+| `test_responsive_tables.py` | Fail | Fail | pre-existing mobile-pattern gap |
+| `test_ticketing_service.py` ×2 | Fail | Fail | pre-existing test/code mismatch (not a security hole) |
+| `test_user_panel_theme.py` | Fail | Fail | pre-existing CSS coverage gap |
 
-One incidental test-maintenance note: `test_security_regressions.py::TestAuthorization::test_download_pdf_requires_auth`
-asserts that `_require_auth` appears within a 500-character window after
-`def download_pdf(`. The hardening change first added a long docstring that
-pushed the guard out of that window (the control was intact and measured by the
-anonymous probe as 401). Rather than editing the test, the docstring was
-converted into comments *after* the authorization guard, so the original,
-unmodified assertion passes again.
+**Security suites:** 175/175 pass (was 137 at the 2026-09-19 snapshot; +38 tests
+for login-only root, kiosk Origin guards, overtime admin gate, bounded uploads,
+CSP/session assertions).
 
-## 3. Coverage added by this assessment
+**Skipped:** 4 (`jsdom` not installed → `test_dark_theme_dom.py`; suite is green
+without them).
 
-`tests/test_security_hardening.py` grew from 112 to 137 behavioural tests. The
-new groups:
+## 3. Coverage added by this assessment (cumulative)
 
-| Test class | What it proves |
+| Test class / group | What it proves |
 |---|---|
-| `TestEmployeeReportAuthorization` | `/get_hourly_pass_report` and `/get_overtime_report` refuse anonymous and non-admin callers |
-| `TestCsrfExemptionIntegration` | the exemption list covers the bridge agent, captcha and the public form, is narrow, and authenticated mutations still need a token |
-| `TestInternalErrorHandling` | the generic error helper no longer raises `NameError`; the request-owner table lookup is allow-listed |
-| `TestPasswordRecovery` (extended) | a pending request answers exactly like a decoy id; the "expired" explanation requires the matching code |
-| `TestStoredXssRendering` | the four report renderers escape DB values, the helper is loaded, and the two free-text write paths reject markup |
-| `TestPdfGenerationHardening` | `pdfkit.from_string` is gone, `from_file` is used with JavaScript and local file access disabled, the temp file is removed, a missing template yields 503 |
+| `TestLoginOnlyRoot` (new, 2026-09-23) | `/` 301→`/login`, no landing render, no redirect loop, robots/sitemap, `https_only`, tight `connect-src`, kiosk Origin guards, bounded profile upload, admin-only `GET /overtime_report` |
+| `TestQueuePIIProtection` | queue PII stripped for non-admins; cross-site Origin rejected even for admins |
+| `TestNoDebugLeak` | `_debug` block removed from JSON responses |
+| `TestSupportTicketFailClosed` | rate-limit exception → 503, not pass-through |
+| `TestSlideDeleteContainment` | slide unlink stays inside `SLIDES_DIR` |
+| `TestReportShellsRequireAuth` | five report shells call `_require_auth` |
+| `TestXSSSinksEscaped` | admin/ticket-kiosk/training/admin.js sinks escaped |
+| `TestCallPageEntryGate` | `/call-display` `/call-management` master-admin + referer gate |
+| `TestEmployeeReportAuthorization` | report data endpoints refuse anonymous/non-admin |
+| `TestCsrfExemptionIntegration` | exemption list narrow; bridge/captcha/public still work |
+| `TestPdfGenerationHardening` | `from_file`, no JS, temp file removed |
+| `TestCallSystemAuthorization` | WS Origin + kiosk write guard |
 
 ## 4. What these tests do **not** prove
 
-* No test exercises a live SQL Server, the Araz device, Caddy, or a real browser;
-  those paths are covered by the manual checklists.
-* Static-analysis output (Bandit/Ruff) is reported as *potential* findings; its
-  High/Medium items were individually triaged in `SQL_INJECTION_REVIEW.md`.
-* The `pip-audit` result covers the packages this assessment could resolve
-  offline; the deployment host must repeat it after the final dependency freeze.
+* No test exercises a live SQL Server, the Araz device, Caddy, or a real browser
+  login; those paths are covered by the manual checklists and the live probes in §5.
+* Static-analysis output (Bandit/Ruff) is *potential* findings; triaged in
+  `SQL_INJECTION_REVIEW.md`.
+* `pip-audit` covers packages resolvable offline; re-run after the final freeze.
+
+## 5. Live production probes (2026-09-23, off-LAN `curl` → `https://hastama.ir`)
+
+| Probe | Expected | Observed |
+|---|---|---|
+| `GET /` | 301 → `/login` | **302** at Phase 8 probe time → `https://hastama.ir/login`; code now 301 (confirm after redeploy) |
+| `GET /` follow | no loop, end 200 | **200** at `/login`, `num_redirects=1` |
+| `GET http://hastama.ir/` | 301 → HTTPS | **301** → HTTPS → `/login` (2 hops) |
+| `GET https://www.hastama.ir/` | 301 → apex | **301** → apex → `/login` (2 hops) |
+| `GET /login` | 200 + security headers | **200**; CSP, HSTS, nosniff, XFO, CORP/COOP, `Secure` csrf cookie |
+| `GET /robots.txt` | `Disallow: /` | matches new text |
+| `GET /sitemap.xml` | only `/login` | matches |
+| `GET /docs` `/redoc` `/openapi.json` | 404 | **404** |
+| `GET /admin` (anon) | 303 → login | **303** login |
+| `GET /user_panel` (anon) | 303 → login | **303** login |
+| `GET /call-display` `/call-management` (anon) | 303 → login | **303** login |
+| `GET /final_report_page` (anon) | 401/redirect | **401** |
+| `GET /overtime_report` (anon) | 401 | **401** |
+| `GET /master-admin` (anon) | 303 dashboard (then gate) | **303** dashboard |
+| `POST /api/calls` cross-site Origin | 403 | **403** |
+| `POST /api/calls/slides/upload` cross-site | 403 | **403** |
+| `POST /api/queue/take` cross-site | 403 | **403** |
+| `POST /api/tickets` cross-site | 403 | **403** |
+| `WS /api/ws/call-display` evil Origin | reject | **403** |
+| `WS /api/ws/call-display` same Origin | 101 | **101** |
+| `POST /api/araz/bridge-sync` no secret | fail-closed | **422** (validation before body secrets — never 200 with data) |
+| `GET /predict` | gated | **403** |
+| Path traversal `/static/../app/main.py` | 404 | **404** |
+| `Server` header | no app leak | **cloudflare** only |
+| HSTS | present on HTTPS | `max-age=31536000; includeSubDomains` |
+
+**Phase 8 status: PASS** for root/login/robots/sitemap/docs/headers/Origin gates.
+Residual: HEAD on some GET routes returns 405 (RR-22, non-security).

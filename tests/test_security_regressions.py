@@ -84,8 +84,8 @@ class TestAuthorization:
         idx = source.find('def overtime_report(')
         assert idx > 0, "overtime_report function not found"
         segment = source[idx:idx+500]
-        assert "_require_auth" in segment or "_require_admin" in segment, \
-            "overtime_report must require authentication"
+        assert "_require_admin" in segment, \
+            "GET /overtime_report exposes org-wide totals — must be admin-only"
 
     def test_download_pdf_requires_auth(self):
         source = self._read_main_source()
@@ -175,6 +175,33 @@ class TestSecretManagement:
                     with open(path, encoding="utf-8", errors="ignore") as fh:
                         if "meyer#perko" in fh.read():
                             pytest.fail(f"Hardcoded credential found in {path}")
+
+    def test_no_hardcoded_meyer_perko_in_repo_docs(self):
+        """Historical Access password must be redacted from tracked docs (except this test)."""
+        needle = "meyer#perko"
+        offenders = []
+        targets = [
+            "HASTAMA_AFTA_SECURITY_AUDIT.md",
+            "HASTAMA_AFTA_SECURITY_AUDIT_FINAL.md",
+            "HASTAMA_AFTA_SECURITY_AUDIT_VERIFIED.md",
+            "HASTAMA_SECURITY_FINAL_VERIFICATION.md",
+            "HASTAMA_SECURITY_HARDENING_CHANGELOG.md",
+        ]
+        for root, dirs, files in os.walk("docs"):
+            dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__"}]
+            for name in files:
+                if name.endswith(".md"):
+                    targets.append(os.path.join(root, name))
+        for path in targets:
+            if not os.path.isfile(path):
+                continue
+            try:
+                with open(path, encoding="utf-8", errors="ignore") as fh:
+                    if needle in fh.read():
+                        offenders.append(path)
+            except OSError:
+                continue
+        assert not offenders, f"Hardcoded credential still present in: {offenders}"
 
     def test_master_admin_from_env(self):
         """MASTER_ADMIN_USERNAMES should read from environment."""
@@ -299,3 +326,273 @@ class TestCallPageEntryGate:
             assert idx > 0, fn
             segment = source[idx: idx + 500]
             assert "_require_call_page_access" in segment, fn
+
+
+class TestQueuePIIProtection:
+    """Queue ticket PII must not be enumerable or writable without browser context."""
+
+    @staticmethod
+    def _request(session=None, origin=None, referer=None, host="127.0.0.1:5000"):
+        from app.api.routes import call_system
+
+        class Req:
+            def __init__(self):
+                self.session = dict(session or {})
+                self.headers = {}
+                if origin is not None:
+                    self.headers["origin"] = origin
+                if referer is not None:
+                    self.headers["referer"] = referer
+                self.headers["host"] = host
+                self.client = type("C", (), {"host": "10.0.0.5"})()
+
+        return call_system, Req()
+
+    def test_guard_rejects_client_without_browser_context(self):
+        from fastapi import HTTPException
+
+        call_system, req = self._request()
+        with pytest.raises(HTTPException) as exc:
+            call_system._guard_queue_pii(req, "test-read")
+        assert exc.value.status_code == 403
+
+    def test_guard_rejects_cross_site_origin(self):
+        from fastapi import HTTPException
+
+        call_system, req = self._request(origin="https://evil.example")
+        with pytest.raises(HTTPException) as exc:
+            call_system._guard_queue_pii(req, "test-read")
+        assert exc.value.status_code == 403
+
+    def test_guard_rejects_cross_site_referer(self):
+        from fastapi import HTTPException
+
+        call_system, req = self._request(referer="https://evil.example/kiosk")
+        with pytest.raises(HTTPException) as exc:
+            call_system._guard_queue_pii(req, "test-read")
+        assert exc.value.status_code == 403
+
+    def test_guard_allows_same_site_origin(self):
+        call_system, req = self._request(origin="http://127.0.0.1:5000")
+        call_system._guard_queue_pii(req, "test-allow-origin")
+
+    def test_guard_allows_same_site_referer(self):
+        call_system, req = self._request(referer="http://127.0.0.1:5000/ticket-kiosk")
+        call_system._guard_queue_pii(req, "test-allow-referer")
+
+    def test_guard_allows_admin_without_browser_headers(self):
+        call_system, req = self._request(session={"username": "admin", "is_admin": True})
+        call_system._guard_queue_pii(req, "test-allow-admin")
+
+    def test_guard_rejects_cross_site_origin_even_for_admin(self):
+        from fastapi import HTTPException
+
+        call_system, req = self._request(
+            session={"username": "admin", "is_admin": True},
+            origin="https://evil.example",
+        )
+        with pytest.raises(HTTPException) as exc:
+            call_system._guard_queue_pii(req, "test-admin-xss-origin")
+        assert exc.value.status_code == 403
+
+    def test_list_endpoint_strips_pii_for_anonymous(self):
+        source = open("app/api/routes/call_system.py", encoding="utf-8").read()
+        idx = source.find("async def list_queue_tickets(")
+        assert idx > 0
+        segment = source[idx:idx + 2500]
+        assert "include_pii" in segment
+        assert "_QUEUE_PII_FIELDS" in segment
+        assert "patient_national_id" in segment
+        assert 'request.session.get("is_admin") is True' in segment
+
+    def test_ticket_detail_endpoints_call_the_pii_guard(self):
+        source = open("app/api/routes/call_system.py", encoding="utf-8").read()
+        for fn in ("async def get_queue_ticket(", "async def edit_queue_ticket("):
+            idx = source.find(fn)
+            assert idx > 0, fn
+            segment = source[idx:idx + 400]
+            assert "_guard_queue_pii" in segment, fn
+
+    def test_kiosk_ticket_path_is_csrf_exempt_with_documented_guard(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        assert '"/api/queue/ticket"' in source
+        assert '"/registration/submit"' in source
+        assert '"/registration/"' not in source.split("CSRF_EXEMPT_PREFIXES")[1].split(")")[0]
+
+
+class TestNoDebugLeak:
+    def test_attendance_response_has_no_debug_block(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        assert '"_debug"' not in source
+        assert "_dbg =" not in source
+        assert '"mdb_path": _mdb_path' not in source
+
+
+class TestSupportTicketFailClosed:
+    def test_rate_limit_exception_fails_closed(self):
+        source = open("app/api/routes/auth.py", encoding="utf-8").read()
+        idx = source.find("async def public_support_ticket(")
+        assert idx > 0
+        segment = source[idx:idx + 3500]
+        assert "pass  # If rate limit check fails" not in segment
+        assert "503" in segment
+
+
+class TestSlideDeleteContainment:
+    def test_delete_slide_resolves_path_inside_slides_dir(self):
+        source = open("app/api/routes/call_system.py", encoding="utf-8").read()
+        idx = source.find("async def delete_slide(")
+        assert idx > 0
+        segment = source[idx:idx + 1200]
+        assert "is_relative_to" in segment
+        assert "SLIDES_DIR.resolve()" in segment
+
+
+class TestReportShellsRequireAuth:
+    def test_report_page_routes_call_require_auth(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        for fn in (
+            "async def report_page(",
+            "async def hourly_pass_report_page(",
+            "async def overtime_report_page(",
+            "async def payroll_report_page(",
+            "async def final_report(",
+        ):
+            idx = source.find(fn)
+            assert idx > 0, fn
+            segment = source[idx:idx + 450]
+            assert "_require_auth" in segment, fn
+
+
+class TestXSSSinksEscaped:
+    def test_registration_rows_escape_user_fields(self):
+        html = open("app/templates/admin.html", encoding="utf-8").read()
+        assert "esc(r.username || '')" in html
+        assert "esc(r.department || '—')" in html
+        assert "jsStr(r.request_id)" in html
+        assert "esc(d.national_id || '—')" in html
+        assert "data-edit-password" not in html
+
+    def test_ticket_kiosk_print_escapes_name(self):
+        html = open("app/templates/ticket-kiosk.html", encoding="utf-8").read()
+        assert "escText(patientData.name)" in html
+        assert "escText(ticket.service || '')" in html
+
+    def test_training_search_escapes_results(self):
+        js = open("app/static/js/training.js", encoding="utf-8").read()
+        assert "trEscape(r.title)" in js
+        assert "trEscape(r.category)" in js
+        assert "encodeURIComponent(String(r.id))" in js
+        assert "window.escapeHtml" not in js
+
+    def test_admin_shift_message_is_escaped(self):
+        js = open("app/static/js/admin.js", encoding="utf-8").read()
+        assert "esc(data.message || 'خطا در دریافت اطلاعات')" in js
+
+
+class TestLoginOnlyRoot:
+    """Phase 1 — public landing page removed; `/` must only redirect to `/login`."""
+
+    def test_root_redirects_to_login(self):
+        from starlette.testclient import TestClient
+
+        import app.main as main_mod
+
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 301
+        assert resp.headers.get("location") in ("/login", "http://testserver/login", "https://testserver/login")
+
+    def test_root_does_not_render_landing_template(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        idx = source.find("async def landing_page(")
+        assert idx > 0
+        segment = source[idx : idx + 400]
+        assert "landing.html" not in segment
+        assert "RedirectResponse" in segment
+
+    def test_login_page_does_not_redirect_back(self):
+        from starlette.testclient import TestClient
+
+        import app.main as main_mod
+
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/login", follow_redirects=False)
+        assert resp.status_code == 200
+        assert "location" not in resp.headers or resp.headers.get("location") != "/"
+
+    def test_robots_disallow_root_and_sitemap_has_no_landing(self):
+        from starlette.testclient import TestClient
+
+        import app.main as main_mod
+
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        robots = client.get("/robots.txt")
+        assert robots.status_code == 200
+        assert "Disallow: /" in robots.text
+        sitemap = client.get("/sitemap.xml")
+        assert sitemap.status_code == 200
+        assert "https://hastama.ir/login" in sitemap.text
+        assert "https://hastama.ir/</loc>" not in sitemap.text
+
+    def test_session_middleware_uses_https_only(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        assert "https_only=True" in source
+        assert "secure=True" not in source  # Starlette 1.6 has no secure= kwarg
+
+    def test_csp_connect_src_has_no_open_websocket_scheme(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        idx = source.find("content-security-policy")
+        assert idx > 0
+        segment = source[idx : idx + 600]
+        assert "connect-src" in segment
+        # bare ws:/wss: would allow exfil to any host
+        assert "connect-src 'self' ws:" not in segment
+        assert "connect-src 'self' ws: wss:" not in segment
+
+    def test_kiosk_write_routes_call_origin_guard(self):
+        source = open("app/api/routes/call_system.py", encoding="utf-8").read()
+        for fn in (
+            "async def reset_display(",
+            "async def refresh_display(",
+            "async def remove_call(",
+            "async def clear_recent_calls(",
+            "async def remove_from_waiting_queue(",
+            "async def call_from_queue(",
+            "async def upload_slide(",
+        ):
+            idx = source.find(fn)
+            assert idx > 0, fn
+            segment = source[idx : idx + 600]
+            assert "_guard_kiosk_write" in segment or "origin_is_same_site" in segment, fn
+
+    def test_queue_state_changes_check_origin(self):
+        source = open("app/api/routes/call_system.py", encoding="utf-8").read()
+        for fn in (
+            "async def call_queue_ticket(",
+            "async def complete_queue_ticket(",
+            "async def call_next_ticket(",
+            "async def delete_waiting_queue(",
+            "async def delete_queue_ticket(",
+            "async def toggle_slide(",
+            "async def delete_slide(",
+        ):
+            idx = source.find(fn)
+            assert idx > 0, fn
+            segment = source[idx : idx + 500]
+            assert "origin_is_same_site" in segment or "_guard_kiosk_write" in segment, fn
+
+    def test_profile_upload_is_size_bounded_before_buffer(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        idx = source.find("MAX_FILE_SIZE = 5 * 1024 * 1024")
+        assert idx > 0
+        segment = source[idx : idx + 800]
+        assert "await file.read()" not in segment.split("while remaining")[0][-200:] or "while remaining" in segment
+        assert "while remaining" in segment
+
+    def test_overtime_html_report_is_admin_only(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        idx = source.find('async def overtime_report(')
+        assert idx > 0
+        segment = source[idx : idx + 350]
+        assert "_require_admin" in segment

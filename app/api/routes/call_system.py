@@ -245,6 +245,55 @@ def _guard_kiosk_write(request: Request, bucket: str) -> None:
         raise HTTPException(status_code=429, detail="تعداد درخواست‌ها بیش از حد مجاز است.")
 
 
+# Ticket PII (name / national id / phone / insurance) must never be enumerable
+# by an anonymous script.  Logged-in admins skip the browser-context check;
+# everyone else must present a same-site Origin or Referer (the kiosk page and
+# reception UI both do) and is rate limited per IP.
+QUEUE_PII_LIMIT = 30
+QUEUE_PII_WINDOW = 60
+_QUEUE_PII_FIELDS = (
+    "patient_name",
+    "patient_national_id",
+    "patient_phone",
+    "insurance_base",
+    "insurance_extra",
+)
+
+
+def _guard_queue_pii(request: Request, bucket: str) -> None:
+    from app.core.net import client_ip, origin_is_same_site
+    from app.core.rate_limit import limiter
+    from urllib.parse import urlparse
+
+    is_admin = request.session.get("is_admin") is True
+    origin = (request.headers.get("origin") or "").strip()
+    referer = (request.headers.get("referer") or "").strip()
+    if origin:
+        # Always enforce when present — including admins (path is CSRF-exempt).
+        if not origin_is_same_site(request):
+            logger.warning("queue PII rejected for cross-site origin: %s", origin)
+            raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
+    elif referer:
+        host = (request.headers.get("host") or "").split(":")[0].lower()
+        try:
+            referer_host = (urlparse(referer).netloc or "").split(":")[0].lower()
+        except Exception:
+            referer_host = ""
+        if not referer_host or referer_host != host:
+            logger.warning("queue PII rejected for cross-site referer: %s", referer)
+            raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
+    elif not is_admin:
+        # Non-browser clients must not enumerate ticket PII; admins (session
+        # cookie) may call without Origin/Referer for internal tooling.
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
+    if not limiter.allow(
+        f"{bucket}:{client_ip(request)}",
+        limit=QUEUE_PII_LIMIT,
+        window_seconds=QUEUE_PII_WINDOW,
+    ):
+        raise HTTPException(status_code=429, detail="تعداد درخواست‌ها بیش از حد مجاز است.")
+
+
 def _clean_department(value) -> str:
     from app.core.validation import clean_display_text
 
@@ -630,6 +679,7 @@ async def add_to_waiting_queue(request: Request):
 @router.delete("/calls/waiting-queue/{item_id}")
 async def remove_from_waiting_queue(request: Request, item_id: int):
     """Remove an item from the waiting queue."""
+    _guard_kiosk_write(request, "calls-waiting-del")
     username = request.session.get("username")
     if not username:
         return JSONResponse(status_code=401, content={"success": False, "error": "لاگین نکرده‌اید."})
@@ -647,6 +697,7 @@ async def remove_from_waiting_queue(request: Request, item_id: int):
 @router.post("/calls/waiting-queue/{item_id}/call")
 async def call_from_queue(request: Request, item_id: int):
     """Mark a waiting queue item as called (triggers call system)."""
+    _guard_kiosk_write(request, "calls-waiting-call")
     username = _actor(request, admin=True, required=False)
 
     conn = _get_connection()
@@ -712,7 +763,7 @@ async def call_from_queue(request: Request, item_id: int):
 @router.post("/calls/reset-display")
 async def reset_display(request: Request):
     """Broadcast a reset event to clear all numbers from TV displays."""
-    _actor(request, admin=True, required=False)
+    _guard_kiosk_write(request, "reset-display")
 
     # Clear persistent display queue
     conn = _get_connection()
@@ -738,6 +789,7 @@ async def refresh_display(request: Request):
     Lets the operator refresh remote kiosk/TV browsers (e.g. when the
     screen is stuck or after an update) without walking to the device.
     """
+    _guard_kiosk_write(request, "refresh-display")
     _actor(request, admin=True, required=False)
 
     event = {"type": "refresh_display", "data": {}}
@@ -754,6 +806,7 @@ async def refresh_display(request: Request):
 @router.post("/calls/remove")
 async def remove_call(request: Request):
     """Broadcast a remove event to TV displays to remove a specific number."""
+    _guard_kiosk_write(request, "calls-remove")
     _actor(request, admin=True, required=False)
 
     body = await request.json()
@@ -815,6 +868,7 @@ async def recent_calls(request: Request, limit: int = 20):
 @router.delete("/calls/recent")
 async def clear_recent_calls(request: Request):
     """Delete the call history."""
+    _guard_kiosk_write(request, "calls-recent-clear")
     _actor(request, admin=True, required=True)
 
     conn = _get_connection()
@@ -911,6 +965,11 @@ async def list_active_slides():
 async def upload_slide(request: Request, file: UploadFile = File(...)):
     """Upload a slide image."""
     _actor(request, admin=True, required=True)
+    # Slides live under /api/calls (CSRF-exempt kiosk prefix) — require a
+    # same-site Origin so a cross-site form cannot drive an admin session.
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _ensure_slides_dir()
 
     # Validate file type
@@ -918,17 +977,32 @@ async def upload_slide(request: Request, file: UploadFile = File(...)):
     if file.content_type not in allowed:
         raise HTTPException(status_code=422, detail="فقط فایل‌های تصویری (JPG, PNG, WebP, GIF) مجاز هستند.")
 
-    # Read file content
-    content = await file.read()
-    if len(content) > 10 * 1024 * 1024:  # 10 MB max
+    # Bounded read before buffering the whole body (10 MB + 1 for the check).
+    MAX_SLIDE = 10 * 1024 * 1024
+    content = b""
+    remaining = MAX_SLIDE + 1
+    while remaining > 0:
+        chunk = await file.read(min(1024 * 1024, remaining))
+        if not chunk:
+            break
+        content += chunk
+        remaining -= len(chunk)
+    if len(content) > MAX_SLIDE:
         raise HTTPException(status_code=422, detail="حجم فایل نباید بیشتر از ۱۰ مگابایت باشد.")
     if len(content) < 100:
         raise HTTPException(status_code=422, detail="فایل نامعتبر است.")
 
-    # Generate safe filename
+    # Magic-byte validation matched to extension (admin content_type alone is
+    # client-controlled).
+    allowed_ext = {".jpg": (b"\xff\xd8\xff",), ".jpeg": (b"\xff\xd8\xff",),
+                   ".png": (b"\x89PNG",), ".gif": (b"GIF8",), ".webp": (b"RIFF",)}
     ext = Path(file.filename or "slide.jpg").suffix.lower()
-    if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+    if ext not in allowed_ext:
         ext = ".jpg"
+    if not any(content.startswith(sig) for sig in allowed_ext[ext]):
+        raise HTTPException(status_code=422, detail="محتوای فایل با پسوند آن مطابقت ندارد.")
+
+    # Generate safe filename
     safe_name = f"slide_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}{ext}"
 
     # Save to disk
@@ -967,6 +1041,9 @@ async def upload_slide(request: Request, file: UploadFile = File(...)):
 @router.put("/calls/slides/{slide_id}/toggle")
 async def toggle_slide(request: Request, slide_id: int):
     """Toggle active/inactive status of a slide (administrators only)."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _require_admin(request)
     conn = _get_connection()
     try:
@@ -984,6 +1061,9 @@ async def toggle_slide(request: Request, slide_id: int):
 @router.delete("/calls/slides/{slide_id}")
 async def delete_slide(request: Request, slide_id: int):
     """Delete a slide from database and disk (administrators only)."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _require_admin(request)
     conn = _get_connection()
     try:
@@ -998,14 +1078,14 @@ async def delete_slide(request: Request, slide_id: int):
     finally:
         conn.close()
 
-    # Delete from disk
+    # Delete from disk — only inside the slides directory (path containment).
     _ensure_slides_dir()
-    file_path = SLIDES_DIR / filename
-    if file_path.exists():
-        try:
+    try:
+        file_path = (SLIDES_DIR / filename).resolve()
+        if file_path.is_relative_to(SLIDES_DIR.resolve()) and file_path.is_file():
             file_path.unlink()
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     return JSONResponse({"success": True, "message": "اسلاید حذف شد."})
 
@@ -1111,8 +1191,13 @@ async def take_queue_ticket(request: Request):
 
 @router.get("/queue/list")
 async def list_queue_tickets(request: Request, status: str = "waiting"):
-    """List queue tickets. status can be: waiting, called, completed, all."""
-    _actor(request, admin=True, required=False)
+    """List queue tickets. status can be: waiting, called, completed, all.
+
+    Anonymous callers (TV display, kiosk counter) only need number/status/
+    service; full patient PII is returned only to an authenticated admin
+    session (call-management console).
+    """
+    include_pii = request.session.get("is_admin") is True
 
     conn = _get_connection()
     try:
@@ -1149,6 +1234,9 @@ async def list_queue_tickets(request: Request, status: str = "waiting"):
             d["called_at"] = _iso(d.pop("called_at", None))
             d["completed_at"] = _iso(d.pop("completed_at", None))
             d["ticket_date"] = str(d.pop("ticket_date", ""))
+            if not include_pii:
+                for field in _QUEUE_PII_FIELDS:
+                    d.pop(field, None)
             result.append(d)
     finally:
         conn.close()
@@ -1188,6 +1276,11 @@ async def queue_stats():
 @router.post("/queue/call/{ticket_id}")
 async def call_queue_ticket(request: Request, ticket_id: int, department: str = "پذیرش"):
     """Call a ticket from the queue (for reception or sample collection)."""
+    # Path is under /api/queue (not CSRF-exempt) but still enforce Origin when
+    # present so a leaked session cookie cannot drive cross-site state changes.
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _actor(request, admin=True, required=False)
     department = _clean_department(department)
 
@@ -1241,6 +1334,9 @@ async def call_queue_ticket(request: Request, ticket_id: int, department: str = 
 @router.delete("/queue/{ticket_id}")
 async def delete_queue_ticket(request: Request, ticket_id: int):
     """Remove one waiting ticket from today's queue."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _actor(request, admin=True, required=True)
 
     conn = _get_connection()
@@ -1268,6 +1364,9 @@ async def delete_queue_ticket(request: Request, ticket_id: int):
 @router.delete("/queue")
 async def delete_waiting_queue(request: Request):
     """Remove all waiting tickets from today's queue."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _actor(request, admin=True, required=True)
 
     conn = _get_connection()
@@ -1293,6 +1392,9 @@ async def delete_waiting_queue(request: Request):
 @router.post("/queue/complete/{ticket_id}")
 async def complete_queue_ticket(request: Request, ticket_id: int):
     """Mark a ticket as completed."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _actor(request, admin=True, required=False)
 
     conn = _get_connection()
@@ -1315,6 +1417,9 @@ async def complete_queue_ticket(request: Request, ticket_id: int):
 @router.post("/queue/call-next")
 async def call_next_ticket(request: Request, department: str = "پذیرش"):
     """Call the next waiting ticket in order."""
+    from app.core.net import origin_is_same_site
+    if not origin_is_same_site(request):
+        raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
     _actor(request, admin=True, required=False)
     department = _clean_department(department)
 
@@ -1380,6 +1485,7 @@ async def call_next_ticket(request: Request, department: str = "پذیرش"):
 @router.get("/queue/ticket/{ticket_number}")
 async def get_queue_ticket(request: Request, ticket_number: int):
     """Get ticket details by ticket number for today (kiosk edit flow)."""
+    _guard_queue_pii(request, "queue-ticket-read")
     conn = _get_connection()
     try:
         _ensure_schema(conn)
@@ -1416,6 +1522,7 @@ class EditTicketRequest(BaseModel):
 @router.put("/queue/ticket/{ticket_number}")
 async def edit_queue_ticket(request: Request, ticket_number: int, body: EditTicketRequest):
     """Update patient info for a waiting ticket (kiosk edit flow)."""
+    _guard_queue_pii(request, "queue-ticket-write")
     conn = _get_connection()
     try:
         _ensure_schema(conn)

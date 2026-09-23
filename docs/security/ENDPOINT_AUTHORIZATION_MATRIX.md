@@ -4,20 +4,21 @@ Generated from the AST of `app/main.py` and `app/api/routes/*.py` (full function
 not a text window) and cross-checked with anonymous HTTP probes against the real ASGI app
 (`TestClient`, no session, `follow_redirects=False`).
 
-**Total routes: 190**
+**Total routes: 191**
 
 | Family | Count |
 |---|---|
 | master-admin | 30 |
+| master-admin entry gate | 2 |
 | admin | 60 |
 | admin (indirect) | 2 |
-| authenticated | 49 |
+| authenticated | 48 |
 | authenticated (indirect) | 5 |
 | bridge-secret | 1 |
 | public-by-design | 35 |
 | public-by-design (kiosk) | 2 |
 | static shell | 5 |
-| redirect-only | 1 |
+| redirect-only | 2 |
 
 Probe column = HTTP status returned to an anonymous `GET` (parameterless routes only).
 
@@ -149,7 +150,7 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | GET | `/api/notifications/stream` | `notification_stream` | authenticated | _actor | 401 |  |
 | GET | `/api/notifications/unread-count` | `unread_count` | authenticated | _actor | 401 |  |
 | GET | `/api/notifications/{notification_id}` | `notification_detail` | authenticated | _actor | n/a |  |
-| GET | `/overtime_report` | `overtime_report` | authenticated | _require_auth | 401 |  |
+| GET | `/overtime_report` | `overtime_report` | admin | _require_admin | 401 | 2026-09-23: org-wide totals restricted to admin (was authenticated) |
 | POST | `/sabt_hozoor_checkin` | `sabt_hozoor_checkin` | authenticated | _attendance_actor | n/a |  |
 | POST | `/sabt_hozoor_checkout` | `sabt_hozoor_checkout` | authenticated | _attendance_actor | n/a |  |
 | POST | `/submit_hourly_pass` | `submit_hourly_pass` | authenticated | session.get("username") | n/a |  |
@@ -176,8 +177,8 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | GET | `/api/date` | `get_date` | public-by-design | - | 200 |  |
 | GET | `/api/system-config` | `public_system_config` | public-by-design | - | 200 |  | returns three public UI settings (captcha/idle-timeout flags) only |
 | GET | `/api/training/search` | `training_search` | public-by-design | - | 200 |  | training catalogue, no personal data |
-| GET | `/call-display` | `call_display` | public-by-design | - | 200 |  |
-| GET | `/call-management` | `call_management` | public-by-design | - | 200 |  |
+| GET | `/call-display` | `call_display` | master-admin entry gate | `_require_call_page_access` | 303 | 2026-09-23: closed to direct entry; only master-admin navigated from `/master-admin/dashboard` (or self/iframe) |
+| GET | `/call-management` | `call_management` | master-admin entry gate | `_require_call_page_access` | 303 | same gate as `/call-display` |
 | GET | `/api/calls/audio-status` | `audio_status` | public-by-design | - | 200 |  |
 | GET | `/api/calls/display-queue` | `get_display_queue` | public-by-design | - | 500 |  |
 | GET | `/api/calls/slides` | `list_slides` | public-by-design | - | 500 |  |
@@ -195,6 +196,7 @@ Probe column = HTTP status returned to an anonymous `GET` (parameterless routes 
 | GET | `/health` | `health` | public-by-design | - | 200 |  |
 | GET | `/health/database` | `health_database` | public-by-design | - | 200 |  | returns only status, never connection details |
 | GET | `/login` | `home` | public-by-design | - | 200 |  |
+| GET | `/` | `landing_page` | redirect-only | - | 301 | 2026-09-23: login-only; `/` 301 → `/login` (marketing landing removed; was 302 during Phase 8 verification, switched to 301 after external confirmation) |
 | POST | `/login_user` | `login` | public-by-design | password+captcha | n/a | pre-authentication endpoint; rate limited 15 failures/10 min per IP |
 | POST | `/predict` | `predict` | public-by-design | - | n/a | ML predictor shipped with the repo; no data access, must be reviewed before LAN exposure |
 | POST | `/public/support-ticket` | `public_support_ticket` | public-by-design | - | n/a |  |

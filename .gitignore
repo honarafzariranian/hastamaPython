@@ -96,11 +96,11 @@ target/
 node_modules/
 package-lock.json
 
-# Database exports / dumps (only allow in database/exports/)
+# Database exports / dumps — never track real dumps (they contain plaintext
+# password columns).  Local restore scripts still write under database/exports/.
 exported_data.sql
+database/exports/*.sql
+database/exports/*.dump
+database/exports/*.sql.gz
 *.dump
 *.sql.gz
-!database/exports/*.dump
-!database/exports/*.sql
-!database/exports/*.sql.gz
-!database/exports/exported_data.sql

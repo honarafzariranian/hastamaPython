@@ -76,7 +76,7 @@ Source-code-based static analysis with code-path tracing. Every finding is verif
 ### HST-SEC-002: Hard-Coded Credentials
 - **Stage 1 Status:** Critical
 - **Stage 2 Fix:** Partial (moved to env vars with empty fallbacks)
-- **Stage 3 Fix:** **IMPROVED** — `ARAZ_ACCESS_PASSWORD` raises RuntimeError if empty in main.py. `_HMAC_SECRET` logs warning when unset. `meyer#perko` removed from source.
+- **Stage 3 Fix:** **IMPROVED** — `ARAZ_ACCESS_PASSWORD` raises RuntimeError if empty in main.py. `_HMAC_SECRET` logs warning when unset. Historical hardcoded Access password (value redacted) removed from source.
 - **Verification:** No hardcoded credentials found in Python source.
 
 ### HST-SEC-003/004: Missing Auth on Endpoints

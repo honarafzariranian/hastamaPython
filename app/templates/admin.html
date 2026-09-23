@@ -725,7 +725,7 @@
                             </form>
 
                             <button class="edit-btn"
-                                onclick="openEditPopupFromData(this)" data-edit-username="{{ user.username }}" data-edit-substitute="{{ user.substitute }}" data-edit-work-hours="{{ user.work_hours }}" data-edit-department="{{ user.department }}" data-edit-employment="{{ user.employment_status }}" data-edit-active="{{ user.is_active or 'active' }}" data-edit-password="{{ user.password }}">
+                                onclick="openEditPopupFromData(this)" data-edit-username="{{ user.username }}" data-edit-substitute="{{ user.substitute }}" data-edit-work-hours="{{ user.work_hours }}" data-edit-department="{{ user.department }}" data-edit-employment="{{ user.employment_status }}" data-edit-active="{{ user.is_active or 'active' }}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 <span class="tooltip-text-table">ویرایش</span>
                             </button>
@@ -2834,18 +2834,22 @@
                         var dateStr = r.created_at
                             ? new Date(r.created_at).toLocaleDateString('fa-IR') + ' · ' + new Date(r.created_at).toLocaleTimeString('fa-IR', {hour:'2-digit',minute:'2-digit'})
                             : '—';
+                        var rid = jsStr(r.request_id);
+                        var firstName = esc(r.first_name || '');
+                        var lastName = esc(r.last_name || '');
+                        var initial = esc((r.first_name || '?').charAt(0) || '?');
                         html += '<tr class="reg-row" style="animation-delay:' + (idx * 40) + 'ms">';
                         html += '<td class="reg-row__idx">' + ((regPage - 1) * regPerPage + idx + 1) + '</td>';
-                        html += '<td class="reg-row__name"><span class="reg-row__avatar">' + ((r.first_name || '?')[0]) + '</span>' + (r.first_name || '') + ' ' + (r.last_name || '') + '</td>';
-                        html += '<td class="reg-row__username">' + (r.username || '') + '</td>';
-                        html += '<td>' + (r.department || '—') + '</td>';
-                        html += '<td class="reg-row__date">' + dateStr + '</td>';
-                        html += '<td><span class="reg-badge ' + s.cls + '">' + s.label + '</span></td>';
+                        html += '<td class="reg-row__name"><span class="reg-row__avatar">' + initial + '</span>' + firstName + ' ' + lastName + '</td>';
+                        html += '<td class="reg-row__username">' + esc(r.username || '') + '</td>';
+                        html += '<td>' + esc(r.department || '—') + '</td>';
+                        html += '<td class="reg-row__date">' + esc(dateStr) + '</td>';
+                        html += '<td><span class="reg-badge ' + esc(s.cls) + '">' + esc(s.label) + '</span></td>';
                         html += '<td class="reg-row__actions">';
-                        html += '<button class="reg-action-btn reg-action-btn--view" onclick="viewRegRequest(\'' + r.request_id + '\')" title="مشاهده جزئیات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>';
+                        html += '<button class="reg-action-btn reg-action-btn--view" onclick="viewRegRequest(\'' + rid + '\')" title="مشاهده جزئیات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>';
                         if (r.status === 'pending') {
-                            html += '<button class="reg-action-btn reg-action-btn--approve" onclick="approveRegRequest(\'' + r.request_id + '\')" title="تأیید"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>';
-                            html += '<button class="reg-action-btn reg-action-btn--reject" onclick="openRegRejectModal(\'' + r.request_id + '\')" title="رد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+                            html += '<button class="reg-action-btn reg-action-btn--approve" onclick="approveRegRequest(\'' + rid + '\')" title="تأیید"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>';
+                            html += '<button class="reg-action-btn reg-action-btn--reject" onclick="openRegRejectModal(\'' + rid + '\')" title="رد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
                         }
                         html += '</td></tr>';
                     });
@@ -2939,26 +2943,26 @@
                     var statusMap = { pending: 'انتظار بررسی', approved: 'تأیید شده', rejected: 'رد شده' };
                     var html = '<div class="reg-detail-grid">';
                     var fields = [
-                        { icon: '👤', label: 'نام', value: (d.first_name || '') + ' ' + (d.last_name || ''), accent: true },
-                        { icon: '🔑', label: 'نام کاربری', value: d.username || '—', mono: true },
-                        { icon: '👨', label: 'نام پدر', value: d.father_name || '—' },
-                        { icon: '🪪', label: 'شماره ملی', value: d.national_id || '—' },
-                        { icon: '📱', label: 'شماره همراه', value: d.mobile || '—' },
-                        { icon: '🏢', label: 'بخش', value: d.department || '—' },
-                        { icon: '🕐', label: 'ساعت کاری', value: d.work_hours || '—' },
-                        { icon: '🤝', label: 'جانشین', value: d.substitute || '—' },
-                        { icon: '📊', label: 'وضعیت', value: statusMap[d.status] || d.status || '—' },
-                        { icon: '📅', label: 'زمان درخواست', value: dateStr, full: true },
-                        { icon: '🌐', label: 'آدرس IP', value: d.created_ip || '—' }
+                        { icon: '👤', label: 'نام', value: esc((d.first_name || '') + ' ' + (d.last_name || '')), accent: true },
+                        { icon: '🔑', label: 'نام کاربری', value: esc(d.username || '—'), mono: true },
+                        { icon: '👨', label: 'نام پدر', value: esc(d.father_name || '—') },
+                        { icon: '🪪', label: 'شماره ملی', value: esc(d.national_id || '—') },
+                        { icon: '📱', label: 'شماره همراه', value: esc(d.mobile || '—') },
+                        { icon: '🏢', label: 'بخش', value: esc(d.department || '—') },
+                        { icon: '🕐', label: 'ساعت کاری', value: esc(d.work_hours || '—') },
+                        { icon: '🤝', label: 'جانشین', value: esc(d.substitute || '—') },
+                        { icon: '📊', label: 'وضعیت', value: esc(statusMap[d.status] || d.status || '—') },
+                        { icon: '📅', label: 'زمان درخواست', value: esc(dateStr), full: true },
+                        { icon: '🌐', label: 'آدرس IP', value: esc(d.created_ip || '—') }
                     ];
                     if (d.rejection_reason) {
-                        fields.push({ icon: '⚠️', label: 'دلیل رد', value: d.rejection_reason, full: true, danger: true });
+                        fields.push({ icon: '⚠️', label: 'دلیل رد', value: esc(d.rejection_reason), full: true, danger: true });
                     }
                     fields.forEach(function(f) {
                         html += '<div class="reg-detail-field' + (f.full ? ' reg-detail-field--full' : '') + (f.danger ? ' reg-detail-field--danger' : '') + '">';
                         html += '<span class="reg-detail-field__icon">' + f.icon + '</span>';
                         html += '<div class="reg-detail-field__content">';
-                        html += '<span class="reg-detail-field__label">' + f.label + '</span>';
+                        html += '<span class="reg-detail-field__label">' + esc(f.label) + '</span>';
                         html += '<span class="reg-detail-field__value' + (f.accent ? ' reg-detail-field__value--accent' : '') + (f.mono ? ' reg-detail-field__value--mono' : '') + '">' + f.value + '</span>';
                         html += '</div></div>';
                     });
@@ -2966,9 +2970,10 @@
                     body.innerHTML = html;
 
                     if (d.status === 'pending') {
+                        var detailRid = jsStr(d.request_id);
                         actions.innerHTML =
-                            '<button class="reg-btn reg-btn--danger" onclick="openRegRejectModal(\'' + d.request_id + '\')">رد درخواست</button>' +
-                            '<button class="reg-btn reg-btn--success" onclick="approveRegRequest(\'' + d.request_id + '\');closeRegDetailModal()">تأیید و ایجاد حساب</button>';
+                            '<button class="reg-btn reg-btn--danger" onclick="openRegRejectModal(\'' + detailRid + '\')">رد درخواست</button>' +
+                            '<button class="reg-btn reg-btn--success" onclick="approveRegRequest(\'' + detailRid + '\');closeRegDetailModal()">تأیید و ایجاد حساب</button>';
                     } else {
                         actions.innerHTML = '<button class="reg-btn reg-btn--ghost" onclick="closeRegDetailModal()">بستن</button>';
                     }
