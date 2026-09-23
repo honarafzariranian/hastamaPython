@@ -129,6 +129,14 @@ def test_printer_panel_styles_and_warning_state_exist():
     assert 'data-state="ready"' in CSS
 
 
+def test_label_studio_is_never_clipped_by_flex_shrink():
+    # overflow:hidden در فلکس‌ایتم بدون flex-shrink:0 باعث می‌شد
+    # استودیو کوتاه‌تر از محتوایش شود و بخش‌های پایین (دکمه‌ها/یادداشت) دیده نشوند.
+    studio_block = CSS.split(".ma-label-studio {", 1)[1].split("}", 1)[0]
+    assert "flex-shrink: 0" in studio_block
+    assert "overflow: hidden" in studio_block
+
+
 def test_print_falls_back_to_a_hidden_iframe():
     # پاپ‌آپ مسدود نشود: اگر window.open مسدود شد، چاپ از iframe انجام می‌شود
     assert "position:fixed;top:0;left:-10000px" in JS
@@ -217,3 +225,26 @@ def test_thermal_print_quality_rules():
     assert "border-top-style: solid !important;" in print_block
     assert ".lbl__record-label" in print_block
     assert "font-weight: 700 !important;" in print_block
+
+
+def _label_font_px(selector: str) -> float:
+    block = LABEL_CSS.split(selector, 1)[1].split("}", 1)[0]
+    match = re.search(r"font-size:\s*([\d.]+)px", block)
+    assert match, f"font-size not found for {selector}"
+    return float(match.group(1))
+
+
+def test_visitor_info_outweighs_the_queue_number():
+    """خوانایی برای مراجعه‌کنندهٔ مسن: اطلاعات (مقدار/نام) درشت‌تر از برچسب،
+    و شمارهٔ نوبت نباید دوباره بر اطلاعات مسلط شود."""
+    value = _label_font_px(".lbl__record-value {")
+    label = _label_font_px(".lbl__record-label {")
+    number = _label_font_px(".lbl__queue-number {")
+    name = _label_font_px("#maPreviewName {")
+    assert value >= 7
+    assert label >= 5
+    assert value > label
+    assert name > value
+    assert number <= 22
+    # حداقل ارتفاع سطر برای مقادیر درشت‌تر
+    assert "min-height: 12px" in LABEL_CSS.split(".lbl__record {", 1)[1].split("}", 1)[0]

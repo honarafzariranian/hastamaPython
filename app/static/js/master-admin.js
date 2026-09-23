@@ -321,7 +321,7 @@
       const boxEl = preview.querySelector('.lbl__number-box');
       if (!numEl || !boxEl) return;
       numEl.style.fontSize = '';
-      const base = parseFloat(window.getComputedStyle(numEl).fontSize) || 26;
+      const base = parseFloat(window.getComputedStyle(numEl).fontSize) || 20;
       const natural = numEl.scrollWidth;
       const available = boxEl.clientWidth - 24; // حاشیهٔ داخلی + کادر جعبه
       if (natural > available) numEl.style.fontSize = `${Math.max(10, base * available / natural)}px`;
@@ -506,7 +506,7 @@
       + 'z=Math.max(0.8,Math.min(1.8,z));'
       + 'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
       + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
-      + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||26;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
+      + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||20;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
       + '}catch(e){}};window.__lblFit();';
 
     function buildPrintRoot(w, h, rotated) {

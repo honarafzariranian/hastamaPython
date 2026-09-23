@@ -227,6 +227,7 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
 
 .ma-label-studio {
     overflow: hidden;
+    flex-shrink: 0;
     border: 1px solid rgba(99, 102, 241, .16);
     border-radius: 24px;
     background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(239,246,255,.78));
