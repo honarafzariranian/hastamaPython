@@ -4,7 +4,7 @@
  *   • هر دو کلاس dark-mode و dark-theme هم‌زمان روی <html> و <body> ست شوند
  *     (تا استایل‌های قدیمی هر دو صفحه بدون بازنویسی کار کنند).
  *   • انتخاب کاربر در localStorage بماند و در بارگذاری بعدی بازگردد.
- *   • بدون انتخاب کاربر، تم سیستم‌عامل دنبال شود.
+ *   • پیش‌فرض بدون انتخاب کاربر همیشه «روشن» باشد (تیره فقط با انتخاب صریح).
  *   • کلیک روی هر عنصر data-action="toggle-theme" تم را عوض کند.
  *   • در صفحاتی بدون کلید تم، دکمهٔ شناور ساخته شود.
  *
@@ -104,21 +104,16 @@ check('API عمومی در دسترس است', () => {
   assert(typeof window.toggleTheme === 'function', 'toggleTheme سراسری نیست');
 });
 
-check('پیش‌فرض بدون انتخاب کاربر و بدون تم تیرهٔ سیستم = روشن', () => {
-  const { window } = makeDom('');
+check('پیش‌فرض بدون انتخاب کاربر = روشن حتی اگر سیستم تیره باشد', () => {
+  const { window } = makeDom('', { systemDark: true });
   assert(isLight(window), 'نباید تیره باشد');
   assert(window.HastamaTheme.get() === 'light');
+  assert(window.document.documentElement.getAttribute('data-theme') === 'light');
 });
 
-check('تم تیرهٔ سیستم‌عامل دنبال می‌شود', () => {
-  const { window } = makeDom('', { systemDark: true });
-  assert(isDark(window), 'باید تیره باشد');
-  assert(window.HastamaTheme.isDark() === true);
-});
-
-check('انتخاب ذخیره‌شدهٔ کاربر بر تم سیستم اولویت دارد', () => {
-  const { window } = makeDom('', { systemDark: true, storage: { 'hastama-theme': 'light' } });
-  assert(isLight(window), 'انتخاب کاربر (روشن) باید غالب باشد');
+check('انتخاب ذخیره‌شدهٔ کاربر بر پیش‌فرض روشن اولویت دارد', () => {
+  const { window } = makeDom('', { systemDark: false, storage: { 'hastama-theme': 'dark' } });
+  assert(isDark(window), 'انتخاب کاربر (تیره) باید غالب باشد');
 });
 
 check('تم ذخیره‌شدهٔ تیره در بارگذاری بازمی‌گردد', () => {
@@ -209,18 +204,17 @@ check('رویداد hastama:themechange منتشر می‌شود', () => {
   assert(got === 'dark', 'رویداد با مقدار درست منتشر نشد');
 });
 
-check('تغییر تم سیستم فقط وقتی کاربر انتخابی نکرده اعمال می‌شود', () => {
-  const free = makeDom('');
+check('تغییر تم سیستم اعمال نمی‌شود مگر انتخاب صریح کاربر', () => {
+  const free = makeDom('', { systemDark: false });
   assert(isLight(free.window));
   free.window.matchMedia = () => ({ matches: true });
-  // شبیه‌سازی تغییر تم سیستم
   free.listeners.forEach((cb) => cb({ matches: true }));
-  assert(isDark(free.window), 'باید تم سیستم را دنبال کند');
+  assert(isLight(free.window), 'بدون انتخاب کاربر نباید تیره شود');
 
-  const pinned = makeDom('', { storage: { 'hastama-theme': 'light' } });
-  pinned.window.matchMedia = () => ({ matches: true });
-  pinned.listeners.forEach((cb) => cb({ matches: true }));
-  assert(isLight(pinned.window), 'انتخاب صریح کاربر نباید بازنویسی شود');
+  const dark = makeDom('', { storage: { 'hastama-theme': 'dark' } });
+  dark.window.matchMedia = () => ({ matches: false });
+  dark.listeners.forEach((cb) => cb({ matches: false }));
+  assert(isDark(dark.window), 'انتخاب صریح تیره نباید بازنویسی شود');
 });
 
 check('نبود localStorage باعث خطا نمی‌شود', () => {

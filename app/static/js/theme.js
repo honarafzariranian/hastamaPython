@@ -13,8 +13,8 @@
    این ماژول تنها منبع حقیقت تم است:
      ۱) کلاس‌های `dark-mode` و `dark-theme` را هم‌زمان روی <html> و <body> ست
         می‌کند تا همهٔ استایل‌های قدیمی (با هر دو نام) بدون بازنویسی کار کنند.
-     ۲) انتخاب کاربر را در localStorage نگه می‌دارد؛ تم بین صفحات حفظ می‌شود.
-     ۳) اگر کاربر انتخابی نکرده باشد، تم سیستم‌عامل دنبال می‌شود.
+      ۲) انتخاب کاربر را در localStorage نگه می‌دارد؛ تم بین صفحات حفظ می‌شود.
+      ۳) پیش‌فرض همیشه «روشن» است؛ تیره فقط با انتخاب صریح کاربر.
      ۴) در صفحاتی که دکمهٔ تم ندارند (صفحات گزارش) یک دکمهٔ شناور می‌سازد.
      ۵) پیش از رنگ‌آمیزی اولیه اجرا می‌شود تا «پرش سفید» (FOUC) رخ ندهد؛ به همین
         دلیل باید در <head> و به‌صورت غیر async بارگذاری شود.
@@ -26,14 +26,6 @@
     var DARK = 'dark';
     var LIGHT = 'light';
     var CLASSES = ['dark-mode', 'dark-theme'];
-
-    function prefersDark() {
-        try {
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        } catch (e) {
-            return false;
-        }
-    }
 
     function readStored() {
         try {
@@ -53,7 +45,7 @@
     }
 
     function resolved() {
-        return readStored() || (prefersDark() ? DARK : LIGHT);
+        return readStored() || LIGHT;
     }
 
     function paint(theme) {
@@ -172,18 +164,6 @@
         document.addEventListener('DOMContentLoaded', boot);
     } else {
         boot();
-    }
-
-    // اگر کاربر خودش انتخابی نکرده، تغییر تم سیستم‌عامل را دنبال کن
-    try {
-        var mq = window.matchMedia('(prefers-color-scheme: dark)');
-        var onChange = function () {
-            if (!readStored()) paint(prefersDark() ? DARK : LIGHT);
-        };
-        if (mq.addEventListener) mq.addEventListener('change', onChange);
-        else if (mq.addListener) mq.addListener(onChange);
-    } catch (e) {
-        /* بدون پشتیبانی matchMedia */
     }
 
     window.HastamaTheme = {

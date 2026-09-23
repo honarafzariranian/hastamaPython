@@ -25,6 +25,7 @@ JS_DIR = ROOT / "app" / "static" / "js"
 TPL_DIR = ROOT / "app" / "templates"
 
 TEMPLATES = [
+    "landing.html",
     "login.html",
     "user-panel.html",
     "admin.html",
@@ -119,9 +120,13 @@ def test_theme_choice_is_persisted() -> None:
     assert "hastama-theme" in js
 
 
-def test_theme_follows_system_preference() -> None:
+def test_theme_defaults_to_light() -> None:
+    """بدون انتخاب کاربر، تم باید روشن باشد (تیره فقط با toggle صریح)."""
     js = read(JS_DIR / "theme.js")
-    assert "prefers-color-scheme" in js
+    assert "readStored() || LIGHT" in js
+    assert "prefers-color-scheme" not in js
+    html = read(TPL_DIR / "landing.html")
+    assert "setItem('hastama-theme', 'dark')" not in html
 
 
 # --------------------------------------------------------------------------

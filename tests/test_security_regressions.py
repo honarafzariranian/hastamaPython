@@ -216,3 +216,86 @@ class TestWebSocketSecurity:
             segment = source[idx:idx+500]
             assert "session" in segment.lower() or "username" in segment.lower(), \
                 "WebSocket endpoint must validate session"
+
+
+class TestCallPageEntryGate:
+    """/call-management and /call-display: master-admin only, linked from dashboard."""
+
+    @staticmethod
+    def _request(referer=None, session=None, host="127.0.0.1"):
+        import app.main as main_mod
+
+        class Req:
+            def __init__(self):
+                self.session = dict(session or {})
+                self.headers = {}
+                if referer is not None:
+                    self.headers["referer"] = referer
+                self.url = type("U", (), {"hostname": host, "path": "/call-management"})()
+
+        return main_mod, Req()
+
+    def test_anonymous_is_redirected_to_login(self):
+        main_mod, req = self._request()
+        resp = main_mod._require_call_page_access(req)
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/login"
+
+    def test_regular_admin_is_rejected(self):
+        main_mod, req = self._request(
+            referer="http://127.0.0.1:5000/master-admin/dashboard",
+            session={"username": "bob", "is_master_admin": False},
+        )
+        resp = main_mod._require_call_page_access(req)
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/admin"
+
+    def test_master_admin_without_referer_is_rejected(self):
+        main_mod, req = self._request(session={"username": "ali", "is_master_admin": True})
+        resp = main_mod._require_call_page_access(req)
+        assert resp.status_code == 303
+        assert resp.headers["location"] == "/master-admin/dashboard"
+
+    def test_master_admin_from_dashboard_is_allowed(self):
+        main_mod, req = self._request(
+            referer="http://127.0.0.1:5000/master-admin/dashboard",
+            session={"username": "ali", "is_master_admin": True},
+        )
+        assert main_mod._require_call_page_access(req) is None
+
+    def test_other_master_admin_section_is_rejected(self):
+        main_mod, req = self._request(
+            referer="http://127.0.0.1:5000/master-admin/users",
+            session={"username": "ali", "is_master_admin": True},
+        )
+        resp = main_mod._require_call_page_access(req)
+        assert resp is not None
+        assert resp.headers["location"] == "/master-admin/dashboard"
+
+    def test_self_referer_allows_iframe_and_refresh(self):
+        for path in ("/call-display", "/call-management"):
+            main_mod, req = self._request(
+                referer=f"http://127.0.0.1:5000{path}",
+                session={"username": "ali", "is_master_admin": True},
+            )
+            assert main_mod._require_call_page_access(req) is None, path
+
+    def test_foreign_host_referer_is_rejected(self):
+        main_mod, req = self._request(referer="https://evil.example/master-admin/dashboard")
+        assert main_mod._call_page_referer_allowed(req) is False
+
+    def test_dashboard_links_do_not_strip_referer(self):
+        html = open("app/templates/master-admin.html", encoding="utf-8").read()
+        assert 'href="/call-management" target="_blank" rel="noopener"' in html
+        assert 'href="/call-display" target="_blank" rel="noopener"' in html
+        assert 'href="/call-management" target="_blank" rel="noopener noreferrer"' not in html
+        assert 'href="/call-display" target="_blank" rel="noopener noreferrer"' not in html
+
+    def test_routes_call_the_gate(self):
+        source = open("app/main.py", encoding="utf-8").read()
+        assert "_require_call_page_access" in source
+        for fn in ("async def call_display", "async def call_management"):
+            idx = source.find(fn)
+            assert idx > 0, fn
+            segment = source[idx: idx + 500]
+            assert "_require_call_page_access" in segment, fn

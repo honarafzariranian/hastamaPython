@@ -491,7 +491,7 @@ class _SecurityHeadersMiddleware:
         (b"cross-origin-resource-policy", b"same-origin"),
         (b"x-permitted-cross-domain-policies", b"none"),
         (b"content-security-policy",
-         b"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
+         b"default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss: https://cloudflareinsights.com; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"),
     ]
     _HSTS = (b"strict-transport-security", b"max-age=31536000; includeSubDomains")
 
@@ -790,14 +790,75 @@ async def master_admin_page(request: Request, section: str = "dashboard"):
         "active_section": section,
     })
 
+
+# ── Call-system pages: master-admin + linked from dashboard ────────────────
+# /call-management and /call-display are closed to direct entry. They only
+# render for a master-admin session whose navigation came from
+# /master-admin/dashboard (or from one of these pages — iframe / refresh).
+_CALL_PAGE_REFERER_PATHS = frozenset({
+    "/master-admin/dashboard",
+    "/call-management",
+    "/call-display",
+})
+
+
+def _call_page_referer_allowed(request: Request) -> bool:
+    from urllib.parse import urlparse
+
+    referer = (request.headers.get("referer") or request.headers.get("Referer") or "").strip()
+    if not referer:
+        return False
+    try:
+        parsed = urlparse(referer)
+        path = parsed.path or "/"
+        referer_host = (parsed.hostname or "").lower()
+    except Exception:
+        return False
+    if not referer_host:
+        return False
+    # Same-site only — a foreign host must never unlock the pages.
+    request_host = (request.url.hostname or "").lower()
+    if referer_host != request_host:
+        return False
+    path = path.rstrip("/") or "/"
+    allowed = {p.rstrip("/") or "/" for p in _CALL_PAGE_REFERER_PATHS}
+    return path in allowed
+
+
+def _call_page_denied(request: Request) -> RedirectResponse:
+    if not request.session.get("username"):
+        return RedirectResponse(url="/login", status_code=303)
+    if request.session.get("is_master_admin") is True:
+        return RedirectResponse(url="/master-admin/dashboard", status_code=303)
+    return RedirectResponse(url="/admin", status_code=303)
+
+
+def _require_call_page_access(request: Request):
+    """Allow only master-admin sessions linked from the dashboard (or self)."""
+    username = request.session.get("username")
+    if not username:
+        return RedirectResponse(url="/login", status_code=303)
+    if request.session.get("is_master_admin") is not True:
+        return _call_page_denied(request)
+    if not _call_page_referer_allowed(request):
+        return _call_page_denied(request)
+    return None
+
+
 @app.get("/call-display", response_class=HTMLResponse)
 async def call_display(request: Request):
-    """TV display page for the sample collection call system."""
+    """TV display page — master-admin only, entered from the dashboard."""
+    denied = _require_call_page_access(request)
+    if denied is not None:
+        return denied
     return templates.TemplateResponse(request, "call-display.html", {"request": request})
 
 @app.get("/call-management", response_class=HTMLResponse)
 async def call_management(request: Request):
-    """Standalone call management page — no authentication required."""
+    """Call management — master-admin only, entered from the dashboard."""
+    denied = _require_call_page_access(request)
+    if denied is not None:
+        return denied
     return templates.TemplateResponse(request, "call-management.html", {"request": request})
 
 @app.get("/ticket-kiosk", response_class=HTMLResponse)
