@@ -599,7 +599,18 @@ cursor = cursor_proxy()
 
 # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود
 # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود
-# تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود # تابع صفحه ورود
+# Public marketing site. Authentication remains isolated at /login.
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def landing_page(request: Request):
+    return templates.TemplateResponse(request, "landing.html", {"request": request})
+
+@app.get("/robots.txt", response_class=Response, include_in_schema=False)
+def robots_txt():
+    return Response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /master-admin\nDisallow: /api/\nSitemap: https://hastama.ir/sitemap.xml\n", media_type="text/plain")
+
+@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+def sitemap_xml():
+    return Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://hastama.ir/</loc></url><url><loc>https://hastama.ir/login</loc></url></urlset>', media_type="application/xml")
 
 @app.get("/login")
 async def home(request: Request):
