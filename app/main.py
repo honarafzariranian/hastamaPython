@@ -112,6 +112,10 @@ CSRF_EXEMPT_PREFIXES = (
     "/api/display-queue",
     "/api/waiting-queue",
     "/api/queue/take",
+    # Kiosk silent-print after issuing a ticket: no session CSRF path on the
+    # kiosk; guarded in-handler by same-site Origin/Referer + rate limit
+    # (_guard_kiosk_write), same as /api/queue/take.
+    "/api/queue/print",
     # Kiosk edit-flow ticket PII read/write: browser kiosk has no session CSRF
     # token path wired; guarded in-handler by same-site Origin/Referer + rate
     # limit (_guard_queue_pii) instead.

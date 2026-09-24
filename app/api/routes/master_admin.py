@@ -1565,13 +1565,36 @@ async def update_config(request: Request):
     value = data.get("value", "")
     if not key:
         raise HTTPException(status_code=400, detail="کلید الزامی است.")
+    allowed_keys = {
+        "captcha_enabled",
+        "idle_timeout_enabled",
+        "idle_timeout_seconds",
+        "label_target_printer",
+    }
+    if key not in allowed_keys:
+        raise HTTPException(status_code=400, detail="کلید تنظیم مجاز نیست.")
     conn = db_connect()
     try:
         cur = conn.cursor()
+        # UPSERT: first write creates the row (e.g. label_target_printer before seed).
         cur.execute(
-            "UPDATE system_config SET config_value=?, updated_by=?, updated_at=SYSUTCDATETIME() WHERE config_key=?",
+            """UPDATE system_config SET config_value=?, updated_by=?, updated_at=SYSUTCDATETIME()
+               WHERE config_key=?""",
             (value, admin, key),
         )
+        if cur.rowcount == 0:
+            cur.execute(
+                """INSERT INTO system_config (config_key, config_value, description, updated_by, updated_at)
+                   VALUES (?, ?, ?, ?, SYSUTCDATETIME())""",
+                (
+                    key,
+                    value,
+                    {
+                        "label_target_printer": "نام چاپگر انتخابی برای چاپ لیبل و بلیت نوبت",
+                    }.get(key, ""),
+                    admin,
+                ),
+            )
         conn.commit()
         log_admin_action(
             admin_username=admin, action="update_config",

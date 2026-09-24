@@ -4,8 +4,9 @@ Hastama is reachable in two supported topologies:
 
 1. **Production LAN** — Caddy terminates HTTPS on ``hastama.local`` and proxies
    to ``uvicorn --host 127.0.0.1 --port 8000 --proxy-headers``.
-2. **Direct/dev** — ``uvicorn --host 0.0.0.0 --port 5000`` (see
-   ``scripts/run_server.bat``).
+2. **Direct/dev** — ``uvicorn --host 127.0.0.1 --port 5000`` (loopback only;
+   see ``scripts/run_server.bat``).  Public access is via the Cloudflare
+   Tunnel, which originates from this host.
 
 ``X-Forwarded-For`` is *client controlled* in every topology unless a trusted
 proxy appends the real peer address.  Caddy appends the immediate peer to any

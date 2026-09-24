@@ -28,7 +28,7 @@ operational tasks outside the application code.
 | 2.3 | Bind uvicorn to `127.0.0.1:8000` (not `0.0.0.0`) and let Caddy be the only listener | `netstat -ano | findstr :8000` shows a loopback binding |
 | 2.4 | Keep the 12 MB request-body cap; raise only with a documented reason | large upload returns 413 |
 | 2.5 | Confirm the access log is written to a protected path with rotation | log file grows and rotates at 20 MiB × 10 |
-| 2.6 | Windows Firewall: allow 443 only from the LAN subnet; no port forwarding from outside | `netsh advfirewall firewall show rule name=all` |
+| 2.6 | Windows Firewall: allow 443 only from the LAN subnet; **deny inbound 5000/1433 and deny 445/3389/49847/1434 from Internet** (rules `Hastama - Block *`); RDP/SMB Allow scoped to `LocalSubnet` only | `Get-NetFirewallRule -DisplayName 'Hastama*'` shows Block rules; `Get-NetFirewallRule -DisplayName 'Remote Desktop*'` shows `RemoteAddress=LocalSubnet` |
 | 2.7 | Do **not** expose `/call-display`, `/call-management` or the registration form to the Internet | external port scan shows no open 443 |
 
 ## 3. Database **[DBA]**
@@ -39,7 +39,7 @@ operational tasks outside the application code.
 | 3.2 | Grant it `db_datareader` + `db_datawriter` on `userDB`; add `db_ddladmin` only if the startup schema migrations must run | attempt `CREATE TABLE` as the app login fails |
 | 3.3 | Enable backup (full daily + log/diff) with an encrypted destination | `RESTORE VERIFYONLY` on the newest file succeeds |
 | 3.4 | Test a restore into a scratch database every quarter | restored row counts match |
-| 3.5 | Do not expose SQL Server outside the host (TCP/IP disabled or firewalled to loopback) | port 1433 not reachable from another LAN host |
+| 3.5 | SQL Server TCP/IP bound to `127.0.0.1` only (`ListenOnAllIPs=0`, loopback IP enabled); SQL Browser disabled; no dynamic port on `0.0.0.0` | `netstat -ano \| findstr :1433` shows only `127.0.0.1:1433`; no `0.0.0.0:49847` |
 | 3.6 | Run `python -m tools.migrate_passwords --dry-run` first, then without `--dry-run` | after migration `SELECT COUNT(*) FROM user_table WHERE password IS NOT NULL AND LTRIM(RTRIM(password)) <> ''` → 0 |
 
 ## 4. Host and runtime **[INFRA]**

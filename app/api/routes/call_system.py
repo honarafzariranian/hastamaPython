@@ -1189,6 +1189,69 @@ async def take_queue_ticket(request: Request):
     })
 
 
+@router.post("/queue/print")
+async def print_queue_ticket(request: Request):
+    """Silently print one issued queue ticket on the server-selected label printer.
+
+    Called by the kiosk immediately after ``/api/queue/take`` succeeds.
+    The printer queue comes from ``system_config.label_target_printer``
+    (chosen in master-admin → label studio), not from browser localStorage,
+    so every kiosk / reception machine shares the same target.
+
+    On failure the client falls back to ``window.print()``.
+    """
+    _guard_kiosk_write(request, "queue-print")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    ticket = body.get("ticket") if isinstance(body.get("ticket"), dict) else {}
+    patient = body.get("patient") if isinstance(body.get("patient"), dict) else {}
+    if not ticket:
+        raise HTTPException(status_code=400, detail="اطلاعات نوبت ارسال نشده است.")
+
+    from app.services.ticket_print import CONFIG_KEY, print_ticket_to_printer, resolve_printer_name
+
+    printer_name = ""
+    try:
+        conn = _get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT config_value FROM system_config WHERE config_key = ?",
+                (CONFIG_KEY,),
+            )
+            row = cursor.fetchone()
+            if row and row[0]:
+                printer_name = str(row[0] or "").strip()
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("label_target_printer lookup failed: %s: %s", type(exc).__name__, exc)
+
+    printer_name = resolve_printer_name(printer_name)
+    if not printer_name:
+        return JSONResponse({
+            "success": False,
+            "fallback": True,
+            "message": "چاپگر لیبل انتخاب نشده است؛ چاپ مرورگر باز می‌شود.",
+        })
+
+    # Print in a worker thread so the spooler cannot block the event loop.
+    result = await asyncio.to_thread(
+        print_ticket_to_printer, ticket, patient, printer_name
+    )
+    return JSONResponse({
+        "success": bool(result.get("ok")),
+        "fallback": not bool(result.get("ok")),
+        "printer": result.get("printer", ""),
+        "method": result.get("method", ""),
+        "message": result.get("message", ""),
+    })
+
+
 @router.get("/queue/list")
 async def list_queue_tickets(request: Request, status: str = "waiting"):
     """List queue tickets. status can be: waiting, called, completed, all.

@@ -210,10 +210,10 @@
     // ── Label geometry ────────────────────────────────────────
     // لیبل پیش‌فرض «عمودی» است (ارتفاع > عرض). دلیل: ویندوز/درایور چاپ صفحهٔ
     // افقی (عرض > ارتفاع) را ۹۰ درجه می‌چرخاند و لیبل روی کاغذ افقی می‌افتد.
-    // v4: لیبل پیش‌فرض ۸۰×۸۰ (اندازه‌ای که روی چاپگر EPSON آزمایش و تأیید شد)
-    const LABEL_LAYOUT_VERSION = 4;
-    const DEFAULT_LABEL_W = 80;
-    const DEFAULT_LABEL_H = 80;
+    // v5: لیبل پیش‌فرض ۷۵×۸۱ (اندازه استاندارد فعلی کاغذ لیبل)
+    const LABEL_LAYOUT_VERSION = 5;
+    const DEFAULT_LABEL_W = 75;
+    const DEFAULT_LABEL_H = 81;
     const TOGGLE_IDS = ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview', 'maPrintRotate'];
 
     const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
@@ -445,7 +445,11 @@
       printerListEl.querySelectorAll('.ma-printer-row').forEach(btn => {
         btn.addEventListener('click', () => {
           targetPrinter = btn.getAttribute('data-printer-name') || '';
+          // Persist server-side so the kiosk / reception share one target
+          // (localStorage alone is browser-local and invisible to other machines).
           try { localStorage.setItem('hastama-label-target-printer', targetPrinter); } catch (_) {}
+          api('/config', { method: 'POST', body: { key: 'label_target_printer', value: targetPrinter } })
+            .catch(() => { /* non-fatal: local cache still holds the choice */ });
           printerListEl.querySelectorAll('.ma-printer-row').forEach(other => other.classList.toggle('is-selected', other === btn));
           updateTargetInfo();
         });
@@ -453,9 +457,25 @@
       updateTargetInfo();
     }
 
+    async function loadServerTargetPrinter() {
+      try {
+        const res = await api('/config');
+        const rows = (res && res.data) || [];
+        const row = rows.find(c => c.config_key === 'label_target_printer');
+        const serverName = row && row.config_value ? String(row.config_value).trim() : '';
+        if (serverName) {
+          targetPrinter = serverName;
+          try { localStorage.setItem('hastama-label-target-printer', serverName); } catch (_) {}
+          return serverName;
+        }
+      } catch (_) { /* offline / not master-admin: keep localStorage value */ }
+      return '';
+    }
+
     async function detectPrinters(force) {
       setPrinterStatus('unknown', 'در حال بررسی چاپگرهای سرور…');
       if (printerListEl) printerListEl.setAttribute('aria-busy', 'true');
+      await loadServerTargetPrinter();
       try {
         const res = await api('/printers' + (force ? '?refresh=true' : ''));
         renderPrinters(res.data);

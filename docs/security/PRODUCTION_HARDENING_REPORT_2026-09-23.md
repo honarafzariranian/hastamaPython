@@ -184,6 +184,23 @@ Full register: `docs/security/RESIDUAL_RISK_REGISTER.md`.
 | Criterion | Status |
 |---|---|
 | `/` no longer serves marketing landing | **PASS** (live redirect; code 301) |
+
+## I. Cloudflare AI host hardening (2026-09-23, after Phase 12)
+
+Recommendation: *bind Uvicorn to `127.0.0.1:5000`; firewall-deny inbound 5000/1433/445/3389.*
+
+| Item | Status | Evidence |
+|---|---|---|
+| Uvicorn bind `127.0.0.1:5000` | **PASS** | Live PID `uvicorn … --host 127.0.0.1 --port 5000`; `scripts/run_server.bat` corrected from `0.0.0.0` → `127.0.0.1`; `install_autostart.ps1` / `start_server.bat` messages updated |
+| Deny inbound TCP 5000 | **PASS** | `Hastama - Block Uvicorn 5000 (Inbound)` Block/Any; loopback still serves 200 |
+| Deny inbound TCP 1433 | **PASS** | `Hastama - Block SQL Server 1433 (Inbound)` Block/Any |
+| Deny inbound 445 | **PARTIAL → PASS (Internet)** | No Internet path; SMB Allow rules scoped `LocalSubnet`; extra `Hastama - Block SMB 445 (Internet)` |
+| Deny inbound 3389 | **PARTIAL → PASS (Internet)** | RDP Allow rules changed `Any` → `LocalSubnet` (preserves admin session `192.168.3.31`); extra `Hastama - Block RDP 3389 TCP/UDP (Internet)` |
+| SQL dynamic port / Browser | **CLOSED** | SQL TCP/IP bound to `127.0.0.1:1433` only (`ListenOnAllIPs=0`); SQL Browser Stopped/Disabled; `0.0.0.0:49847` gone; Internet rules for `49847`/`1434` removed (unnecessary) |
+
+**Post-change verification:** `pytest` → 400 passed / 14 failed (same pre-existing set) / 4 skipped; security suites 175 passed; `https://hastama.ir/login` → 200; `/` → **301** `https://hastama.ir/login`; pyodbc `localhost\SQLEXPRESS` → OK after SQL restart.
+
+**Outbound Internet:** never blocked by these rules (all Inbound). Verified `google.com`/`github.com`/`hastama.ir` → 200. Only `1.1.1.1` times out (common on this network, unrelated to host firewall).
 | `/login` is the only public entry for the app | **PASS** |
 | No redirect loop `/` ↔ `/login` | **PASS** |
 | robots/sitemap do not advertise `/` as content | **PASS** |

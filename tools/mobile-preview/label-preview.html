@@ -21,12 +21,16 @@
                     </div>
                     <div class="ma-label-studio__grid">
                         <div class="ma-label-preview-panel">
-                            <div class="ma-label-preview-panel__top"><span>پیش‌نمایش چاپ</span><span class="ma-label-size-readout" id="maLabelSizeReadout">۸۰ × ۸۰ میلی‌متر</span></div>
+                            <div class="ma-label-preview-panel__top"><span>پیش‌نمایش چاپ</span><span class="ma-label-size-readout" id="maLabelSizeReadout">۷۵ × ۸۱ میلی‌متر</span></div>
                             <div class="ma-label-preview-stage"><div class="lbl" id="maLabelPreview" data-template="queue" aria-label="پیش‌نمایش لیبل نوبت">
                                 <span class="lbl__accent" aria-hidden="true"></span>
                                 <div class="lbl__content">
                                 <!-- سربرگ: هویت آزمایشگاه + تاریخ و ساعت -->
                                 <header class="lbl__header">
+                                    <span class="lbl__datetime" id="maPreviewTime" title="تاریخ و ساعت ثبت نوبت">
+                                        <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span class="lbl__datetime-value">۱۴۰۵/۰۶/۲۹ - ۱۸:۲۲</span>
+                                    </span>
                                     <div class="lbl__identity">
                                         <img class="lbl__logo" src="/static/images/lab-logo.png" alt="لوگوی آزمایشگاه">
                                         <div class="lbl__identity-text">
@@ -34,18 +38,14 @@
                                             <p class="lbl__slogan">همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</p>
                                         </div>
                                     </div>
-                                    <span class="lbl__datetime" id="maPreviewTime" title="تاریخ و ساعت ثبت نوبت">
-                                        <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                        <span class="lbl__datetime-value">۱۴۰۵/۰۶/۲۹ - ۱۸:۲۲</span>
-                                    </span>
                                 </header>
-                                <!-- شماره نوبت: مهم‌ترین عنصر -->
+                                <!-- شماره نوبت: واضح و خوانا، بدون غلبه بر اطلاعات مراجعه‌کننده -->
                                 <section class="lbl__queue" aria-label="شماره نوبت">
                                     <div class="lbl__number-box">
+                                        <span class="lbl__service">پذیرش</span>
                                         <span class="lbl__queue-label">نوبت شما</span>
                                         <span class="lbl__queue-number" id="maPreviewNumber">۱۲</span>
                                     </div>
-                                    <span class="lbl__service">پذیرش</span>
                                 </section>
                                 <!-- اطلاعات مراجعه‌کننده + بیمه -->
                                 <section class="lbl__records" aria-label="اطلاعات مراجعه‌کننده و بیمه">
@@ -56,15 +56,15 @@
                                         <div class="lbl__record"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num" id="maPreviewPhone">۰۹۳۳۲۹۰۵۸۴۰</span></div>
                                     </div>
                                     <div class="lbl__record-group lbl__record-group--insurance">
-                                        <div class="lbl__record"><span class="lbl__record-label"><svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num" id="maPreviewInsurance">۱۲۳۴۵۶</span></div>
+                                        <div class="lbl__record"><span class="lbl__record-label"><svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track" id="maPreviewInsurance">۱۲۳۴۵</span></div>
                                         <div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value" id="maPreviewBaseInsurance">تأمین اجتماعی</span></div>
                                         <div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value" id="maPreviewSupplementaryInsurance">آسیا</span></div>
                                     </div>
                                 </section>
-                                <!-- پیام انگیزشی -->
+                                <!-- پیام آرام‌بخش برای انتظار -->
                                 <p class="lbl__message" id="maPreviewHint">
                                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3"></path><polyline points="8.5 12.5 11 12.5 12.5 10 14 15 15.5 12.5 17.5 12.5" stroke-width="1.8"></polyline></svg>
-                                    <span class="lbl__message-text">هر روز فرصتی دوباره برای بهتر زندگی کردن است؛ آرام باشید، نوبت شما فرا می‌رسد.</span>
+                                    <span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span>
                                 </p>
                                 <!-- برند هستما -->
                                 <footer class="lbl__footer">
@@ -76,7 +76,7 @@
                             <div class="ma-label-preview-panel__foot"><span><i class="ma-preview-dot ma-preview-dot--accent"></i>محتوای نمونه</span><span id="maLabelRatio">نسبت ۱٫۱</span></div>
                         </div>
                         <div class="ma-label-controls">
-                            <div class="ma-label-control-section"><h3>تنظیمات اندازه و جهت</h3><div class="ma-label-inputs"><label>عرض (mm)<input id="maLabelWidth" type="number" min="30" max="150" value="80"></label><label>ارتفاع (mm)<input id="maLabelHeight" type="number" min="20" max="100" value="80"></label></div><label class="ma-label-select">قالب لیبل<select id="maLabelTemplate"><option value="queue">لیبل نوبت استاندارد</option><option value="compact">لیبل کوچک و فشرده</option></select></label><label class="ma-toggle-row"><span>چرخش ۹۰ درجه هنگام چاپ</span><input id="maPrintRotate" type="checkbox"><i></i></label><p class="ma-printer-note">اگر عرض بیشتر از ارتفاع باشد، ویندوز کل محتوا را ۹۰ درجه می‌چرخاند و خروجی افقی می‌شود؛ در آن حالت «چرخش ۹۰ درجه» را روشن کنید (پیش‌نمایش تغییر نمی‌کند، فقط جهت چاپ روی کاغذ می‌چرخد). هرچه اندازهٔ لیبل بزرگ‌تر باشد، جعبه‌ها و متن‌ها هم به همان نسبت درشت‌تر چاپ می‌شوند.</p></div>
+                            <div class="ma-label-control-section"><h3>تنظیمات اندازه و جهت</h3><div class="ma-label-inputs"><label>عرض (mm)<input id="maLabelWidth" type="number" min="30" max="150" value="75"></label><label>ارتفاع (mm)<input id="maLabelHeight" type="number" min="20" max="100" value="81"></label></div><label class="ma-label-select">قالب لیبل<select id="maLabelTemplate"><option value="queue">لیبل نوبت استاندارد</option><option value="compact">لیبل کوچک و فشرده</option></select></label><label class="ma-toggle-row"><span>چرخش ۹۰ درجه هنگام چاپ</span><input id="maPrintRotate" type="checkbox"><i></i></label><p class="ma-printer-note">اگر عرض بیشتر از ارتفاع باشد، ویندوز کل محتوا را ۹۰ درجه می‌چرخاند و خروجی افقی می‌شود؛ در آن حالت «چرخش ۹۰ درجه» را روشن کنید (پیش‌نمایش تغییر نمی‌کند، فقط جهت چاپ روی کاغذ می‌چرخد). هرچه اندازهٔ لیبل بزرگ‌تر باشد، جعبه‌ها و متن‌ها هم به همان نسبت درشت‌تر چاپ می‌شوند.</p></div>
                             <div class="ma-label-control-section"><h3>اطلاعات روی لیبل</h3><label class="ma-toggle-row"><span>نام مراجعه‌کننده</span><input id="maShowName" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>ساعت ثبت نوبت</span><input id="maShowTime" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>راهنمای انتظار</span><input id="maShowHint" type="checkbox" checked><i></i></label><label class="ma-toggle-row"><span>پیش‌نمایش چاپ حرارتی (سیاه‌وسفید)</span><input id="maThermalPreview" type="checkbox"><i></i></label></div>
                             <div class="ma-label-control-section ma-printer-panel">
                                 <h3>چاپگرهای سرور</h3>

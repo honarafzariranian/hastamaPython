@@ -560,6 +560,7 @@ class TestLoginOnlyRoot:
             "async def remove_from_waiting_queue(",
             "async def call_from_queue(",
             "async def upload_slide(",
+            "async def print_queue_ticket(",
         ):
             idx = source.find(fn)
             assert idx > 0, fn

@@ -233,31 +233,51 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
     background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(239,246,255,.78));
     box-shadow: 0 18px 50px rgba(30, 64, 175, .09);
 }
-.ma-label-studio__head { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 24px; border-bottom:1px solid rgba(99,102,241,.1); }
-.ma-label-studio__head h2 { margin:4px 0 2px; color:#172554; font-size:1.15rem; }
-.ma-label-studio__head p { margin:0; color:#64748b; font-size:.76rem; }
-.ma-eyebrow { color:#6366f1; font-size:.62rem; font-weight:800; letter-spacing:.14em; }
-.ma-printer-status { display:flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid #e2e8f0; border-radius:999px; background:rgba(255,255,255,.75); color:#64748b; font-size:.7rem; white-space:nowrap; }
+.ma-label-studio__head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 20px; border-bottom:1px solid rgba(99,102,241,.1); }
+.ma-label-studio__head h2 { margin:2px 0 1px; color:#172554; font-size:1.05rem; }
+.ma-label-studio__head p { margin:0; color:#64748b; font-size:.72rem; }
+.ma-eyebrow { color:#6366f1; font-size:.58rem; font-weight:800; letter-spacing:.14em; }
+.ma-printer-status { display:flex; align-items:center; gap:8px; padding:7px 11px; border:1px solid #e2e8f0; border-radius:999px; background:rgba(255,255,255,.75); color:#64748b; font-size:.68rem; white-space:nowrap; }
 .ma-printer-status__dot { width:9px; height:9px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.14); }
 .ma-printer-status[data-state="connected"] { color:#047857; border-color:rgba(16,185,129,.25); }
 .ma-printer-status[data-state="connected"] .ma-printer-status__dot { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.14); }
 .ma-printer-status[data-state="disconnected"] { color:#b91c1c; border-color:rgba(239,68,68,.2); }
 .ma-printer-status[data-state="disconnected"] .ma-printer-status__dot { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.12); }
-.ma-label-studio__grid { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr); gap:22px; padding:22px; }
-.ma-label-preview-panel { min-width:0; padding:16px; border:1px solid rgba(148,163,184,.18); border-radius:18px; background:rgba(248,250,252,.72); }
-.ma-label-preview-panel__top,.ma-label-preview-panel__foot { display:flex; justify-content:space-between; align-items:center; color:#475569; font-size:.7rem; font-weight:700; }
+/* Compact 2-column studio: controls split into two short columns so the
+   whole page fits one desktop viewport without scrolling. */
+.ma-label-studio__grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr); gap:16px; padding:14px 16px; align-items:start; }
+.ma-label-preview-panel { min-width:0; padding:12px; border:1px solid rgba(148,163,184,.18); border-radius:18px; background:rgba(248,250,252,.72); }
+.ma-label-preview-panel__top,.ma-label-preview-panel__foot { display:flex; justify-content:space-between; align-items:center; color:#475569; font-size:.68rem; font-weight:700; }
 .ma-label-size-readout { color:#6366f1; }
-.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; min-height:300px; margin:14px 0; padding:28px 24px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
+.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; min-height:260px; max-height:340px; margin:10px 0; padding:18px 16px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
 .ma-label-preview-stage .lbl { max-width:100%; }
 body.dark-theme .ma-label-preview-stage { background:radial-gradient(circle at 50% 18%,#1e293b 0%,#0b1220 75%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.12); }
 /* Queue-label design system lives in label-print.css (shared by preview + print window). */
 .ma-preview-dot { display:inline-block; width:7px; height:7px; margin-left:4px; border-radius:50%; vertical-align:middle; }.ma-preview-dot--accent { background:#6366f1; }
-.ma-label-controls { display:flex; flex-direction:column; gap:14px; }.ma-label-control-section { padding:14px; border:1px solid rgba(148,163,184,.18); border-radius:16px; background:rgba(255,255,255,.64); }.ma-label-control-section h3 { margin:0 0 11px; color:#334155; font-size:.78rem; }.ma-label-inputs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }.ma-label-inputs label,.ma-label-select { display:flex; flex-direction:column; gap:5px; color:#64748b; font-size:.63rem; font-weight:700; }.ma-label-inputs input,.ma-label-select select { width:100%; padding:8px 9px; border:1px solid #dbe3ef; border-radius:9px; background:#fff; color:#1e293b; font:inherit; }.ma-label-select { margin-top:10px; }
-.ma-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(148,163,184,.12); color:#475569; font-size:.7rem; }.ma-toggle-row:last-child { border-bottom:0; }.ma-toggle-row input { display:none; }.ma-toggle-row i { position:relative; width:34px; height:19px; border-radius:99px; background:#cbd5e1; cursor:pointer; }.ma-toggle-row i:after { content:''; position:absolute; top:3px; right:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.2s; }.ma-toggle-row input:checked+i { background:#6366f1; }.ma-toggle-row input:checked+i:after { transform:translateX(-15px); }.ma-label-actions { display:flex; gap:8px; flex-wrap:wrap; }.ma-label-actions .ma-btn { flex:1; min-width:130px; }.ma-printer-note { margin:0; color:#94a3b8; font-size:.62rem; line-height:1.7; }
+.ma-label-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; min-width:0; }
+.ma-label-controls > .ma-printer-panel,
+.ma-label-controls > .ma-label-actions,
+.ma-label-controls > .ma-printer-note { grid-column: 1 / -1; }
+.ma-label-control-section { padding:10px 12px; border:1px solid rgba(148,163,184,.18); border-radius:14px; background:rgba(255,255,255,.64); min-width:0; }
+.ma-label-control-section h3 { margin:0 0 8px; color:#334155; font-size:.74rem; }
+.ma-label-inputs { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.ma-label-inputs label,.ma-label-select { display:flex; flex-direction:column; gap:4px; color:#64748b; font-size:.6rem; font-weight:700; }
+.ma-label-inputs input,.ma-label-select select { width:100%; padding:6px 8px; border:1px solid #dbe3ef; border-radius:9px; background:#fff; color:#1e293b; font:inherit; font-size:.72rem; }
+.ma-label-select { margin-top:8px; }
+.ma-toggle-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px solid rgba(148,163,184,.12); color:#475569; font-size:.66rem; }
+.ma-toggle-row:last-child { border-bottom:0; }
+.ma-toggle-row input { display:none; }
+.ma-toggle-row i { position:relative; flex:0 0 auto; width:32px; height:18px; border-radius:99px; background:#cbd5e1; cursor:pointer; }
+.ma-toggle-row i:after { content:''; position:absolute; top:3px; right:3px; width:12px; height:12px; border-radius:50%; background:#fff; transition:.2s; }
+.ma-toggle-row input:checked+i { background:#6366f1; }
+.ma-toggle-row input:checked+i:after { transform:translateX(-14px); }
+.ma-label-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.ma-label-actions .ma-btn { flex:1; min-width:110px; padding:8px 12px; font-size:.72rem; }
+.ma-printer-note { margin:0; color:#94a3b8; font-size:.58rem; line-height:1.55; }
 /* ── Printer discovery panel (label studio) ──────────────────── */
-.ma-printer-list { display:flex; flex-direction:column; gap:6px; max-height:216px; overflow:auto; }
-.ma-printer-empty { padding:10px; border:1px dashed #cbd5e1; border-radius:10px; color:#94a3b8; font-size:.66rem; text-align:center; }
-.ma-printer-row { display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; color:#1e293b; font:inherit; font-size:.68rem; text-align:right; cursor:pointer; transition:border-color .18s, box-shadow .18s, transform .18s, background .18s; }
+.ma-printer-list { display:flex; flex-direction:column; gap:5px; max-height:120px; overflow:auto; }
+.ma-printer-empty { padding:8px; border:1px dashed #cbd5e1; border-radius:10px; color:#94a3b8; font-size:.64rem; text-align:center; }
+.ma-printer-row { display:flex; align-items:center; gap:8px; width:100%; padding:7px 9px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; color:#1e293b; font:inherit; font-size:.66rem; text-align:right; cursor:pointer; transition:border-color .18s, box-shadow .18s, transform .18s, background .18s; }
 .ma-printer-row:hover { border-color:#a5b4fc; transform:translateY(-1px); }
 .ma-printer-row.is-selected { border-color:#6366f1; background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(99,102,241,.02)); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
 .ma-printer-row__dot { flex:0 0 auto; width:9px; height:9px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgba(148,163,184,.16); }
@@ -730,6 +750,9 @@ body.dark-theme .ma-sidebar-left .icon-container:last-child:hover .icon-label {
 .ma-sidebar-left .icon-container[data-accent="ma-label-printer"] {
     --tile-from:#8B5CF6; --tile-to:#EC4899; --acc:#8B5CF6; --tint:rgba(139,92,246,.14); --glow:rgba(139,92,246,.48);
 }
+.ma-sidebar-left .icon-container[data-accent="ma-ticket-kiosk"] {
+    --tile-from:#14B8A6; --tile-to:#06B6D4; --acc:#14B8A6; --tint:rgba(20,184,166,.14); --glow:rgba(20,184,166,.48);
+}
 .ma-sidebar-left .icon-container[data-accent="ma-subscriptions"] {
     --tile-from:#ec4899; --tile-to:#8b5cf6; --acc:#db2777; --tint:rgba(219,39,119,.12); --glow:rgba(219,39,119,.45);
 }
@@ -900,7 +923,9 @@ body.dark-theme .ma-sidebar-left .icon-label {
     .ma-top-cards-row { grid-template-columns: repeat(3, 1fr); }
     .ma-header-box { margin: 10px 12px 0; }
     .ma-label-studio__grid { grid-template-columns: 1fr; }
+    .ma-label-controls { grid-template-columns: 1fr; }
     .ma-label-studio__head { flex-direction: column; align-items: flex-start; }
+    .ma-label-preview-stage { max-height: none; }
 }
 @media (max-width: 768px) {
     .ma-header-box {

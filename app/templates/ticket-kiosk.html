@@ -2985,9 +2985,26 @@
                 updateModalHint(service);
                 document.getElementById('ticketModal').classList.add('visible');
                 refreshQueueCount();
+                // Silent server-side print to the label studio's selected printer.
+                // Falls back to window.print() only when the server says so.
+                printIssuedTicket(ticket, patientData);
             } catch (err) {
                 console.error(err);
             }
+        }
+
+        /* ── چاپ بی‌صدا سمت سرور (چاپگر انتخابی در استودیو لیبل) ── */
+        async function printIssuedTicket(ticket, patientData) {
+            try {
+                var resp = await fetch('/api/queue/print', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket: ticket, patient: patientData || {} })
+                });
+                var data = await resp.json();
+                if (data && data.success) return;
+            } catch (_) { /* network / 5xx → browser fallback below */ }
+            try { printTicket(ticket, patientData); } catch (_) {}
         }
 
         /* ── چاپ لیبل نوبت ── */

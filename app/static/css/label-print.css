@@ -67,13 +67,15 @@
     zoom: var(--lbl-zoom, 1);
 }
 
-/* ═══ 1 · Header — laboratory identity + date/time ═══════════ */
+/* ═══ 1 · Header — lab identity (right) + date/time (left) ═══
+   RTL: identity first → visual right; datetime second → visual left.
+   Never wrap: the pill must stay beside the lab name, not drop below. */
 .lbl__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 3px 6px;
+    flex-wrap: nowrap;
+    gap: 4px 6px;
     padding-bottom: 2.5px;
     border-bottom: 1px solid var(--lbl-line-2);
     position: relative;
@@ -95,6 +97,7 @@
     gap: 5px;
     flex: 1 1 auto;
     min-width: 0;
+    order: 1;
 }
 .lbl__logo {
     height: 14px;
@@ -133,9 +136,10 @@
     overflow: hidden;
 }
 
-/* date/time pill */
+/* date/time pill — LEFT of the lab name in RTL (second flex child) */
 .lbl__datetime {
     flex: 0 0 auto;
+    order: 2;
     display: inline-flex;
     align-items: center;
     gap: 2.5px;
@@ -148,6 +152,8 @@
     line-height: 1.2;
     font-weight: 700;
     white-space: nowrap;
+    max-width: 48%;
+    overflow: hidden;
 }
 .lbl__datetime svg { flex: 0 0 auto; display: block; }
 .lbl__datetime-value {
@@ -156,13 +162,14 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* ═══ 2 · Queue number ═══════════════════════════════════════ */
+/* ═══ 2 · Queue number — single box, service on the top edge ══ */
 .lbl__queue {
     display: flex;
     align-items: stretch;
-    gap: 7px;
+    gap: 0;
 }
 .lbl__number-box {
+    position: relative;
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
@@ -170,10 +177,32 @@
     align-items: center;
     justify-content: center;
     gap: 0;
-    padding: 2px 10px 2.5px 10px;
+    margin-top: 5px;
+    padding: 4px 10px 3px 10px;
     border: 1px solid var(--lbl-ink);
     border-radius: 9px;
     background: var(--lbl-brand-tint);
+}
+/* service title rides on the top edge of the number box (legend style) */
+.lbl__service {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 7px;
+    border: none;
+    border-radius: 99px;
+    background: var(--lbl-ink);
+    color: #fff;
+    font-size: 5.6px;
+    line-height: 1.45;
+    font-weight: 800;
+    white-space: nowrap;
+    letter-spacing: .02em;
 }
 .lbl__queue-label {
     font-size: 5.4px;
@@ -193,23 +222,6 @@
     overflow: hidden;
     text-overflow: clip;
     word-break: keep-all;
-}
-/* service type chip */
-.lbl__service {
-    flex: 0 0 auto;
-    align-self: center;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 3.5px 8px;
-    border: 1.5px solid var(--lbl-brand-deep);
-    border-radius: 9px;
-    background: var(--lbl-brand-tint);
-    color: var(--lbl-brand-deep);
-    font-size: 6.2px;
-    line-height: 1;
-    font-weight: 800;
-    white-space: nowrap;
 }
 
 /* ═══ 3 · Patient + insurance records ════════════════════════
@@ -281,6 +293,15 @@
     direction: ltr;
     unicode-bidi: isolate;
 }
+/* کد پیگیری بیمه همیشه ۵ رقم است — عرض ثابت ۵ رقم تا هرگز بریده/ellipsis نشود */
+.lbl__record-value--track {
+    flex: 0 0 auto;
+    min-width: 5.6ch;
+    text-align: left;
+    overflow: visible;
+    text-overflow: clip;
+    letter-spacing: .04em;
+}
 
 /* ═══ 4 · Motivational message ═══════════════════════════════ */
 .lbl__message {
@@ -307,7 +328,7 @@
     overflow: hidden;
 }
 
-/* ═══ 5 · Hastama footer — deliberately lighter than the lab ═ */
+/* ═══ 5 · Hastama footer — clear and readable brand line ════ */
 .lbl__footer {
     display: flex;
     align-items: center;
@@ -318,12 +339,12 @@
     border-top: 1px solid var(--lbl-line);
 }
 .lbl__brand-logo {
-    height: 10px;
+    height: 12px;
     width: auto;
-    max-width: 52px;
+    max-width: 56px;
     flex: 0 0 auto;
     object-fit: contain;
-    opacity: .92;
+    opacity: .95;
 }
 .lbl__brand-text {
     display: flex;
@@ -332,19 +353,19 @@
     min-width: 0;
 }
 .lbl__brand-text strong {
-    font-size: 5.3px;
-    line-height: 1.2;
+    font-size: 6.4px;
+    line-height: 1.25;
     font-weight: 800;
-    color: var(--lbl-ink-2);
+    color: var(--lbl-ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .lbl__brand-text span {
-    font-size: 4.5px;
-    line-height: 1.2;
-    font-weight: 500;
-    color: var(--lbl-ink-3);
+    font-size: 5.4px;
+    line-height: 1.25;
+    font-weight: 600;
+    color: var(--lbl-ink-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -438,9 +459,12 @@
     .lbl__record-group--insurance,
     .lbl__datetime,
     .lbl__number-box,
-    .lbl__service,
     .lbl__message {
         background: #fff !important;
+    }
+    .lbl__service {
+        background: var(--lbl-ink) !important;
+        color: #fff !important;
     }
     /* خط‌چین‌های نازک روی کاغذ حرارتی شکسته چاپ می‌شوند؛ خط یکدست بهتر دیده می‌شود */
     .lbl__record + .lbl__record {
@@ -451,8 +475,7 @@
     .lbl__footer,
     .lbl__record-group,
     .lbl__datetime,
-    .lbl__message,
-    .lbl__service {
+    .lbl__message {
         border-color: var(--lbl-ink-2) !important;
     }
     /* متن‌های ریز با وزن بیشتر، روی چاپ حرارتی خیلی واضح‌تر دیده می‌شوند */

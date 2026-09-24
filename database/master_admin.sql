@@ -251,4 +251,9 @@ IF NOT EXISTS (SELECT 1 FROM dbo.system_config WHERE config_key = 'idle_timeout_
     INSERT INTO dbo.system_config (config_key, config_value, description)
     VALUES ('idle_timeout_seconds', '300', 'زمان بیکاری برای خروج خودکار (ثانیه)');
 
+-- 10. Label / ticket printer selected in master-admin label studio
+IF NOT EXISTS (SELECT 1 FROM dbo.system_config WHERE config_key = 'label_target_printer')
+    INSERT INTO dbo.system_config (config_key, config_value, description)
+    VALUES ('label_target_printer', '', 'نام چاپگر انتخابی برای چاپ لیبل و بلیت نوبت');
+
 PRINT 'Master Admin migration completed successfully.';
