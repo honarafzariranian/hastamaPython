@@ -12,7 +12,7 @@ import re
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import pyodbc
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, WebSocket, WebSocketDisconnect
@@ -1212,36 +1212,50 @@ async def print_queue_ticket(request: Request):
     if not ticket:
         raise HTTPException(status_code=400, detail="اطلاعات نوبت ارسال نشده است.")
 
-    from app.services.ticket_print import CONFIG_KEY, print_ticket_to_printer, resolve_printer_name
+    from app.services.ticket_print import (
+        CONFIG_KEY,
+        SETTINGS_CONFIG_KEY,
+        default_label_settings,
+        normalize_label_settings,
+        print_ticket_to_printer,
+        resolve_printer_name,
+    )
 
     printer_name = ""
+    settings_raw: Any = None
     try:
         conn = _get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT config_value FROM system_config WHERE config_key = ?",
-                (CONFIG_KEY,),
+                "SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?)",
+                (CONFIG_KEY, SETTINGS_CONFIG_KEY),
             )
-            row = cursor.fetchone()
-            if row and row[0]:
-                printer_name = str(row[0] or "").strip()
+            for row in cursor.fetchall():
+                key = str(row[0] or "")
+                value = row[1]
+                if key == CONFIG_KEY and value:
+                    printer_name = str(value or "").strip()
+                elif key == SETTINGS_CONFIG_KEY and value:
+                    settings_raw = value
         finally:
             conn.close()
     except Exception as exc:
-        logger.warning("label_target_printer lookup failed: %s: %s", type(exc).__name__, exc)
+        logger.warning("label print config lookup failed: %s: %s", type(exc).__name__, exc)
 
+    settings = normalize_label_settings(settings_raw) if settings_raw is not None else default_label_settings()
     printer_name = resolve_printer_name(printer_name)
     if not printer_name:
         return JSONResponse({
             "success": False,
             "fallback": True,
             "message": "چاپگر لیبل انتخاب نشده است؛ چاپ مرورگر باز می‌شود.",
+            "settings": settings,
         })
 
     # Print in a worker thread so the spooler cannot block the event loop.
     result = await asyncio.to_thread(
-        print_ticket_to_printer, ticket, patient, printer_name
+        print_ticket_to_printer, ticket, patient, printer_name, settings=settings
     )
     return JSONResponse({
         "success": bool(result.get("ok")),
@@ -1249,6 +1263,7 @@ async def print_queue_ticket(request: Request):
         "printer": result.get("printer", ""),
         "method": result.get("method", ""),
         "message": result.get("message", ""),
+        "settings": result.get("settings") or settings,
     })
 
 

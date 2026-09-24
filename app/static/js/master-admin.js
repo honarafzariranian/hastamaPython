@@ -327,6 +327,15 @@
       if (natural > available) numEl.style.fontSize = `${Math.max(10, base * available / natural)}px`;
     }
 
+    // عنوان سرویس روی بج لیبل — با قالب انتخاب‌شده عوض می‌شود
+    const TEMPLATE_SERVICE = {
+      queue: 'پذیرش',
+      compact: 'پذیرش',
+      result: 'جوابدهی',
+      sampling: 'نمونه‌گیری',
+      blank: 'نوبت خالی',
+    };
+
     function refresh() {
       const w = Math.round(clampMm(Number(width.value), 30, 150));
       const h = Math.round(clampMm(Number(height.value), 20, 100));
@@ -339,7 +348,10 @@
       preview.style.setProperty('width', `${Math.max(120, Math.round(w * pxPerMm))}px`, 'important');
       preview.style.setProperty('height', `${Math.max(80, Math.round(h * pxPerMm))}px`, 'important');
       preview.style.aspectRatio = `${w} / ${h}`;
-      preview.dataset.template = (template && template.value) || 'queue';
+      const tpl = (template && template.value) || 'queue';
+      preview.dataset.template = tpl;
+      const serviceEl = preview.querySelector('.lbl__service');
+      if (serviceEl) serviceEl.textContent = TEMPLATE_SERVICE[tpl] || 'پذیرش';
       fitLabelPreview();
       fitQueueNumber();
       if (readout) readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر — ${h >= w ? 'عمودی' : 'افقی'}`;
@@ -349,9 +361,27 @@
       if (timeEl) timeEl.hidden = !document.getElementById('maShowTime').checked;
       if (hintEl) hintEl.hidden = !document.getElementById('maShowHint').checked;
       preview.classList.toggle('is-thermal', document.getElementById('maThermalPreview').checked);
-      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: (template && template.value) || 'queue', maLabelLayoutVersion: LABEL_LAYOUT_VERSION };
+      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: tpl, maLabelLayoutVersion: LABEL_LAYOUT_VERSION };
       TOGGLE_IDS.forEach(id => { settings[id] = document.getElementById(id).checked; });
       localStorage.setItem('hastama-label-settings', JSON.stringify(settings));
+      pushLabelSettingsToServer(settings);
+    }
+
+    // Persist print settings server-side so the kiosk / reception share the
+    // same size, template, rotate and field visibility as this studio.
+    // (localStorage alone is browser-local and invisible to other machines.)
+    let labelSettingsPushTimer = 0;
+    let labelSettingsPushSeq = 0;
+    function pushLabelSettingsToServer(settings) {
+      clearTimeout(labelSettingsPushTimer);
+      const seq = ++labelSettingsPushSeq;
+      labelSettingsPushTimer = setTimeout(() => {
+        if (seq !== labelSettingsPushSeq) return;
+        api('/config', {
+          method: 'POST',
+          body: { key: 'label_print_settings', value: JSON.stringify(settings) },
+        }).catch(() => { /* offline / non-admin: local cache still holds the choice */ });
+      }, 400);
     }
 
     [width, height, template, ...TOGGLE_IDS.map(id => document.getElementById(id))]
@@ -502,6 +532,37 @@
 
     // فهرست چاپگرها به‌محض باز شدن صفحه خوانده می‌شود تا کارمند منتظر نماند
     detectPrinters(false);
+
+    // ── Shared print settings from the server ──────────────────
+    // Other machines (kiosk) only see system_config — not this browser's
+    // localStorage. Prefer the server copy when present so every surface
+    // prints the size / template / toggles currently under test here.
+    (async function loadServerLabelSettings() {
+      try {
+        const res = await api('/config');
+        const rows = (res && res.data) || [];
+        const row = rows.find(c => c.config_key === 'label_print_settings');
+        if (!row || !row.config_value) return;
+        const server = JSON.parse(row.config_value);
+        if (!server || typeof server !== 'object') return;
+        let changed = false;
+        if (server.maLabelWidth != null && String(server.maLabelWidth) !== width.value) {
+          width.value = server.maLabelWidth; changed = true;
+        }
+        if (server.maLabelHeight != null && String(server.maLabelHeight) !== height.value) {
+          height.value = server.maLabelHeight; changed = true;
+        }
+        if (server.maLabelTemplate != null && template && server.maLabelTemplate !== template.value) {
+          template.value = server.maLabelTemplate; changed = true;
+        }
+        TOGGLE_IDS.forEach(id => {
+          if (server[id] == null) return;
+          const el = document.getElementById(id);
+          if (el && !!server[id] !== el.checked) { el.checked = !!server[id]; changed = true; }
+        });
+        if (changed) refresh();
+      } catch (_) { /* offline / not master-admin: keep localStorage value */ }
+    })();
 
     // ── Printing ───────────────────────────────────────────────
     // چاپ از طریق دیالوگ مرورگر انجام می‌شود، پس روی چاپگرهای «همین رایانه»

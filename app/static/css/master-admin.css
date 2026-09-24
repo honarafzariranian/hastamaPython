@@ -233,6 +233,56 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
     background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(239,246,255,.78));
     box-shadow: 0 18px 50px rgba(30, 64, 175, .09);
 }
+/* صفحهٔ طراحی لیبل: باکس استودیو دقیقاً هم‌ارتفاع/هم‌راستای سایدبارها
+   (fixed: top:8rem → bottom:12px) و محتوای آن وسط آن قرار می‌گیرد. */
+@media (min-width: 1025px) {
+    body[data-section="label-printer"] .ma-dashboard-main {
+        position: fixed;
+        top: 8rem;
+        bottom: 12px;
+        left: calc(clamp(64px, 6vw, 78px) + 16px);
+        right: calc(clamp(64px, 6vw, 78px) + 16px);
+        width: auto;
+        height: auto;
+        max-height: none;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+    }
+    body[data-section="label-printer"] .ma-dashboard-inner {
+        height: 100%;
+        min-height: 0;
+        max-width: none;
+    }
+    body[data-section="label-printer"] .ma-label-studio {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
+    }
+    body[data-section="label-printer"] .ma-label-studio__grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: center;
+        align-content: center;
+    }
+    body[data-section="label-printer"] .ma-label-preview-panel,
+    body[data-section="label-printer"] .ma-label-controls {
+        max-height: 100%;
+        overflow: auto;
+    }
+}
+@media (max-width: 1024px) {
+    body[data-section="label-printer"] .ma-label-studio {
+        display: flex;
+        flex-direction: column;
+    }
+    body[data-section="label-printer"] .ma-label-studio__grid {
+        align-items: start;
+        align-content: start;
+    }
+}
 .ma-label-studio__head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 20px; border-bottom:1px solid rgba(99,102,241,.1); }
 .ma-label-studio__head h2 { margin:2px 0 1px; color:#172554; font-size:1.05rem; }
 .ma-label-studio__head p { margin:0; color:#64748b; font-size:.72rem; }

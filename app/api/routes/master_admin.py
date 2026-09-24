@@ -1570,6 +1570,7 @@ async def update_config(request: Request):
         "idle_timeout_enabled",
         "idle_timeout_seconds",
         "label_target_printer",
+        "label_print_settings",
     }
     if key not in allowed_keys:
         raise HTTPException(status_code=400, detail="کلید تنظیم مجاز نیست.")
@@ -1591,6 +1592,7 @@ async def update_config(request: Request):
                     value,
                     {
                         "label_target_printer": "نام چاپگر انتخابی برای چاپ لیبل و بلیت نوبت",
+                        "label_print_settings": "تنظیمات چاپ لیبل (اندازه، قالب، چرخش، نمایش فیلدها)",
                     }.get(key, ""),
                     admin,
                 ),

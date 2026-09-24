@@ -475,8 +475,9 @@ class TestXSSSinksEscaped:
 
     def test_ticket_kiosk_print_escapes_name(self):
         html = open("app/templates/ticket-kiosk.html", encoding="utf-8").read()
-        assert "escText(patientData.name)" in html
-        assert "escText(ticket.service || '')" in html
+        assert "escText(patientData.name || '—')" in html
+        assert "escText(service || 'پذیرش')" in html
+        assert "escText(ticket.persian_number" in html
 
     def test_training_search_escapes_results(self):
         js = open("app/static/js/training.js", encoding="utf-8").read()

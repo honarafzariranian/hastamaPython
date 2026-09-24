@@ -183,12 +183,13 @@
     border-radius: 9px;
     background: var(--lbl-brand-tint);
 }
-/* service title rides on the top edge of the number box (legend style) */
+/* service title rides on the top-right edge of the number box (legend style) */
 .lbl__service {
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    right: 10px;
+    left: auto;
+    transform: translateY(-50%);
     z-index: 1;
     display: inline-flex;
     align-items: center;
@@ -203,12 +204,6 @@
     font-weight: 800;
     white-space: nowrap;
     letter-spacing: .02em;
-}
-.lbl__queue-label {
-    font-size: 5.4px;
-    line-height: 1.2;
-    font-weight: 700;
-    color: var(--lbl-ink-3);
 }
 /* کوچک‌تر از قبل؛ فضای آزاد برای اطلاعات مراجعه‌کننده که خوانایی اول است */
 .lbl__queue-number {
@@ -229,7 +224,7 @@
    و ضخیم، برچسب‌ها هم واضح‌تر از قبل. */
 .lbl__records {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    grid-template-columns: 1fr;
     gap: 6px;
     min-width: 0;
 }
@@ -376,6 +371,31 @@
 .lbl[data-template='compact'] .lbl__message { display: none; }
 .lbl[data-template='compact'] .lbl__content { gap: 3px; padding-top: 6px; }
 .lbl[data-template='compact'] .lbl__queue-number { font-size: 24px; }
+
+/* ═══ Minimal service templates (preview + studio print) ═════
+   جوابدهی / نمونه‌گیری: فقط شماره پذیرش + شماره نوبت
+   نوبت خالی: فقط شماره نوبت (سالمندان — بدون فرم) */
+.lbl[data-template='queue'] #maPreviewAdmissionRow,
+.lbl[data-template='compact'] #maPreviewAdmissionRow { display: none; }
+
+.lbl[data-template='result'] #maPreviewAdmissionRow,
+.lbl[data-template='sampling'] #maPreviewAdmissionRow { display: flex; }
+
+.lbl[data-template='result'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow),
+.lbl[data-template='sampling'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow) { display: none; }
+
+.lbl[data-template='result'] .lbl__record-group--insurance,
+.lbl[data-template='sampling'] .lbl__record-group--insurance { display: none; }
+
+.lbl[data-template='result'] .lbl__record-group--patient,
+.lbl[data-template='sampling'] .lbl__record-group--patient {
+    border-color: var(--lbl-ink);
+    background: var(--lbl-brand-tint);
+}
+
+.lbl[data-template='blank'] .lbl__records { display: none; }
+.lbl[data-template='blank'] .lbl__queue-number { font-size: 28px; }
+.lbl[data-template='blank'] .lbl__number-box { margin-top: 12px; padding-top: 10px; padding-bottom: 10px; }
 
 /* ═══════════════════════════════════════════════════════════════
    SCREEN — browser preview (admin page + print window preview)

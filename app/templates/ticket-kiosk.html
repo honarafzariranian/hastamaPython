@@ -557,6 +557,53 @@
             background: linear-gradient(145deg, rgba(139,92,246,0.06), rgba(99,102,241,0.04));
             box-shadow: 0 6px 24px rgba(139,92,246,0.09);
         }
+
+        /* ── دکمه نوبت خالی (خاکستری — بدون فرم) ── */
+        .k-services-row--blank {
+            margin-top: 2px;
+        }
+        .k-service-card.k-service-card--blank {
+            border: 2px dashed rgba(100,116,139,0.35);
+            background: linear-gradient(145deg, rgba(148,163,184,0.08), rgba(148,163,184,0.03));
+            box-shadow: 0 4px 16px rgba(148,163,184,0.08);
+            min-height: auto;
+            padding: 16px 22px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 14px;
+        }
+        .k-service-card.k-service-card--blank .k-service-icon {
+            width: 44px; height: 44px;
+            margin-bottom: 0;
+            background: rgba(148,163,184,0.14);
+        }
+        .k-service-card.k-service-card--blank .k-service-icon svg {
+            width: 22px; height: 22px;
+            stroke: #64748b;
+        }
+        .k-service-card.k-service-card--blank .k-service-label {
+            font-size: 18px;
+        }
+        .k-service-card.k-service-card--blank .k-service-desc {
+            font-size: 12px;
+            margin-top: 0;
+            text-align: right;
+        }
+        .k-service-card.k-service-card--blank:hover {
+            border-color: #94a3b8;
+            box-shadow: 0 8px 24px rgba(148,163,184,0.16);
+        }
+        .k-service-card.k-service-card--blank:hover .k-service-icon {
+            background: linear-gradient(135deg, #64748b, #475569);
+            box-shadow: 0 4px 12px rgba(100,116,139,0.3);
+        }
+        .k-service-card.k-service-card--blank:hover .k-service-icon svg { stroke: #fff; }
+        .k-service-card.k-service-card--blank:active { transform: scale(0.97); }
+        body.dark-mode .k-service-card.k-service-card--blank {
+            border-color: rgba(148,163,184,0.28);
+            background: linear-gradient(145deg, rgba(148,163,184,0.08), rgba(100,116,139,0.04));
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
         .k-service-card.k-service-card--edit::after {
             background: linear-gradient(90deg, #8b5cf6, #6366f1);
         }
@@ -1954,6 +2001,20 @@
                         <span class="k-service-desc">ویرایش اطلاعات نوبت</span>
                     </button>
                 </div>
+                <!-- ردیف نوبت خالی: بدون هیچ فرم یا اطلاعاتی -->
+                <div class="k-services-row k-services-row--blank">
+                    <button type="button" class="k-service-card k-service-card--blank k-service-card--wide" data-service="نوبت خالی" onclick="issueBlankTicket()">
+                        <div class="k-service-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                <path d="M3 10h18"/>
+                                <path d="M8 15h4"/>
+                            </svg>
+                        </div>
+                        <span class="k-service-label">نوبت خالی</span>
+                        <span class="k-service-desc">فقط شماره نوبت — بدون پرکردن اطلاعات</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -2151,7 +2212,7 @@
                     </p>
                 </div>
                 <div class="k-result-field">
-                    <label>شماره پذیرش <span style="color:#ef4444">*</span></label>
+                    <label for="resultAdmissionNo">شماره پذیرش <span style="color:#ef4444">*</span></label>
                     <input class="k-result-input" id="resultAdmissionNo" type="text" placeholder="مثال: ۱۲۳۴۵" data-kb="number" readonly>
                     <div class="k-result-error" id="resultError">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -2338,7 +2399,7 @@
                 <!-- مرحله ۱: ورود شماره نوبت -->
                 <div class="k-edit-step" id="editStep1">
                     <div class="k-edit-field" style="text-align:center">
-                        <label style="font-size:14px;color:var(--k-text-dim);margin-bottom:4px">شماره نوبت خود را وارد کنید</label>
+                        <label for="editTicketNumber" style="font-size:14px;color:var(--k-text-dim);margin-bottom:4px">شماره نوبت خود را وارد کنید</label>
                         <input type="text" id="editTicketNumber" placeholder="مثال: ۱۲" data-kb="number" readonly style="text-align:center;font-size:22px;height:56px;border-radius:14px">
                     </div>
                     <div class="k-edit-error" id="editError1">
@@ -2360,21 +2421,21 @@
                         <span style="font-size:14px;font-weight:700;color:var(--k-text)">اطلاعات بیمار</span>
                     </div>
                     <div class="k-edit-field">
-                        <label>نام و نام خانوادگی</label>
+                        <label for="editName">نام و نام خانوادگی</label>
                         <input type="text" id="editName" placeholder="نام کامل">
                     </div>
                     <div class="k-edit-field-row">
                         <div class="k-edit-field">
-                            <label>سن</label>
+                            <label for="editAge">سن</label>
                             <input type="text" id="editAge" placeholder="مثال: ۳۵" data-kb="number" readonly>
                         </div>
                         <div class="k-edit-field">
-                            <label>شماره ملی</label>
+                            <label for="editNationalId">شماره ملی</label>
                             <input type="text" id="editNationalId" placeholder="۱۰ رقمی" data-kb="number" readonly>
                         </div>
                     </div>
                     <div class="k-edit-field">
-                        <label>شماره تماس</label>
+                        <label for="editPhone">شماره تماس</label>
                         <input type="text" id="editPhone" placeholder="۰۹۱۲۱۲۳۴۵۶۷" data-kb="number" readonly>
                     </div>
                     <div style="width:100%;display:flex;align-items:center;gap:8px;margin:6px 0 2px">
@@ -2384,11 +2445,11 @@
                         <span style="font-size:14px;font-weight:700;color:var(--k-text)">بیمه</span>
                     </div>
                     <div class="k-edit-field">
-                        <label>بیمه پایه</label>
+                        <label for="editInsuranceBase">بیمه پایه</label>
                         <input type="text" id="editInsuranceBase" placeholder="نام بیمه">
                     </div>
                     <div class="k-edit-field">
-                        <label>بیمه تکمیلی</label>
+                        <label for="editInsuranceExtra">بیمه تکمیلی</label>
                         <input type="text" id="editInsuranceExtra" placeholder="نام بیمه تکمیلی (اختیاری)">
                     </div>
                     <div class="k-edit-error" id="editError2">
@@ -2474,9 +2535,20 @@
                 openResult();
             } else if (service === 'اصلاح پذیرش') {
                 openEditOverlay();
+            } else if (service === 'نوبت خالی') {
+                issueBlankTicket();
             } else {
                 showPatientForm(service, null);
             }
+        }
+
+        /* نوبت خالی: بدون فرم و بدون اطلاعات بیمار */
+        function issueBlankTicket() {
+            document.querySelectorAll('.k-service-card').forEach(function (c) { c.classList.remove('selected'); });
+            var blankBtn = document.querySelector('.k-service-card--blank');
+            if (blankBtn) blankBtn.classList.add('selected');
+            selectedService = 'نوبت خالی';
+            issueTicket('نوبت خالی', {});
         }
 
         /* ── متن مودال بر اساس نوع سرویس ── */
@@ -2993,8 +3065,9 @@
             }
         }
 
-        /* ── چاپ بی‌صدا سمت سرور (چاپگر انتخابی در استودیو لیبل) ── */
+        /* ── چاپ بی‌صدا سمت سرور (چاپگر + تنظیمات انتخابی در استودیو لیبل) ── */
         async function printIssuedTicket(ticket, patientData) {
+            var labelSettings = null;
             try {
                 var resp = await fetch('/api/queue/print', {
                     method: 'POST',
@@ -3002,12 +3075,20 @@
                     body: JSON.stringify({ ticket: ticket, patient: patientData || {} })
                 });
                 var data = await resp.json();
+                if (data && data.settings) labelSettings = data.settings;
                 if (data && data.success) return;
             } catch (_) { /* network / 5xx → browser fallback below */ }
-            try { printTicket(ticket, patientData); } catch (_) {}
+            try { printTicket(ticket, patientData, labelSettings); } catch (_) {}
         }
 
-        /* ── چاپ لیبل نوبت ── */
+        function readLocalLabelSettings() {
+            try {
+                var raw = localStorage.getItem('hastama-label-settings');
+                return raw ? JSON.parse(raw) : null;
+            } catch (_) { return null; }
+        }
+
+        /* ── چاپ لیبل نوبت (fallback مرورگر — همان تنظیمات label-printer) ── */
         function escText(v) {
             return String(v === null || v === undefined ? '' : v)
                 .replace(/&/g, '&amp;')
@@ -3016,36 +3097,123 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
         }
-        function printTicket(ticket, patientData) {
-            var w = window.open('', '_blank', 'width=320,height=450');
-            var admissionHtml = '';
-            if (patientData && patientData.admission_number) {
-                admissionHtml = '<div class="admission" style="font-size:10pt; margin:2mm 0; font-weight:bold;">شماره پذیرش: ' + escText(patientData.admission_number_persian || patientData.admission_number) + '</div>';
+        function faDigits(v) {
+            return String(v === null || v === undefined ? '' : v)
+                .replace(/[0-9]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
+        }
+        function isMinimalLabelService(service) {
+            var s = String(service || '').replace(/‌/g, ' ').replace(/\s+/g, ' ').trim();
+            return s === 'جوابدهی' || s === 'نمونه‌گیری' || s === 'نمونه گیری'
+                || s === 'نوبت خالی' || s === 'javabdehi' || s === 'sampling'
+                || s === 'result' || s === 'blank';
+        }
+        function clampMm(v, min, max, fallback) {
+            var n = Number(v);
+            if (!isFinite(n)) return fallback;
+            return Math.min(max, Math.max(min, Math.round(n)));
+        }
+        function normalizeLabelSettings(raw) {
+            raw = raw || {};
+            var width = raw.width_mm != null ? raw.width_mm : raw.maLabelWidth;
+            var height = raw.height_mm != null ? raw.height_mm : raw.maLabelHeight;
+            var tpl = raw.template != null ? raw.template : raw.maLabelTemplate;
+            var rotate = raw.rotate != null ? raw.rotate : raw.maPrintRotate;
+            var showName = raw.show_name != null ? raw.show_name : raw.maShowName;
+            var showTime = raw.show_time != null ? raw.show_time : raw.maShowTime;
+            var showHint = raw.show_hint != null ? raw.show_hint : raw.maShowHint;
+            if (['queue', 'compact', 'result', 'sampling', 'blank'].indexOf(String(tpl)) < 0) tpl = 'queue';
+            return {
+                width_mm: clampMm(width, 30, 150, 75),
+                height_mm: clampMm(height, 20, 100, 81),
+                template: String(tpl),
+                rotate: rotate === true || rotate === 1 || rotate === '1' || rotate === 'true',
+                show_name: showName == null ? true : !!showName && showName !== false && showName !== 'false',
+                show_time: showTime == null ? true : !!showTime && showTime !== false && showTime !== 'false',
+                show_hint: showHint == null ? true : !!showHint && showHint !== false && showHint !== 'false'
+            };
+        }
+        function printTicket(ticket, patientData, labelSettings) {
+            patientData = patientData || {};
+            var s = normalizeLabelSettings(labelSettings || readLocalLabelSettings());
+            var w = s.width_mm;
+            var h = s.height_mm;
+            var rotated = s.rotate;
+            var pageW = rotated ? h : w;
+            var pageH = rotated ? w : h;
+            var zoom = Math.max(0.8, Math.min(1.8, w / 50));
+            var wwin = window.open('', '_blank', 'width=360,height=520');
+            if (!wwin) return;
+            var service = String(ticket.service || '');
+            var number = escText(ticket.persian_number || faDigits(ticket.number) || '');
+            var admission = escText(patientData.admission_number_persian || patientData.admission_number || '');
+            var minimal = isMinimalLabelService(service);
+            var recordsHtml;
+            if (minimal) {
+                recordsHtml = admission
+                    ? '<section class="lbl__records" style="grid-template-columns:1fr"><div class="lbl__record-group">'
+                      + '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span>'
+                      + '<span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
+                      + '</div></section>'
+                    : '';
+            } else {
+                recordsHtml = '<section class="lbl__records">'
+                    + '<div class="lbl__record-group">'
+                    + (admission
+                        ? '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
+                        : '')
+                    + (s.show_name
+                        ? '<div class="lbl__record"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value">' + escText(patientData.name || '—') + '</span></div>'
+                        : '')
+                    + '<div class="lbl__record"><span class="lbl__record-label">سن</span><span class="lbl__record-value">' + escText(faDigits(patientData.age) || '—') + '</span></div>'
+                    + '<div class="lbl__record"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.national_id) || '—') + '</span></div>'
+                    + '<div class="lbl__record"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.phone) || '—') + '</span></div>'
+                    + '</div>'
+                    + '<div class="lbl__record-group lbl__record-group--insurance">'
+                    + '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track">—</span></div>'
+                    + '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value">' + escText(patientData.insurance_base || '—') + '</span></div>'
+                    + '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value">' + escText(patientData.insurance_extra || '—') + '</span></div>'
+                    + '</div></section>';
             }
-            var nameHtml = '';
-            if (patientData && patientData.name) {
-                nameHtml = '<div class="name" style="font-size:8pt; color:#333; margin:1mm 0;">' + escText(patientData.name) + '</div>';
-            }
-            w.document.write(
-                '<!DOCTYPE html><html><head><title>نوبت ' + escText(ticket.number || '') + '</title>' +
-                '<style>' +
-                '@page { size: 70mm 50mm; margin: 3mm; }' +
-                'body { font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: center; padding: 2mm; margin: 0; }' +
-                '.header { font-size: 8pt; font-weight: bold; margin-bottom: 2mm; border-bottom: 1px dashed #333; padding-bottom: 2mm; }' +
-                '.number { font-size: 28pt; font-weight: 900; margin: 2mm 0; }' +
-                '.service { font-size: 9pt; color: #555; margin-bottom: 1mm; }' +
-                '.date { font-size: 7pt; color: #888; margin-top: 2mm; border-top: 1px dashed #333; padding-top: 2mm; }' +
-                '</style></head><body>' +
-                '<div class="header">آزمایشگاه تشخیص طبی دکتر امینی</div>' +
-                '<div class="service">' + escText(ticket.service || '') + '</div>' +
-                admissionHtml +
-                nameHtml +
-                '<div class="number">' + escText(ticket.persian_number || ticket.number || '') + '</div>' +
-                '<div class="date">' + new Date().toLocaleDateString('fa-IR') + ' — ' + new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'}) + '</div>' +
-                '</body></html>'
+            var origin = window.location.origin;
+            var now = new Date();
+            var when = now.toLocaleDateString('fa-IR') + ' - ' + now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+            var rotateCss = rotated
+                ? '.lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;'
+                  + 'transform:translateY(calc(var(--lbl-mm-w,' + w + ') * 1mm)) rotate(-90deg);transform-origin:top left}'
+                : '';
+            var rotatedCls = rotated ? ' is-rotated' : '';
+            var hintAttr = s.show_hint ? '' : ' hidden';
+            var timeAttr = s.show_time ? '' : ' hidden';
+            wwin.document.write(
+                '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">'
+                + '<title>نوبت ' + number + '</title>'
+                + '<link rel="stylesheet" href="' + origin + '/static/css/vazir.css">'
+                + '<link rel="stylesheet" href="' + origin + '/static/css/label-print.css">'
+                + '<style>@page{size:' + pageW + 'mm ' + pageH + 'mm;margin:0}html,body{margin:0;background:#fff}'
+                + '.lbl-page{position:relative;width:' + pageW + 'mm;height:' + pageH + 'mm;overflow:hidden}'
+                + '.lbl.lbl--print{width:' + w + 'mm;height:' + h + 'mm;--lbl-mm-w:' + w + ';--lbl-mm-h:' + h
+                + ';--lbl-zoom:' + zoom.toFixed(3) + ';margin:0;border:0;border-radius:0;box-shadow:none;filter:grayscale(1)}'
+                + rotateCss + '</style>'
+                + '</head><body class="lbl-print-page"><div class="lbl-page">'
+                + '<div class="lbl lbl--print' + rotatedCls + '" data-template="' + escText(s.template) + '">'
+                + '<span class="lbl__accent" aria-hidden="true"></span><div class="lbl__content">'
+                + '<header class="lbl__header"><span class="lbl__datetime"' + timeAttr + '><span class="lbl__datetime-value">' + escText(when) + '</span></span>'
+                + '<div class="lbl__identity"><img class="lbl__logo" src="' + origin + '/static/images/lab-logo.png" alt="">'
+                + '<div class="lbl__identity-text"><h3 class="lbl__lab-name">آزمایشگاه تشخیص طبی دکتر امینی</h3>'
+                + '<p class="lbl__slogan"' + hintAttr + '>همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</p></div></div></header>'
+                + '<section class="lbl__queue"><div class="lbl__number-box">'
+                + '<span class="lbl__service">' + escText(service || 'پذیرش') + '</span>'
+                + '<span class="lbl__queue-number">' + number + '</span>'
+                + '</div></section>'
+                + recordsHtml
+                + '<p class="lbl__message"' + hintAttr + '><span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span></p>'
+                + '<footer class="lbl__footer"><img class="lbl__brand-logo" src="' + origin + '/static/images/newlogo.png" alt="">'
+                + '<div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div></footer>'
+                + '</div></div></div>'
+                + '</body></html>'
             );
-            w.document.close();
-            setTimeout(function () { w.print(); }, 400);
+            wwin.document.close();
+            setTimeout(function () { try { wwin.focus(); wwin.print(); } catch (_) {} }, 500);
         }
 
         /* ── بستن مودال ── */

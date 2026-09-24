@@ -4,15 +4,21 @@ Modern kiosk flow (best practice):
 1. The label studio stores the chosen printer in ``system_config`` (``label_target_printer``)
    so every surface (kiosk, reception, label studio) shares one source of truth —
    not browser-local ``localStorage``.
-2. When the kiosk issues a ticket it POSTs to ``/api/queue/print-ticket``.
-3. This module builds a self-contained HTML receipt, renders it to a PDF via
-   Edge headless (present on every Windows 10/11 install), and submits that PDF
-   to the named Windows printer queue — no dialog, no user interaction.
+2. When the kiosk issues a ticket it POSTs to ``/api/queue/print``.
+3. This module builds a self-contained HTML receipt using the shared
+   ``label-print.css`` presentation (same as master-admin → label printer),
+   renders it via Edge headless, and submits the job to the named Windows
+   printer queue — no dialog, no user interaction.
 4. The client always keeps a browser ``window.print()`` fallback when the server
    path is unavailable (Linux/CUPS, missing Edge, offline spooler, etc.).
 
-Only the standard library is used (plus Edge).  ``wkhtmltopdf`` / SumatraPDF
-are optional and never required.
+Print fidelity path (Windows):
+  1. Edge → PNG → ``System.Drawing.Printing`` (full label design).
+  2. Edge → PDF → shell PrintTo (when a .pdf PrintTo handler exists).
+  3. ``Out-Printer`` plain text (last resort so the patient still gets a ticket).
+
+Only the standard library is used (plus Edge + Windows/.NET print APIs).
+``wkhtmltopdf`` / SumatraPDF are optional and never required.
 """
 from __future__ import annotations
 
@@ -20,6 +26,7 @@ import html
 import logging
 import os
 import platform
+import re
 import shutil
 import subprocess
 import tempfile
@@ -32,6 +39,18 @@ logger = logging.getLogger(__name__)
 #: system_config key holding the selected printer queue name.
 CONFIG_KEY = "label_target_printer"
 
+#: system_config key holding the label-studio print settings (JSON).
+SETTINGS_CONFIG_KEY = "label_print_settings"
+
+#: Label studio defaults (master-admin.js DEFAULT_LABEL_W/H).
+DEFAULT_LABEL_W_MM = 75
+DEFAULT_LABEL_H_MM = 81
+
+#: Design reference width in mm (label-print.css is authored for ~50 mm).
+_LABEL_REF_W_MM = 50
+
+_TEMPLATE_IDS = frozenset({"queue", "compact", "result", "sampling", "blank"})
+
 _EDGE_CANDIDATES = (
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
@@ -42,6 +61,23 @@ _EDGE_CANDIDATES = (
 #: Bound a headless render so a hung spooler cannot pin a worker forever.
 _RENDER_TIMEOUT = 20
 _PRINT_TIMEOUT = 15
+
+_APP_ROOT = Path(__file__).resolve().parents[1]
+_STATIC_ROOT = _APP_ROOT / "static"
+
+#: Services that print only queue number + admission number (no patient block).
+_MINIMAL_SERVICES = frozenset(
+    {
+        "جوابدهی",
+        "نمونه‌گیری",
+        "نمونه گیری",
+        "نوبت خالی",
+        "javabdehi",
+        "sampling",
+        "result",
+        "blank",
+    }
+)
 
 _NO_WINDOW: dict[str, Any] = {}
 if platform.system() == "Windows":
@@ -58,6 +94,11 @@ def esc(value: Any) -> str:
     return html.escape(str(value if value is not None else ""), quote=True)
 
 
+def to_persian_digits(value: Any) -> str:
+    text = str(value if value is not None else "")
+    return text.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+
+
 def find_edge() -> str:
     """Absolute path to msedge.exe, or ``\"\"`` when Edge is not installed."""
     which = shutil.which("msedge") or shutil.which("msedge.exe")
@@ -69,67 +110,388 @@ def find_edge() -> str:
     return ""
 
 
+def is_minimal_label_service(service: Any) -> bool:
+    """True when the label must only show queue number + admission number."""
+    text = str(service or "").strip()
+    if text in _MINIMAL_SERVICES:
+        return True
+    normalized = text.replace("‌", " ").replace("‍", " ")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    return normalized in _MINIMAL_SERVICES
+
+
+def _read_static_text(relative: str) -> str:
+    path = _STATIC_ROOT / relative
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        logger.warning("Missing static asset for label print: %s", path)
+        return ""
+
+
+def _static_file_uri(relative: str) -> str:
+    return (_STATIC_ROOT / relative).as_uri()
+
+
+def _format_label_datetime() -> str:
+    """Persian date/time pill text (Jalali when jdatetime is available)."""
+    try:
+        import jdatetime
+
+        now = jdatetime.datetime.now()
+        return f"{now.strftime('%Y/%m/%d')} - {now.strftime('%H:%M')}"
+    except Exception:
+        now = time.localtime()
+        return f"{time.strftime('%Y/%m/%d', now)} - {time.strftime('%H:%M', now)}"
+
+
+def _label_zoom(width_mm: int) -> str:
+    # Same formula as master-admin.js: design reference is 50 mm wide.
+    zoom = max(0.8, min(1.8, float(width_mm) / _LABEL_REF_W_MM))
+    return f"{zoom:.3f}"
+
+
+def default_label_settings() -> dict[str, Any]:
+    """Canonical print settings shared by the studio, kiosk, and server."""
+    return {
+        "width_mm": DEFAULT_LABEL_W_MM,
+        "height_mm": DEFAULT_LABEL_H_MM,
+        "template": "queue",
+        "rotate": False,
+        "show_name": True,
+        "show_time": True,
+        "show_hint": True,
+    }
+
+
+def _clamp_int(value: Any, low: int, high: int, fallback: int) -> int:
+    try:
+        n = int(round(float(value)))
+    except (TypeError, ValueError):
+        return fallback
+    return max(low, min(high, n))
+
+
+def _as_bool(value: Any, fallback: bool = True) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return fallback
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off"}:
+        return False
+    return fallback
+
+
+def normalize_label_settings(raw: Any) -> dict[str, Any]:
+    """Coerce studio / system_config payload into the canonical settings shape.
+
+    Accepts both the master-admin localStorage keys (``maLabelWidth`` …) and
+    the already-normalized server keys (``width_mm`` …). Missing fields fall
+    back to studio defaults so a partial payload never breaks printing.
+    """
+    import json
+
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except (TypeError, ValueError):
+            raw = None
+    if not isinstance(raw, dict):
+        raw = {}
+
+    def pick(*keys: str) -> Any:
+        for key in keys:
+            if key in raw and raw[key] is not None and raw[key] != "":
+                return raw[key]
+        return None
+
+    width = pick("width_mm", "maLabelWidth")
+    height = pick("height_mm", "maLabelHeight")
+    template = pick("template", "maLabelTemplate")
+    rotate = pick("rotate", "maPrintRotate")
+    show_name = pick("show_name", "maShowName")
+    show_time = pick("show_time", "maShowTime")
+    show_hint = pick("show_hint", "maShowHint")
+
+    tpl = str(template).strip().lower() if template is not None else "queue"
+    if tpl not in _TEMPLATE_IDS:
+        tpl = "queue"
+
+    return {
+        "width_mm": _clamp_int(width, 30, 150, DEFAULT_LABEL_W_MM),
+        "height_mm": _clamp_int(height, 20, 100, DEFAULT_LABEL_H_MM),
+        "template": tpl,
+        "rotate": _as_bool(rotate, False),
+        "show_name": _as_bool(show_name, True),
+        "show_time": _as_bool(show_time, True),
+        "show_hint": _as_bool(show_hint, True),
+    }
+
+
+def load_label_settings() -> dict[str, Any]:
+    """Read label-studio print settings from ``system_config`` (best-effort)."""
+    try:
+        from app.core.database import connect
+
+        conn = connect()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT config_value FROM system_config WHERE config_key = ?",
+                (SETTINGS_CONFIG_KEY,),
+            )
+            row = cur.fetchone()
+            value = row[0] if row else None
+        finally:
+            conn.close()
+        return normalize_label_settings(value)
+    except Exception as exc:
+        logger.warning(
+            "label_print_settings lookup failed: %s: %s", type(exc).__name__, exc
+        )
+        return default_label_settings()
+
+
 def build_ticket_html(
     ticket: dict[str, Any],
     patient: Optional[dict[str, Any]] = None,
     *,
     clinic_name: str = "آزمایشگاه تشخیص طبی دکتر امینی",
+    clinic_slogan: str = "همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز",
+    width_mm: Optional[int] = None,
+    height_mm: Optional[int] = None,
+    settings: Any = None,
 ) -> str:
-    """Self-contained 70×50 mm receipt HTML (matches the kiosk printTicket design)."""
+    """Self-contained label HTML matching master-admin → label-printer.
+
+    Service variants:
+      * جوابدهی / نمونه‌گیری / نوبت خالی → queue number + admission number only.
+      * پذیرش / اصلاح پذیرش / others → full label studio template.
+
+    ``settings`` (or explicit ``width_mm`` / ``height_mm``) mirror the studio
+    print controls: size, template, 90° rotate, and name/time/hint visibility.
+    """
+    cfg = normalize_label_settings(settings)
+    if width_mm is not None:
+        cfg["width_mm"] = _clamp_int(width_mm, 30, 150, DEFAULT_LABEL_W_MM)
+    if height_mm is not None:
+        cfg["height_mm"] = _clamp_int(height_mm, 20, 100, DEFAULT_LABEL_H_MM)
+    width_mm = cfg["width_mm"]
+    height_mm = cfg["height_mm"]
+    template = cfg["template"]
+    rotated = cfg["rotate"]
+    # Physical page (studio openPrintWindow): swap axes when content is rotated.
+    page_w = height_mm if rotated else width_mm
+    page_h = width_mm if rotated else height_mm
+
     patient = patient or {}
-    number = esc(ticket.get("persian_number") or ticket.get("number") or "")
-    service = esc(ticket.get("service") or "")
-    admission = patient.get("admission_number") or patient.get("admission_number_persian") or ""
-    name = esc(patient.get("name") or "")
-    admission_html = ""
-    if admission:
-        admission_html = (
-            f'<div class="admission">شماره پذیرش: {esc(admission)}</div>'
+    number = esc(
+        ticket.get("persian_number")
+        or to_persian_digits(ticket.get("number") or "")
+        or ""
+    )
+    service_raw = str(ticket.get("service") or "")
+    service = esc(service_raw)
+    admission_raw = (
+        patient.get("admission_number_persian")
+        or patient.get("admission_number")
+        or ""
+    )
+    admission = esc(admission_raw)
+    minimal = is_minimal_label_service(service_raw)
+
+    name = esc(patient.get("name") or "—")
+    age = esc(to_persian_digits(patient.get("age") or "") or "—")
+    national = esc(to_persian_digits(patient.get("national_id") or "") or "—")
+    phone = esc(to_persian_digits(patient.get("phone") or "") or "—")
+    insurance_base = esc(patient.get("insurance_base") or "—")
+    insurance_extra = esc(patient.get("insurance_extra") or "—")
+    insurance_track = esc(
+        to_persian_digits(
+            patient.get("insurance_tracking")
+            or patient.get("tracking_code")
+            or patient.get("insurance_track")
+            or ""
         )
-    name_html = f'<div class="name">{name}</div>' if name else ""
-    # Prefer server clock (UTC-naive local) so the receipt never depends on kiosk TZ.
-    now = time.localtime()
-    date_str = time.strftime("%Y/%m/%d", now)
-    time_str = time.strftime("%H:%M", now)
+        or "—"
+    )
+
+    if minimal:
+        if admission:
+            records = (
+                '<section class="lbl__records" aria-label="شماره پذیرش" '
+                'style="grid-template-columns:1fr">'
+                '<div class="lbl__record-group">'
+                '<div class="lbl__record">'
+                '<span class="lbl__record-label">شماره پذیرش</span>'
+                f'<span class="lbl__record-value lbl__record-value--num">{admission}</span>'
+                "</div></div></section>"
+            )
+        else:
+            records = ""
+    else:
+        admission_row = ""
+        if admission:
+            admission_row = (
+                '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span>'
+                f'<span class="lbl__record-value lbl__record-value--num">{admission}</span></div>'
+            )
+        name_row = ""
+        if cfg["show_name"]:
+            name_row = (
+                '<div class="lbl__record"><span class="lbl__record-label">نام و نام خانوادگی</span>'
+                f'<span class="lbl__record-value">{name}</span></div>'
+            )
+        records = (
+            '<section class="lbl__records" aria-label="اطلاعات مراجعه‌کننده و بیمه">'
+            '<div class="lbl__record-group">'
+            + admission_row
+            + name_row
+            + '<div class="lbl__record"><span class="lbl__record-label">سن</span>'
+            f'<span class="lbl__record-value">{age}</span></div>'
+            '<div class="lbl__record"><span class="lbl__record-label">شماره ملی</span>'
+            f'<span class="lbl__record-value lbl__record-value--num">{national}</span></div>'
+            '<div class="lbl__record"><span class="lbl__record-label">شماره همراه</span>'
+            f'<span class="lbl__record-value lbl__record-value--num">{phone}</span></div>'
+            "</div>"
+            '<div class="lbl__record-group lbl__record-group--insurance">'
+            '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span>'
+            f'<span class="lbl__record-value lbl__record-value--num lbl__record-value--track">{insurance_track}</span></div>'
+            '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span>'
+            f'<span class="lbl__record-value">{insurance_base}</span></div>'
+            '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span>'
+            f'<span class="lbl__record-value">{insurance_extra}</span></div>'
+            "</div></section>"
+        )
+
+    label_css = _read_static_text("css/label-print.css")
+    font_css = f"""
+@font-face {{
+  font-family: 'Vazir';
+  src: url('{_static_file_uri('fonts/Vazir.woff2')}') format('woff2'),
+       url('{_static_file_uri('fonts/Vazir.woff')}') format('woff'),
+       url('{_static_file_uri('fonts/Vazir.ttf')}') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}}
+"""
+    logo_uri = _static_file_uri("images/lab-logo.png")
+    brand_uri = _static_file_uri("images/newlogo.png")
+    zoom = _label_zoom(width_mm)
+
+    # Content visibility mirrors the studio toggles (maShowName / maShowTime /
+    # maShowHint). The shared CSS has `.lbl [hidden] { display:none !important }`.
+    time_hidden = "" if cfg["show_time"] else " hidden"
+    hint_hidden = "" if cfg["show_hint"] else " hidden"
+    rotated_cls = " is-rotated" if rotated else ""
+    # Same rotate geometry as master-admin openPrintWindow (left/right explicit
+    # so RTL + absolute positioning still lands on the paper).
+    rotate_css = (
+        ".lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;"
+        "transform:translateY(calc(var(--lbl-mm-w,75) * 1mm)) rotate(-90deg);transform-origin:top left}"
+        if rotated
+        else ""
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="fa" dir="rtl"><head><meta charset="utf-8">
 <title>نوبت {number}</title>
 <style>
-@page {{ size: 70mm 50mm; margin: 3mm; }}
-* {{ box-sizing: border-box; }}
-body {{
-  font-family: Tahoma, Arial, sans-serif;
-  direction: rtl; text-align: center;
-  padding: 0; margin: 0;
-  color: #111; background: #fff;
+{font_css}
+{label_css}
+@page {{ size: {page_w}mm {page_h}mm; margin: 0; }}
+html, body {{ margin: 0; padding: 0; background: #fff; }}
+.lbl-page {{
+  position: relative;
+  width: {page_w}mm;
+  height: {page_h}mm;
+  overflow: hidden;
 }}
-.header {{ font-size: 8pt; font-weight: bold; margin-bottom: 1.5mm;
-  border-bottom: 1px dashed #333; padding-bottom: 1.5mm; }}
-.number {{ font-size: 28pt; font-weight: 900; margin: 1.5mm 0; line-height: 1.1; }}
-.service {{ font-size: 9pt; color: #444; margin-bottom: 1mm; }}
-.admission {{ font-size: 8pt; font-weight: bold; margin: 1mm 0; }}
-.name {{ font-size: 8pt; color: #333; margin: 0.5mm 0; }}
-.date {{ font-size: 7pt; color: #666; margin-top: 1.5mm;
-  border-top: 1px dashed #333; padding-top: 1.5mm; }}
-</style></head><body>
-<div class="header">{esc(clinic_name)}</div>
-<div class="service">{service}</div>
-{admission_html}
-{name_html}
-<div class="number">{number}</div>
-<div class="date">{date_str} — {time_str}</div>
+.lbl.lbl--print {{
+  width: {width_mm}mm;
+  height: {height_mm}mm;
+  --lbl-mm-w: {width_mm};
+  --lbl-mm-h: {height_mm};
+  --lbl-zoom: {zoom};
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: grayscale(1);
+}}
+{rotate_css}
+</style>
+</head><body class="lbl-print-page"><div class="lbl-page">
+<div class="lbl lbl--print{rotated_cls}" data-template="{template}" data-service="{service}" aria-label="لیبل نوبت">
+  <span class="lbl__accent" aria-hidden="true"></span>
+  <div class="lbl__content">
+    <header class="lbl__header">
+      <span class="lbl__datetime" title="تاریخ و ساعت ثبت نوبت"{time_hidden}>
+        <span class="lbl__datetime-value">{esc(_format_label_datetime())}</span>
+      </span>
+      <div class="lbl__identity">
+        <img class="lbl__logo" src="{logo_uri}" alt="لوگوی آزمایشگاه">
+        <div class="lbl__identity-text">
+          <h3 class="lbl__lab-name">{esc(clinic_name)}</h3>
+          <p class="lbl__slogan"{hint_hidden}>{esc(clinic_slogan)}</p>
+        </div>
+      </div>
+    </header>
+    <section class="lbl__queue" aria-label="شماره نوبت">
+      <div class="lbl__number-box">
+        <span class="lbl__service">{service or "پذیرش"}</span>
+        <span class="lbl__queue-number">{number or to_persian_digits(ticket.get("number") or "")}</span>
+      </div>
+    </section>
+    {records}
+    <p class="lbl__message"{hint_hidden}>
+      <span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span>
+    </p>
+    <footer class="lbl__footer">
+      <img class="lbl__brand-logo" src="{brand_uri}" alt="هستما">
+      <div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
+    </footer>
+  </div>
+</div>
+</div>
 </body></html>"""
+
+
+def _edge_process(args: list[str], timeout: float) -> bool:
+    try:
+        proc = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            **_NO_WINDOW,
+        )
+        return proc.returncode == 0
+    except Exception as exc:
+        logger.warning("Edge process failed: %s: %s", type(exc).__name__, exc)
+        return False
+
+
+def _write_temp_html(html_text: str) -> str:
+    handle = tempfile.NamedTemporaryFile(
+        "w", suffix=".html", encoding="utf-8", delete=False, dir=tempfile.gettempdir()
+    )
+    with handle:
+        handle.write(html_text)
+    return handle.name
 
 
 def _render_pdf_with_edge(html_text: str, pdf_path: str) -> bool:
     edge = find_edge()
     if not edge:
         return False
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".html", encoding="utf-8", delete=False, dir=tempfile.gettempdir()
-    ) as handle:
-        handle.write(html_text)
-        html_path = handle.name
+    html_path = _write_temp_html(html_text)
     try:
         cmd = [
             edge,
@@ -141,17 +503,47 @@ def _render_pdf_with_edge(html_text: str, pdf_path: str) -> bool:
             "--no-pdf-header-footer",
             Path(html_path).as_uri(),
         ]
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=_RENDER_TIMEOUT,
-            **_NO_WINDOW,
-        )
-        return proc.returncode == 0 and os.path.isfile(pdf_path) and os.path.getsize(pdf_path) > 0
-    except Exception as exc:
-        logger.warning("Edge PDF render failed: %s: %s", type(exc).__name__, exc)
+        if not _edge_process(cmd, _RENDER_TIMEOUT):
+            return False
+        return os.path.isfile(pdf_path) and os.path.getsize(pdf_path) > 0
+    finally:
+        try:
+            os.unlink(html_path)
+        except OSError:
+            pass
+
+
+def _render_png_with_edge(
+    html_text: str,
+    png_path: str,
+    width_mm: int = DEFAULT_LABEL_W_MM,
+    height_mm: int = DEFAULT_LABEL_H_MM,
+    *,
+    dpi: int = 203,
+) -> bool:
+    """Screenshot the label HTML at thermal-ish resolution for GDI printing."""
+    edge = find_edge()
+    if not edge:
         return False
+    html_path = _write_temp_html(html_text)
+    try:
+        width_px = max(320, int(round(width_mm / 25.4 * dpi)))
+        height_px = max(320, int(round(height_mm / 25.4 * dpi)))
+        profile = Path(tempfile.gettempdir()) / "hastama-edge-label"
+        cmd = [
+            edge,
+            "--headless",
+            "--disable-gpu",
+            "--no-first-run",
+            "--no-default-browser-check",
+            f"--user-data-dir={profile}",
+            f"--window-size={width_px},{height_px}",
+            f"--screenshot={png_path}",
+            Path(html_path).as_uri(),
+        ]
+        if not _edge_process(cmd, _RENDER_TIMEOUT):
+            return False
+        return os.path.isfile(png_path) and os.path.getsize(png_path) > 0
     finally:
         try:
             os.unlink(html_path)
@@ -164,21 +556,90 @@ def _ps_quote(value: str) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def _run_powershell(script: str, *, input_text: Optional[str] = None, timeout: int = _PRINT_TIMEOUT) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+        input=input_text,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        encoding="utf-8",
+        errors="replace",
+        **_NO_WINDOW,
+    )
+
+
 def _print_pdf_windows(pdf_path: str, printer_name: str) -> bool:
     """Submit a PDF to a named Windows queue without showing a dialog."""
     # PrintTo verb: the shell hands the file to the registered handler with the
-    # target queue.  Paths are embedded (quoted) — passing bare extra argv to
-    # ``powershell -Command`` breaks on spaces / TEMP short names.
+    # target queue.  Never force exit 0: a missing .pdf association / PrintTo
+    # failure must fall through instead of reporting a false success.
     ps = (
+        "$ErrorActionPreference = 'Stop'; "
+        "try { "
         "Start-Process -FilePath "
         + _ps_quote(pdf_path)
         + " -Verb PrintTo -ArgumentList "
         + _ps_quote(printer_name)
-        + " -Wait; exit 0"
+        + " -Wait; exit 0 "
+        "} catch { "
+        "[Console]::Error.WriteLine($_.Exception.Message); exit 1 "
+        "}"
     )
     try:
+        proc = _run_powershell(ps, timeout=_PRINT_TIMEOUT)
+        if proc.returncode == 0:
+            return True
+        logger.warning("PrintTo failed rc=%s: %s", proc.returncode, (proc.stderr or "")[:300])
+    except Exception as exc:
+        logger.warning("Windows PrintTo raised: %s: %s", type(exc).__name__, exc)
+    return False
+
+
+def _print_png_windows(
+    png_path: str,
+    printer_name: str,
+    width_mm: int = DEFAULT_LABEL_W_MM,
+    height_mm: int = DEFAULT_LABEL_H_MM,
+) -> bool:
+    """Print a label PNG through System.Drawing.Printing (no shell verb)."""
+    # Script is written to a temp file: embedding long PowerShell -Command
+    # strings breaks on paths/quotes more easily than a .ps1 file.
+    script = f"""
+$ErrorActionPreference = 'Stop'
+try {{
+  Add-Type -AssemblyName System.Drawing
+  $doc = New-Object System.Drawing.Printing.PrintDocument
+  $doc.PrinterSettings.PrinterName = { _ps_quote(printer_name) }
+  if (-not $doc.PrinterSettings.IsValid) {{ exit 2 }}
+  $doc.PrinterSettings.Copies = 1
+  $doc.DefaultPageSettings.Color = $false
+  $doc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0, 0, 0, 0)
+  $w = [int]([math]::Round({float(width_mm)} / 25.4 * 100))
+  $h = [int]([math]::Round({float(height_mm)} / 25.4 * 100))
+  try {{
+    $doc.DefaultPageSettings.PaperSize = New-Object System.Drawing.Printing.PaperSize('Label', $w, $h)
+  }} catch {{ }}
+  $png = { _ps_quote(png_path) }
+  $doc.add_PrintPage({{
+    param($sender, $e)
+    $img = [System.Drawing.Image]::FromFile($png)
+    try {{
+      $e.Graphics.DrawImage($img, $e.PageBounds)
+    }} finally {{ $img.Dispose() }}
+  }})
+  $doc.Print()
+  exit 0
+}} catch {{
+  [Console]::Error.WriteLine($_.Exception.Message)
+  exit 1
+}}
+"""
+    script_path = os.path.join(tempfile.gettempdir(), f"hastama-print-{os.getpid()}-{int(time.time() * 1000)}.ps1")
+    try:
+        Path(script_path).write_text(script, encoding="utf-8")
         proc = subprocess.run(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps],
+            ["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script_path],
             capture_output=True,
             text=True,
             timeout=_PRINT_TIMEOUT,
@@ -188,9 +649,14 @@ def _print_pdf_windows(pdf_path: str, printer_name: str) -> bool:
         )
         if proc.returncode == 0:
             return True
-        logger.warning("PrintTo failed rc=%s: %s", proc.returncode, (proc.stderr or "")[:300])
+        logger.warning("PNG PrintDocument failed rc=%s: %s", proc.returncode, (proc.stderr or "")[:400])
     except Exception as exc:
-        logger.warning("Windows PrintTo raised: %s: %s", type(exc).__name__, exc)
+        logger.warning("PNG print raised: %s: %s", type(exc).__name__, exc)
+    finally:
+        try:
+            os.unlink(script_path)
+        except OSError:
+            pass
     return False
 
 
@@ -204,16 +670,7 @@ def _print_text_windows(text: str, printer_name: str) -> bool:
         "$Input | Out-Printer -Name " + _ps_quote(printer_name)
     )
     try:
-        proc = subprocess.run(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps],
-            input=text,
-            capture_output=True,
-            text=True,
-            timeout=_PRINT_TIMEOUT,
-            encoding="utf-8",
-            errors="replace",
-            **_NO_WINDOW,
-        )
+        proc = _run_powershell(ps, input_text=text, timeout=_PRINT_TIMEOUT)
         return proc.returncode == 0
     except Exception as exc:
         logger.warning("Out-Printer failed: %s: %s", type(exc).__name__, exc)
@@ -233,28 +690,63 @@ def _print_pdf_posix(pdf_path: str, printer_name: str) -> bool:
         return False
 
 
+def _plain_text_fallback(
+    ticket: dict[str, Any],
+    patient: Optional[dict[str, Any]],
+    *,
+    minimal: bool,
+) -> str:
+    patient = patient or {}
+    service = str(ticket.get("service") or "")
+    number = str(ticket.get("persian_number") or ticket.get("number") or "")
+    admission = str(
+        patient.get("admission_number_persian") or patient.get("admission_number") or ""
+    )
+    lines = [service or "پذیرش", f"شماره نوبت: {number}"]
+    if admission:
+        lines.append(f"شماره پذیرش: {admission}")
+    if not minimal:
+        name = str(patient.get("name") or "")
+        if name:
+            lines.append(name)
+    lines.append(time.strftime("%Y/%m/%d %H:%M"))
+    return "\n".join(lines) + "\n"
+
+
 def print_ticket_to_printer(
     ticket: dict[str, Any],
     patient: Optional[dict[str, Any]] = None,
     printer_name: str = "",
+    *,
+    settings: Any = None,
 ) -> dict[str, Any]:
-    """Silently print one queue-ticket receipt.
+    """Silently print one queue-ticket label.
+
+    ``settings`` are the shared label-studio print controls (size, template,
+    rotate, visibility). When omitted, they are loaded from ``system_config``.
 
     Returns a JSON-serialisable result:
-    ``{"ok": bool, "printer": str, "method": str, "message": str}``.
+    ``{"ok": bool, "printer": str, "method": str, "message": str, "settings": dict}``.
     ``ok=False`` means the client should fall back to ``window.print()``.
     """
     printer_name = (printer_name or "").strip()
+    cfg = normalize_label_settings(settings) if settings is not None else load_label_settings()
     if not printer_name:
         return {
             "ok": False,
             "printer": "",
             "method": "none",
             "message": "چاپگری در سامانه انتخاب نشده است.",
+            "settings": cfg,
         }
 
-    html_text = build_ticket_html(ticket, patient)
+    patient = patient or {}
+    html_text = build_ticket_html(ticket, patient, settings=cfg)
+    minimal = is_minimal_label_service(str(ticket.get("service") or ""))
     is_windows = platform.system() == "Windows"
+    # Physical page after optional 90° rotate (axes swapped).
+    page_w = cfg["height_mm"] if cfg["rotate"] else cfg["width_mm"]
+    page_h = cfg["width_mm"] if cfg["rotate"] else cfg["height_mm"]
 
     if not is_windows:
         # POSIX: still try lp with a temp PDF if Edge exists; otherwise fail soft.
@@ -266,32 +758,45 @@ def print_ticket_to_printer(
             except OSError:
                 pass
             if ok:
-                return {"ok": True, "printer": printer_name, "method": "edge-lp", "message": "چاپ انجام شد."}
+                return {"ok": True, "printer": printer_name, "method": "edge-lp", "message": "چاپ انجام شد.", "settings": cfg}
         return {
             "ok": False,
             "printer": printer_name,
             "method": "posix",
             "message": "چاپ سمت سرور در این سیستم‌عامل پشتیبانی نمی‌شود؛ از چاپ مرورگر استفاده کنید.",
+            "settings": cfg,
         }
 
-    pdf_path = os.path.join(tempfile.gettempdir(), f"hastama-ticket-{os.getpid()}-{int(time.time()*1000)}.pdf")
+    stamp = f"{os.getpid()}-{int(time.time() * 1000)}"
+    png_path = os.path.join(tempfile.gettempdir(), f"hastama-ticket-{stamp}.png")
+    pdf_path = os.path.join(tempfile.gettempdir(), f"hastama-ticket-{stamp}.pdf")
     try:
+        # Preferred: full label design via PNG + GDI (no .pdf PrintTo handler needed).
+        if (
+            find_edge()
+            and _render_png_with_edge(html_text, png_path, page_w, page_h)
+            and _print_png_windows(png_path, printer_name, page_w, page_h)
+        ):
+            return {
+                "ok": True,
+                "printer": printer_name,
+                "method": "edge-png",
+                "message": "چاپ انجام شد.",
+                "settings": cfg,
+            }
+
         if _render_pdf_with_edge(html_text, pdf_path) and _print_pdf_windows(pdf_path, printer_name):
-            return {"ok": True, "printer": printer_name, "method": "edge-printto", "message": "چاپ انجام شد."}
+            return {"ok": True, "printer": printer_name, "method": "edge-printto", "message": "چاپ انجام شد.", "settings": cfg}
 
         # Degraded path: plain-text job so the patient still gets a ticket.
-        plain = (
-            f"{ticket.get('service') or ''}\n"
-            f"شماره نوبت: {ticket.get('persian_number') or ticket.get('number') or ''}\n"
-            f"{patient.get('name') or ''}\n"
-            f"{time.strftime('%Y/%m/%d %H:%M')}\n"
-        )
+        plain = _plain_text_fallback(ticket, patient, minimal=minimal)
         if _print_text_windows(plain, printer_name):
             return {
                 "ok": True,
                 "printer": printer_name,
                 "method": "out-printer",
                 "message": "چاپ متنی انجام شد (طرح کامل در دسترس نبود).",
+                "settings": cfg,
             }
 
         return {
@@ -299,13 +804,15 @@ def print_ticket_to_printer(
             "printer": printer_name,
             "method": "failed",
             "message": "ارسال شغل چاپ به چاپگر ناموفق بود؛ از چاپ مرورگر استفاده کنید.",
+            "settings": cfg,
         }
     finally:
-        try:
-            if os.path.isfile(pdf_path):
-                os.unlink(pdf_path)
-        except OSError:
-            pass
+        for path in (png_path, pdf_path):
+            try:
+                if os.path.isfile(path):
+                    os.unlink(path)
+            except OSError:
+                pass
 
 
 def resolve_printer_name(config_value: str = "", *, prefer_label_pick: bool = True) -> str:

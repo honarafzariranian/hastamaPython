@@ -248,3 +248,38 @@ def test_visitor_info_outweighs_the_queue_number():
     assert number <= 22
     # حداقل ارتفاع سطر برای مقادیر درشت‌تر
     assert "min-height: 12px" in LABEL_CSS.split(".lbl__record {", 1)[1].split("}", 1)[0]
+
+
+# ── قالب‌های حداقلی سرویس (جوابدهی / نمونه‌گیری / نوبت خالی) ──
+
+
+def test_label_studio_offers_minimal_service_templates():
+    for value, label in (
+        ("result", "جوابدهی"),
+        ("sampling", "نمونه‌گیری"),
+        ("blank", "نوبت خالی"),
+    ):
+        assert f'value="{value}"' in HTML, f"template option {value} missing"
+        assert label in HTML
+    # ردیف شماره پذیرش در پیش‌نمایش هست تا قالب‌های حداقلی نمایشش دهند
+    assert 'id="maPreviewAdmissionRow"' in HTML
+    assert 'id="maPreviewPatientGroup"' in HTML
+
+
+def test_minimal_templates_css_hides_patient_block():
+    # جوابدهی/نمونه‌گیری: فقط شماره پذیرش + نوبت؛ نوبت خالی: فقط نوبت
+    assert "data-template='result'" in LABEL_CSS
+    assert "data-template='sampling'" in LABEL_CSS
+    assert "data-template='blank'" in LABEL_CSS
+    blank_block = LABEL_CSS.split(".lbl[data-template='blank'] .lbl__records", 1)[1].split("}", 1)[0]
+    assert "display: none" in blank_block
+    # بج سرویس با قالب عوض می‌شود
+    assert "TEMPLATE_SERVICE" in JS
+    for service in ("جوابدهی", "نمونه‌گیری", "نوبت خالی"):
+        assert service in JS
+
+
+def test_template_select_persists_and_drives_preview():
+    assert "preview.dataset.template = tpl" in JS
+    assert "serviceEl.textContent = TEMPLATE_SERVICE[tpl]" in JS
+    assert "maLabelTemplate: tpl" in JS
