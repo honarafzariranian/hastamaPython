@@ -271,6 +271,9 @@ def test_minimal_templates_css_hides_patient_block():
     assert "data-template='result'" in LABEL_CSS
     assert "data-template='sampling'" in LABEL_CSS
     assert "data-template='blank'" in LABEL_CSS
+    # data-field selectors → server/kiosk print HTML (no preview IDs) matches studio
+    assert "[data-field='admission']" in LABEL_CSS
+    assert "[data-field='patient']" in LABEL_CSS
     blank_block = LABEL_CSS.split(".lbl[data-template='blank'] .lbl__records", 1)[1].split("}", 1)[0]
     assert "display: none" in blank_block
     # بج سرویس با قالب عوض می‌شود

@@ -1,3 +1,18 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<title>نوبت ۱۲</title>
+<style>
+
+@font-face {
+  font-family: 'Vazir';
+  src: url('file:///E:/Hastama/app/static/fonts/Vazir.woff2') format('woff2'),
+       url('file:///E:/Hastama/app/static/fonts/Vazir.woff') format('woff'),
+       url('file:///E:/Hastama/app/static/fonts/Vazir.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    HASTAMA — Queue ticket / appointment label
    ─────────────────────────────────────────────────────────────
@@ -374,23 +389,15 @@
 
 /* ═══ Minimal service templates (preview + studio print) ═════
    جوابدهی / نمونه‌گیری: فقط شماره پذیرش + شماره نوبت
-   نوبت خالی: فقط شماره نوبت (سالمندان — بدون فرم)
-   Selectors use data-field so server / kiosk print HTML (no preview IDs)
-   gets the same layout as the studio preview. */
-.lbl[data-template='queue'] [data-field='admission'],
-.lbl[data-template='compact'] [data-field='admission'],
+   نوبت خالی: فقط شماره نوبت (سالمندان — بدون فرم) */
 .lbl[data-template='queue'] #maPreviewAdmissionRow,
 .lbl[data-template='compact'] #maPreviewAdmissionRow { display: none; }
 
-.lbl[data-template='result'] [data-field='admission'],
-.lbl[data-template='sampling'] [data-field='admission'],
 .lbl[data-template='result'] #maPreviewAdmissionRow,
 .lbl[data-template='sampling'] #maPreviewAdmissionRow { display: flex; }
 
-.lbl[data-template='result'] [data-field='patient'] .lbl__record:not([data-field='admission']):not(#maPreviewAdmissionRow),
-.lbl[data-template='sampling'] [data-field='patient'] .lbl__record:not([data-field='admission']):not(#maPreviewAdmissionRow),
-.lbl[data-template='result'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow):not([data-field='admission']),
-.lbl[data-template='sampling'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow):not([data-field='admission']) { display: none; }
+.lbl[data-template='result'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow),
+.lbl[data-template='sampling'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow) { display: none; }
 
 .lbl[data-template='result'] .lbl__record-group--insurance,
 .lbl[data-template='sampling'] .lbl__record-group--insurance { display: none; }
@@ -530,3 +537,60 @@ body.dark-theme .lbl {
         0 1px 2px rgba(0, 0, 0, .4),
         0 16px 40px rgba(0, 0, 0, .45);
 }
+
+@page { size: 75mm 81mm; margin: 0; }
+html, body { margin: 0; padding: 0; background: #fff; }
+.lbl-page {
+  position: relative;
+  width: 75mm;
+  height: 81mm;
+  overflow: hidden;
+}
+.lbl.lbl--print {
+  width: 75mm;
+  height: 81mm;
+  --lbl-mm-w: 75;
+  --lbl-mm-h: 81;
+  --lbl-zoom: 1.500;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: grayscale(1);
+}
+
+</style>
+</head><body class="lbl-print-page"><div class="lbl-page">
+<div class="lbl lbl--print" data-template="result" data-service="جوابدهی" aria-label="لیبل نوبت">
+  <span class="lbl__accent" aria-hidden="true"></span>
+  <div class="lbl__content">
+    <header class="lbl__header">
+      <span class="lbl__datetime" title="تاریخ و ساعت ثبت نوبت">
+        <span class="lbl__datetime-value">1405/07/02 - 11:55</span>
+      </span>
+      <div class="lbl__identity">
+        <img class="lbl__logo" src="file:///E:/Hastama/app/static/images/lab-logo.png" alt="لوگوی آزمایشگاه">
+        <div class="lbl__identity-text">
+          <h3 class="lbl__lab-name">آزمایشگاه تشخیص طبی دکتر امینی</h3>
+          <p class="lbl__slogan">همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</p>
+        </div>
+      </div>
+    </header>
+    <section class="lbl__queue" aria-label="شماره نوبت">
+      <div class="lbl__number-box">
+        <span class="lbl__service">جوابدهی</span>
+        <span class="lbl__queue-number">۱۲</span>
+      </div>
+    </section>
+    <section class="lbl__records" aria-label="شماره پذیرش" style="grid-template-columns:1fr"><div class="lbl__record-group"><div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num">12345</span></div></div></section>
+    <p class="lbl__message">
+      <span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span>
+    </p>
+    <footer class="lbl__footer">
+      <img class="lbl__brand-logo" src="file:///E:/Hastama/app/static/images/newlogo.png" alt="هستما">
+      <div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
+    </footer>
+  </div>
+</div>
+</div>
+</body></html>

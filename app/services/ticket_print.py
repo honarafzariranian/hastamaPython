@@ -321,53 +321,61 @@ def build_ticket_html(
         or "—"
     )
 
+    # Always emit the studio DOM shape (patient / admission data-field hooks)
+    # so shared label-print.css template rules apply on server and kiosk prints.
+    # Minimal services omit PII rows entirely (privacy) but keep the same groups.
+    admission_row = ""
+    if admission:
+        admission_row = (
+            '<div class="lbl__record" data-field="admission">'
+            '<span class="lbl__record-label">شماره پذیرش</span>'
+            f'<span class="lbl__record-value lbl__record-value--num">{admission}</span></div>'
+        )
     if minimal:
-        if admission:
-            records = (
-                '<section class="lbl__records" aria-label="شماره پذیرش" '
-                'style="grid-template-columns:1fr">'
-                '<div class="lbl__record-group">'
-                '<div class="lbl__record">'
-                '<span class="lbl__record-label">شماره پذیرش</span>'
-                f'<span class="lbl__record-value lbl__record-value--num">{admission}</span>'
-                "</div></div></section>"
-            )
-        else:
-            records = ""
+        patient_rows = admission_row
+        insurance_block = ""
+        records_label = "شماره پذیرش"
     else:
-        admission_row = ""
-        if admission:
-            admission_row = (
-                '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span>'
-                f'<span class="lbl__record-value lbl__record-value--num">{admission}</span></div>'
-            )
         name_row = ""
         if cfg["show_name"]:
             name_row = (
-                '<div class="lbl__record"><span class="lbl__record-label">نام و نام خانوادگی</span>'
+                '<div class="lbl__record" data-field="name">'
+                '<span class="lbl__record-label">نام و نام خانوادگی</span>'
                 f'<span class="lbl__record-value">{name}</span></div>'
             )
-        records = (
-            '<section class="lbl__records" aria-label="اطلاعات مراجعه‌کننده و بیمه">'
-            '<div class="lbl__record-group">'
-            + admission_row
+        patient_rows = (
+            admission_row
             + name_row
-            + '<div class="lbl__record"><span class="lbl__record-label">سن</span>'
+            + '<div class="lbl__record" data-field="age"><span class="lbl__record-label">سن</span>'
             f'<span class="lbl__record-value">{age}</span></div>'
-            '<div class="lbl__record"><span class="lbl__record-label">شماره ملی</span>'
+            '<div class="lbl__record" data-field="national"><span class="lbl__record-label">شماره ملی</span>'
             f'<span class="lbl__record-value lbl__record-value--num">{national}</span></div>'
-            '<div class="lbl__record"><span class="lbl__record-label">شماره همراه</span>'
+            '<div class="lbl__record" data-field="phone"><span class="lbl__record-label">شماره همراه</span>'
             f'<span class="lbl__record-value lbl__record-value--num">{phone}</span></div>'
-            "</div>"
-            '<div class="lbl__record-group lbl__record-group--insurance">'
+        )
+        insurance_block = (
+            '<div class="lbl__record-group lbl__record-group--insurance" data-field="insurance">'
             '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span>'
             f'<span class="lbl__record-value lbl__record-value--num lbl__record-value--track">{insurance_track}</span></div>'
             '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span>'
             f'<span class="lbl__record-value">{insurance_base}</span></div>'
             '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span>'
             f'<span class="lbl__record-value">{insurance_extra}</span></div>'
-            "</div></section>"
+            "</div>"
         )
+        records_label = "اطلاعات مراجعه‌کننده و بیمه"
+
+    if patient_rows or insurance_block:
+        records = (
+            f'<section class="lbl__records" aria-label="{records_label}">'
+            '<div class="lbl__record-group lbl__record-group--patient" data-field="patient">'
+            + patient_rows
+            + "</div>"
+            + insurance_block
+            + "</section>"
+        )
+    else:
+        records = ""
 
     label_css = _read_static_text("css/label-print.css")
     font_css = f"""
@@ -397,6 +405,29 @@ def build_ticket_html(
         "transform:translateY(calc(var(--lbl-mm-w,75) * 1mm)) rotate(-90deg);transform-origin:top left}"
         if rotated
         else ""
+    )
+    # Same content-fit calibration as the studio print window (FIT_GUARD).
+    # Width-only zoom leaves tall templates small / clipped on the paper.
+    fit_script = (
+        "<script>"
+        "window.__lblFit=function(){try{"
+        'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
+        'r.style.setProperty("--lbl-zoom","1");'
+        "var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;"
+        'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
+        "var cw=c.scrollWidth,ch=c.scrollHeight;"
+        "c.style.height=ph;c.style.flex=pf;c.style.transform=pt;"
+        "var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;"
+        "z=Math.max(0.8,Math.min(1.8,z));"
+        'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
+        'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
+        "if(n&&b){n.style.fontSize=\"\";var base=parseFloat(window.getComputedStyle(n).fontSize)||20;"
+        "var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){"
+        "n.style.fontSize=Math.max(10,base*av/nat)+\"px\";}}"
+        "}catch(e){}};"
+        "window.__lblFit();"
+        "if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.__lblFit();});}"
+        "</script>"
     )
 
     return f"""<!DOCTYPE html>
@@ -460,6 +491,7 @@ html, body {{ margin: 0; padding: 0; background: #fff; }}
   </div>
 </div>
 </div>
+{fit_script}
 </body></html>"""
 
 
@@ -521,14 +553,24 @@ def _render_png_with_edge(
     *,
     dpi: int = 203,
 ) -> bool:
-    """Screenshot the label HTML at thermal-ish resolution for GDI printing."""
+    """Screenshot the label HTML at thermal-ish resolution for GDI printing.
+
+    CSS lays out in 96 dpi device pixels (``1mm ≈ 3.7795px``). The viewport
+    must match that layout, then ``--force-device-scale-factor`` upsamples to
+    the thermal DPI. Sizing the window only in physical px (old behaviour)
+    left the mm-sized label occupying ~half the bitmap, so GDI stretched a
+    mostly-white PNG onto the paper and the print came out the wrong size.
+    """
     edge = find_edge()
     if not edge:
         return False
     html_path = _write_temp_html(html_text)
     try:
-        width_px = max(320, int(round(width_mm / 25.4 * dpi)))
-        height_px = max(320, int(round(height_mm / 25.4 * dpi)))
+        # Viewport is CSS px (96 dpi). No artificial floor: a min larger than
+        # the mm layout would change the aspect ratio once scaled up.
+        css_w = max(80, int(round(width_mm / 25.4 * 96)))
+        css_h = max(80, int(round(height_mm / 25.4 * 96)))
+        scale = max(1.0, float(dpi) / 96.0)
         profile = Path(tempfile.gettempdir()) / "hastama-edge-label"
         cmd = [
             edge,
@@ -537,7 +579,10 @@ def _render_png_with_edge(
             "--no-first-run",
             "--no-default-browser-check",
             f"--user-data-dir={profile}",
-            f"--window-size={width_px},{height_px}",
+            f"--force-device-scale-factor={scale:.6f}",
+            f"--window-size={css_w},{css_h}",
+            # Let fonts.ready / __lblFit settle before the screenshot.
+            "--virtual-time-budget=3000",
             f"--screenshot={png_path}",
             Path(html_path).as_uri(),
         ]
@@ -602,33 +647,64 @@ def _print_png_windows(
     width_mm: int = DEFAULT_LABEL_W_MM,
     height_mm: int = DEFAULT_LABEL_H_MM,
 ) -> bool:
-    """Print a label PNG through System.Drawing.Printing (no shell verb)."""
-    # Script is written to a temp file: embedding long PowerShell -Command
-    # strings breaks on paths/quotes more easily than a .ps1 file.
+    """Print a label PNG via PrintTicket + XpsDocumentWriter (no shell verb).
+
+    Classic ``PrintDocument`` + ``PaperSize`` is unreliable on network/thermal
+    queues: the driver keeps its default form (here ``new`` 303×315) and the
+    job lands at A4/Letter — content ends up off the 75×81 label.
+
+    Browser studio print works because ``@page { size: … }`` becomes a
+    PrintTicket ``PageMediaSize``. This script does the same: WPF
+    ``PageMediaSize(Unknown, w*100, h*100)`` (1/100 mm) + draw the PNG into a
+    rect of the exact physical size, then ``XpsDocumentWriter.Write``.
+    """
+    # Temp .ps1: long embedded PowerShell -Command breaks on paths/quotes.
     script = f"""
 $ErrorActionPreference = 'Stop'
 try {{
+  Add-Type -AssemblyName ReachFramework
+  Add-Type -AssemblyName System.Printing
+  Add-Type -AssemblyName WindowsBase
+  Add-Type -AssemblyName PresentationCore
+  Add-Type -AssemblyName PresentationFramework
   Add-Type -AssemblyName System.Drawing
-  $doc = New-Object System.Drawing.Printing.PrintDocument
-  $doc.PrinterSettings.PrinterName = { _ps_quote(printer_name) }
-  if (-not $doc.PrinterSettings.IsValid) {{ exit 2 }}
-  $doc.PrinterSettings.Copies = 1
-  $doc.DefaultPageSettings.Color = $false
-  $doc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0, 0, 0, 0)
-  $w = [int]([math]::Round({float(width_mm)} / 25.4 * 100))
-  $h = [int]([math]::Round({float(height_mm)} / 25.4 * 100))
-  try {{
-    $doc.DefaultPageSettings.PaperSize = New-Object System.Drawing.Printing.PaperSize('Label', $w, $h)
-  }} catch {{ }}
   $png = { _ps_quote(png_path) }
-  $doc.add_PrintPage({{
-    param($sender, $e)
-    $img = [System.Drawing.Image]::FromFile($png)
-    try {{
-      $e.Graphics.DrawImage($img, $e.PageBounds)
-    }} finally {{ $img.Dispose() }}
-  }})
-  $doc.Print()
+  if (-not (Test-Path -LiteralPath $png)) {{ exit 2 }}
+  $w = [double]({float(width_mm)} * 100)
+  $h = [double]({float(height_mm)} * 100)
+  $local = New-Object System.Printing.LocalPrintServer
+  $queue = $local.GetPrintQueue({ _ps_quote(printer_name) })
+  $ticket = $queue.DefaultPrintTicket
+  $pms = New-Object System.Printing.PageMediaSize @(
+    [System.Printing.PageMediaSizeName]::Unknown, $w, $h
+  )
+  $ticket.PageMediaSize = $pms
+  try {{ $ticket.PageOrientation = [System.Printing.PageOrientation]::Portrait }} catch {{ }}
+  try {{ $ticket.ColorSetting = [System.Printing.PrintColorMode]::Monochrome }} catch {{ }}
+  try {{
+    $m = New-Object System.Printing.PageMargin
+    $m.Left = 0
+    $m.Top = 0
+    $m.Right = 0
+    $m.Bottom = 0
+    $ticket.PageMargin = $m
+  }} catch {{ }}
+  $bi = New-Object System.Windows.Media.Imaging.BitmapImage
+  $bi.BeginInit()
+  $bi.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+  $bi.UriSource = New-Object Uri($png, [UriKind]::Absolute)
+  $bi.EndInit()
+  $bi.Freeze()
+  $pxW = {float(width_mm)} / 25.4 * 96.0
+  $pxH = {float(height_mm)} / 25.4 * 96.0
+  $rect = New-Object System.Windows.Rect(0, 0, $pxW, $pxH)
+  $drawing = New-Object System.Windows.Media.ImageDrawing($bi, $rect)
+  $dv = New-Object System.Windows.Media.DrawingVisual
+  $dc = $dv.RenderOpen()
+  $dc.DrawDrawing($drawing)
+  $dc.Close()
+  $writer = [System.Printing.PrintQueue]::CreateXpsDocumentWriter($queue)
+  $writer.Write($dv, $ticket)
   exit 0
 }} catch {{
   [Console]::Error.WriteLine($_.Exception.Message)
@@ -649,7 +725,12 @@ try {{
         )
         if proc.returncode == 0:
             return True
-        logger.warning("PNG PrintDocument failed rc=%s: %s", proc.returncode, (proc.stderr or "")[:400])
+        logger.warning(
+            "PNG PrintTicket failed rc=%s: %s | %s",
+            proc.returncode,
+            (proc.stderr or "")[:400],
+            (proc.stdout or "")[:200],
+        )
     except Exception as exc:
         logger.warning("PNG print raised: %s: %s", type(exc).__name__, exc)
     finally:
@@ -658,6 +739,7 @@ try {{
         except OSError:
             pass
     return False
+
 
 
 def _print_text_windows(text: str, printer_name: str) -> bool:

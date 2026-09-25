@@ -3184,6 +3184,48 @@
             var rotatedCls = rotated ? ' is-rotated' : '';
             var hintAttr = s.show_hint ? '' : ' hidden';
             var timeAttr = s.show_time ? '' : ' hidden';
+            // Same studio structure + data-field hooks so label-print.css
+            // template rules (result/sampling/blank/…) apply on this fallback.
+            var patientRows = '';
+            if (minimal) {
+                patientRows = admission
+                    ? '<div class="lbl__record" data-field="admission"><span class="lbl__record-label">شماره پذیرش</span>'
+                      + '<span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
+                    : '';
+            } else {
+                patientRows = (admission
+                    ? '<div class="lbl__record" data-field="admission"><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
+                    : '')
+                    + (s.show_name
+                        ? '<div class="lbl__record" data-field="name"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value">' + escText(patientData.name || '—') + '</span></div>'
+                        : '')
+                    + '<div class="lbl__record" data-field="age"><span class="lbl__record-label">سن</span><span class="lbl__record-value">' + escText(faDigits(patientData.age) || '—') + '</span></div>'
+                    + '<div class="lbl__record" data-field="national"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.national_id) || '—') + '</span></div>'
+                    + '<div class="lbl__record" data-field="phone"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.phone) || '—') + '</span></div>';
+            }
+            var insuranceBlock = minimal
+                ? ''
+                : '<div class="lbl__record-group lbl__record-group--insurance" data-field="insurance">'
+                  + '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track">—</span></div>'
+                  + '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value">' + escText(patientData.insurance_base || '—') + '</span></div>'
+                  + '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value">' + escText(patientData.insurance_extra || '—') + '</span></div>'
+                  + '</div>';
+            var recordsHtml = (patientRows || insuranceBlock)
+                ? '<section class="lbl__records"><div class="lbl__record-group lbl__record-group--patient" data-field="patient">'
+                  + patientRows + '</div>' + insuranceBlock + '</section>'
+                : '';
+            var fitScript = '<scr' + 'ipt>window.__lblFit=function(){try{'
+                + 'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
+                + 'r.style.setProperty("--lbl-zoom","1");'
+                + 'var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;'
+                + 'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
+                + 'var ch=c.scrollHeight;c.style.height=ph;c.style.flex=pf;c.style.transform=pt;'
+                + 'var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;'
+                + 'z=Math.max(0.8,Math.min(1.8,z));'
+                + 'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
+                + '}catch(e){}};window.__lblFit();'
+                + 'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.__lblFit();});}'
+                + '</scr' + 'ipt>';
             wwin.document.write(
                 '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">'
                 + '<title>نوبت ' + number + '</title>'
@@ -3210,10 +3252,14 @@
                 + '<footer class="lbl__footer"><img class="lbl__brand-logo" src="' + origin + '/static/images/newlogo.png" alt="">'
                 + '<div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div></footer>'
                 + '</div></div></div>'
+                + fitScript
                 + '</body></html>'
             );
             wwin.document.close();
-            setTimeout(function () { try { wwin.focus(); wwin.print(); } catch (_) {} }, 500);
+            setTimeout(function () {
+                try { if (wwin.__lblFit) wwin.__lblFit(); } catch (_) {}
+                setTimeout(function () { try { wwin.focus(); wwin.print(); } catch (_) {} }, 350);
+            }, 400);
         }
 
         /* ── بستن مودال ── */

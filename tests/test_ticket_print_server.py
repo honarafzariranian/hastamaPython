@@ -50,12 +50,29 @@ def test_config_upsert_and_allowlist():
 
 def test_build_ticket_html_escapes_and_includes_fields():
     html_text = ticket_print.build_ticket_html(
+        {"number": 3, "service": "<script>alert(1)</script>"},
+        {"name": "<b>X</b>", "national_id": "123", "phone": "09"},
+    )
+    assert "&lt;script&gt;" in html_text
+    assert "<b>X</b>" not in html_text
+    assert "&lt;b&gt;X&lt;/b&gt;" in html_text
+    # Only the trusted content-fit calibration script is allowed in the shell.
+    assert html_text.count("<script>") == 1
+    assert "window.__lblFit" in html_text
+    assert 'data-service="&lt;script&gt;alert(1)&lt;/script&gt;"' in html_text
+    assert "نام و نام خانوادگی" in html_text
+    assert "شماره ملی" in html_text
+    assert "شماره همراه" in html_text
+    assert "بیمه پایه" in html_text
+
+    html_text = ticket_print.build_ticket_html(
         {"number": 12, "persian_number": "۱۲", "service": "پذیرش"},
         {"name": "علی <script>", "admission_number": "A1"},
     )
     assert "۱۲" in html_text
     assert "پذیرش" in html_text
-    assert "<script>" not in html_text
+    assert "علی &lt;script&gt;" in html_text
+    assert html_text.count("<script>") == 1
     assert "A1" in html_text
     assert 'dir="rtl"' in html_text
     # Label studio physical size (master-admin DEFAULT_LABEL_W/H).
@@ -87,18 +104,45 @@ def test_build_ticket_html_minimal_services_show_only_number_and_admission():
         assert "0912" not in html_text
         assert "شماره ملی" not in html_text
         assert "بیمه پایه" not in html_text
+        # Studio DOM shape so shared template CSS applies on the print HTML.
+        assert 'data-field="patient"' in html_text
+        assert 'data-field="admission"' in html_text
 
 
 def test_build_ticket_html_full_services_include_patient_block():
     for service in ("پذیرش", "اصلاح پذیرش", "تست آزاد"):
         html_text = ticket_print.build_ticket_html(
             {"number": 3, "service": service},
-            {"name": "تقی", "national_id": "0890519684", "insurance_base": "تأمین اجتماعی"},
+            {
+                "name": "تقی",
+                "national_id": "0890519684",
+                "insurance_base": "تأمین اجتماعی",
+                "admission_number": "A10",
+            },
         )
         assert "نام و نام خانوادگی" in html_text
         assert "تقی" in html_text
         assert "شماره ملی" in html_text
         assert "بیمه پایه" in html_text
+        assert 'data-field="patient"' in html_text
+        assert 'data-field="admission"' in html_text
+        assert 'data-field="insurance"' in html_text
+
+
+def test_build_ticket_html_result_template_matches_studio_hooks():
+    html_text = ticket_print.build_ticket_html(
+        {"number": 7, "service": "جوابدهی"},
+        {"name": "SECRET", "admission_number": "99", "phone": "0912"},
+        settings={"template": "result", "width_mm": 75, "height_mm": 81},
+    )
+    assert 'data-template="result"' in html_text
+    assert 'data-field="patient"' in html_text
+    assert 'data-field="admission"' in html_text
+    assert "SECRET" not in html_text
+    assert "0912" not in html_text
+    # Studio content-fit script is embedded so Edge / browser scale like openPrintWindow.
+    assert "window.__lblFit" in html_text
+    assert "document.fonts.ready" in html_text
 
 
 def test_is_minimal_label_service_normalizes_zwnj():
@@ -304,6 +348,14 @@ def test_print_png_windows_quotes_paths():
     src = inspect.getsource(ticket_print._print_png_windows)
     assert "_ps_quote(printer_name)" in src
     assert "_ps_quote(png_path)" in src
+    # Must not stretch onto the driver's default form (A4 / long roll).
+    assert "$e.PageBounds" not in src
+    assert "PrinterSettings.PaperSizes" not in src
+    # PrintTicket path (same as studio @page): custom media in 1/100 mm,
+    # not classic PrintDocument.PaperSize which network thermal queues ignore.
+    assert "PageMediaSize" in src
+    assert "XpsDocumentWriter" in src
+    assert "PageMediaSizeName]::Unknown" in src
 
 
 def test_build_ticket_html_inlines_label_css_and_logos():
@@ -394,6 +446,7 @@ def test_print_ticket_passes_settings_sizes_to_png_path(monkeypatch):
     def fake_render(html_text, png_path, width_mm=75, height_mm=81, **kwargs):
         captured["w"] = width_mm
         captured["h"] = height_mm
+        captured["html"] = html_text
         return True
 
     monkeypatch.setattr(ticket_print, "_render_png_with_edge", fake_render)
@@ -410,6 +463,39 @@ def test_print_ticket_passes_settings_sizes_to_png_path(monkeypatch):
     assert captured["h"] == 70
     assert result["settings"]["width_mm"] == 70
     assert result["settings"]["template"] == "queue"
+    assert 'data-template="queue"' in captured["html"]
+    assert "window.__lblFit" in captured["html"]
+
+
+def test_render_png_uses_css_layout_and_device_scale(monkeypatch):
+    """Viewport must be 96dpi CSS mm; thermal dpi comes from device-scale-factor.
+
+    Old code sized --window-size only in 203dpi physical px, so the mm-sized
+    label filled ~half the bitmap and GDI printed it at the wrong size.
+    """
+    captured = {}
+
+    def fake_edge(args, timeout):
+        captured["args"] = args
+        return True
+
+    monkeypatch.setattr(ticket_print, "find_edge", lambda: "msedge")
+    monkeypatch.setattr(ticket_print, "_edge_process", fake_edge)
+    monkeypatch.setattr(ticket_print, "_write_temp_html", lambda t: r"C:\Temp\x.html")
+    monkeypatch.setattr(ticket_print.os.path, "isfile", lambda p: True)
+    monkeypatch.setattr(ticket_print.os.path, "getsize", lambda p: 10)
+
+    ok = ticket_print._render_png_with_edge("<html></html>", r"C:\Temp\x.png", 75, 81)
+    assert ok is True
+    args = captured["args"]
+    # 75mm × 96dpi ≈ 283 CSS px (no artificial floor that breaks aspect ratio)
+    window = next(a for a in args if a.startswith("--window-size="))
+    scale = next(a for a in args if a.startswith("--force-device-scale-factor="))
+    w_part, h_part = window.split("=", 1)[1].split(",")
+    assert int(w_part) == max(80, round(75 / 25.4 * 96))
+    assert int(h_part) == max(80, round(81 / 25.4 * 96))
+    assert float(scale.split("=", 1)[1]) == pytest.approx(203 / 96, rel=1e-4)
+    assert any(a.startswith("--virtual-time-budget=") for a in args)
 
 
 def test_print_without_printer_still_returns_normalized_settings():
