@@ -22,6 +22,15 @@
     --lbl-brand-tint: #ecfeff;  /* brand soft background   */
     --lbl-panel:      #f8fafc;  /* neutral soft background */
 
+    /* ── حاشیهٔ ایمن چاپ (safe area) ─────────────────────────
+       چاپگرهای حرارتی/لیبل‌زن معمولاً ۱ تا ۲ میلی‌متر اول کاغذ را چاپ
+       نمی‌کنند و اگر محتوا چسبیده به لبهٔ بالا باشد، سربرگ لیبل بریده
+       می‌شود. همین‌قدر حاشیهٔ عمودی بالا و پایین رزرو می‌شود تا سربرگ و
+       پاصفحهٔ لیبل همیشه چاپ شوند. مقدار با واحد میلی‌متر است، پس با
+       مقیاس طرح (--lbl-zoom) هم بزرگ/کوچک می‌شود و در پیش‌نمایش و سند چاپ
+       یکسان دیده می‌شود (WYSIWYG). */
+    --lbl-safe-y:     2mm;
+
     position: relative;
     box-sizing: border-box;
     overflow: hidden;
@@ -57,7 +66,10 @@
     flex-direction: column;
     justify-content: space-between;
     gap: 5px;
-    padding: 7px 8px 0 8px;
+    /* پدینگ بالا/پایین = فاصلهٔ طراحی + حاشیهٔ ایمن چاپ؛ چون جاوااسکریپت
+       ارتفاع طبیعی محتوا را با همین پدینگ می‌سنجد، --lbl-zoom خودکار کمی
+       کوچک‌تر می‌شود و طرح با این حاشیه در لیبل جا می‌شود. */
+    padding: calc(7px + var(--lbl-safe-y, 2mm)) 8px var(--lbl-safe-y, 2mm) 8px;
     transform-origin: center center;
     will-change: transform;
     /* کل طرح (متن‌ها، جعبه‌ها، حاشیه‌ها و آیکون‌ها) با اندازهٔ فیزیکی لیبل
@@ -277,8 +289,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* نام مراجعه‌کننده: درشت‌ترین مقدار متنی روی لیبل */
-#maPreviewName {
+/* نام مراجعه‌کننده: درشت‌ترین مقدار متنی روی لیبل
+   (data-field ← همان قلاب مشترک پیش‌نمایش استودیو و سند چاپ/کیوسک) */
+[data-field='name-value'] {
     font-size: 8.6px;
     font-weight: 800;
 }
@@ -378,19 +391,13 @@
    Selectors use data-field so server / kiosk print HTML (no preview IDs)
    gets the same layout as the studio preview. */
 .lbl[data-template='queue'] [data-field='admission'],
-.lbl[data-template='compact'] [data-field='admission'],
-.lbl[data-template='queue'] #maPreviewAdmissionRow,
-.lbl[data-template='compact'] #maPreviewAdmissionRow { display: none; }
+.lbl[data-template='compact'] [data-field='admission'] { display: none; }
 
 .lbl[data-template='result'] [data-field='admission'],
-.lbl[data-template='sampling'] [data-field='admission'],
-.lbl[data-template='result'] #maPreviewAdmissionRow,
-.lbl[data-template='sampling'] #maPreviewAdmissionRow { display: flex; }
+.lbl[data-template='sampling'] [data-field='admission'] { display: flex; }
 
-.lbl[data-template='result'] [data-field='patient'] .lbl__record:not([data-field='admission']):not(#maPreviewAdmissionRow),
-.lbl[data-template='sampling'] [data-field='patient'] .lbl__record:not([data-field='admission']):not(#maPreviewAdmissionRow),
-.lbl[data-template='result'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow):not([data-field='admission']),
-.lbl[data-template='sampling'] #maPreviewPatientGroup .lbl__record:not(#maPreviewAdmissionRow):not([data-field='admission']) { display: none; }
+.lbl[data-template='result'] [data-field='patient'] .lbl__record:not([data-field='admission']),
+.lbl[data-template='sampling'] [data-field='patient'] .lbl__record:not([data-field='admission']) { display: none; }
 
 .lbl[data-template='result'] .lbl__record-group--insurance,
 .lbl[data-template='sampling'] .lbl__record-group--insurance { display: none; }

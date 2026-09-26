@@ -228,13 +228,20 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
 .ma-label-studio {
     overflow: hidden;
     flex-shrink: 0;
+    /* کارت استودیو ۸۰٪ عرض صفحه است و وسط آن می‌نشیند تا محتوای ریزِ داخلش
+       در عرض کامل صفحه پخش نشود و فضای خالی کنار جعبه‌ها بماند. روی نمایشگرهای
+       خیلی پهن سقف می‌خورد تا سطرها و سوییچ‌ها کشیده و ناخوانا نشوند. */
+    width: min(80%, 1200px);
+    margin-inline: auto;
     border: 1px solid rgba(99, 102, 241, .16);
     border-radius: 24px;
     background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(239,246,255,.78));
     box-shadow: 0 18px 50px rgba(30, 64, 175, .09);
 }
-/* صفحهٔ طراحی لیبل: باکس استودیو دقیقاً هم‌ارتفاع/هم‌راستای سایدبارها
-   (fixed: top:8rem → bottom:12px) و محتوای آن وسط آن قرار می‌گیرد. */
+/* صفحهٔ طراحی لیبل: ناحیهٔ اصلی بین سایدبارها ثابت می‌شود (fixed:
+   top:8rem → bottom:12px) و اگر محتوا از ارتفاع صفحه کمتر باشد، خودِ کارت
+   استودیو به اندازهٔ محتوایش می‌ماند (height:auto) تا داخل کارت فضای خالی
+   نماند؛ در آن حالت بقیهٔ صفحه پس‌زمینه است، نه حفرهٔ داخل کارت. */
 @media (min-width: 1025px) {
     body[data-section="label-printer"] .ma-dashboard-main {
         position: fixed;
@@ -257,26 +264,23 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
     body[data-section="label-printer"] .ma-label-studio {
         display: flex;
         flex-direction: column;
-        flex: 1 1 auto;
-        height: 100%;
+        flex: 0 0 auto;
         min-height: 0;
     }
+    /* دو ستون هم‌ارتفاع و از بالا هم‌تراز: پنل پیش‌نمایش با ستون کنترل‌ها کشیده
+       می‌شود و جعبهٔ پیش‌نمایش (stage) بقیهٔ فضا را پر می‌کند تا زیر کارت
+       پیش‌نمایش یا کنار جعبه‌ها فضای خالی نماند. */
     body[data-section="label-printer"] .ma-label-studio__grid {
-        flex: 1 1 auto;
-        min-height: 0;
-        align-items: center;
-        align-content: center;
-    }
-    body[data-section="label-printer"] .ma-label-preview-panel,
-    body[data-section="label-printer"] .ma-label-controls {
-        max-height: 100%;
-        overflow: auto;
+        flex: 0 0 auto;
+        align-items: stretch;
+        align-content: start;
     }
 }
 @media (max-width: 1024px) {
     body[data-section="label-printer"] .ma-label-studio {
         display: flex;
         flex-direction: column;
+        width: 100%;
     }
     body[data-section="label-printer"] .ma-label-studio__grid {
         align-items: start;
@@ -293,18 +297,22 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
 .ma-printer-status[data-state="connected"] .ma-printer-status__dot { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.14); }
 .ma-printer-status[data-state="disconnected"] { color:#b91c1c; border-color:rgba(239,68,68,.2); }
 .ma-printer-status[data-state="disconnected"] .ma-printer-status__dot { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.12); }
-/* Compact 2-column studio: controls split into two short columns so the
-   whole page fits one desktop viewport without scrolling. */
-.ma-label-studio__grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr); gap:16px; padding:14px 16px; align-items:start; }
-.ma-label-preview-panel { min-width:0; padding:12px; border:1px solid rgba(148,163,184,.18); border-radius:18px; background:rgba(248,250,252,.72); }
+/* استودیو دو ستونه است: ستون پیش‌نمایش به اندازهٔ خود لیبل (نه تا نیمهٔ صفحه)
+   و بقیهٔ فضا به پنل کنترل‌ها می‌رسد؛ این‌طور جعبهٔ خاکستری پیش‌نمایش دور لیبل
+   خالی نمی‌ماند و کنترل‌ها هم برای دو ستون داخلی‌شان جا دارند. */
+.ma-label-studio__grid { display:grid; grid-template-columns:minmax(300px,360px) minmax(320px,1fr); gap:16px; padding:14px 16px; align-items:start; }
+.ma-label-preview-panel { display:flex; flex-direction:column; min-width:0; padding:12px; border:1px solid rgba(148,163,184,.18); border-radius:18px; background:rgba(248,250,252,.72); }
 .ma-label-preview-panel__top,.ma-label-preview-panel__foot { display:flex; justify-content:space-between; align-items:center; color:#475569; font-size:.68rem; font-weight:700; }
 .ma-label-size-readout { color:#6366f1; }
-.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; min-height:260px; max-height:340px; margin:10px 0; padding:18px 16px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
+.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; flex:1 1 auto; min-height:260px; margin:10px 0; padding:16px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
 .ma-label-preview-stage .lbl { max-width:100%; }
 body.dark-theme .ma-label-preview-stage { background:radial-gradient(circle at 50% 18%,#1e293b 0%,#0b1220 75%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.12); }
 /* Queue-label design system lives in label-print.css (shared by preview + print window). */
 .ma-preview-dot { display:inline-block; width:7px; height:7px; margin-left:4px; border-radius:50%; vertical-align:middle; }.ma-preview-dot--accent { background:#6366f1; }
-.ma-label-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; min-width:0; }
+.ma-label-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; min-width:0; align-items:stretch; }
+/* کارت «اطلاعات روی لیبل» کوتاه‌تر از کارت تنظیمات است؛ به‌جای کِشیده‌شدن با
+   حفرهٔ خالی، سوییچ‌ها در همان ارتفاع پخش می‌شوند. */
+.ma-label-control-section.ma-label-fields { display:flex; flex-direction:column; justify-content:space-between; }
 .ma-label-controls > .ma-printer-panel,
 .ma-label-controls > .ma-label-actions,
 .ma-label-controls > .ma-printer-note { grid-column: 1 / -1; }
@@ -325,7 +333,7 @@ body.dark-theme .ma-label-preview-stage { background:radial-gradient(circle at 5
 .ma-label-actions .ma-btn { flex:1; min-width:110px; padding:8px 12px; font-size:.72rem; }
 .ma-printer-note { margin:0; color:#94a3b8; font-size:.58rem; line-height:1.55; }
 /* ── Printer discovery panel (label studio) ──────────────────── */
-.ma-printer-list { display:flex; flex-direction:column; gap:5px; max-height:120px; overflow:auto; }
+.ma-printer-list { display:flex; flex-direction:column; gap:5px; max-height:216px; overflow:auto; }
 .ma-printer-empty { padding:8px; border:1px dashed #cbd5e1; border-radius:10px; color:#94a3b8; font-size:.64rem; text-align:center; }
 .ma-printer-row { display:flex; align-items:center; gap:8px; width:100%; padding:7px 9px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; color:#1e293b; font:inherit; font-size:.66rem; text-align:right; cursor:pointer; transition:border-color .18s, box-shadow .18s, transform .18s, background .18s; }
 .ma-printer-row:hover { border-color:#a5b4fc; transform:translateY(-1px); }

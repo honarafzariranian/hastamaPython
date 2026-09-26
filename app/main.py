@@ -116,6 +116,10 @@ CSRF_EXEMPT_PREFIXES = (
     # kiosk; guarded in-handler by same-site Origin/Referer + rate limit
     # (_guard_kiosk_write), same as /api/queue/take.
     "/api/queue/print",
+    # The one label print document (studio browser fallback + kiosk fallback):
+    # guarded in-handler by the same same-site Origin/Referer + rate limit
+    # (_guard_kiosk_write) as /api/queue/print.
+    "/api/label/print-document",
     # Kiosk edit-flow ticket PII read/write: browser kiosk has no session CSRF
     # token path wired; guarded in-handler by same-site Origin/Referer + rate
     # limit (_guard_queue_pii) instead.

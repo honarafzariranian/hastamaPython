@@ -1,0 +1,101 @@
+{#- ═══════════════════════════════════════════════════════════════════════════
+   HASTAMA — قالب واحد لیبل نوبت (single source of truth)
+   ───────────────────────────────────────────────────────────────────────────
+   همین یک فایل، مارک‌آپ لیبل را برای همهٔ مصرف‌کننده‌ها می‌سازد:
+     1. پیش‌نمایش استودیو لیبل  (master-admin → label-printer)
+     2. سند چاپ (چاپ بی‌صدای سرور و fallback مرورگر)  → label_print_document.html
+     3. چاپ کیوسک (همان سند چاپ)
+   مارک‌آپ لیبل جای دیگری تکرار نمی‌شود.
+
+   متغیرهای ورودی (همه اختیاری‌اند تا {% raw %}{% include %}{% endraw %} در صفحات هم کار کند):
+     label    : dict — service, number, admission, name, age, national_id,
+                       phone, insurance_track, insurance_base, insurance_extra,
+                       datetime, clinic_name, clinic_slogan
+     settings : dict — template, show_name, show_time, show_hint
+     minimal  : bool — فقط شماره نوبت + شماره پذیرش (جواب‌دهی/نمونه‌گیری/نوبت خالی)
+     assets   : dict — {logo, brand}
+     root_class / root_style / root_id : برای سند چاپ (اندازهٔ فیزیکی) و پیش‌نمایش
+   ═══════════════════════════════════════════════════════════════════════════ -#}
+{%- set lbl = label|default({}, true) -%}
+{%- set st = settings|default({}, true) -%}
+{%- set tpl = (st.get('template') or lbl.get('template') or 'queue')|string -%}
+{%- set show_name = st.get('show_name', true) -%}
+{%- set show_time = st.get('show_time', true) -%}
+{%- set show_hint = st.get('show_hint', true) -%}
+{%- set minimal = minimal|default(false) -%}
+{%- set assets = assets|default({'logo': '/static/images/lab-logo.png', 'brand': '/static/images/newlogo.png'}, true) -%}
+{%- set number = lbl.get('number') or '' -%}
+{%- set admission = lbl.get('admission') or '' -%}
+{%- set has_admission = admission|string|trim != '' -%}
+{%- set has_patient_rows = has_admission or not minimal -%}
+<div class="lbl{% if root_class %} {{ root_class }}{% endif %}"{% if root_id %} id="{{ root_id }}"{% endif %}
+     data-template="{{ tpl }}"{% if root_style %} style="{{ root_style }}"{% endif %}
+     aria-label="لیبل نوبت{{ ' — ' ~ number if number }}">
+    <span class="lbl__accent" aria-hidden="true"></span>
+    <div class="lbl__content">
+        <!-- سربرگ: هویت آزمایشگاه + تاریخ و ساعت -->
+        <header class="lbl__header">
+            <span class="lbl__datetime" data-field="time" title="تاریخ و ساعت ثبت نوبت"{% if not show_time %} hidden{% endif %}>
+                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span class="lbl__datetime-value" data-field="datetime">{{ lbl.get('datetime') or '' }}</span>
+            </span>
+            <div class="lbl__identity">
+                <img class="lbl__logo" src="{{ assets.logo }}" alt="لوگوی آزمایشگاه">
+                <div class="lbl__identity-text">
+                    <h3 class="lbl__lab-name">{{ lbl.get('clinic_name') or 'آزمایشگاه تشخیص طبی دکتر امینی' }}</h3>
+                    <p class="lbl__slogan">{{ lbl.get('clinic_slogan') or 'همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز' }}</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- شماره نوبت: واضح و خوانا، بدون غلبه بر اطلاعات مراجعه‌کننده -->
+        <section class="lbl__queue" aria-label="شماره نوبت">
+            <div class="lbl__number-box">
+                <span class="lbl__service" data-field="service">{{ lbl.get('service') or 'پذیرش' }}</span>
+                <span class="lbl__queue-number" data-field="number">{{ number }}</span>
+            </div>
+        </section>
+
+        <!-- اطلاعات مراجعه‌کننده + بیمه -->
+        {%- if has_patient_rows or not minimal %}
+        <section class="lbl__records" aria-label="{{ 'شماره پذیرش' if minimal else 'اطلاعات مراجعه‌کننده و بیمه' }}">
+            {%- if has_patient_rows %}
+            <div class="lbl__record-group lbl__record-group--patient" data-field="patient">
+                {%- if has_admission %}
+                {# در سرویس‌های حداقلی (جواب‌دهی/نمونه‌گیری/نوبت خالی) این تنها
+                   ردیف اطلاعاتی لیبل است و باید در هر قالبی دیده شود. #}
+                <div class="lbl__record" data-field="admission"{% if minimal %} style="display:flex"{% endif %}><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num" data-field="admission-value">{{ admission }}</span></div>
+                {%- endif %}
+                {%- if not minimal %}
+                {%- if show_name %}
+                <div class="lbl__record" data-field="name"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value" data-field="name-value">{{ lbl.get('name') or '—' }}</span></div>
+                {%- endif %}
+                <div class="lbl__record" data-field="age"><span class="lbl__record-label">سن</span><span class="lbl__record-value" data-field="age-value">{{ lbl.get('age') or '—' }}</span></div>
+                <div class="lbl__record" data-field="national"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num" data-field="national-value">{{ lbl.get('national_id') or '—' }}</span></div>
+                <div class="lbl__record" data-field="phone"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num" data-field="phone-value">{{ lbl.get('phone') or '—' }}</span></div>
+                {%- endif %}
+            </div>
+            {%- endif %}
+            {%- if not minimal %}
+            <div class="lbl__record-group lbl__record-group--insurance" data-field="insurance">
+                <div class="lbl__record"><span class="lbl__record-label"><svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track" data-field="insurance-track">{{ lbl.get('insurance_track') or '—' }}</span></div>
+                <div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value" data-field="insurance-base">{{ lbl.get('insurance_base') or '—' }}</span></div>
+                <div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value" data-field="insurance-extra">{{ lbl.get('insurance_extra') or '—' }}</span></div>
+            </div>
+            {%- endif %}
+        </section>
+        {%- endif %}
+
+        <!-- پیام آرام‌بخش برای انتظار -->
+        <p class="lbl__message" data-field="hint"{% if not show_hint %} hidden{% endif %}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3"></path><polyline points="8.5 12.5 11 12.5 12.5 10 14 15 15.5 12.5 17.5 12.5" stroke-width="1.8"></polyline></svg>
+            <span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span>
+        </p>
+
+        <!-- برند هستما -->
+        <footer class="lbl__footer">
+            <img class="lbl__brand-logo" src="{{ assets.brand }}" alt="هستما">
+            <div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
+        </footer>
+    </div>
+</div>

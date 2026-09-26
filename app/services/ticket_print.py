@@ -1,15 +1,18 @@
 """Server-side silent print of queue tickets / labels.
 
-Modern kiosk flow (best practice):
-1. The label studio stores the chosen printer in ``system_config`` (``label_target_printer``)
-   so every surface (kiosk, reception, label studio) shares one source of truth —
-   not browser-local ``localStorage``.
-2. When the kiosk issues a ticket it POSTs to ``/api/queue/print``.
-3. This module builds a self-contained HTML receipt using the shared
-   ``label-print.css`` presentation (same as master-admin → label printer),
-   renders it via Edge headless, and submits the job to the named Windows
-   printer queue — no dialog, no user interaction.
-4. The client always keeps a browser ``window.print()`` fallback when the server
+ONE label system, three consumers (label studio, ticket kiosk, server print):
+1. Settings live in ``system_config`` (``label_print_settings`` + the chosen
+   printer in ``label_target_printer``) so every surface shares one source of
+   truth — not browser-local ``localStorage``.
+2. Both the kiosk and the studio POST to the *same* endpoint
+   (``POST /api/queue/print``) and print the *same* document.
+3. The document + its markup come from ``app/services/label_render.py``
+   (Jinja: ``templates/label_print_document.html`` +
+   ``templates/partials/label_queue.html``), which is also what the browser
+   fallback downloads — so every output is byte-identical.
+4. This module only renders that document via Edge headless and submits the job
+   to the named Windows printer queue — no dialog, no user interaction.
+5. The client always keeps a browser ``window.print()`` fallback when the server
    path is unavailable (Linux/CUPS, missing Edge, offline spooler, etc.).
 
 Print fidelity path (Windows):
@@ -33,6 +36,16 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any, Optional
+
+# The label renderer owns the markup, the escaping, the minimal-service rule and
+# the date/time formatting (one source for studio preview, kiosk and server).
+from app.services import label_render
+from app.services.label_render import (  # re-exported for callers/tests
+    esc,
+    is_minimal_label_service,
+    to_persian_digits,
+)
+from app.services.label_render import MINIMAL_LABEL_SERVICES as _MINIMAL_SERVICES
 
 logger = logging.getLogger(__name__)
 
@@ -90,15 +103,6 @@ if platform.system() == "Windows":
         pass
 
 
-def esc(value: Any) -> str:
-    return html.escape(str(value if value is not None else ""), quote=True)
-
-
-def to_persian_digits(value: Any) -> str:
-    text = str(value if value is not None else "")
-    return text.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
-
-
 def find_edge() -> str:
     """Absolute path to msedge.exe, or ``\"\"`` when Edge is not installed."""
     which = shutil.which("msedge") or shutil.which("msedge.exe")
@@ -110,45 +114,10 @@ def find_edge() -> str:
     return ""
 
 
-def is_minimal_label_service(service: Any) -> bool:
-    """True when the label must only show queue number + admission number."""
-    text = str(service or "").strip()
-    if text in _MINIMAL_SERVICES:
-        return True
-    normalized = text.replace("‌", " ").replace("‍", " ")
-    normalized = re.sub(r"\s+", " ", normalized).strip()
-    return normalized in _MINIMAL_SERVICES
-
-
-def _read_static_text(relative: str) -> str:
-    path = _STATIC_ROOT / relative
-    try:
-        return path.read_text(encoding="utf-8")
-    except OSError:
-        logger.warning("Missing static asset for label print: %s", path)
-        return ""
-
-
-def _static_file_uri(relative: str) -> str:
-    return (_STATIC_ROOT / relative).as_uri()
-
-
-def _format_label_datetime() -> str:
-    """Persian date/time pill text (Jalali when jdatetime is available)."""
-    try:
-        import jdatetime
-
-        now = jdatetime.datetime.now()
-        return f"{now.strftime('%Y/%m/%d')} - {now.strftime('%H:%M')}"
-    except Exception:
-        now = time.localtime()
-        return f"{time.strftime('%Y/%m/%d', now)} - {time.strftime('%H:%M', now)}"
-
-
-def _label_zoom(width_mm: int) -> str:
-    # Same formula as master-admin.js: design reference is 50 mm wide.
-    zoom = max(0.8, min(1.8, float(width_mm) / _LABEL_REF_W_MM))
-    return f"{zoom:.3f}"
+_read_static_text = label_render.static_text
+_static_file_uri = label_render.static_uri
+_format_label_datetime = label_render.format_label_datetime
+_label_zoom = label_render.zoom_seed
 
 
 def default_label_settings() -> dict[str, Any]:
@@ -233,8 +202,15 @@ def normalize_label_settings(raw: Any) -> dict[str, Any]:
     }
 
 
-def load_label_settings() -> dict[str, Any]:
-    """Read label-studio print settings from ``system_config`` (best-effort)."""
+def load_label_config() -> dict[str, Any]:
+    """Read the ONE shared label configuration from ``system_config``.
+
+    Returns ``{"settings": {...}, "printer": str}`` — the same payload the
+    studio saves and the kiosk / server print consume, so there is a single
+    source of truth for size, template, toggles and target printer.
+    """
+    settings_raw: Any = None
+    printer = ""
     try:
         from app.core.database import connect
 
@@ -242,19 +218,29 @@ def load_label_settings() -> dict[str, Any]:
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT config_value FROM system_config WHERE config_key = ?",
-                (SETTINGS_CONFIG_KEY,),
+                "SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?)",
+                (CONFIG_KEY, SETTINGS_CONFIG_KEY),
             )
-            row = cur.fetchone()
-            value = row[0] if row else None
+            for row in cur.fetchall():
+                key = str(row[0] or "")
+                value = row[1]
+                if key == CONFIG_KEY and value:
+                    printer = str(value or "").strip()
+                elif key == SETTINGS_CONFIG_KEY and value:
+                    settings_raw = value
         finally:
             conn.close()
-        return normalize_label_settings(value)
     except Exception as exc:
-        logger.warning(
-            "label_print_settings lookup failed: %s: %s", type(exc).__name__, exc
-        )
-        return default_label_settings()
+        logger.warning("label config lookup failed: %s: %s", type(exc).__name__, exc)
+    return {
+        "settings": normalize_label_settings(settings_raw) if settings_raw is not None else default_label_settings(),
+        "printer": printer,
+    }
+
+
+def load_label_settings() -> dict[str, Any]:
+    """Read label-studio print settings from ``system_config`` (best-effort)."""
+    return load_label_config()["settings"]
 
 
 def build_ticket_html(
@@ -281,226 +267,22 @@ def build_ticket_html(
         cfg["width_mm"] = _clamp_int(width_mm, 30, 150, DEFAULT_LABEL_W_MM)
     if height_mm is not None:
         cfg["height_mm"] = _clamp_int(height_mm, 20, 100, DEFAULT_LABEL_H_MM)
-    width_mm = cfg["width_mm"]
-    height_mm = cfg["height_mm"]
-    template = cfg["template"]
-    rotated = cfg["rotate"]
-    # Physical page (studio openPrintWindow): swap axes when content is rotated.
-    page_w = height_mm if rotated else width_mm
-    page_h = width_mm if rotated else height_mm
 
-    patient = patient or {}
-    number = esc(
-        ticket.get("persian_number")
-        or to_persian_digits(ticket.get("number") or "")
-        or ""
-    )
-    service_raw = str(ticket.get("service") or "")
-    service = esc(service_raw)
-    admission_raw = (
-        patient.get("admission_number_persian")
-        or patient.get("admission_number")
-        or ""
-    )
-    admission = esc(admission_raw)
-    minimal = is_minimal_label_service(service_raw)
+    # ── ONE renderer ──────────────────────────────────────────────────────
+    # Markup + document shell live in app/services/label_render.py (Jinja:
+    # partials/label_queue.html + label_print_document.html). The browser (via
+    # label-system.js) downloads this *same* document, so the studio preview,
+    # the kiosk print and the silent server print can never drift apart.
+    return label_render.render_print_document(
+        ticket,
+        patient,
+        settings=cfg,
+        assets={
+            "logo": label_render.static_uri("images/lab-logo.png"),
+            "brand": label_render.static_uri("images/newlogo.png"),
+        },
+        title=f"نوبت {ticket.get('persian_number') or to_persian_digits(ticket.get('number') or '')}",    )
 
-    name = esc(patient.get("name") or "—")
-    age = esc(to_persian_digits(patient.get("age") or "") or "—")
-    national = esc(to_persian_digits(patient.get("national_id") or "") or "—")
-    phone = esc(to_persian_digits(patient.get("phone") or "") or "—")
-    insurance_base = esc(patient.get("insurance_base") or "—")
-    insurance_extra = esc(patient.get("insurance_extra") or "—")
-    insurance_track = esc(
-        to_persian_digits(
-            patient.get("insurance_tracking")
-            or patient.get("tracking_code")
-            or patient.get("insurance_track")
-            or ""
-        )
-        or "—"
-    )
-
-    # Always emit the studio DOM shape (patient / admission data-field hooks)
-    # so shared label-print.css template rules apply on server and kiosk prints.
-    # Minimal services omit PII rows entirely (privacy) but keep the same groups.
-    admission_row = ""
-    if admission:
-        admission_row = (
-            '<div class="lbl__record" data-field="admission">'
-            '<span class="lbl__record-label">شماره پذیرش</span>'
-            f'<span class="lbl__record-value lbl__record-value--num">{admission}</span></div>'
-        )
-    if minimal:
-        patient_rows = admission_row
-        insurance_block = ""
-        records_label = "شماره پذیرش"
-    else:
-        name_row = ""
-        if cfg["show_name"]:
-            name_row = (
-                '<div class="lbl__record" data-field="name">'
-                '<span class="lbl__record-label">نام و نام خانوادگی</span>'
-                f'<span class="lbl__record-value">{name}</span></div>'
-            )
-        patient_rows = (
-            admission_row
-            + name_row
-            + '<div class="lbl__record" data-field="age"><span class="lbl__record-label">سن</span>'
-            f'<span class="lbl__record-value">{age}</span></div>'
-            '<div class="lbl__record" data-field="national"><span class="lbl__record-label">شماره ملی</span>'
-            f'<span class="lbl__record-value lbl__record-value--num">{national}</span></div>'
-            '<div class="lbl__record" data-field="phone"><span class="lbl__record-label">شماره همراه</span>'
-            f'<span class="lbl__record-value lbl__record-value--num">{phone}</span></div>'
-        )
-        insurance_block = (
-            '<div class="lbl__record-group lbl__record-group--insurance" data-field="insurance">'
-            '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span>'
-            f'<span class="lbl__record-value lbl__record-value--num lbl__record-value--track">{insurance_track}</span></div>'
-            '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span>'
-            f'<span class="lbl__record-value">{insurance_base}</span></div>'
-            '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span>'
-            f'<span class="lbl__record-value">{insurance_extra}</span></div>'
-            "</div>"
-        )
-        records_label = "اطلاعات مراجعه‌کننده و بیمه"
-
-    if patient_rows or insurance_block:
-        records = (
-            f'<section class="lbl__records" aria-label="{records_label}">'
-            '<div class="lbl__record-group lbl__record-group--patient" data-field="patient">'
-            + patient_rows
-            + "</div>"
-            + insurance_block
-            + "</section>"
-        )
-    else:
-        records = ""
-
-    label_css = _read_static_text("css/label-print.css")
-    font_css = f"""
-@font-face {{
-  font-family: 'Vazir';
-  src: url('{_static_file_uri('fonts/Vazir.woff2')}') format('woff2'),
-       url('{_static_file_uri('fonts/Vazir.woff')}') format('woff'),
-       url('{_static_file_uri('fonts/Vazir.ttf')}') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-}}
-"""
-    logo_uri = _static_file_uri("images/lab-logo.png")
-    brand_uri = _static_file_uri("images/newlogo.png")
-    zoom = _label_zoom(width_mm)
-
-    # Content visibility mirrors the studio toggles (maShowName / maShowTime /
-    # maShowHint). The shared CSS has `.lbl [hidden] { display:none !important }`.
-    time_hidden = "" if cfg["show_time"] else " hidden"
-    hint_hidden = "" if cfg["show_hint"] else " hidden"
-    rotated_cls = " is-rotated" if rotated else ""
-    # Same rotate geometry as master-admin openPrintWindow (left/right explicit
-    # so RTL + absolute positioning still lands on the paper).
-    rotate_css = (
-        ".lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;"
-        "transform:translateY(calc(var(--lbl-mm-w,75) * 1mm)) rotate(-90deg);transform-origin:top left}"
-        if rotated
-        else ""
-    )
-    # Same content-fit calibration as the studio print window (FIT_GUARD).
-    # Width-only zoom leaves tall templates small / clipped on the paper.
-    fit_script = (
-        "<script>"
-        "window.__lblFit=function(){try{"
-        'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
-        'r.style.setProperty("--lbl-zoom","1");'
-        "var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;"
-        'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
-        "var cw=c.scrollWidth,ch=c.scrollHeight;"
-        "c.style.height=ph;c.style.flex=pf;c.style.transform=pt;"
-        "var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;"
-        "z=Math.max(0.8,Math.min(1.8,z));"
-        'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
-        'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
-        "if(n&&b){n.style.fontSize=\"\";var base=parseFloat(window.getComputedStyle(n).fontSize)||20;"
-        "var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){"
-        "n.style.fontSize=Math.max(10,base*av/nat)+\"px\";}}"
-        "}catch(e){}};"
-        "window.__lblFit();"
-        "if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.__lblFit();});}"
-        "</script>"
-    )
-
-    return f"""<!DOCTYPE html>
-<html lang="fa" dir="rtl"><head><meta charset="utf-8">
-<title>نوبت {number}</title>
-<style>
-{font_css}
-{label_css}
-@page {{ size: {page_w}mm {page_h}mm; margin: 0; }}
-html, body {{ margin: 0; padding: 0; background: #fff;
-  width: {page_w}mm; height: {page_h}mm; overflow: hidden;
-  /* Headless Edge ignores --window-size below its minimum (~500px): the
-     viewport stays wider than the label. In RTL the fixed-width page then
-     sticks to the right and --screenshot crops it off. Pin LTR + left/top
-     so the label always starts at (0,0) of the captured bitmap. */
-  direction: ltr;
-}}
-.lbl-page {{
-  position: absolute;
-  top: 0; left: 0;
-  width: {page_w}mm;
-  height: {page_h}mm;
-  overflow: hidden;
-}}
-.lbl.lbl--print {{
-  width: {width_mm}mm;
-  height: {height_mm}mm;
-  --lbl-mm-w: {width_mm};
-  --lbl-mm-h: {height_mm};
-  --lbl-zoom: {zoom};
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter: grayscale(1);
-}}
-{rotate_css}
-</style>
-</head><body class="lbl-print-page"><div class="lbl-page">
-<div class="lbl lbl--print{rotated_cls}" data-template="{template}" data-service="{service}" aria-label="لیبل نوبت">
-  <span class="lbl__accent" aria-hidden="true"></span>
-  <div class="lbl__content">
-    <header class="lbl__header">
-      <span class="lbl__datetime" title="تاریخ و ساعت ثبت نوبت"{time_hidden}>
-        <span class="lbl__datetime-value">{esc(_format_label_datetime())}</span>
-      </span>
-      <div class="lbl__identity">
-        <img class="lbl__logo" src="{logo_uri}" alt="لوگوی آزمایشگاه">
-        <div class="lbl__identity-text">
-          <h3 class="lbl__lab-name">{esc(clinic_name)}</h3>
-          <p class="lbl__slogan"{hint_hidden}>{esc(clinic_slogan)}</p>
-        </div>
-      </div>
-    </header>
-    <section class="lbl__queue" aria-label="شماره نوبت">
-      <div class="lbl__number-box">
-        <span class="lbl__service">{service or "پذیرش"}</span>
-        <span class="lbl__queue-number">{number or to_persian_digits(ticket.get("number") or "")}</span>
-      </div>
-    </section>
-    {records}
-    <p class="lbl__message"{hint_hidden}>
-      <span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span>
-    </p>
-    <footer class="lbl__footer">
-      <img class="lbl__brand-logo" src="{brand_uri}" alt="هستما">
-      <div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div>
-    </footer>
-  </div>
-</div>
-</div>
-{fit_script}
-</body></html>"""
 
 
 def _edge_process(args: list[str], timeout: float) -> bool:
@@ -696,6 +478,17 @@ try {{
     $m.Right = 0
     $m.Bottom = 0
     $ticket.PageMargin = $m
+  }} catch {{ }}
+  # Drop PageDevmodeSnapshot (Epson private blob baked from DefaultPrintTicket).
+  # That stale roll-paper DEVMODE conflicts with our 75×81 media and overrides
+  # the queue's live Printing Preferences (dither/halftone) that studio browser
+  # print uses — so server output diverged in dither settings.
+  try {{
+    $inner = $ticket.GetType().GetField('_printTicket', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($ticket)
+    $doc = $inner.GetType().GetField('_xmlDoc', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($inner)
+    foreach ($n in $doc.SelectNodes('//*[contains(@name,"PageDevmodeSnapshot")]')) {{
+      [void]$n.ParentNode.RemoveChild($n)
+    }}
   }} catch {{ }}
   $bi = New-Object System.Windows.Media.Imaging.BitmapImage
   $bi.BeginInit()

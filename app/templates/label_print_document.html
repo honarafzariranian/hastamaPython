@@ -1,0 +1,55 @@
+{#- ═══════════════════════════════════════════════════════════════════════════
+   HASTAMA — سند واحد چاپ لیبل (single source of truth)
+   ───────────────────────────────────────────────────────────────────────────
+   همین یک سند، هم در چاپ بی‌صدای سرور (Edge headless → PNG/PDF → صف چاپ) و
+   هم در چاپ مرورگر (پنجرهٔ چاپ / iframe) استفاده می‌شود؛ پس خروجی هر دو مسیر
+   و هر دو صفحه (استودیو لیبل و کیوسک) دقیقاً یکی است.
+
+   نکات چیدمان (همه از تجربهٔ چاپ روی این صف چاپگر آمده‌اند):
+     * @page با همان اندازهٔ فیزیکی لیبل و margin صفر.
+     * html/body ثابت با direction:ltr — Edge headless در RTL صفحه را جابه‌جا
+       می‌کند و بخشی از کادر از بیت‌مپ بیرون می‌افتد.
+     * .lbl-page مطلق در (0,0) تا ناحیهٔ اسکرین‌شات همیشه از گوشهٔ بالا-چپ
+       شروع شود.
+     * حالت چرخش ۹۰ درجه، از لبهٔ چپ/بالا شروع می‌شود.
+   ═══════════════════════════════════════════════════════════════════════════ -#}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>{{ font_css }}</style>
+<style>{{ label_css }}</style>
+<style>
+@page { size: {{ page_w }}mm {{ page_h }}mm; margin: 0; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  width: {{ page_w }}mm;
+  height: {{ page_h }}mm;
+  overflow: hidden;
+  direction: ltr;
+}
+.lbl-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: {{ page_w }}mm;
+  height: {{ page_h }}mm;
+  overflow: hidden;
+}
+@media print {
+  html, body { width: {{ page_w }}mm; height: {{ page_h }}mm; }
+}
+{{ rotate_css }}
+</style>
+</head>
+<body class="lbl-print-page">
+<div class="lbl-page">
+{% include 'partials/label_queue.html' %}
+</div>
+<script>{{ label_js }}</script>
+<script>if (window.HastamaLabel) { HastamaLabel.fitDocument(); }</script>
+</body>
+</html>

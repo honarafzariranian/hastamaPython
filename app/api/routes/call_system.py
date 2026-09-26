@@ -1189,6 +1189,89 @@ async def take_queue_ticket(request: Request):
     })
 
 
+@router.get("/label/config")
+async def label_config(request: Request):
+    """Shared label configuration for every surface (studio UI + kiosk + print).
+
+    ``system_config`` is the single source of truth: the label studio writes it
+    and the kiosk / server print read it, so a size or template change made in
+    master-admin applies to kiosk labels without any per-page setting.
+    """
+    from app.services.ticket_print import (
+        default_label_settings,
+        load_label_config,
+        normalize_label_settings,
+        resolve_printer_name,
+    )
+
+    try:
+        config = load_label_config()
+    except Exception as exc:  # pragma: no cover - database outage
+        logger.warning("label config read failed: %s: %s", type(exc).__name__, exc)
+        config = {"settings": default_label_settings(), "printer": ""}
+    settings = normalize_label_settings(config.get("settings"))
+    printer = str(config.get("printer") or "")
+    return JSONResponse(
+        {
+            "success": True,
+            "settings": settings,
+            "printer": printer,
+            "resolved_printer": resolve_printer_name(printer),
+        }
+    )
+
+
+@router.post("/label/print-document")
+async def label_print_document(request: Request):
+    """The ONE print document, rendered by the server for the browser fallback.
+
+    The kiosk and the label studio both call this when the silent spooler path
+    is unavailable, so printing from a browser produces exactly the same label
+    as the silent server print.  Settings always come from ``system_config``;
+    a master-admin may send an unsaved ``settings``/``label`` override so the
+    studio's sample print matches what is on screen.
+    """
+    _guard_kiosk_write(request, "label-document")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    ticket = body.get("ticket") if isinstance(body.get("ticket"), dict) else {}
+    patient = body.get("patient") if isinstance(body.get("patient"), dict) else {}
+
+    from app.services import label_render
+    from app.services.ticket_print import load_label_settings
+
+    settings = load_label_settings()
+    label_override = None
+    # Studio sample print: an authenticated master-admin may preview the exact
+    # settings currently on screen (unsaved). Anonymous kiosk callers never can.
+    if request.session.get("is_master_admin") is True:
+        if isinstance(body.get("settings"), dict):
+            from app.services.ticket_print import normalize_label_settings
+
+            settings = normalize_label_settings(body["settings"])
+        if isinstance(body.get("label"), dict):
+            label_override = body["label"]
+
+    html_text = label_render.render_print_document(
+        ticket,
+        patient,
+        settings=settings,
+        label=label_override,
+        assets={
+            "logo": str(request.base_url).rstrip("/") + "/static/images/lab-logo.png",
+            "brand": str(request.base_url).rstrip("/") + "/static/images/newlogo.png",
+        },
+        fonts_css=label_render.font_css(
+            lambda rel: str(request.base_url).rstrip("/") + "/static/" + rel
+        ),
+    )
+    return JSONResponse({"success": True, "html": html_text, "settings": settings})
+
+
 @router.post("/queue/print")
 async def print_queue_ticket(request: Request):
     """Silently print one issued queue ticket on the server-selected label printer.
