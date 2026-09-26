@@ -437,9 +437,17 @@ def build_ticket_html(
 {font_css}
 {label_css}
 @page {{ size: {page_w}mm {page_h}mm; margin: 0; }}
-html, body {{ margin: 0; padding: 0; background: #fff; }}
+html, body {{ margin: 0; padding: 0; background: #fff;
+  width: {page_w}mm; height: {page_h}mm; overflow: hidden;
+  /* Headless Edge ignores --window-size below its minimum (~500px): the
+     viewport stays wider than the label. In RTL the fixed-width page then
+     sticks to the right and --screenshot crops it off. Pin LTR + left/top
+     so the label always starts at (0,0) of the captured bitmap. */
+  direction: ltr;
+}}
 .lbl-page {{
-  position: relative;
+  position: absolute;
+  top: 0; left: 0;
   width: {page_w}mm;
   height: {page_h}mm;
   overflow: hidden;
@@ -697,7 +705,10 @@ try {{
   $bi.Freeze()
   $pxW = {float(width_mm)} / 25.4 * 96.0
   $pxH = {float(height_mm)} / 25.4 * 96.0
-  $rect = New-Object System.Windows.Rect(0, 0, $pxW, $pxH)
+  # Physical feed calibration: content lands ~1mm too far left on this queue
+  # (studio browser print is correct; XPS origin differs by a hair).
+  $offX = 1.0 / 25.4 * 96.0
+  $rect = New-Object System.Windows.Rect($offX, 0, $pxW, $pxH)
   $drawing = New-Object System.Windows.Media.ImageDrawing($bi, $rect)
   $dv = New-Object System.Windows.Media.DrawingVisual
   $dc = $dv.RenderOpen()
