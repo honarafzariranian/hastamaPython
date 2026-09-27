@@ -1,5 +1,5 @@
 {
-    "hastama_url": "http://192.168.3.69:8000",
+    "hastama_url": "https://hastama.ir",
     "hastama_secret": "",
     "device_ip": "192.168.3.200",
     "device_port": 1001,

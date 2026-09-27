@@ -48,9 +48,13 @@
 .lbl [hidden] { display: none !important; }
 
 /* ── Top brand accent strip ─────────────────────────────────── */
+/* نوار برند از همان حاشیهٔ ایمن چاپ شروع می‌شود: چاپگر حرارتی چند میلی‌متر
+   اول کاغذ را چاپ نمی‌کند و اگر این نوار روی لبهٔ بالا بنشیند، در چاپ گم
+   می‌شود (همان «چند میلی‌متر بالای لیبل چاپ نشد»). با این تنظیم، هیچ رنگی در
+   ناحیهٔ غیرقابل‌چاپ نیست و خود نوار هم روی کاغذ دیده می‌شود. */
 .lbl__accent {
     position: absolute;
-    top: 0; right: 0; left: 0;
+    top: var(--lbl-safe-y, 2mm); right: 0; left: 0;
     height: 3px;
     background: linear-gradient(270deg, var(--lbl-brand-deep) 0%, var(--lbl-brand) 55%, #22b8cf 100%);
     z-index: 2;
@@ -133,9 +137,11 @@
     color: var(--lbl-ink);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
 .lbl__slogan {
     margin: 1px 0 0;
     font-size: 5px;
@@ -144,6 +150,7 @@
     color: var(--lbl-ink-3);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -167,7 +174,6 @@
     max-width: 48%;
     overflow: hidden;
 }
-.lbl__datetime svg { flex: 0 0 auto; display: block; }
 .lbl__datetime-value {
     direction: ltr;
     unicode-bidi: isolate;
@@ -206,12 +212,12 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    padding: 0 7px;
+    padding: 3px 11px;
     border: none;
     border-radius: 99px;
     background: var(--lbl-ink);
     color: #fff;
-    font-size: 5.6px;
+    font-size: 8.6px;
     line-height: 1.45;
     font-weight: 800;
     white-space: nowrap;
@@ -332,6 +338,7 @@
 .lbl__message-text {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -387,7 +394,7 @@
 
 /* ═══ Minimal service templates (preview + studio print) ═════
    جوابدهی / نمونه‌گیری: فقط شماره پذیرش + شماره نوبت
-   نوبت خالی: فقط شماره نوبت (سالمندان — بدون فرم)
+   نوبت آزاد: فقط شماره نوبت (سالمندان — بدون فرم)
    Selectors use data-field so server / kiosk print HTML (no preview IDs)
    gets the same layout as the studio preview. */
 .lbl[data-template='queue'] [data-field='admission'],

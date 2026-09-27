@@ -24,10 +24,31 @@
   var ZOOM_MIN = 0.8;
   var ZOOM_MAX = 1.8;
   var FIT_SAFETY = 0.97;            // کمی جا برای خطای گردکردن چاپ
-  var MAX_PX_PER_MM = 4;            // سقف بزرگ‌نمایی پیش‌نمایش روی صفحه
+  /* سقف بزرگ‌نمایی پیش‌نمایش استودیو نسبت به اندازهٔ واقعی لیبل: لیبل روی
+     نمایشگر تقریباً به اندازهٔ فیزیکی‌اش دیده می‌شود و برای خوانده‌شدن متن
+     تا این نسبت بزرگ می‌شود. سند چاپ و کیوسک از این مقدار استفاده نمی‌کنند؛
+     مقیاس چاپ همان ZOOM_MAX است. */
+  var PREVIEW_MAX_SCALE = 1.5;
+  /* حاشیهٔ تنفس پیش‌نمایش داخل قاب (px، از هر طرف) */
+  var PREVIEW_GUTTER = 12;
   var LAYOUT_VERSION = 6;           // با هر تغییر مهم در چیدمان لیبل بالا می‌رود
 
   var TEMPLATE_IDS = ['queue', 'compact', 'result', 'sampling', 'blank'];
+  /* بازهٔ مجاز اندازهٔ لیبل (میلی‌متر). همین اعداد در سه لایه تکرار می‌شوند و
+     باید یکی بمانند: ورودی‌های استودیو در master-admin.html، این‌جا، و
+     ticket_print.LABEL_*_MM_RANGE در سرور. اگر محدودیتی این‌جا باشد ولی در
+     input نباشد، کاربر عدد بزرگ‌تر می‌زند و «اعمال نمی‌شود». */
+  var WIDTH_RANGE = [30, 150];
+  var HEIGHT_RANGE = [20, 150];
+  /* قالب‌های حداقلی (جوابدهی/نمونه‌گیری/نوبت آزاد) خودشان یعنی «سرویس»؛
+     پس با تغییر قالب، متن روی چیپ سرویس لیبل هم باید عوض شود وگرنه
+     پیش‌نمایش «پذیرش» می‌ماند. همین جفت‌ها در سرور هم هستند
+     (label_render.TEMPLATE_SERVICE_LABELS) و باید یکی بمانند. */
+  var TEMPLATE_SERVICE_LABELS = {
+    result: 'جوابدهی',
+    sampling: 'نمونه‌گیری',
+    blank: 'نوبت آزاد',
+  };
   var DEFAULT_SETTINGS = {
     width_mm: 75,
     height_mm: 81,
@@ -83,6 +104,23 @@
       .replace(/[0-9]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
   }
 
+  /* تاریخ/ساعت لیبل: دقیقاً همان قالبی که سرور می‌سازد
+     (label_render.format_label_datetime → «۱۴۰۵/۰۷/۰۵ - ۰۹:۴۱»). ماه و روز
+     دورقمي گرفته می‌شوند تا صفرِ ابتدایی مثل چاپ حفظ شود، و یک‌بار دیگر
+     ارقام فارسی می‌شوند (بعضی سیستم‌ها با fa-IR هم رقم لاتین می‌دهند). */
+  function labelDateTimeText(now) {
+    now = now || new Date();
+    var date, time;
+    try {
+      date = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+      time = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+    } catch (_) {
+      date = now.toLocaleDateString('fa-IR');
+      time = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    }
+    return faDigits(date + ' - ' + time);
+  }
+
   function pickNumber(raw, keys, fallback) {
     for (var i = 0; i < keys.length; i += 1) {
       if (raw && raw[keys[i]] !== undefined && raw[keys[i]] !== null && raw[keys[i]] !== '') {
@@ -109,8 +147,8 @@
     var template = String(pickNumber(raw, ['template', 'maLabelTemplate'], 'queue')).toLowerCase();
     if (TEMPLATE_IDS.indexOf(template) < 0) template = 'queue';
     return {
-      width_mm: clampMm(pickNumber(raw, ['width_mm', 'maLabelWidth'], DEFAULT_SETTINGS.width_mm), 30, 150, DEFAULT_SETTINGS.width_mm),
-      height_mm: clampMm(pickNumber(raw, ['height_mm', 'maLabelHeight'], DEFAULT_SETTINGS.height_mm), 20, 100, DEFAULT_SETTINGS.height_mm),
+      width_mm: clampMm(pickNumber(raw, ['width_mm', 'maLabelWidth'], DEFAULT_SETTINGS.width_mm), WIDTH_RANGE[0], WIDTH_RANGE[1], DEFAULT_SETTINGS.width_mm),
+      height_mm: clampMm(pickNumber(raw, ['height_mm', 'maLabelHeight'], DEFAULT_SETTINGS.height_mm), HEIGHT_RANGE[0], HEIGHT_RANGE[1], DEFAULT_SETTINGS.height_mm),
       template: template,
       rotate: pickBool(raw, ['rotate', 'maPrintRotate'], false),
       show_name: pickBool(raw, ['show_name', 'maShowName'], true),
@@ -200,7 +238,8 @@
     return {
       service: String(ticket.service || 'پذیرش'),
       number: String(number),
-      admission: String(admission || ''),
+      // ارقام لاتین روی لیبل فارسی نمی‌آیند؛ سرور هم همین کار را می‌کند
+      admission: faDigits(admission),
       name: String(patient.name || '—'),
       age: faDigits(patient.age || '') || '—',
       national_id: faDigits(patient.national_id || '') || '—',
@@ -208,8 +247,7 @@
       insurance_track: faDigits(track) || '—',
       insurance_base: String(patient.insurance_base || '—'),
       insurance_extra: String(patient.insurance_extra || '—'),
-      datetime: new Date().toLocaleDateString('fa-IR') + ' - '
-        + new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
+      datetime: labelDateTimeText(),
     };
   }
 
@@ -237,8 +275,16 @@
     if (el) el.hidden = !visible;
   }
 
+  /* متن چیپ سرویس: اول قالب انتخاب‌شدهٔ استودیو، بعد سرویس خودِ نوبت. */
+  function serviceLabel(data, settings) {
+    var tpl = String((settings && settings.template) || '').toLowerCase();
+    var preset = TEMPLATE_SERVICE_LABELS[tpl];
+    if (preset) return preset;
+    return (data && data.service) || 'پذیرش';
+  }
+
   function applyLabelData(labelEl, data, settings) {
-    setField(labelEl, 'service', data.service || 'پذیرش');
+    setField(labelEl, 'service', serviceLabel(data, settings));
     setField(labelEl, 'number', data.number || '');
     setField(labelEl, 'datetime', data.datetime || '');
     setField(labelEl, 'admission-value', data.admission || '');
@@ -254,13 +300,16 @@
     showField(labelEl, 'time', settings.show_time !== false);
     showField(labelEl, 'hint', settings.show_hint !== false);
     labelEl.setAttribute('data-template', settings.template || 'queue');
-    var serviceEl = labelEl.querySelector('[data-field="service"]');
-    if (serviceEl && !data.service) serviceEl.textContent = 'پذیرش';
   }
 
-  /* ── مقیاس طرح: همین تابع در سند چاپ هم اجرا می‌شود (fitDocument) ── */
-  function fitLabel(labelEl) {
+  /* ── مقیاس طرح: همین تابع در سند چاپ هم اجرا می‌شود (fitDocument) ──
+     options.zoomMax مقیاس را برای پیش‌نمایش بزرگ‌تر از چاپ باز می‌کند؛ سند
+     چاپ بدون options صدا زده می‌شود و همان ZOOM_MAX را دارد. */
+  function fitLabel(labelEl, options) {
     if (!labelEl) return 1;
+    options = options || {};
+    var zoomMin = options.zoomMin === undefined ? ZOOM_MIN : options.zoomMin;
+    var zoomMax = options.zoomMax === undefined ? ZOOM_MAX : options.zoomMax;
     var content = labelEl.querySelector('.lbl__content');
     if (!content) return 1;
     labelEl.style.setProperty('--lbl-zoom', '1');
@@ -277,7 +326,7 @@
       labelEl.clientWidth / REF_WIDTH_PX,
       labelEl.clientHeight / Math.max(1, naturalHeight)
     ) * FIT_SAFETY;
-    zoom = clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+    zoom = clamp(zoom, zoomMin, zoomMax);
     labelEl.style.setProperty('--lbl-zoom', zoom.toFixed(3));
 
     // اگر لیبل باریک است، رقمِ شمارهٔ نوبت نباید بریده شود
@@ -298,10 +347,18 @@
   function fitDocument() {
     var labelEl = document.querySelector('.lbl');
     if (!labelEl) return;
-    fitLabel(labelEl);
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(function () { fitLabel(labelEl); });
-    }
+    var refit = function () { fitLabel(labelEl); };
+    refit();
+    // فونت و لوگو ممکن است دیرتر از اندازه‌گیری اول بیایند و با آن اندازهٔ
+    // نادرست، مقیاس طرح بزرگ‌تر از لیبل شود و پایین لیبل بریده شود. پس چند
+    // بار دیگر هم مقیاس حساب می‌شود (چاپ بی‌صدا هم بعد از بارگذاری کامل
+    // اسکرین‌شات می‌گیرد).
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    if (document.readyState === 'complete') refit();
+    else global.addEventListener('load', refit);
+    global.addEventListener('resize', refit);
+    setTimeout(refit, 120);
+    setTimeout(refit, 700);
   }
 
   /* ── پیش‌نمایش زنده (استودیو) ──────────────────────────────────────────── */
@@ -311,21 +368,34 @@
     var state = {
       data: options.data || labelData(SAMPLE.ticket, SAMPLE.patient),
       settings: normalizeSettings(options.settings || readCache() || DEFAULT_SETTINGS),
+      scale: 1,
     };
     var labelEl = null;
     var observer = null;
+    var maxScale = options.maxScale === undefined ? PREVIEW_MAX_SCALE : options.maxScale;
+    /* محتوا هم مثل قاب بزرگ می‌شود، پس سقف zoom متناسب با همان مقیاس بالا
+       می‌رود (fitLabel خودش min() عرض/ارتفاع می‌گیرد و سرریز نمی‌کند). */
+    var fitOptions = { zoomMin: ZOOM_MIN, zoomMax: ZOOM_MAX * maxScale };
 
     function sizeToHost() {
       if (!labelEl) return;
       var width = state.settings.width_mm;
       var height = state.settings.height_mm;
-      var roomW = Math.max(180, hostEl.clientWidth - 40);
-      var roomH = Math.max(150, hostEl.clientHeight - 40);
-      var pxPerMm = Math.min(MAX_PX_PER_MM, roomW / width, roomH / height);
-      labelEl.style.setProperty('width', Math.max(120, Math.round(width * pxPerMm)) + 'px', 'important');
-      labelEl.style.setProperty('height', Math.max(80, Math.round(height * pxPerMm)) + 'px', 'important');
+      // قاب واقعی در دسترس (hostEl با CSS اندازهٔ کامل استیج را دارد)
+      var roomW = Math.max(180, hostEl.clientWidth - PREVIEW_GUTTER * 2);
+      var roomH = Math.max(150, hostEl.clientHeight - PREVIEW_GUTTER * 2);
+      // سقف: ۱.۵ برابر اندازهٔ واقعی روی نمایشگر ۹۶dpi — اگر فضا کم بود،
+      // همان‌قدر که جا می‌شود (هیچ‌وقت بزرگ‌تر از سقف).
+      var pxPerMm = Math.min(PX_PER_MM * maxScale, roomW / width, roomH / height);
+      var boxW = Math.max(120, Math.round(width * pxPerMm));
+      var boxH = Math.max(80, Math.round(height * pxPerMm));
+      labelEl.style.setProperty('width', boxW + 'px', 'important');
+      labelEl.style.setProperty('height', boxH + 'px', 'important');
       labelEl.style.setProperty('aspect-ratio', width + ' / ' + height);
-      fitLabel(labelEl);
+      fitLabel(labelEl, fitOptions);
+      // مقیاس واقعی صفحه (px بر میلی‌متر ÷ ۹۶dpi) برای نمایش در استودیو
+      state.scale = (boxW / width) / PX_PER_MM;
+      if (typeof options.onScale === 'function') options.onScale(state.scale);
     }
 
     function render() {
@@ -356,7 +426,8 @@
         render();
       },
       refresh: render,
-      fit: function () { fitLabel(labelEl); },
+      scale: function () { return state.scale; },
+      fit: function () { fitLabel(labelEl, fitOptions); },
       destroy: function () { if (observer) observer.disconnect(); },
     };
   }
@@ -437,9 +508,16 @@
       });
   }
 
-  /* چاپ نمونهٔ استودیو = همان دادهٔ نمونهٔ پیش‌نمایش */
-  function printSample() {
-    return print(SAMPLE.ticket, SAMPLE.patient);
+  /* چاپ نمونهٔ استودیو = همان دادهٔ نمونهٔ پیش‌نمایش؛ قالب انتخاب‌شده تعیین
+     می‌کند چیپ سرویس چه بنویسد، تا برگهٔ چاپ‌شده با پیش‌نمایش یکی باشد. */
+  function printSample(currentSettings) {
+    var settings = normalizeSettings(currentSettings || readCache() || DEFAULT_SETTINGS);
+    var ticket = {};
+    for (var key in SAMPLE.ticket) {
+      if (Object.prototype.hasOwnProperty.call(SAMPLE.ticket, key)) ticket[key] = SAMPLE.ticket[key];
+    }
+    ticket.service = serviceLabel(SAMPLE.ticket, settings);
+    return print(ticket, SAMPLE.patient);
   }
 
   global.HastamaLabel = {
@@ -448,6 +526,7 @@
     ZOOM_MAX: ZOOM_MAX,
     LAYOUT_VERSION: LAYOUT_VERSION,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
+    TEMPLATE_SERVICE_LABELS: TEMPLATE_SERVICE_LABELS,
     SAMPLE: SAMPLE,
     normalizeSettings: normalizeSettings,
     readCache: readCache,
@@ -458,6 +537,7 @@
     saveSettings: saveSettings,
     saveTargetPrinter: saveTargetPrinter,
     labelData: labelData,
+    serviceLabel: serviceLabel,
     applyLabelData: applyLabelData,
     createLabelElement: createLabelElement,
     fitLabel: fitLabel,

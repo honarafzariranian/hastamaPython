@@ -487,7 +487,8 @@
             tickets.forEach(function (t) {
                 var div = document.createElement('div');
                 div.className = 'cd-queue-item';
-                div.innerHTML = '<span class="cd-queue-item-num">' + t.number + '</span>' +
+                // همان کلیدهایی که /api/queue/list برمی‌گرداند (number وجود ندارد)
+                div.innerHTML = '<span class="cd-queue-item-num">' + (t.persian_number || t.ticket_number || '') + '</span>' +
                     '<span class="cd-queue-item-service">' + (t.service || '') + '</span>';
                 cdQueueGrid.appendChild(div);
             });

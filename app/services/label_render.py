@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Mapping, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,17 @@ LABEL_ZOOM_MAX = 1.8
 PAGE_LABEL_TEMPLATE = "partials/label_queue.html"
 PRINT_DOCUMENT_TEMPLATE = "label_print_document.html"
 
+#: Studio templates that *are* a service: choosing «جوابدهی» must make the
+#: service chip read «جوابدهی» instead of the ticket's own service (the studio
+#: preview and the sample print both go through this mapping). Mirrored in
+#: ``app/static/js/label-system.js`` (TEMPLATE_SERVICE_LABELS); the two dicts
+#: must stay identical — the template→service mapping is one decision.
+TEMPLATE_SERVICE_LABELS: dict[str, str] = {
+    "result": "جوابدهی",
+    "sampling": "نمونه‌گیری",
+    "blank": "نوبت آزاد",
+}
+
 #: Services that print only the queue number + admission number (no patient
 #: block) — mirrors ``is_minimal_label_service`` in label-system.js.
 MINIMAL_LABEL_SERVICES = frozenset(
@@ -46,6 +58,9 @@ MINIMAL_LABEL_SERVICES = frozenset(
         "جوابدهی",
         "نمونه‌گیری",
         "نمونه گیری",
+        "نوبت آزاد",
+        # نام قدیمی همین سرویس: نوبت‌های ثبت‌شده در بانک قبل از تغییر نام
+        # باید مثل قبل حداقلی چاپ شوند.
         "نوبت خالی",
         "javabdehi",
         "sampling",
@@ -79,6 +94,15 @@ def to_persian_digits(value: Any) -> str:
     return text.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
 
 
+def template_service_label(template: Any) -> str:
+    """Service chip text implied by a studio template (``""`` when none).
+
+    ``result``/``sampling``/``blank`` are service presets, so a label rendered
+    with one of them and no service of its own still reads correctly.
+    """
+    return TEMPLATE_SERVICE_LABELS.get(str(template or "").strip().lower(), "")
+
+
 def is_minimal_label_service(service: Any) -> bool:
     """True when the label must only show queue number + admission number."""
     text = str(service or "").strip()
@@ -90,15 +114,22 @@ def is_minimal_label_service(service: Any) -> bool:
 
 
 def format_label_datetime() -> str:
-    """Persian date/time pill text (Jalali when jdatetime is available)."""
+    """Persian date/time pill text (Jalali when jdatetime is available).
+
+    Digits are Persian: this string is printed verbatim on the label and the
+    patient reads it, so ``strftime`` output must become ``۱۴۰۵/۰۷/۰۵ - ۰۹:۳۲``.
+    The browser mirror (``HastamaLabel.labelData``) formats with ``fa-IR`` and
+    runs the same digit pass, so preview and print agree.
+    """
     try:
         import jdatetime
 
         now = jdatetime.datetime.now()
-        return f"{now.strftime('%Y/%m/%d')} - {now.strftime('%H:%M')}"
+        text = f"{now.strftime('%Y/%m/%d')} - {now.strftime('%H:%M')}"
     except Exception:
         now = time.localtime()
-        return f"{time.strftime('%Y/%m/%d', now)} - {time.strftime('%H:%M', now)}"
+        text = f"{time.strftime('%Y/%m/%d', now)} - {time.strftime('%H:%M', now)}"
+    return to_persian_digits(text)
 
 
 def static_text(relative: str) -> str:
@@ -158,6 +189,41 @@ def rotate_css(rotated: bool) -> str:
     return _ROTATE_CSS if rotated else ""
 
 
+def page_css(width_mm: int, height_mm: int, rotated: bool = False) -> str:
+    """``@page`` + fixed-origin rules for the print document.
+
+    Generated here instead of in ``label_print_document.html`` for two reasons:
+    the page geometry lives next to ``page_size``/``rotate_css`` (one module owns
+    it), and the template's ``<style>`` blocks keep no Jinja values inside CSS
+    rules — editors lint those as broken CSS and the noise hides real problems.
+    """
+    page_w, page_h = page_size(int(width_mm), int(height_mm), bool(rotated))
+    return (
+        f"@page {{ size: {page_w}mm {page_h}mm; margin: 0; }}\n"
+        "html, body {\n"
+        "  margin: 0;\n"
+        "  padding: 0;\n"
+        "  background: #fff;\n"
+        f"  width: {page_w}mm;\n"
+        f"  height: {page_h}mm;\n"
+        "  overflow: hidden;\n"
+        "  direction: ltr;\n"
+        "}\n"
+        ".lbl-page {\n"
+        "  position: absolute;\n"
+        "  top: 0;\n"
+        "  left: 0;\n"
+        f"  width: {page_w}mm;\n"
+        f"  height: {page_h}mm;\n"
+        "  overflow: hidden;\n"
+        "}\n"
+        "@media print {\n"
+        f"  html, body {{ width: {page_w}mm; height: {page_h}mm; }}\n"
+        "}\n"
+        + rotate_css(bool(rotated))
+    )
+
+
 # ── Data shaping ───────────────────────────────────────────────────────────
 
 
@@ -193,7 +259,8 @@ def label_context(
     return {
         "service": str(ticket.get("service") or "پذیرش"),
         "number": str(number_raw or ""),
-        "admission": str(admission_raw or ""),
+        # شمارهٔ پذیرش هم ممکن است لاتین در بانک باشد؛ روی لیبل فارسی چاپ می‌شود
+        "admission": to_persian_digits(admission_raw),
         "name": str(patient.get("name") or "—"),
         "age": to_persian_digits(patient.get("age") or "") or "—",
         "national_id": to_persian_digits(patient.get("national_id") or "") or "—",
@@ -227,6 +294,7 @@ def render_label_markup(
         settings=dict(settings or {}),
         minimal=bool(minimal),
         assets=dict(assets or DEFAULT_ASSETS),
+        template_services=TEMPLATE_SERVICE_LABELS,
         root_class=root_class,
         root_style=root_style,
         root_id=root_id,
@@ -257,7 +325,6 @@ def render_print_document(
     width_mm = int(settings.get("width_mm") or 75)
     height_mm = int(settings.get("height_mm") or 81)
     rotated = bool(settings.get("rotate"))
-    page_w, page_h = page_size(width_mm, height_mm, rotated)
 
     data = dict(label or label_context(ticket, patient, datetime_text=datetime_text))
     if minimal is None:
@@ -268,20 +335,36 @@ def render_print_document(
         f"--lbl-mm-w:{width_mm};--lbl-mm-h:{height_mm};"
         f"--lbl-zoom:{zoom_seed(width_mm)}"
     )
+    # The stylesheets, the page geometry and the client engine are our own files
+    # (or our own generated CSS); they must NOT be HTML-escaped (``&&`` →
+    # ``&amp;&amp;`` would break the script). ``Markup`` marks exactly these
+    # trusted blobs as safe while the label markup (partials/label_queue.html)
+    # keeps autoescaping, because it carries patient data.
+    #
+    # The stylesheets ship as one ready-made ``<style>`` blob rather than as
+    # Jinja values inside ``<style>`` rules in the template: editors lint those
+    # as broken CSS, and a wall of duplicate errors hides real problems.
+    head_styles = Markup(
+        "".join(
+            f"<style>{blob}</style>\n"
+            for blob in (
+                fonts_css if fonts_css is not None else font_css(),
+                label_css if label_css is not None else static_text("css/label-print.css"),
+                page_css(width_mm, height_mm, rotated),
+            )
+        )
+    )
     template = _env.get_template(PRINT_DOCUMENT_TEMPLATE)
     return template.render(
         title=title or f"چاپ لیبل نوبت {data.get('number') or ''}".strip(),
-        page_w=page_w,
-        page_h=page_h,
-        rotate_css=rotate_css(rotated),
-        label_css=label_css if label_css is not None else static_text("css/label-print.css"),
-        label_js=label_js if label_js is not None else static_text("js/label-system.js"),
-        font_css=fonts_css if fonts_css is not None else font_css(),
+        head_styles=head_styles,
+        label_js=Markup(label_js if label_js is not None else static_text("js/label-system.js")),
         # context consumed by the shared partial include
         label=data,
         settings=settings,
         minimal=minimal,
         assets=dict(assets or DEFAULT_ASSETS),
+        template_services=TEMPLATE_SERVICE_LABELS,
         root_class="lbl--print" + (" is-rotated" if rotated else ""),
         root_style=root_style,
     )

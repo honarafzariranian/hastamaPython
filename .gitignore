@@ -104,3 +104,7 @@ database/exports/*.dump
 database/exports/*.sql.gz
 *.dump
 *.sql.gz
+
+# Runtime logs (watchdog + boot log; may contain operational detail)
+logs/
+_tmp*/

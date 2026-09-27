@@ -297,15 +297,22 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
 .ma-printer-status[data-state="connected"] .ma-printer-status__dot { background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.14); }
 .ma-printer-status[data-state="disconnected"] { color:#b91c1c; border-color:rgba(239,68,68,.2); }
 .ma-printer-status[data-state="disconnected"] .ma-printer-status__dot { background:#ef4444; box-shadow:0 0 0 4px rgba(239,68,68,.12); }
-/* استودیو دو ستونه است: ستون پیش‌نمایش به اندازهٔ خود لیبل (نه تا نیمهٔ صفحه)
-   و بقیهٔ فضا به پنل کنترل‌ها می‌رسد؛ این‌طور جعبهٔ خاکستری پیش‌نمایش دور لیبل
-   خالی نمی‌ماند و کنترل‌ها هم برای دو ستون داخلی‌شان جا دارند. */
-.ma-label-studio__grid { display:grid; grid-template-columns:minmax(300px,360px) minmax(320px,1fr); gap:16px; padding:14px 16px; align-items:start; }
+/* استودیو دو ستونه است. ستون پیش‌نمایش عرض قابل توجهی می‌گیرد تا لیبل روی
+   صفحه خوانا باشد: پیش‌نمایش تا ۱.۵ برابر اندازهٔ واقعی بزرگ می‌شود
+   (PREVIEW_MAX_SCALE در label-system.js) و برای همان سقف به فضای عرضی و
+   ارتفاعی کافی نیاز دارد. ستون کنترل‌ها کمی پهن‌تر می‌ماند تا کارت‌های
+   داخلی‌اش دو ستونه جا شوند. */
+.ma-label-studio__grid { display:grid; grid-template-columns:minmax(320px,1fr) minmax(320px,1.05fr); gap:16px; padding:14px 16px; align-items:start; }
 .ma-label-preview-panel { display:flex; flex-direction:column; min-width:0; padding:12px; border:1px solid rgba(148,163,184,.18); border-radius:18px; background:rgba(248,250,252,.72); }
 .ma-label-preview-panel__top,.ma-label-preview-panel__foot { display:flex; justify-content:space-between; align-items:center; color:#475569; font-size:.68rem; font-weight:700; }
 .ma-label-size-readout { color:#6366f1; }
-.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; flex:1 1 auto; min-height:260px; margin:10px 0; padding:16px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
-.ma-label-preview-stage .lbl { max-width:100%; }
+.ma-label-scale-readout { color:#0891b2; white-space:nowrap; }
+.ma-label-preview-stage { display:flex; align-items:center; justify-content:center; flex:1 1 auto; min-height:380px; margin:10px 0; padding:16px; border-radius:14px; background:radial-gradient(circle at 50% 18%,#f1f5f9 0%,#dbe4ee 72%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.16); }
+/* قاب پیش‌نمایش دقیقاً فضای در دسترس استیج را می‌گیرد (نه اندازهٔ خود لیبل)،
+   وگرنه جاوااسکریپت «فضای خالی» را از روی خود لیبل اندازه می‌گرفت و لیبل
+   در هر اندازه‌گیری کمی کوچک‌تر می‌شد. */
+.ma-label-preview-host { display:flex; align-items:center; justify-content:center; align-self:stretch; width:100%; min-width:0; min-height:0; }
+.ma-label-preview-stage .lbl { max-width:100%; max-height:100%; }
 body.dark-theme .ma-label-preview-stage { background:radial-gradient(circle at 50% 18%,#1e293b 0%,#0b1220 75%); box-shadow:inset 0 0 0 1px rgba(148,163,184,.12); }
 /* Queue-label design system lives in label-print.css (shared by preview + print window). */
 .ma-preview-dot { display:inline-block; width:7px; height:7px; margin-left:4px; border-radius:50%; vertical-align:middle; }.ma-preview-dot--accent { background:#6366f1; }

@@ -1,6 +1,14 @@
-# Hastama — production reverse proxy (internal HTTPS for the LAN)
+# Hastama — RETIRED LAN reverse proxy configuration (kept for reference only).
 #
-# Topology (see docs/HASTAMA_PRODUCTION_DEPLOYMENT.md):
+# The supported deployment no longer uses Caddy or an internal `hastama.local`
+# name.  One public URL now serves LAN and Internet users alike:
+#
+#   browser ──HTTPS──▶ Cloudflare ──tunnel──▶ cloudflared ──HTTP──▶ uvicorn 127.0.0.1:5000
+#
+# See docs/network/UNIFIED_URL_ARCHITECTURE.md.  This file is not loaded by any
+# service on the production host; do not install it as part of a new setup.
+#
+# Original topology (historical, Caddy + internal CA):
 #   browser ──HTTPS──▶ Caddy (hastama.local, internal CA) ──HTTP──▶ uvicorn 127.0.0.1:8000
 #
 # Security notes:

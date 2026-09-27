@@ -59,6 +59,13 @@ SETTINGS_CONFIG_KEY = "label_print_settings"
 DEFAULT_LABEL_W_MM = 75
 DEFAULT_LABEL_H_MM = 81
 
+#: Allowed label size in mm. Mirrored by the studio number inputs in
+#: ``master-admin.html`` (min/max) and by ``WIDTH_RANGE``/``HEIGHT_RANGE`` in
+#: ``label-system.js``; keep the three in step, otherwise an operator can type a
+#: size that one layer silently clamps back (the label then "refuses" to grow).
+LABEL_WIDTH_MM_RANGE = (30, 150)
+LABEL_HEIGHT_MM_RANGE = (20, 150)
+
 #: Design reference width in mm (label-print.css is authored for ~50 mm).
 _LABEL_REF_W_MM = 50
 
@@ -84,6 +91,8 @@ _MINIMAL_SERVICES = frozenset(
         "جوابدهی",
         "نمونه‌گیری",
         "نمونه گیری",
+        "نوبت آزاد",
+        # نام قدیمی: نوبت‌های قبل از تغییر نام در همان بانک حداقلی می‌مانند
         "نوبت خالی",
         "javabdehi",
         "sampling",
@@ -141,6 +150,11 @@ def _clamp_int(value: Any, low: int, high: int, fallback: int) -> int:
     return max(low, min(high, n))
 
 
+def _clamp_range(value: Any, limits: tuple[int, int], fallback: int) -> int:
+    """Clamp a mm value to one of the ``LABEL_*_MM_RANGE`` tuples."""
+    return _clamp_int(value, limits[0], limits[1], fallback)
+
+
 def _as_bool(value: Any, fallback: bool = True) -> bool:
     if isinstance(value, bool):
         return value
@@ -192,8 +206,8 @@ def normalize_label_settings(raw: Any) -> dict[str, Any]:
         tpl = "queue"
 
     return {
-        "width_mm": _clamp_int(width, 30, 150, DEFAULT_LABEL_W_MM),
-        "height_mm": _clamp_int(height, 20, 100, DEFAULT_LABEL_H_MM),
+        "width_mm": _clamp_range(width, LABEL_WIDTH_MM_RANGE, DEFAULT_LABEL_W_MM),
+        "height_mm": _clamp_range(height, LABEL_HEIGHT_MM_RANGE, DEFAULT_LABEL_H_MM),
         "template": tpl,
         "rotate": _as_bool(rotate, False),
         "show_name": _as_bool(show_name, True),
@@ -256,7 +270,7 @@ def build_ticket_html(
     """Self-contained label HTML matching master-admin → label-printer.
 
     Service variants:
-      * جوابدهی / نمونه‌گیری / نوبت خالی → queue number + admission number only.
+      * جوابدهی / نمونه‌گیری / نوبت آزاد → queue number + admission number only.
       * پذیرش / اصلاح پذیرش / others → full label studio template.
 
     ``settings`` (or explicit ``width_mm`` / ``height_mm``) mirror the studio
@@ -264,9 +278,9 @@ def build_ticket_html(
     """
     cfg = normalize_label_settings(settings)
     if width_mm is not None:
-        cfg["width_mm"] = _clamp_int(width_mm, 30, 150, DEFAULT_LABEL_W_MM)
+        cfg["width_mm"] = _clamp_range(width_mm, LABEL_WIDTH_MM_RANGE, DEFAULT_LABEL_W_MM)
     if height_mm is not None:
-        cfg["height_mm"] = _clamp_int(height_mm, 20, 100, DEFAULT_LABEL_H_MM)
+        cfg["height_mm"] = _clamp_range(height_mm, LABEL_HEIGHT_MM_RANGE, DEFAULT_LABEL_H_MM)
 
     # ── ONE renderer ──────────────────────────────────────────────────────
     # Markup + document shell live in app/services/label_render.py (Jinja:
@@ -447,6 +461,12 @@ def _print_png_windows(
     PrintTicket ``PageMediaSize``. This script does the same: WPF
     ``PageMediaSize(Unknown, w*100, h*100)`` (1/100 mm) + draw the PNG into a
     rect of the exact physical size, then ``XpsDocumentWriter.Write``.
+
+    The ticket itself is built from the *per-user* print ticket, so the
+    operator's own printer defaults (darkness / dither / paper type set in
+    Control Panel → Printing Preferences) travel with the job; only the label
+    size is overridden. Building it from ``DefaultPrintTicket`` instead made
+    every job use the machine defaults, so those settings looked ignored.
     """
     # Temp .ps1: long embedded PowerShell -Command breaks on paths/quotes.
     script = f"""
@@ -458,13 +478,67 @@ try {{
   Add-Type -AssemblyName PresentationCore
   Add-Type -AssemblyName PresentationFramework
   Add-Type -AssemblyName System.Drawing
+
+  # Build the job ticket from the operator's own
+  # "Printing Preferences" (per-user DEVMODE), not the machine default.
+  #
+  # DefaultPrintTicket and its PageDevmodeSnapshot are the *machine* defaults
+  # (on this Epson queue: the 80x297 roll form). Darkness / dither / paper type
+  # are driver-private DEVMODE fields that exist ONLY inside that snapshot, so a
+  # ticket built from the machine default silently printed with driver defaults
+  # - which is why "Control Panel → Printing Preferences" looked ignored.
+  # UserPrintTicket is the per-user devmode (HKCU\\Printers\\DevModes2); keep it
+  # as-is - including the private blob - and override only the label size.
+  function New-LabelJobTicket {{
+    param([System.Printing.PrintQueue]$Queue, [double]$WidthMm, [double]$HeightMm)
+    $base = $null
+    try {{ $base = $Queue.UserPrintTicket }} catch {{ }}
+    if (-not $base) {{
+      # No per-user ticket (remote/unreachable print server): fall back to the
+      # machine default, but drop its DevmodeSnapshot - that stale roll-paper
+      # blob overrides the page size we are about to request.
+      $fallback = $Queue.DefaultPrintTicket
+      try {{
+        $inner = $fallback.GetType().GetField('_printTicket', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($fallback)
+        $doc = $inner.GetType().GetField('_xmlDoc', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($inner)
+        foreach ($n in $doc.SelectNodes('//*[contains(@name,"PageDevmodeSnapshot")]')) {{
+          [void]$n.ParentNode.RemoveChild($n)
+        }}
+      }} catch {{ }}
+      return $fallback
+    }}
+    $stream = $base.GetXmlStream()
+    $stream.Position = 0
+    $reader = New-Object System.IO.StreamReader($stream)
+    $xml = $reader.ReadToEnd()
+    $reader.Close()
+    $doc = New-Object System.Xml.XmlDocument
+    $doc.PreserveWhitespace = $true
+    $doc.LoadXml($xml)
+    $snap = $doc.SelectSingleNode('//*[local-name()="ParameterInit" and contains(@name,"PageDevmodeSnapshot")]/*[local-name()="Value"]')
+    if ($snap) {{
+      # DEVMODEW offsets: 72 dmFields, 78 dmPaperSize, 80 dmPaperLength,
+      # 82 dmPaperWidth (0.1 mm). dmPaperSize = DMPAPER_USER (256) so the driver
+      # takes the size from dmPaperWidth/Length instead of a registered form
+      # (a named form wins over these fields and prints its own size).
+      $dm = [Convert]::FromBase64String($snap.InnerText.Trim())
+      $fields = [BitConverter]::ToUInt32($dm, 72) -bor 0x2 -bor 0x4 -bor 0x8
+      [Array]::Copy([BitConverter]::GetBytes([uint32]$fields), 0, $dm, 72, 4)
+      [Array]::Copy([BitConverter]::GetBytes([int16]256), 0, $dm, 78, 2)
+      [Array]::Copy([BitConverter]::GetBytes([int16][int][math]::Round($WidthMm * 10)), 0, $dm, 82, 2)
+      [Array]::Copy([BitConverter]::GetBytes([int16][int][math]::Round($HeightMm * 10)), 0, $dm, 80, 2)
+      $snap.InnerText = [Convert]::ToBase64String($dm)
+    }}
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($doc.OuterXml)
+    return New-Object System.Printing.PrintTicket((New-Object System.IO.MemoryStream(, $bytes)))
+  }}
   $png = { _ps_quote(png_path) }
   if (-not (Test-Path -LiteralPath $png)) {{ exit 2 }}
   $w = [double]({float(width_mm)} * 100)
   $h = [double]({float(height_mm)} * 100)
   $local = New-Object System.Printing.LocalPrintServer
   $queue = $local.GetPrintQueue({ _ps_quote(printer_name) })
-  $ticket = $queue.DefaultPrintTicket
+  $ticket = New-LabelJobTicket -Queue $queue -WidthMm {float(width_mm)} -HeightMm {float(height_mm)}
   $pms = New-Object System.Printing.PageMediaSize @(
     [System.Printing.PageMediaSizeName]::Unknown, $w, $h
   )
@@ -478,17 +552,6 @@ try {{
     $m.Right = 0
     $m.Bottom = 0
     $ticket.PageMargin = $m
-  }} catch {{ }}
-  # Drop PageDevmodeSnapshot (Epson private blob baked from DefaultPrintTicket).
-  # That stale roll-paper DEVMODE conflicts with our 75×81 media and overrides
-  # the queue's live Printing Preferences (dither/halftone) that studio browser
-  # print uses — so server output diverged in dither settings.
-  try {{
-    $inner = $ticket.GetType().GetField('_printTicket', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($ticket)
-    $doc = $inner.GetType().GetField('_xmlDoc', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($inner)
-    foreach ($n in $doc.SelectNodes('//*[contains(@name,"PageDevmodeSnapshot")]')) {{
-      [void]$n.ParentNode.RemoveChild($n)
-    }}
   }} catch {{ }}
   $bi = New-Object System.Windows.Media.Imaging.BitmapImage
   $bi.BeginInit()
@@ -584,8 +647,11 @@ def _plain_text_fallback(
 ) -> str:
     patient = patient or {}
     service = str(ticket.get("service") or "")
-    number = str(ticket.get("persian_number") or ticket.get("number") or "")
-    admission = str(
+    # ارقام فارسی: همان قرارداد سند چاپ (سرور و پیش‌نمایش استودیو)
+    number = to_persian_digits(
+        ticket.get("persian_number") or ticket.get("number") or ""
+    )
+    admission = to_persian_digits(
         patient.get("admission_number_persian") or patient.get("admission_number") or ""
     )
     lines = [service or "پذیرش", f"شماره نوبت: {number}"]
@@ -595,7 +661,7 @@ def _plain_text_fallback(
         name = str(patient.get("name") or "")
         if name:
             lines.append(name)
-    lines.append(time.strftime("%Y/%m/%d %H:%M"))
+    lines.append(to_persian_digits(time.strftime("%Y/%m/%d %H:%M")))
     return "\n".join(lines) + "\n"
 
 

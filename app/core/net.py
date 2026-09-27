@@ -1,17 +1,20 @@
 """Trusted client-IP and request-origin helpers.
 
-Hastama is reachable in two supported topologies:
+There is exactly **one** user facing URL, ``https://hastama.ir``, for laboratory
+LAN users and Internet users alike: Cloudflare terminates TLS, the Cloudflare
+Tunnel (``cloudflared`` Windows service) forwards to
+``uvicorn --host 127.0.0.1 --port 5000`` on this host.  No Caddy, no LAN
+hostname and no direct port-5000 access is part of the supported topology.
 
-1. **Production LAN** — Caddy terminates HTTPS on ``hastama.local`` and proxies
-   to ``uvicorn --host 127.0.0.1 --port 8000 --proxy-headers``.
-2. **Direct/dev** — ``uvicorn --host 127.0.0.1 --port 5000`` (loopback only;
-   see ``scripts/run_server.bat``).  Public access is via the Cloudflare
-   Tunnel, which originates from this host.
+The only direct caller of the origin port is ``cloudflared`` on loopback, which
+is why the loopback default below is the correct trust boundary; dev machines
+running the app on ``127.0.0.1:5000`` are trusted for the same reason.
 
 ``X-Forwarded-For`` is *client controlled* in every topology unless a trusted
-proxy appends the real peer address.  Caddy appends the immediate peer to any
-client-supplied header, so the **last** syntactically valid entry of the header
-is the closest value we can trust, while the first entry is attacker chosen.
+proxy appends the real peer address.  Cloudflare (and uvicorn's own proxy
+header middleware) appends the immediate peer to any client-supplied header, so
+the **last** syntactically valid entry of the header is the closest value we can
+trust, while the first entry is attacker chosen.
 
 The previous implementation used ``split(",")[0]`` which allowed any client to
 forge an arbitrary address.  That broke IP based rate limiting, poisoned audit
@@ -21,9 +24,10 @@ unauthenticated stored-XSS primitive.  See ``docs/security/`` for the finding.
 Rules implemented here:
 
 * Honor ``X-Forwarded-For`` / ``X-Forwarded-Proto`` **only** when the request
-  arrives from a configured trusted proxy (default ``127.0.0.1, ::1``, the
-  Caddy sidecar on the same host).  A client that reaches the application port
-  directly therefore cannot forge its own address.
+  arrives from a configured trusted proxy (default ``127.0.0.1, ::1`` — the
+  Cloudflare Tunnel ``cloudflared`` process on the same host).  A LAN client
+  that somehow reached the application port directly could not forge its own
+  address for rate limiting or audit records.
 * Use the last syntactically valid IP in ``X-Forwarded-For``.
 * Ignore the header completely when no entry is a valid IP literal.
 * Fall back to the socket peer address.

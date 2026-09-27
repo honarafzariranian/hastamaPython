@@ -1125,12 +1125,15 @@ async def take_queue_ticket(request: Request):
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
-        # Get today's date and next ticket number
         cursor.execute("SELECT CAST(SYSUTCDATETIME() AS DATE)")
         today = cursor.fetchone()[0]
+        # شمارهٔ نوبت **پیوسته** است: نه با ریستارت سرور و نه با عوض‌شدن روز
+        # به ۱ برنمی‌گردد، چون صف یک جریان پیوسته است. تاریخِ نوبت فقط برای
+        # گزارش روزانه ذخیره می‌شود. قفل UPDLOCK/HOLDLOCK جلوی دو شمارهٔ
+        # یکسان را می‌گیرد وقتی دو کیوسک هم‌زمان نوبت می‌گیرند.
         cursor.execute(
-            "SELECT ISNULL(MAX(ticket_number), 0) + 1 FROM dbo.queue_tickets WHERE ticket_date = ?",
-            (today,),
+            """SELECT ISNULL(MAX(ticket_number), 0) + 1
+               FROM dbo.queue_tickets WITH (UPDLOCK, HOLDLOCK)"""
         )
         next_num = cursor.fetchone()[0]
         cursor.execute(
@@ -1149,16 +1152,14 @@ async def take_queue_ticket(request: Request):
     finally:
         conn.close()
 
-    # Count how many are waiting
+    # صفِ کیوسک = همهٔ نوبت‌های در انتظار، حتی نوبت‌های معطلی که از روزهای
+    # قبل مانده‌اند (صف با عوض‌شدن روز صفر نمی‌شود).
     waiting_count = 0
     conn2 = _get_connection()
     try:
         _ensure_schema(conn2)
         cursor2 = conn2.cursor()
-        cursor2.execute(
-            "SELECT COUNT(*) FROM dbo.queue_tickets WHERE ticket_date = ? AND status = 'waiting'",
-            (today,),
-        )
+        cursor2.execute("SELECT COUNT(*) FROM dbo.queue_tickets WHERE status = 'waiting'")
         waiting_count = cursor2.fetchone()[0]
     finally:
         conn2.close()
@@ -1354,38 +1355,37 @@ async def print_queue_ticket(request: Request):
 async def list_queue_tickets(request: Request, status: str = "waiting"):
     """List queue tickets. status can be: waiting, called, completed, all.
 
+    صف پیوسته است: «در انتظار»/«فراخوان‌شده» از هر تاریخی می‌آید تا نوبتِ
+    معطل دیروز هم در صف بماند؛ فقط تاریخ (پایان‌یافته) به امروز محدود است.
     Anonymous callers (TV display, kiosk counter) only need number/status/
     service; full patient PII is returned only to an authenticated admin
     session (call-management console).
     """
     include_pii = request.session.get("is_admin") is True
 
+    # «همه» = صفِ باز (در انتظار/فراخوان‌شده) + تاریخ امروز
+    today = "ticket_date = CAST(SYSUTCDATETIME() AS DATE)"
+    if status == "all":
+        scope, params = f"status IN ('waiting', 'called') OR {today}", ()
+    elif status in ("waiting", "called"):
+        scope, params = "status = ?", (status,)
+    else:
+        scope, params = f"status = ? AND {today}", (status,)
+
     conn = _get_connection()
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
-        if status == "all":
-            rows = cursor.execute(
-                """SELECT id, ticket_number, ticket_date, status, service,
-                       patient_name, patient_age, patient_national_id, patient_phone,
-                       insurance_base, insurance_extra, called_for,
-                       called_at, completed_at, created_at
-                   FROM dbo.queue_tickets
-                   WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
-                   ORDER BY ticket_number ASC"""
-            ).fetchall()
-        else:
-            rows = cursor.execute(
-                """SELECT id, ticket_number, ticket_date, status, service,
-                       patient_name, patient_age, patient_national_id, patient_phone,
-                       insurance_base, insurance_extra, called_for,
-                       called_at, completed_at, created_at
-                   FROM dbo.queue_tickets
-                   WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
-                     AND status = ?
-                   ORDER BY ticket_number ASC""",
-                (status,),
-            ).fetchall()
+        rows = cursor.execute(
+            f"""SELECT id, ticket_number, ticket_date, status, service,
+                   patient_name, patient_age, patient_national_id, patient_phone,
+                   insurance_base, insurance_extra, called_for,
+                   called_at, completed_at, created_at
+               FROM dbo.queue_tickets
+               WHERE {scope}
+               ORDER BY ticket_number ASC""",
+            params,
+        ).fetchall()
         columns = [d[0] for d in cursor.description]
         result = []
         for row in rows:
@@ -1406,19 +1406,20 @@ async def list_queue_tickets(request: Request, status: str = "waiting"):
 
 @router.get("/queue/stats")
 async def queue_stats():
-    """Return today's queue statistics."""
+    """Queue statistics: the open queue (any date) + today's finished tickets."""
     conn = _get_connection()
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
         cursor.execute(
             """SELECT
-                   COUNT(*) as total,
+                   SUM(CASE WHEN status IN ('waiting', 'called') THEN 1 ELSE 0 END) as total,
                    SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
                    SUM(CASE WHEN status = 'called' THEN 1 ELSE 0 END) as called,
-                   SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
-               FROM dbo.queue_tickets
-               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)"""
+                   SUM(CASE WHEN status = 'completed'
+                             AND ticket_date = CAST(SYSUTCDATETIME() AS DATE)
+                            THEN 1 ELSE 0 END) as completed
+               FROM dbo.queue_tickets"""
         )
         row = cursor.fetchone()
     finally:
@@ -1494,7 +1495,7 @@ async def call_queue_ticket(request: Request, ticket_id: int, department: str = 
 
 @router.delete("/queue/{ticket_id}")
 async def delete_queue_ticket(request: Request, ticket_id: int):
-    """Remove one waiting ticket from today's queue."""
+    """Remove one waiting ticket from the queue (any date)."""
     from app.core.net import origin_is_same_site
     if not origin_is_same_site(request):
         raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
@@ -1507,7 +1508,6 @@ async def delete_queue_ticket(request: Request, ticket_id: int):
         cursor.execute(
             """DELETE FROM dbo.queue_tickets
                WHERE id = ?
-                 AND ticket_date = CAST(SYSUTCDATETIME() AS DATE)
                  AND status = 'waiting'""",
             (ticket_id,),
         )
@@ -1524,7 +1524,7 @@ async def delete_queue_ticket(request: Request, ticket_id: int):
 
 @router.delete("/queue")
 async def delete_waiting_queue(request: Request):
-    """Remove all waiting tickets from today's queue."""
+    """Remove every waiting ticket from the queue (any date)."""
     from app.core.net import origin_is_same_site
     if not origin_is_same_site(request):
         raise HTTPException(status_code=403, detail="درخواست از مبدأ مجاز نیست.")
@@ -1534,11 +1534,7 @@ async def delete_waiting_queue(request: Request):
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
-        cursor.execute(
-            """DELETE FROM dbo.queue_tickets
-               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
-                 AND status = 'waiting'"""
-        )
+        cursor.execute("DELETE FROM dbo.queue_tickets WHERE status = 'waiting'")
         deleted_count = max(0, int(cursor.rowcount))
         conn.commit()
     finally:
@@ -1588,10 +1584,11 @@ async def call_next_ticket(request: Request, department: str = "پذیرش"):
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
+        # فراخوان نفر بعدی از صف پیوسته: قدیمی‌ترین نوبتِ در انتظار، حتی اگر
+        # مربوط به روزهای قبل باشد.
         row = cursor.execute(
             """SELECT TOP 1 id, ticket_number FROM dbo.queue_tickets
-               WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE)
-                 AND status = 'waiting'
+               WHERE status = 'waiting'
                ORDER BY ticket_number ASC"""
         ).fetchone()
         if not row:
@@ -1645,23 +1642,29 @@ async def call_next_ticket(request: Request, department: str = "پذیرش"):
 
 @router.get("/queue/ticket/{ticket_number}")
 async def get_queue_ticket(request: Request, ticket_number: int):
-    """Get ticket details by ticket number for today (kiosk edit flow)."""
+    """Get ticket details by ticket number (kiosk edit flow).
+
+    شمارهٔ نوبت پیوسته است، پس عملاً یکتاست؛ تنها در داده‌های قدیمیِ روز‌محور
+    ممکن است یک شماره در چند روز تکرار شده باشد — آن‌وقت نوبت باز و تازه‌تر
+    انتخاب می‌شود تا ویرایش روی نوبت درست بنشیند.
+    """
     _guard_queue_pii(request, "queue-ticket-read")
     conn = _get_connection()
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
         row = cursor.execute(
-            "SELECT id, ticket_number, ticket_date, status, service, "
+            "SELECT TOP 1 id, ticket_number, ticket_date, status, service, "
             "patient_name, patient_age, patient_national_id, patient_phone, "
             "insurance_base, insurance_extra "
             "FROM dbo.queue_tickets "
-            "WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE) "
-            "AND ticket_number = ?",
+            "WHERE ticket_number = ? "
+            "ORDER BY CASE WHEN status IN ('waiting', 'called') THEN 0 ELSE 1 END, "
+            "created_at DESC, id DESC",
             (ticket_number,),
         ).fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="نوبتی با این شماره امروز یافت نشد.")
+            raise HTTPException(status_code=404, detail="نوبتی با این شماره یافت نشد.")
         columns = [d[0] for d in cursor.description]
         ticket = dict(zip(columns, row))
         ticket["ticket_date"] = str(ticket.pop("ticket_date", ""))
@@ -1688,15 +1691,16 @@ async def edit_queue_ticket(request: Request, ticket_number: int, body: EditTick
     try:
         _ensure_schema(conn)
         cursor = conn.cursor()
-        # Check ticket exists and is still waiting
+        # Check ticket exists and is still waiting (همان قاعدهٔ خواندن نوبت)
         row = cursor.execute(
-            "SELECT id, status FROM dbo.queue_tickets "
-            "WHERE ticket_date = CAST(SYSUTCDATETIME() AS DATE) "
-            "AND ticket_number = ?",
+            "SELECT TOP 1 id, status FROM dbo.queue_tickets "
+            "WHERE ticket_number = ? "
+            "ORDER BY CASE WHEN status IN ('waiting', 'called') THEN 0 ELSE 1 END, "
+            "created_at DESC, id DESC",
             (ticket_number,),
         ).fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="نوبتی با این شماره امروز یافت نشد.")
+            raise HTTPException(status_code=404, detail="نوبتی با این شماره یافت نشد.")
         if row[1] != "waiting":
             raise HTTPException(status_code=400, detail="فقط نوبت‌های در انتظار قابل اصلاح هستند.")
         # Build update fields (only non-None values)

@@ -391,6 +391,7 @@
         font-weight: 900;
         line-height: 15px;
         text-align: center;
+        width: fit-content;
     }
 
     .topbar-user {

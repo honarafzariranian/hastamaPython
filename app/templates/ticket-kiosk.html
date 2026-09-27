@@ -558,7 +558,7 @@
             box-shadow: 0 6px 24px rgba(139,92,246,0.09);
         }
 
-        /* ── دکمه نوبت خالی (خاکستری — بدون فرم) ── */
+        /* ── دکمه نوبت آزاد (خاکستری — بدون فرم) ── */
         .k-services-row--blank {
             margin-top: 2px;
         }
@@ -2001,9 +2001,9 @@
                         <span class="k-service-desc">ویرایش اطلاعات نوبت</span>
                     </button>
                 </div>
-                <!-- ردیف نوبت خالی: بدون هیچ فرم یا اطلاعاتی -->
+                <!-- ردیف نوبت آزاد: بدون هیچ فرم یا اطلاعاتی -->
                 <div class="k-services-row k-services-row--blank">
-                    <button type="button" class="k-service-card k-service-card--blank k-service-card--wide" data-service="نوبت خالی" onclick="issueBlankTicket()">
+                    <button type="button" class="k-service-card k-service-card--blank k-service-card--wide" data-service="نوبت آزاد" onclick="issueBlankTicket()">
                         <div class="k-service-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="5" width="18" height="14" rx="2"/>
@@ -2011,7 +2011,7 @@
                                 <path d="M8 15h4"/>
                             </svg>
                         </div>
-                        <span class="k-service-label">نوبت خالی</span>
+                        <span class="k-service-label">نوبت آزاد</span>
                         <span class="k-service-desc">فقط شماره نوبت — بدون پرکردن اطلاعات</span>
                     </button>
                 </div>
@@ -2473,6 +2473,9 @@
         </div>
     </div>
 
+    {#- ONE shared label engine: the same settings, markup and print document
+        that master-admin → label-printer uses. -#}
+    <script src="/static/js/label-system.js"></script>
     <script>
         /* ── تم روشن/تاریک (هماهنگ با call-management) ── */
         (function () {
@@ -2535,20 +2538,20 @@
                 openResult();
             } else if (service === 'اصلاح پذیرش') {
                 openEditOverlay();
-            } else if (service === 'نوبت خالی') {
+            } else if (service === 'نوبت آزاد') {
                 issueBlankTicket();
             } else {
                 showPatientForm(service, null);
             }
         }
 
-        /* نوبت خالی: بدون فرم و بدون اطلاعات بیمار */
+        /* نوبت آزاد: بدون فرم و بدون اطلاعات بیمار */
         function issueBlankTicket() {
             document.querySelectorAll('.k-service-card').forEach(function (c) { c.classList.remove('selected'); });
             var blankBtn = document.querySelector('.k-service-card--blank');
             if (blankBtn) blankBtn.classList.add('selected');
-            selectedService = 'نوبت خالی';
-            issueTicket('نوبت خالی', {});
+            selectedService = 'نوبت آزاد';
+            issueTicket('نوبت آزاد', {});
         }
 
         /* ── متن مودال بر اساس نوع سرویس ── */
@@ -3065,201 +3068,15 @@
             }
         }
 
-        /* ── چاپ بی‌صدا سمت سرور (چاپگر + تنظیمات انتخابی در استودیو لیبل) ── */
-        async function printIssuedTicket(ticket, patientData) {
-            var labelSettings = null;
-            try {
-                var resp = await fetch('/api/queue/print', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ticket: ticket, patient: patientData || {} })
-                });
-                var data = await resp.json();
-                if (data && data.settings) labelSettings = data.settings;
-                if (data && data.success) return;
-            } catch (_) { /* network / 5xx → browser fallback below */ }
-            try { printTicket(ticket, patientData, labelSettings); } catch (_) {}
-        }
-
-        function readLocalLabelSettings() {
-            try {
-                var raw = localStorage.getItem('hastama-label-settings');
-                return raw ? JSON.parse(raw) : null;
-            } catch (_) { return null; }
-        }
-
-        /* ── چاپ لیبل نوبت (fallback مرورگر — همان تنظیمات label-printer) ── */
-        function escText(v) {
-            return String(v === null || v === undefined ? '' : v)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-        function faDigits(v) {
-            return String(v === null || v === undefined ? '' : v)
-                .replace(/[0-9]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; });
-        }
-        function isMinimalLabelService(service) {
-            var s = String(service || '').replace(/‌/g, ' ').replace(/\s+/g, ' ').trim();
-            return s === 'جوابدهی' || s === 'نمونه‌گیری' || s === 'نمونه گیری'
-                || s === 'نوبت خالی' || s === 'javabdehi' || s === 'sampling'
-                || s === 'result' || s === 'blank';
-        }
-        function clampMm(v, min, max, fallback) {
-            var n = Number(v);
-            if (!isFinite(n)) return fallback;
-            return Math.min(max, Math.max(min, Math.round(n)));
-        }
-        function normalizeLabelSettings(raw) {
-            raw = raw || {};
-            var width = raw.width_mm != null ? raw.width_mm : raw.maLabelWidth;
-            var height = raw.height_mm != null ? raw.height_mm : raw.maLabelHeight;
-            var tpl = raw.template != null ? raw.template : raw.maLabelTemplate;
-            var rotate = raw.rotate != null ? raw.rotate : raw.maPrintRotate;
-            var showName = raw.show_name != null ? raw.show_name : raw.maShowName;
-            var showTime = raw.show_time != null ? raw.show_time : raw.maShowTime;
-            var showHint = raw.show_hint != null ? raw.show_hint : raw.maShowHint;
-            if (['queue', 'compact', 'result', 'sampling', 'blank'].indexOf(String(tpl)) < 0) tpl = 'queue';
-            return {
-                width_mm: clampMm(width, 30, 150, 75),
-                height_mm: clampMm(height, 20, 100, 81),
-                template: String(tpl),
-                rotate: rotate === true || rotate === 1 || rotate === '1' || rotate === 'true',
-                show_name: showName == null ? true : !!showName && showName !== false && showName !== 'false',
-                show_time: showTime == null ? true : !!showTime && showTime !== false && showTime !== 'false',
-                show_hint: showHint == null ? true : !!showHint && showHint !== false && showHint !== 'false'
-            };
-        }
-        function printTicket(ticket, patientData, labelSettings) {
-            patientData = patientData || {};
-            var s = normalizeLabelSettings(labelSettings || readLocalLabelSettings());
-            var w = s.width_mm;
-            var h = s.height_mm;
-            var rotated = s.rotate;
-            var pageW = rotated ? h : w;
-            var pageH = rotated ? w : h;
-            var zoom = Math.max(0.8, Math.min(1.8, w / 50));
-            var wwin = window.open('', '_blank', 'width=360,height=520');
-            if (!wwin) return;
-            var service = String(ticket.service || '');
-            var number = escText(ticket.persian_number || faDigits(ticket.number) || '');
-            var admission = escText(patientData.admission_number_persian || patientData.admission_number || '');
-            var minimal = isMinimalLabelService(service);
-            var recordsHtml;
-            if (minimal) {
-                recordsHtml = admission
-                    ? '<section class="lbl__records" style="grid-template-columns:1fr"><div class="lbl__record-group">'
-                      + '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span>'
-                      + '<span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
-                      + '</div></section>'
-                    : '';
-            } else {
-                recordsHtml = '<section class="lbl__records">'
-                    + '<div class="lbl__record-group">'
-                    + (admission
-                        ? '<div class="lbl__record"><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
-                        : '')
-                    + (s.show_name
-                        ? '<div class="lbl__record"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value">' + escText(patientData.name || '—') + '</span></div>'
-                        : '')
-                    + '<div class="lbl__record"><span class="lbl__record-label">سن</span><span class="lbl__record-value">' + escText(faDigits(patientData.age) || '—') + '</span></div>'
-                    + '<div class="lbl__record"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.national_id) || '—') + '</span></div>'
-                    + '<div class="lbl__record"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.phone) || '—') + '</span></div>'
-                    + '</div>'
-                    + '<div class="lbl__record-group lbl__record-group--insurance">'
-                    + '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track">—</span></div>'
-                    + '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value">' + escText(patientData.insurance_base || '—') + '</span></div>'
-                    + '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value">' + escText(patientData.insurance_extra || '—') + '</span></div>'
-                    + '</div></section>';
-            }
-            var origin = window.location.origin;
-            var now = new Date();
-            var when = now.toLocaleDateString('fa-IR') + ' - ' + now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-            var rotateCss = rotated
-                ? '.lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;'
-                  + 'transform:translateY(calc(var(--lbl-mm-w,' + w + ') * 1mm)) rotate(-90deg);transform-origin:top left}'
-                : '';
-            var rotatedCls = rotated ? ' is-rotated' : '';
-            var hintAttr = s.show_hint ? '' : ' hidden';
-            var timeAttr = s.show_time ? '' : ' hidden';
-            // Same studio structure + data-field hooks so label-print.css
-            // template rules (result/sampling/blank/…) apply on this fallback.
-            var patientRows = '';
-            if (minimal) {
-                patientRows = admission
-                    ? '<div class="lbl__record" data-field="admission"><span class="lbl__record-label">شماره پذیرش</span>'
-                      + '<span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
-                    : '';
-            } else {
-                patientRows = (admission
-                    ? '<div class="lbl__record" data-field="admission"><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num">' + admission + '</span></div>'
-                    : '')
-                    + (s.show_name
-                        ? '<div class="lbl__record" data-field="name"><span class="lbl__record-label">نام و نام خانوادگی</span><span class="lbl__record-value">' + escText(patientData.name || '—') + '</span></div>'
-                        : '')
-                    + '<div class="lbl__record" data-field="age"><span class="lbl__record-label">سن</span><span class="lbl__record-value">' + escText(faDigits(patientData.age) || '—') + '</span></div>'
-                    + '<div class="lbl__record" data-field="national"><span class="lbl__record-label">شماره ملی</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.national_id) || '—') + '</span></div>'
-                    + '<div class="lbl__record" data-field="phone"><span class="lbl__record-label">شماره همراه</span><span class="lbl__record-value lbl__record-value--num">' + escText(faDigits(patientData.phone) || '—') + '</span></div>';
-            }
-            var insuranceBlock = minimal
-                ? ''
-                : '<div class="lbl__record-group lbl__record-group--insurance" data-field="insurance">'
-                  + '<div class="lbl__record"><span class="lbl__record-label">کد پیگیری بیمه</span><span class="lbl__record-value lbl__record-value--num lbl__record-value--track">—</span></div>'
-                  + '<div class="lbl__record"><span class="lbl__record-label">بیمه پایه</span><span class="lbl__record-value">' + escText(patientData.insurance_base || '—') + '</span></div>'
-                  + '<div class="lbl__record"><span class="lbl__record-label">بیمه تکمیلی</span><span class="lbl__record-value">' + escText(patientData.insurance_extra || '—') + '</span></div>'
-                  + '</div>';
-            var recordsHtml = (patientRows || insuranceBlock)
-                ? '<section class="lbl__records"><div class="lbl__record-group lbl__record-group--patient" data-field="patient">'
-                  + patientRows + '</div>' + insuranceBlock + '</section>'
-                : '';
-            var fitScript = '<scr' + 'ipt>window.__lblFit=function(){try{'
-                + 'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
-                + 'r.style.setProperty("--lbl-zoom","1");'
-                + 'var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;'
-                + 'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
-                + 'var ch=c.scrollHeight;c.style.height=ph;c.style.flex=pf;c.style.transform=pt;'
-                + 'var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;'
-                + 'z=Math.max(0.8,Math.min(1.8,z));'
-                + 'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
-                + '}catch(e){}};window.__lblFit();'
-                + 'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.__lblFit();});}'
-                + '</scr' + 'ipt>';
-            wwin.document.write(
-                '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">'
-                + '<title>نوبت ' + number + '</title>'
-                + '<link rel="stylesheet" href="' + origin + '/static/css/vazir.css">'
-                + '<link rel="stylesheet" href="' + origin + '/static/css/label-print.css">'
-                + '<style>@page{size:' + pageW + 'mm ' + pageH + 'mm;margin:0}html,body{margin:0;background:#fff}'
-                + '.lbl-page{position:relative;width:' + pageW + 'mm;height:' + pageH + 'mm;overflow:hidden}'
-                + '.lbl.lbl--print{width:' + w + 'mm;height:' + h + 'mm;--lbl-mm-w:' + w + ';--lbl-mm-h:' + h
-                + ';--lbl-zoom:' + zoom.toFixed(3) + ';margin:0;border:0;border-radius:0;box-shadow:none;filter:grayscale(1)}'
-                + rotateCss + '</style>'
-                + '</head><body class="lbl-print-page"><div class="lbl-page">'
-                + '<div class="lbl lbl--print' + rotatedCls + '" data-template="' + escText(s.template) + '">'
-                + '<span class="lbl__accent" aria-hidden="true"></span><div class="lbl__content">'
-                + '<header class="lbl__header"><span class="lbl__datetime"' + timeAttr + '><span class="lbl__datetime-value">' + escText(when) + '</span></span>'
-                + '<div class="lbl__identity"><img class="lbl__logo" src="' + origin + '/static/images/lab-logo.png" alt="">'
-                + '<div class="lbl__identity-text"><h3 class="lbl__lab-name">آزمایشگاه تشخیص طبی دکتر امینی</h3>'
-                + '<p class="lbl__slogan"' + hintAttr + '>همگام با تکنولوژی امروز، به پشتوانه تجربه دیروز</p></div></div></header>'
-                + '<section class="lbl__queue"><div class="lbl__number-box">'
-                + '<span class="lbl__service">' + escText(service || 'پذیرش') + '</span>'
-                + '<span class="lbl__queue-number">' + number + '</span>'
-                + '</div></section>'
-                + recordsHtml
-                + '<p class="lbl__message"' + hintAttr + '><span class="lbl__message-text">نوبت شما با دقت پیگیری می‌شود؛ به‌محض آماده‌شدن از همین سامانه اعلام خواهد شد.</span></p>'
-                + '<footer class="lbl__footer"><img class="lbl__brand-logo" src="' + origin + '/static/images/newlogo.png" alt="">'
-                + '<div class="lbl__brand-text"><strong>سامانه نوبت‌دهی و فراخوان هستما</strong><span>محصولی از شرکت هنر افزار ایرانیان</span></div></footer>'
-                + '</div></div></div>'
-                + fitScript
-                + '</body></html>'
-            );
-            wwin.document.close();
-            setTimeout(function () {
-                try { if (wwin.__lblFit) wwin.__lblFit(); } catch (_) {}
-                setTimeout(function () { try { wwin.focus(); wwin.print(); } catch (_) {} }, 350);
-            }, 400);
+        /* ── چاپ لیبل نوبت: همان سیستم واحد (label-system.js) ──
+           تنظیمات، قالب، اندازه و چاپگر از system_config روی سرور می‌آید؛ یعنی
+           دقیقاً همان چیزی که در استودیو لیبل (master-admin → label-printer)
+           تنظیم می‌شود. این صفحه هیچ سیستم چاپ جداگانه‌ای ندارد. */
+        function printIssuedTicket(ticket, patientData) {
+            if (!window.HastamaLabel) return;
+            // چاپ بی‌صدای سرور با همان سند و همان تنظیمات؛ فقط اگر سرور نتواند،
+            // همان سند چاپ در مرورگر باز می‌شود.
+            window.HastamaLabel.print(ticket || {}, patientData || {});
         }
 
         /* ── بستن مودال ── */

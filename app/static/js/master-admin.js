@@ -187,223 +187,165 @@
     return `<span class="ma-dot ma-dot--${colors[val] || 'blue'}"></span>`;
   }
 
-  // ── Label Studio (طراحی و چاپ لیبل نوبت) ─────────────────────
+  // ── Label Studio (استودیو لیبل نوبت) ─────────────────────────
+  // اینجا فقط *رابط* استودیو است؛ خود سیستم چاپ و لیبل یکی است و جای دیگری
+  // زندگی می‌کند:
+  //   • app/static/js/label-system.js             → موتور مشترک (استودیو + کیوسک)
+  //   • app/templates/partials/label_queue.html   → مارک‌آپ واحد لیبل
+  //   • app/templates/label_print_document.html   → سند واحد چاپ
+  //   • app/services/label_render.py              → همان‌ها روی سرور
+  // تنظیمات در system_config ذخیره می‌شود، پس هر تغییری در این صفحه روی
+  // لیبل‌هایی که کیوسک چاپ می‌کند هم اعمال می‌شود.
   let labelStudioReady = false;
 
   function initLabelStudio() {
-    const preview = document.getElementById('maLabelPreview');
-    if (!preview) return;
+    const HL = window.HastamaLabel;
+    const host = document.getElementById('maLabelPreviewHost');
+    if (!HL || !host) return;
     if (labelStudioReady) return;
     labelStudioReady = true;
 
-    const stage = preview.closest('.ma-label-preview-stage');
-    const width = document.getElementById('maLabelWidth');
-    const height = document.getElementById('maLabelHeight');
-    const readout = document.getElementById('maLabelSizeReadout');
-    const ratio = document.getElementById('maLabelRatio');
-    const template = document.getElementById('maLabelTemplate');
-    const timeEl = document.getElementById('maPreviewTime');
-    const nameRow = document.getElementById('maPreviewNameRow');
-    const hintEl = document.getElementById('maPreviewHint');
-    const rotateToggle = document.getElementById('maPrintRotate');
-
-    // ── Label geometry ────────────────────────────────────────
-    // لیبل پیش‌فرض «عمودی» است (ارتفاع > عرض). دلیل: ویندوز/درایور چاپ صفحهٔ
-    // افقی (عرض > ارتفاع) را ۹۰ درجه می‌چرخاند و لیبل روی کاغذ افقی می‌افتد.
-    // v5: لیبل پیش‌فرض ۷۵×۸۱ (اندازه استاندارد فعلی کاغذ لیبل)
-    const LABEL_LAYOUT_VERSION = 5;
-    const DEFAULT_LABEL_W = 75;
-    const DEFAULT_LABEL_H = 81;
-    const TOGGLE_IDS = ['maShowName', 'maShowTime', 'maShowHint', 'maThermalPreview', 'maPrintRotate'];
-
-    const stored = (() => { try { return JSON.parse(localStorage.getItem('hastama-label-settings') || '{}'); } catch (_) { return {}; } })();
-    [width, height, template].forEach(el => { if (el && stored[el.id] != null) el.value = stored[el.id]; });
-    if (Number(stored.maLabelLayoutVersion || 0) < LABEL_LAYOUT_VERSION) {
-      width.value = DEFAULT_LABEL_W;
-      height.value = DEFAULT_LABEL_H;
-      stored.maLabelLayoutVersion = LABEL_LAYOUT_VERSION;
-      localStorage.setItem('hastama-label-settings', JSON.stringify(stored));
-    }
-    TOGGLE_IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && stored[id] != null) el.checked = stored[id];
-    });
+    const el = {
+      width: document.getElementById('maLabelWidth'),
+      height: document.getElementById('maLabelHeight'),
+      template: document.getElementById('maLabelTemplate'),
+      rotate: document.getElementById('maPrintRotate'),
+      showName: document.getElementById('maShowName'),
+      showTime: document.getElementById('maShowTime'),
+      showHint: document.getElementById('maShowHint'),
+      thermal: document.getElementById('maThermalPreview'),
+      readout: document.getElementById('maLabelSizeReadout'),
+      ratio: document.getElementById('maLabelRatio'),
+      scale: document.getElementById('maLabelScaleReadout'),
+      reset: document.getElementById('maResetLabelBtn'),
+      print: document.getElementById('maPrintLabelBtn'),
+    };
 
     const fa = value => String(value).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-    const clampMm = (value, min, max) => {
-      const n = Number(value);
-      return Math.min(max, Math.max(min, Number.isFinite(n) ? n : min));
-    };
 
-    function printedAt() {
-      const now = new Date();
-      return `${now.toLocaleDateString('fa-IR')} - ${now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`;
+    // همان شکل canonical که label_print_document و سرور می‌فهمند
+    function readControls() {
+      return HL.normalizeSettings({
+        width_mm: el.width ? el.width.value : undefined,
+        height_mm: el.height ? el.height.value : undefined,
+        template: el.template ? el.template.value : undefined,
+        rotate: el.rotate ? el.rotate.checked : undefined,
+        show_name: el.showName ? el.showName.checked : undefined,
+        show_time: el.showTime ? el.showTime.checked : undefined,
+        show_hint: el.showHint ? el.showHint.checked : undefined,
+      });
     }
 
-    // ── مقیاس طرح لیبل ───────────────────────────────────────
-    // طرح لیبل در label-print.css برای یک لیبل کوچک (≈۵۰×۵۵ میلی‌متر) با
-    // اندازه‌های مطلق پیکسلی تنظیم شده است.  روی لیبل بزرگ‌تر این طرح ریز و
-    // خالی می‌ماند، پس کل محتوا با --lbl-zoom مقیاس می‌گیرد (متن‌ها، جعبه‌ها،
-    // حاشیه‌ها و آیکون‌ها یک‌جا و به یک نسبت).
-    const PX_PER_MM = 3.7795; // ۹۶ نقطه بر اینچ: همان مقداری که label-print.css استفاده می‌کند
-    const LABEL_REF_W_MM = 50; // طرح برای لیبلی با این عرض طراحی شده است
-    const ZOOM_MIN = 0.8;
-    const ZOOM_MAX = 1.8;
-
-    // اندازهٔ طبیعی محتوا در حالت مقیاس ۱ (همان روش fitLabelPreview)
-    function naturalContentSize(content) {
-      const previousHeight = content.style.height;
-      const previousFlex = content.style.flex;
-      const previousTransform = content.style.transform;
-      content.style.transform = 'none';
-      content.style.height = 'auto';
-      content.style.flex = 'none';
-      const size = { w: content.scrollWidth, h: content.scrollHeight };
-      content.style.height = previousHeight;
-      content.style.flex = previousFlex;
-      content.style.transform = previousTransform;
-      return size;
+    function writeControls(settings) {
+      if (el.width) el.width.value = settings.width_mm;
+      if (el.height) el.height.value = settings.height_mm;
+      if (el.template) el.template.value = settings.template;
+      if (el.rotate) el.rotate.checked = !!settings.rotate;
+      if (el.showName) el.showName.checked = settings.show_name !== false;
+      if (el.showTime) el.showTime.checked = settings.show_time !== false;
+      if (el.showHint) el.showHint.checked = settings.show_hint !== false;
     }
 
-    // مقیاس را روی خود لیبل تنظیم می‌کند و مقدارش را برمی‌گرداند.
-    // اندازه‌گیری در ابعاد فیزیکی واقعی لیبل انجام می‌شود (نه ابعاد پیش‌نمایش،
-    // چون جعبهٔ پیش‌نمایش روی صفحه با مقیاس دیگری رسم می‌شود) تا همان مقداری
-    // که در چاپ استفاده می‌شود درست باشد.
-    function applyLabelZoom(wmm, hmm) {
-      const content = preview.querySelector('.lbl__content');
-      if (!content) return 1;
-      // روی صفحه، اندازهٔ لیبل با transition عوض می‌شود؛ برای اندازه‌گیری دقیق
-      // باید پرش بین دو اندازه موقتی غیرفعال شود
-      const previousTransition = preview.style.transition;
-      preview.style.transition = 'none';
-      preview.style.setProperty('--lbl-zoom', '1');
-      preview.style.setProperty('width', `${(wmm * PX_PER_MM).toFixed(2)}px`, 'important');
-      preview.style.setProperty('height', `${(hmm * PX_PER_MM).toFixed(2)}px`, 'important');
-      const natural = naturalContentSize(content);
-      preview.style.transition = previousTransition;
-      const boxH = hmm * PX_PER_MM;
-      // سقف مقیاس از دو طرف می‌آید:
-      //   ۱) ارتفاع: محتوا باید در ارتفاع لیبل جا شود
-      //   ۲) عرض: طرح نباید از عرض مرجع (۵۰ میلی‌متر) باریک‌تر شود، وگرنه
-      //      متن‌های یک‌خطی بریده (…) می‌شوند
-      const widthRoom = wmm / LABEL_REF_W_MM;
-      const heightRoom = boxH / Math.max(1, natural.h);
-      const zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(widthRoom, heightRoom) * 0.97));
-      preview.style.setProperty('--lbl-zoom', zoom.toFixed(3));
-      return zoom;
+    function updateReadout(settings) {
+      if (el.readout) {
+        el.readout.textContent = fa(settings.width_mm) + ' × ' + fa(settings.height_mm)
+          + ' میلی‌متر — ' + (settings.height_mm >= settings.width_mm ? 'عمودی' : 'افقی');
+      }
+      if (el.ratio) {
+        el.ratio.textContent = 'نسبت عرض/ارتفاع '
+          + fa((settings.width_mm / settings.height_mm).toFixed(2)).replace('.', '٫');
+      }
     }
 
-    // تور نجات مقیاس: اگر بعد از zoom هم محتوا جا نشد (مثلاً zoom روی کف خود
-    // گیر کرده باشد) در فضای بدون zoom جمع می‌کند. جای محاسبه در همان فضای
-    // بدون zoom است تا با مقیاس طرح قاطی نشود.
-    function fitLabelPreview() {
-      const content = preview.querySelector('.lbl__content');
-      if (!content) return;
-      const zoomValue = preview.style.getPropertyValue('--lbl-zoom') || '1';
-      preview.style.setProperty('--lbl-zoom', '1');
-      const natural = naturalContentSize(content);
-      preview.style.setProperty('--lbl-zoom', zoomValue);
-      const zoom = parseFloat(zoomValue) || 1;
-      // فقط ارتفاع سنجیده می‌شود: عرض محتوا همیشه ۱۰۰٪ لیبل است، پس مقایسهٔ
-      // عرضی همیشه حدود ۱ در می‌آید و مقدار واقعی را خراب می‌کند.
-      const availableH = preview.clientHeight / zoom - 4;
-      const scale = Math.min(1, availableH / Math.max(1, natural.h));
-      if (scale >= 0.995) { content.style.transform = ''; return; }
-      content.style.height = '100%';
-      content.style.flex = '';
-      content.style.transformOrigin = 'top center';
-      content.style.transform = `scale(${Math.max(.58, scale)})`;
+    // مقیاس واقعی پیش‌نمایش نسبت به لیبل چاپی؛ اگر فضای پنل کم بود، عددی
+    // کمتر از ۱.۵ نشان داده می‌شود که همان چیزی است که روی صفحه می‌بینید.
+    function updateScale(scale) {
+      if (el.scale) {
+        el.scale.textContent = 'مقیاس '
+          + fa((scale || 1).toFixed(2)).replace('.', '٫') + ' برابر واقعی';
+      }
     }
 
-    // اگر عرض جعبهٔ شماره کم باشد (لیبل باریک)، اندازهٔ رقم را کم می‌کند تا بریده نشود
-    function fitQueueNumber() {
-      const numEl = preview.querySelector('.lbl__queue-number');
-      const boxEl = preview.querySelector('.lbl__number-box');
-      if (!numEl || !boxEl) return;
-      numEl.style.fontSize = '';
-      const base = parseFloat(window.getComputedStyle(numEl).fontSize) || 20;
-      const natural = numEl.scrollWidth;
-      const available = boxEl.clientWidth - 24; // حاشیهٔ داخلی + کادر جعبه
-      if (natural > available) numEl.style.fontSize = `${Math.max(10, base * available / natural)}px`;
-    }
+    // پیش‌نمایش با همان مارک‌آپ سرور ساخته می‌شود (قالب #hastamaLabelTemplate)
+    // و تا ۱.۵ برابر اندازهٔ واقعی لیبل بزرگ می‌شود تا متن‌ها خوانا باشند.
+    const preview = HL.mountPreview(host, {
+      settings: HL.readCache() || HL.DEFAULT_SETTINGS,
+      onScale: updateScale,
+    });
 
-    // عنوان سرویس روی بج لیبل — با قالب انتخاب‌شده عوض می‌شود
-    const TEMPLATE_SERVICE = {
-      queue: 'پذیرش',
-      compact: 'پذیرش',
-      result: 'جوابدهی',
-      sampling: 'نمونه‌گیری',
-      blank: 'نوبت خالی',
-    };
-
-    function refresh() {
-      const w = Math.round(clampMm(Number(width.value), 30, 150));
-      const h = Math.round(clampMm(Number(height.value), 20, 100));
-      const stageWidth = stage ? Math.max(180, stage.clientWidth - 48) : 420;
-      const stageHeight = stage ? Math.max(160, stage.clientHeight - 48) : 280;
-      const pxPerMm = Math.min(4, stageWidth / w, stageHeight / h);
-      // مقیاس طرح باید قبل از چیدن جعبهٔ پیش‌نمایش حساب شود (این تابع خودش
-      // اندازهٔ جعبه را موقتاً روی مقدار فیزیکی می‌گذارد)
-      applyLabelZoom(w, h);
-      preview.style.setProperty('width', `${Math.max(120, Math.round(w * pxPerMm))}px`, 'important');
-      preview.style.setProperty('height', `${Math.max(80, Math.round(h * pxPerMm))}px`, 'important');
-      preview.style.aspectRatio = `${w} / ${h}`;
-      const tpl = (template && template.value) || 'queue';
-      preview.dataset.template = tpl;
-      const serviceEl = preview.querySelector('.lbl__service');
-      if (serviceEl) serviceEl.textContent = TEMPLATE_SERVICE[tpl] || 'پذیرش';
-      fitLabelPreview();
-      fitQueueNumber();
-      if (readout) readout.textContent = `${fa(w)} × ${fa(h)} میلی‌متر — ${h >= w ? 'عمودی' : 'افقی'}`;
-      if (ratio) ratio.textContent = `نسبت ${fa((w / h).toFixed(2)).replace('.', '٫')}`;
-      if (timeEl && timeEl.querySelector('.lbl__datetime-value')) timeEl.querySelector('.lbl__datetime-value').textContent = printedAt();
-      if (nameRow) nameRow.hidden = !document.getElementById('maShowName').checked;
-      if (timeEl) timeEl.hidden = !document.getElementById('maShowTime').checked;
-      if (hintEl) hintEl.hidden = !document.getElementById('maShowHint').checked;
-      preview.classList.toggle('is-thermal', document.getElementById('maThermalPreview').checked);
-      const settings = { maLabelWidth: w, maLabelHeight: h, maLabelTemplate: tpl, maLabelLayoutVersion: LABEL_LAYOUT_VERSION };
-      TOGGLE_IDS.forEach(id => { settings[id] = document.getElementById(id).checked; });
-      localStorage.setItem('hastama-label-settings', JSON.stringify(settings));
-      pushLabelSettingsToServer(settings);
-    }
-
-    // Persist print settings server-side so the kiosk / reception share the
-    // same size, template, rotate and field visibility as this studio.
-    // (localStorage alone is browser-local and invisible to other machines.)
-    let labelSettingsPushTimer = 0;
-    let labelSettingsPushSeq = 0;
-    function pushLabelSettingsToServer(settings) {
-      clearTimeout(labelSettingsPushTimer);
-      const seq = ++labelSettingsPushSeq;
-      labelSettingsPushTimer = setTimeout(() => {
-        if (seq !== labelSettingsPushSeq) return;
-        api('/config', {
-          method: 'POST',
-          body: { key: 'label_print_settings', value: JSON.stringify(settings) },
-        }).catch(() => { /* offline / non-admin: local cache still holds the choice */ });
+    // ذخیرهٔ تنظیمات روی سرور: کیوسک و چاپ سرور از همین یک کپی می‌خوانند
+    let saveTimer = 0;
+    function persist(settings) {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        HL.saveSettings(settings).catch(() => { /* آفلاین: کش محلی نگه داشته می‌شود */ });
       }, 400);
     }
 
-    [width, height, template, ...TOGGLE_IDS.map(id => document.getElementById(id))]
-      .filter(Boolean)
-      .forEach(el => {
-        el.addEventListener('input', refresh);
-        el.addEventListener('change', refresh);
-      });
-    refresh();
-    if (window.ResizeObserver) new ResizeObserver(refresh).observe(stage || preview);
-    // اندازه‌گیری قبل از بارگذاری فونت وب انجام می‌شود؛ بعد از آماده‌شدن فونت‌ها
-    // یک‌بار دیگر مقیاس و جاگیری حساب می‌شود تا چاپ دقیق باشد.
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { refresh(); });
+    function applyControls() {
+      const settings = readControls();
+      preview.setSettings(settings);
+      updateReadout(settings);
+      host.classList.toggle('is-thermal', !!(el.thermal && el.thermal.checked));
+      persist(settings);
+      return settings;
+    }
 
-    document.getElementById('maResetLabelBtn').addEventListener('click', function () {
-      width.value = DEFAULT_LABEL_W; height.value = DEFAULT_LABEL_H; template.value = 'queue';
-      ['maShowName', 'maShowTime', 'maShowHint'].forEach(id => { document.getElementById(id).checked = true; });
-      document.getElementById('maThermalPreview').checked = false;
-      if (rotateToggle) rotateToggle.checked = false;
-      refresh();
-      showToast('تنظیمات لیبل بازنشانی شد', 'success');
+    [el.width, el.height, el.template, el.rotate, el.showName, el.showTime, el.showHint, el.thermal]
+      .filter(Boolean)
+      .forEach(control => {
+        control.addEventListener('input', applyControls);
+        control.addEventListener('change', applyControls);
+      });
+
+    writeControls(preview.settings());
+    updateReadout(preview.settings());
+    host.classList.toggle('is-thermal', !!(el.thermal && el.thermal.checked));
+    // اندازه‌گیری اول پیش از بارگذاری فونت وب است؛ یک‌بار دیگر پس از آماده‌شدن فونت
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => preview.fit());
+    if (window.ResizeObserver) new ResizeObserver(() => preview.fit()).observe(host);
+
+    // ── منبع حقیقت: تنظیمات ذخیره‌شده روی سرور ────────────────
+    // کش محلی فقط برای نمایش فوری است، ولی سرور مرجع است تا چاپ کیوسک
+    // دقیقاً همان چیزی باشد که اینجا تنظیم شده.
+    HL.loadConfig().then(config => {
+      if (!config) return;
+      writeControls(config.settings);
+      preview.setSettings(config.settings);
+      updateReadout(config.settings);
     });
+
+    if (el.reset) {
+      el.reset.addEventListener('click', () => {
+        const settings = HL.normalizeSettings(HL.DEFAULT_SETTINGS);
+        writeControls(settings);
+        if (el.thermal) el.thermal.checked = false;
+        preview.setSettings(settings);
+        updateReadout(settings);
+        host.classList.remove('is-thermal');
+        persist(settings);
+        showToast('تنظیمات لیبل بازنشانی شد؛ لیبل‌های کیوسک هم همین تنظیمات را می‌گیرند', 'success');
+      });
+    }
+
+    // ── چاپ نمونه: همان سند و همان مسیر چاپ کیوسک ────────────
+    if (el.print) {
+      el.print.addEventListener('click', async () => {
+        // تنظیمات روی صفحه — حتی پیش از ذخیرهٔ تأخیری — همان چیزی است که چاپ می‌شود
+        const settings = readControls();
+        await HL.saveSettings(settings).catch(() => {});
+        // تنظیمات زندهٔ روی صفحه به موتور چاپ داده می‌شود تا چیپ سرویس
+        // چاپ‌شده هم مثل پیش‌نمایش همان قالب انتخاب‌شده باشد
+        const result = await HL.printSample(settings);
+        if (result && result.ok && result.via === 'server') {
+          showToast('لیبل نمونه روی چاپگر «' + (result.printer || '—') + '» چاپ شد', 'success');
+        } else if (result && result.ok) {
+          showToast('پنجرهٔ چاپ باز شد — همان سند چاپی که کیوسک استفاده می‌کند', 'success');
+        } else {
+          showToast((result && result.message) || 'چاپ لیبل ناموفق بود', 'error');
+        }
+      });
+    }
 
     // ── Printer discovery ──────────────────────────────────────
     // WebUSB / WebSerial can never see this printer: the LAN build is served
@@ -417,8 +359,8 @@
     const targetNameEl = document.getElementById('maPrinterTargetName');
     const PRINTER_STATE_LABEL = { ready: 'آماده', busy: 'در حال چاپ', paused: 'متوقف', offline: 'آفلاین', unknown: 'نامشخص' };
     let printerInfo = null;
-    let targetPrinter = '';
-    try { targetPrinter = localStorage.getItem('hastama-label-target-printer') || ''; } catch (_) {}
+    // چاپگر هدف هم مثل تنظیمات لیبل از سرور می‌آید (HL.readTargetPrinter کش محلی است)
+    let targetPrinter = HL.readTargetPrinter();
 
     function setPrinterStatus(state, message) {
       if (statusPill) statusPill.dataset.state = state;
@@ -477,9 +419,8 @@
           targetPrinter = btn.getAttribute('data-printer-name') || '';
           // Persist server-side so the kiosk / reception share one target
           // (localStorage alone is browser-local and invisible to other machines).
-          try { localStorage.setItem('hastama-label-target-printer', targetPrinter); } catch (_) {}
-          api('/config', { method: 'POST', body: { key: 'label_target_printer', value: targetPrinter } })
-            .catch(() => { /* non-fatal: local cache still holds the choice */ });
+          // ذخیره از مسیر مشترک: سرور مرجع است، پس کیوسک هم همین چاپگر را می‌گیرد
+          HL.saveTargetPrinter(targetPrinter).catch(() => { /* offline: local cache still holds the choice */ });
           printerListEl.querySelectorAll('.ma-printer-row').forEach(other => other.classList.toggle('is-selected', other === btn));
           updateTargetInfo();
         });
@@ -489,13 +430,11 @@
 
     async function loadServerTargetPrinter() {
       try {
-        const res = await api('/config');
-        const rows = (res && res.data) || [];
-        const row = rows.find(c => c.config_key === 'label_target_printer');
-        const serverName = row && row.config_value ? String(row.config_value).trim() : '';
+        const config = await HL.loadConfig();
+        const serverName = (config && config.printer) || '';
         if (serverName) {
           targetPrinter = serverName;
-          try { localStorage.setItem('hastama-label-target-printer', serverName); } catch (_) {}
+          HL.writeTargetPrinter(serverName);
           return serverName;
         }
       } catch (_) { /* offline / not master-admin: keep localStorage value */ }
@@ -533,159 +472,6 @@
     // فهرست چاپگرها به‌محض باز شدن صفحه خوانده می‌شود تا کارمند منتظر نماند
     detectPrinters(false);
 
-    // ── Shared print settings from the server ──────────────────
-    // Other machines (kiosk) only see system_config — not this browser's
-    // localStorage. Prefer the server copy when present so every surface
-    // prints the size / template / toggles currently under test here.
-    (async function loadServerLabelSettings() {
-      try {
-        const res = await api('/config');
-        const rows = (res && res.data) || [];
-        const row = rows.find(c => c.config_key === 'label_print_settings');
-        if (!row || !row.config_value) return;
-        const server = JSON.parse(row.config_value);
-        if (!server || typeof server !== 'object') return;
-        let changed = false;
-        if (server.maLabelWidth != null && String(server.maLabelWidth) !== width.value) {
-          width.value = server.maLabelWidth; changed = true;
-        }
-        if (server.maLabelHeight != null && String(server.maLabelHeight) !== height.value) {
-          height.value = server.maLabelHeight; changed = true;
-        }
-        if (server.maLabelTemplate != null && template && server.maLabelTemplate !== template.value) {
-          template.value = server.maLabelTemplate; changed = true;
-        }
-        TOGGLE_IDS.forEach(id => {
-          if (server[id] == null) return;
-          const el = document.getElementById(id);
-          if (el && !!server[id] !== el.checked) { el.checked = !!server[id]; changed = true; }
-        });
-        if (changed) refresh();
-      } catch (_) { /* offline / not master-admin: keep localStorage value */ }
-    })();
-
-    // ── Printing ───────────────────────────────────────────────
-    // چاپ از طریق دیالوگ مرورگر انجام می‌شود، پس روی چاپگرهای «همین رایانه»
-    // چاپ می‌کند. هر دارایی ارجاع‌شده در صفحهٔ چاپ مطلق‌سازی می‌شود و اگر
-    // پاپ‌آپ مسدود باشد، از یک iframe پنهان چاپ می‌کنیم.
-    const LABEL_PRINT_CSS = window.location.origin + '/static/css/label-print.css';
-    const LABEL_FONT_CSS = window.location.origin + '/static/css/vazir.css';
-
-    // اگر محتوا از فضای لیبل کوچک‌تر/بزرگ‌تر بود، در صفحهٔ چاپ هم مقیاس می‌شود
-    // مقیاس و جاگیری در خود سند چاپ و بر اساس ابعاد فیزیکی لیبل حساب می‌شود
-    // (--lbl-zoom روی ریشهٔ .lbl).  قبل از باز شدن پنجرهٔ چاپ یک‌بار دیگر با
-    // فونت‌های بارگذاری‌شده صدا زده می‌شود.
-    const FIT_GUARD = 'window.__lblFit=function(){try{'
-      + 'var r=document.querySelector(".lbl");var c=document.querySelector(".lbl__content");if(!r||!c)return;'
-      + 'r.style.setProperty("--lbl-zoom","1");'
-      + 'var ph=c.style.height,pf=c.style.flex,pt=c.style.transform;'
-      + 'c.style.transform="none";c.style.height="auto";c.style.flex="none";'
-      + 'var cw=c.scrollWidth,ch=c.scrollHeight;'
-      + 'c.style.height=ph;c.style.flex=pf;c.style.transform=pt;'
-      // ۱۸۸٫۹۸ = عرض مرجع طرح (۵۰ میلی‌متر) بر حسب پیکسل ۹۶dpi
-      + 'var z=Math.min(r.clientWidth/188.98,r.clientHeight/Math.max(1,ch))*0.97;'
-      + 'z=Math.max(0.8,Math.min(1.8,z));'
-      + 'r.style.setProperty("--lbl-zoom",z.toFixed(3));'
-      + 'var n=document.querySelector(".lbl__queue-number");var b=document.querySelector(".lbl__number-box");'
-      + 'if(n&&b){n.style.fontSize="";var base=parseFloat(window.getComputedStyle(n).fontSize)||20;var nat=n.scrollWidth;var av=b.clientWidth-24;if(nat>av){n.style.fontSize=Math.max(10,base*av/nat)+"px";}}'
-      + '}catch(e){}};window.__lblFit();';
-
-    function buildPrintRoot(w, h, rotated) {
-      const contentEl = preview.querySelector('.lbl__content');
-      if (!contentEl) return '';
-      // کلون بدون استایل درون‌خطی (مقیاس پیش‌نمایش به چاپ نشت نکند)
-      const clone = contentEl.cloneNode(true);
-      clone.removeAttribute('style');
-      const root = document.createElement('div');
-      root.className = 'lbl lbl--print' + (rotated ? ' is-rotated' : '');
-      root.setAttribute('data-template', preview.dataset.template || 'queue');
-      root.style.setProperty('--lbl-mm-w', String(w));
-      root.style.setProperty('--lbl-mm-h', String(h));
-      root.appendChild(clone);
-      // سند about:blank فقط در بعضی مرورگرها base خود را ارث می‌برد: مسیرها را مطلق کن
-      root.querySelectorAll('[src]').forEach(node => {
-        const value = node.getAttribute('src') || '';
-        if (value.charAt(0) === '/') node.setAttribute('src', window.location.origin + value);
-      });
-      return root.outerHTML;
-    }
-
-    // پس از آماده‌شدن فونت‌ها و لوگوها دیالوگ چاپ باز می‌شود
-    function printWhenReady(win, doc) {
-      let printed = false;
-      const doPrint = () => {
-        if (printed) return;
-        printed = true;
-        try {
-          // آخرین کالیبراسیون: با فونت‌ها و لوگوهای بارگذاری‌شده
-          if (win.__lblFit) win.__lblFit();
-          win.focus();
-          win.print();
-        } catch (_) {}
-      };
-      const jobs = Array.prototype.slice.call(doc.images || [])
-        .map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }));
-      if (doc.fonts && doc.fonts.ready) jobs.push(doc.fonts.ready);
-      Promise.all(jobs).then(doPrint);
-      setTimeout(doPrint, 2500);
-    }
-
-    function openPrintWindow() {
-      const w = Math.round(clampMm(Number(width.value), 30, 150));
-      const h = Math.round(clampMm(Number(height.value), 20, 100));
-      const rotated = !!(rotateToggle && rotateToggle.checked);
-      // صفحهٔ فیزیکی چاپ: در حالت چرخش، عرض و ارتفاع جابه‌جا می‌شوند تا محتوا
-      // پس از چرخیدن ۹۰ درجه دقیقاً روی کاغذ بنشیند.
-      const pageW = rotated ? h : w;
-      const pageH = rotated ? w : h;
-      const markup = buildPrintRoot(w, h, rotated);
-      if (!markup) return;
-      const html = [
-        '<!doctype html>',
-        '<html lang="fa" dir="rtl"><head><meta charset="utf-8">',
-        '<title>چاپ لیبل نوبت — ' + fa(w) + ' × ' + fa(h) + ' میلی‌متر</title>',
-        '<style>@page{size:' + pageW + 'mm ' + pageH + 'mm;margin:0}',
-        '.lbl-page{position:relative;width:' + pageW + 'mm;height:' + pageH + 'mm;overflow:hidden}',
-        // left/right صریح لازم است: در جهت RTL باکس با margin:0 از لبهٔ راست چیده
-        // میشود و چرخش ۹۰ درجه از لبهٔ چپ، محتوا را از کاغذ بیرون میبرد.
-        '.lbl--print.is-rotated{position:absolute;top:0;left:0;right:auto;margin:0 !important;'
-          + 'transform:translateY(calc(var(--lbl-mm-w,55) * 1mm)) rotate(-90deg);transform-origin:top left}',
-        '</style>',
-        '<link rel="stylesheet" href="' + LABEL_FONT_CSS + '">',
-        '<link rel="stylesheet" href="' + LABEL_PRINT_CSS + '">',
-        '</head><body class="lbl-print-page"><div class="lbl-page">',
-        markup,
-        '</div>',
-        '<script>' + FIT_GUARD + '<\/script>',
-        '</body></html>',
-      ].join('');
-
-      const win = window.open('', '_blank', 'width=560,height=700');
-      if (win && win.document) {
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
-        printWhenReady(win, win.document);
-      } else {
-        // پاپ‌آپ مسدود شده است: چاپ از یک iframe پنهان انجام می‌شود (مسدود نمی‌شود)
-        const frame = document.createElement('iframe');
-        frame.setAttribute('aria-hidden', 'true');
-        frame.setAttribute('tabindex', '-1');
-        frame.style.cssText = 'position:fixed;top:0;left:-10000px;width:700px;height:900px;border:0;';
-        document.body.appendChild(frame);
-        const doc = frame.contentWindow.document;
-        doc.open(); doc.write(html); doc.close();
-        printWhenReady(frame.contentWindow, doc);
-        setTimeout(() => frame.remove(), 60000);
-      }
-      showToast(
-        targetPrinter
-          ? 'در پنجرهٔ چاپ، چاپگر «' + targetPrinter + '» را انتخاب کنید'
-          : 'در پنجرهٔ چاپ، چاپگر لیبل را انتخاب کنید',
-        'success'
-      );
-    }
-    document.getElementById('maPrintLabelBtn').addEventListener('click', openPrintWindow);
   }
 
   // ── Dashboard ────────────────────────────────────────────

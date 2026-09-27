@@ -23,7 +23,7 @@ Usage:
 
     # Or run with command-line args
     python bridge_agent.py --device-ip 192.168.3.200 --device-port 1001 \
-                           --hastama-url http://192.168.3.69:8000 \
+                           --hastama-url https://hastama.ir \
                            --mdb-path "E:\\Hastama\\database\\Arazdb.mdb"
 
     # As a Windows service (using NSSM or similar):
@@ -545,7 +545,8 @@ class BridgeAgent:
 # ---------------------------------------------------------------------------
 
 DEFAULT_CONFIG = {
-    "hastama_url": "http://192.168.3.69:8000",
+    # One canonical URL for LAN and Internet alike (Cloudflare Tunnel).
+    "hastama_url": "https://hastama.ir",
     "hastama_secret": "",
     "device_ip": "192.168.3.200",
     "device_port": 1001,
@@ -598,7 +599,7 @@ def main():
     )
     parser.add_argument(
         "--hastama-url",
-        help="Hastama server URL (e.g. http://192.168.3.69:8000)",
+        help="Hastama server URL (public: https://hastama.ir)",
     )
     parser.add_argument(
         "--device-ip",

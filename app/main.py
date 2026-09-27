@@ -46,6 +46,7 @@ from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 
 import logging
@@ -569,6 +570,81 @@ def _harden_cookies(headers: list) -> list:
     return hardened
 
 
+# ── One canonical public hostname ───────────────────────────────────────────
+# Hastama serves LAN and Internet users through the same URL,
+# ``https://hastama.ir`` (Cloudflare → Cloudflare Tunnel → 127.0.0.1:5000).
+# cloudflared connects over loopback, so a spoofed ``Host`` header could only
+# come from this machine or from a tunnel ingress rule we do not control; the
+# allow-list removes that whole class of host-header poisoning (absolute URLs
+# are built with ``request.base_url`` — see the label print document and the
+# ticketing origin check).  ``www.hastama.ir`` stays allowed so a request that
+# slips past the Cloudflare www→apex redirect still gets served instead of
+# erroring; the canonical URL is still the apex domain.
+_DEFAULT_ALLOWED_HOSTS = (
+    "hastama.ir",
+    "www.hastama.ir",
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "[::1]",
+)
+
+
+def allowed_hosts() -> list:
+    """``Host`` values the application accepts (``HASTAMA_ALLOWED_HOSTS`` wins).
+
+    Comma separated override for staging hosts or a temporary second name;
+    the default is the production hostname plus the loopback names used by
+    local health checks on the server itself.
+    """
+    raw = os.getenv("HASTAMA_ALLOWED_HOSTS", "")
+    values = [item.strip() for item in raw.split(",") if item.strip()]
+    return values or list(_DEFAULT_ALLOWED_HOSTS)
+
+
+class _HeadMethodMiddleware:
+    """Serve ``HEAD`` by running the ``GET`` handler and dropping the body.
+
+    FastAPI registers only the methods a route declares, so ``@app.get`` routes
+    answered ``405`` to HEAD (uptime monitors commonly probe with HEAD — see
+    residual risk RR-22).  Only ``http`` scopes are touched, so WebSocket
+    upgrades and lifespan events pass straight through.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or scope.get("method") != "HEAD":
+            await self.app(scope, receive, send)
+            return
+
+        scope = dict(scope)
+        scope["method"] = "GET"
+
+        headers_only = False
+
+        async def _send_without_body(message):
+            nonlocal headers_only
+            if message["type"] in ("http.response.body", "http.response.pathsend"):
+                # One terminating, empty body: a HEAD response carries headers
+                # only.  Streaming handlers (StaticFiles/FileResponse) may send
+                # more chunks afterwards; swallow them so the response is not
+                # written twice.
+                if headers_only:
+                    return
+                headers_only = True
+                message = {"type": "http.response.body", "body": b"", "more_body": False}
+            await send(message)
+
+        await self.app(scope, receive, _send_without_body)
+
+
+# Order matters: the last middleware added is the outermost one, so the
+# security headers wrap even a rejected host, and the host check runs before
+# any session, CSRF or database work happens.
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
+app.add_middleware(_HeadMethodMiddleware)
 app.add_middleware(_SecurityHeadersMiddleware)
 
 # Browsers request this conventional root URL even when a page does not

@@ -18,6 +18,8 @@ from app.services import ticket_print
 ROOT = Path(__file__).resolve().parents[1]
 KIOSK_HTML = (ROOT / "app" / "templates" / "ticket-kiosk.html").read_text(encoding="utf-8")
 MASTER_JS = (ROOT / "app" / "static" / "js" / "master-admin.js").read_text(encoding="utf-8")
+LABEL_JS = (ROOT / "app" / "static" / "js" / "label-system.js").read_text(encoding="utf-8")
+PARTIAL = (ROOT / "app" / "templates" / "partials" / "label_queue.html").read_text(encoding="utf-8")
 MASTER_HTML = (ROOT / "app" / "templates" / "master-admin.html").read_text(encoding="utf-8")
 MAIN_PY = (ROOT / "app" / "main.py").read_text(encoding="utf-8")
 MASTER_ADMIN_SQL = (ROOT / "database" / "master_admin.sql").read_text(encoding="utf-8")
@@ -56,10 +58,10 @@ def test_build_ticket_html_escapes_and_includes_fields():
     assert "&lt;script&gt;" in html_text
     assert "<b>X</b>" not in html_text
     assert "&lt;b&gt;X&lt;/b&gt;" in html_text
-    # Only the trusted content-fit calibration script is allowed in the shell.
-    assert html_text.count("<script>") == 1
-    assert "window.__lblFit" in html_text
-    assert 'data-service="&lt;script&gt;alert(1)&lt;/script&gt;"' in html_text
+    # Only two trusted scripts: the shared label engine + its fit call.
+    assert html_text.count("<script>") == 2
+    assert "HastamaLabel.fitDocument" in html_text
+    assert '<span class="lbl__service" data-field="service">&lt;script&gt;alert(1)&lt;/script&gt;</span>' in html_text
     assert "نام و نام خانوادگی" in html_text
     assert "شماره ملی" in html_text
     assert "شماره همراه" in html_text
@@ -72,8 +74,9 @@ def test_build_ticket_html_escapes_and_includes_fields():
     assert "۱۲" in html_text
     assert "پذیرش" in html_text
     assert "علی &lt;script&gt;" in html_text
-    assert html_text.count("<script>") == 1
-    assert "A1" in html_text
+    assert html_text.count("<script>") == 2
+    # ارقام لیبل فارسی چاپ می‌شوند (هم‌قرارداد با شمارهٔ ملی/همراه)
+    assert "A۱" in html_text
     assert 'dir="rtl"' in html_text
     # Label studio physical size (master-admin DEFAULT_LABEL_W/H).
     assert "75mm" in html_text and "81mm" in html_text
@@ -93,7 +96,9 @@ def test_build_ticket_html_without_optional_patient_fields():
 
 
 def test_build_ticket_html_minimal_services_show_only_number_and_admission():
-    for service in ("جوابدهی", "نمونه‌گیری", "نوبت خالی"):
+    # «نوبت خالی» نام قدیمی همین سرویس است: نوبت‌های ثبت‌شده در بانک باید
+    # بعد از تغییر نام به «نوبت آزاد» هم مثل قبل حداقلی چاپ شوند.
+    for service in ("جوابدهی", "نمونه‌گیری", "نوبت آزاد", "نوبت خالی"):
         html_text = ticket_print.build_ticket_html(
             {"number": 9, "persian_number": "۹", "service": service},
             {"admission_number": "42", "name": "SECRET", "phone": "0912"},
@@ -140,8 +145,9 @@ def test_build_ticket_html_result_template_matches_studio_hooks():
     assert 'data-field="admission"' in html_text
     assert "SECRET" not in html_text
     assert "0912" not in html_text
-    # Studio content-fit script is embedded so Edge / browser scale like openPrintWindow.
-    assert "window.__lblFit" in html_text
+    # همان موتور مشترک در سند چاپ inline می‌شود؛ پس Edge و fallback مرورگر
+    # دقیقاً مثل استودیو مقیاس می‌گیرند.
+    assert "HastamaLabel.fitDocument" in html_text
     assert "document.fonts.ready" in html_text
 
 
@@ -208,61 +214,65 @@ def test_print_runs_in_worker_thread():
 # ── master-admin client persists the selection ────────────────
 
 
-def test_label_studio_saves_printer_to_server_config():
-    assert "label_target_printer" in MASTER_JS
-    assert "api('/config'" in MASTER_JS or 'api("/config"' in MASTER_JS
-    # Both the POST-on-select and the load-from-server paths exist.
+def test_label_studio_saves_printer_through_the_shared_engine():
+    # استودیو از همان تابع مشترک ذخیره‌سازی استفاده می‌کند، نه یک مسیر جداگانه
+    assert "HL.saveTargetPrinter" in MASTER_JS
+    assert "HL.readTargetPrinter" in MASTER_JS
     assert "loadServerTargetPrinter" in MASTER_JS
-    assert "key: 'label_target_printer'" in MASTER_JS
+    assert "key: 'label_target_printer'" in LABEL_JS
+    assert "'/api/label/config'" in LABEL_JS
 
 
 def test_label_studio_still_keeps_local_cache():
     # localStorage remains a fast offline hint; server is the source of truth.
-    assert "hastama-label-target-printer" in MASTER_JS
+    assert "hastama-label-target-printer" in LABEL_JS
+    assert "hastama-label-settings" in LABEL_JS
 
 
 # ── kiosk wires the silent print after issue ──────────────────
 
 
 def test_kiosk_calls_print_endpoint_after_issue():
-    assert "/api/queue/print" in KIOSK_HTML
+    # کیوسک از همان موتور مشترک چاپ می‌کند (سرور اول، سند مشترک به‌عنوان fallback)
     assert "printIssuedTicket" in KIOSK_HTML
+    assert "HastamaLabel.print(" in KIOSK_HTML
     # Called only after a successful take (inside issueTicket success path).
     assert "printIssuedTicket(ticket, patientData)" in KIOSK_HTML
+    assert "'/api/queue/print'" in LABEL_JS
+    assert "'/api/label/print-document'" in LABEL_JS
 
 
 def test_kiosk_has_blank_ticket_button_without_form():
     assert "issueBlankTicket" in KIOSK_HTML
-    assert 'data-service="نوبت خالی"' in KIOSK_HTML
+    assert 'data-service="نوبت آزاد"' in KIOSK_HTML
     # Issues immediately with empty patient — no overlay/form path.
     start = KIOSK_HTML.index("function issueBlankTicket")
     end = KIOSK_HTML.index("/* ── متن مودال", start)
     fn = KIOSK_HTML[start:end]
-    assert "issueTicket('نوبت خالی', {})" in fn
+    assert "issueTicket('نوبت آزاد', {})" in fn
     assert "showPatientForm" not in fn
     assert "patientOverlay" not in fn
 
 
-def test_kiosk_browser_fallback_uses_label_template():
-    assert "label-print.css" in KIOSK_HTML
-    assert "lbl__queue-number" in KIOSK_HTML
-    assert "isMinimalLabelService" in KIOSK_HTML
+def test_kiosk_browser_fallback_uses_the_shared_document():
+    # کیوسک مارک‌آپ لیبل خودش را نمی‌سازد؛ همان سند سرور را چاپ می‌کند
+    assert "js/label-system.js" in KIOSK_HTML
+    assert "lbl__queue-number" not in KIOSK_HTML
+    assert "label-print.css" not in KIOSK_HTML
 
 
 def test_kiosk_falls_back_to_browser_print():
-    assert "printTicket(ticket, patientData, labelSettings)" in KIOSK_HTML
-    # Fallback is inside printIssuedTicket when the server reports failure.
-    fn = KIOSK_HTML.split("async function printIssuedTicket", 1)[1].split("function escText", 1)[0]
-    assert "printTicket" in fn
-    assert "data.success" in fn
-    # Settings from the server response feed the browser fallback.
-    assert "data.settings" in fn
-    assert "normalizeLabelSettings" in KIOSK_HTML
+    fn = KIOSK_HTML.split("function printIssuedTicket", 1)[1]
+    assert "HastamaLabel.print(" in fn
+    # موتور مشترک: اول چاپ بی‌صدای سرور، بعد همان سند چاپ در مرورگر
+    assert "printViaBrowser" in LABEL_JS
+    assert "fetchPrintDocument" in LABEL_JS
+    assert "data.success" in LABEL_JS
 
 
 def test_kiosk_print_is_non_blocking_for_modal():
     # Modal + queue refresh must not wait on the print round-trip.
-    issue = KIOSK_HTML.split("async function issueTicket", 1)[1].split("async function printIssuedTicket", 1)[0]
+    issue = KIOSK_HTML.split("async function issueTicket", 1)[1].split("function printIssuedTicket", 1)[0]
     assert "printIssuedTicket" in issue
     # printIssuedTicket is fire-and-forget relative to the UI (no await before modal).
     # The call is the last statement of the success path — modal already shown.
@@ -327,7 +337,8 @@ def test_print_ticket_falls_back_to_out_printer_when_image_print_fails(monkeypat
     assert result["method"] == "out-printer"
     assert called["printer"] == "EPSON TM-T88III Receipt"
     assert "شماره نوبت" in called["text"]
-    assert "A9" in called["text"]
+    # مسیر متنی پشتیبان هم ارقام فارسی می‌فرستد
+    assert "A۹" in called["text"]
 
 
 def test_print_ticket_prefers_edge_png_when_available(monkeypatch):
@@ -356,6 +367,44 @@ def test_print_png_windows_quotes_paths():
     assert "PageMediaSize" in src
     assert "XpsDocumentWriter" in src
     assert "PageMediaSizeName]::Unknown" in src
+
+
+def test_print_png_windows_uses_the_operators_own_printing_preferences():
+    """Control Panel → Printing Preferences must reach the job.
+
+    The driver keeps darkness / dither / paper-type in the private DEVMODE blob
+    that only ``PageDevmodeSnapshot`` carries. ``DefaultPrintTicket`` exposes the
+    *machine* defaults (on the Epson queue: the 80×297 roll form), so building
+    the job ticket from it made every Control Panel change look ignored. The job
+    ticket therefore starts from the per-user ticket.
+    """
+    import inspect
+
+    src = inspect.getsource(ticket_print._print_png_windows)
+    assert "UserPrintTicket" in src
+    assert "New-LabelJobTicket" in src
+    # The per-user ticket is kept as-is; only the label size is overridden.
+    assert "PageDevmodeSnapshot" in src
+    assert "[Convert]::ToBase64String($dm)" in src
+    # DEVMODEW public fields: 72 dmFields, 78 dmPaperSize, 80/82 length/width.
+    assert "ToUInt32($dm, 72)" in src
+    assert "GetBytes([int16]256), 0, $dm, 78, 2" in src
+    assert "$WidthMm * 10" in src and "$HeightMm * 10" in src
+    # ``_bor 0x2`` = DM_PAPERSIZE, 0x4 = DM_PAPERLENGTH, 0x8 = DM_PAPERWIDTH.
+    assert "-bor 0x2 -bor 0x4 -bor 0x8" in src
+
+
+def test_print_png_windows_only_drops_stale_snapshot_without_per_user_ticket():
+    """Fallback (no per-user ticket) keeps the old roll-paper workaround."""
+    import inspect
+
+    src = inspect.getsource(ticket_print._print_png_windows)
+    assert "RemoveChild" in src
+    assert "DefaultPrintTicket" in src
+    fallback_start = src.index("if (-not $base)")
+    remove_child = src.index("RemoveChild")
+    # Dropping the snapshot is now only the no-per-user-ticket fallback.
+    assert fallback_start < remove_child
 
 
 def test_build_ticket_html_inlines_label_css_and_logos():
@@ -398,6 +447,49 @@ def test_settings_config_key_and_normalize():
     assert ticket_print.normalize_label_settings(None)["width_mm"] == 75
     assert ticket_print.normalize_label_settings({"template": "nope"})["template"] == "queue"
     assert ticket_print.normalize_label_settings({"width_mm": 999})["width_mm"] == 150
+    # ارتفاع هم سقف جداگانه دارد (۱۰۵ باید بگذرد؛ ۹۹۹ به سقف برمی‌گردد)
+    assert ticket_print.normalize_label_settings({"height_mm": 105})["height_mm"] == 105
+    assert ticket_print.normalize_label_settings({"height_mm": 999})["height_mm"] == 150
+    assert ticket_print.LABEL_HEIGHT_MM_RANGE == (20, 150)
+
+
+def test_label_datetime_and_numbers_print_in_persian_digits():
+    """تاریخ/ساعت و شماره‌ها روی لیبل فارسی چاپ می‌شوند، نه با ارقام لاتین.
+
+    سرور با ``strftime`` می‌سازد (ارقام لاتین) و پیش‌نمایش مرورگر با «fa-IR»؛
+    هر دو باید به یک شکل فارسی برسند وگرنه لیبل چاپی با پیش‌نمایش فرق می‌کند.
+    """
+    import re
+
+    from app.services import label_render
+
+    stamp = label_render.format_label_datetime()
+    assert re.search(r"[۰-۹]", stamp), "تاریخ باید ارقام فارسی داشته باشد"
+    assert not re.search(r"[0-9]", stamp), f"ارقام لاتین در تاریخ لیبل: {stamp}"
+
+    html = ticket_print.build_ticket_html(
+        {"service": "پذیرش", "number": 12},
+        {"admission_number": "12345", "name": "تقی"},
+    )
+    pill = re.search(r'data-field="datetime">([^<]*)<', html).group(1)
+    admission = re.search(r'data-field="admission-value">([^<]*)<', html).group(1)
+    assert not re.search(r"[0-9]", pill), f"تاریخ لاتین در سند چاپ: {pill}"
+    assert admission == "۱۲۳۴۵"
+
+    # پیش‌نمایش مرورگر (همان موتور مشترک) هم همین شکل را می‌سازد
+    assert "function labelDateTimeText" in LABEL_JS
+    assert "labelDateTimeText()" in LABEL_JS
+    assert "faDigits(admission)" in LABEL_JS
+    # ماه/روز دورقمی و ساعت ۲۴ ساعته، مثل «%m/%d» و «%H:%M» سرور
+    assert "month: '2-digit', day: '2-digit'" in LABEL_JS
+    assert "hour12: false" in LABEL_JS
+
+    # مسیر متنی پشتیبان هم ارقام فارسی می‌فرستد
+    plain = ticket_print._plain_text_fallback(
+        {"service": "پذیرش", "number": 12}, {"admission_number": "12345"}, minimal=False
+    )
+    assert "۱۲۳۴۵" in plain
+    assert not re.search(r"[0-9]", plain), f"ارقام لاتین در چاپ متنی: {plain}"
 
 
 def test_build_ticket_html_applies_studio_settings():
@@ -419,13 +511,13 @@ def test_build_ticket_html_applies_studio_settings():
     assert "is-rotated" in html_text
     assert "rotate(-90deg)" in html_text
     assert 'data-template="compact"' in html_text
-    assert "--lbl-mm-w: 70" in html_text
-    assert "--lbl-mm-h: 50" in html_text
+    assert "--lbl-mm-w:70" in html_text
+    assert "--lbl-mm-h:50" in html_text
     # Visibility toggles
     assert "Hidden" not in html_text
     assert "lbl__datetime-value" in html_text
     assert 'title="تاریخ و ساعت ثبت نوبت" hidden' in html_text
-    assert 'class="lbl__message" hidden' in html_text
+    assert 'class="lbl__message" data-field="hint" hidden' in html_text
 
 
 def test_build_ticket_html_explicit_size_overrides_settings():
@@ -464,7 +556,7 @@ def test_print_ticket_passes_settings_sizes_to_png_path(monkeypatch):
     assert result["settings"]["width_mm"] == 70
     assert result["settings"]["template"] == "queue"
     assert 'data-template="queue"' in captured["html"]
-    assert "window.__lblFit" in captured["html"]
+    assert "HastamaLabel.fitDocument" in captured["html"]
 
 
 def test_render_png_uses_css_layout_and_device_scale(monkeypatch):
@@ -514,7 +606,9 @@ def test_print_endpoint_reads_and_returns_label_settings():
 
 
 def test_studio_pushes_print_settings_to_server():
-    assert "label_print_settings" in MASTER_JS
-    assert "pushLabelSettingsToServer" in MASTER_JS
-    assert "loadServerLabelSettings" in MASTER_JS
-    assert "key: 'label_print_settings'" in MASTER_JS
+    # استودیو تنظیمات را با همان موتور مشترک روی سرور ذخیره می‌کند تا کیوسک
+    # (که فقط system_config را می‌بیند) دقیقاً همان لیبل را چاپ کند.
+    assert "HL.saveSettings" in MASTER_JS
+    assert "HL.loadConfig" in MASTER_JS
+    assert "key: 'label_print_settings'" in LABEL_JS
+    assert "SETTINGS_CONFIG_KEY" in CALL_SYSTEM

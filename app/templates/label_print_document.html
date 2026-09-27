@@ -6,7 +6,8 @@
    و هر دو صفحه (استودیو لیبل و کیوسک) دقیقاً یکی است.
 
    نکات چیدمان (همه از تجربهٔ چاپ روی این صف چاپگر آمده‌اند):
-     * @page با همان اندازهٔ فیزیکی لیبل و margin صفر.
+     * @page با همان اندازهٔ فیزیکی لیبل و margin صفر — در
+       ``label_render.page_css`` ساخته می‌شود (نه با مقادیر Jinja داخل CSS).
      * html/body ثابت با direction:ltr — Edge headless در RTL صفحه را جابه‌جا
        می‌کند و بخشی از کادر از بیت‌مپ بیرون می‌افتد.
      * .lbl-page مطلق در (0,0) تا ناحیهٔ اسکرین‌شات همیشه از گوشهٔ بالا-چپ
@@ -18,32 +19,22 @@
 <head>
 <meta charset="utf-8">
 <title>{{ title }}</title>
-<style>{{ font_css }}</style>
-<style>{{ label_css }}</style>
-<style>
-@page { size: {{ page_w }}mm {{ page_h }}mm; margin: 0; }
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #fff;
-  width: {{ page_w }}mm;
-  height: {{ page_h }}mm;
-  overflow: hidden;
-  direction: ltr;
-}
-.lbl-page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: {{ page_w }}mm;
-  height: {{ page_h }}mm;
-  overflow: hidden;
-}
-@media print {
-  html, body { width: {{ page_w }}mm; height: {{ page_h }}mm; }
-}
-{{ rotate_css }}
-</style>
+{#- تمام CSS سند چاپ (فونت‌ها، برگهٔ لیبل و هندسهٔ صفحه) توسط
+    ``label_render.render_print_document()`` به‌صورت آماده ساخته می‌شود و
+    این‌جا به‌عنوان یک بلوک ``Markup`` درج می‌شود:
+      * فونت‌ها → label_render.font_css()
+      * برگهٔ لیبل → static/css/label-print.css (همان فایلی که استودیو بار
+        می‌کند، پس پیش‌نمایش و چاپ روی کاغذ یکی است)
+      * هندسهٔ صفحه (@page، مبدأ ۰٫۰ و چرخش ۹۰ درجه) → label_render.page_css()
+    این بلوک باید بدون escape درج شود: با autoescape، `&&` به `&amp;&amp;`
+    تبدیل می‌شد، window.HastamaLabel هیچ‌وقت ساخته نمی‌شد و لیبل در مقیاس
+    غلط و بریده چاپ می‌شد. از فیلتر bypass هم استفاده نمی‌کنیم؛ خود
+    ``label_render`` این بلاب‌ها را Markup می‌کند و مارک‌آپ لیبل
+    (partials/label_queue.html) که دادهٔ بیمار دارد، autoescape می‌ماند.
+    CSS عمداً در همین بلوک آماده است و نه با مقادیر Jinja درون تگ استایل
+    این فایل: ویرایشگرها آن را CSS خراب می‌خوانند و خطاهای تکراری،
+    مشکل‌های واقعی را می‌پوشاند. -#}
+{{ head_styles }}
 </head>
 <body class="lbl-print-page">
 <div class="lbl-page">

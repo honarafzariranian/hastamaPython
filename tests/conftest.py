@@ -12,8 +12,18 @@ for ``pyodbc`` *before* any application module is imported. Tests that
 need cursor behaviour monkeypatch it explicitly, exactly as before.
 """
 
+import os
 import sys
 import types
+
+# The application validates the ``Host`` header against one canonical public
+# hostname (``hastama.ir``, see ``app.main.allowed_hosts``).  ``TestClient``
+# speaks as ``testserver``, so the test session declares its own allow-list here
+# — before ``app.main`` is imported.  Production keeps the strict default.
+os.environ.setdefault(
+    "HASTAMA_ALLOWED_HOSTS",
+    "testserver,localhost,127.0.0.1,hastama.ir,www.hastama.ir",
+)
 
 
 class _FakeCursor:

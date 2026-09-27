@@ -473,11 +473,25 @@ class TestXSSSinksEscaped:
         assert "esc(d.national_id || '—')" in html
         assert "data-edit-password" not in html
 
-    def test_ticket_kiosk_print_escapes_name(self):
+    def test_ticket_kiosk_print_delegates_to_shared_engine(self):
+        # The kiosk no longer builds label HTML or escapes fields itself: it hands
+        # the ticket to the one shared engine (app/static/js/label-system.js),
+        # which fills the shared partial and prints via the shared print document.
         html = open("app/templates/ticket-kiosk.html", encoding="utf-8").read()
-        assert "escText(patientData.name || '—')" in html
-        assert "escText(service || 'پذیرش')" in html
-        assert "escText(ticket.persian_number" in html
+        assert "/static/js/label-system.js" in html
+        assert "window.HastamaLabel.print(" in html
+        assert "escText(" not in html
+        assert "lbl__record-value" not in html
+
+    def test_label_field_values_are_html_escaped(self):
+        # Patient values live in the shared Jinja partial, so autoescape covers
+        # them on the server...
+        partial = open("app/templates/partials/label_queue.html", encoding="utf-8").read()
+        assert 'data-field="name-value"' in partial
+        assert "{{ lbl.get('name') or '—' }}" in partial
+        # ...and the browser engine writes them with textContent, never innerHTML.
+        js = open("app/static/js/label-system.js", encoding="utf-8").read()
+        assert "el.textContent = text === undefined || text === null ? '' : String(text);" in js
 
     def test_training_search_escapes_results(self):
         js = open("app/static/js/training.js", encoding="utf-8").read()

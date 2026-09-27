@@ -12,8 +12,10 @@
                        phone, insurance_track, insurance_base, insurance_extra,
                        datetime, clinic_name, clinic_slogan
      settings : dict — template, show_name, show_time, show_hint
-     minimal  : bool — فقط شماره نوبت + شماره پذیرش (جواب‌دهی/نمونه‌گیری/نوبت خالی)
+     minimal  : bool — فقط شماره نوبت + شماره پذیرش (جواب‌دهی/نمونه‌گیری/نوبت آزاد)
      assets   : dict — {logo, brand}
+     template_services : dict — قالب‌های سرویس‌محور → متن چیپ سرویس
+                       (label_render.TEMPLATE_SERVICE_LABELS)
      root_class / root_style / root_id : برای سند چاپ (اندازهٔ فیزیکی) و پیش‌نمایش
    ═══════════════════════════════════════════════════════════════════════════ -#}
 {%- set lbl = label|default({}, true) -%}
@@ -23,6 +25,12 @@
 {%- set show_time = st.get('show_time', true) -%}
 {%- set show_hint = st.get('show_hint', true) -%}
 {%- set minimal = minimal|default(false) -%}
+{%- set template_services = template_services|default({}, true) -%}
+{#- قالب‌های سرویس‌محور خودشان سرویس را تعیین می‌کنند: اگر دادهٔ نوبت سرویس
+   نداشت، همان نام قالب روی چیپ می‌آید («جواب‌دهی»). سرویس واقعیِ نوبت
+   همیشه اولویت دارد تا لیبل پذیرش، پذیرش بماند. آینهٔ سمت مرورگر:
+   TEMPLATE_SERVICE_LABELS در label-system.js -#}
+{%- set service_preset = template_services.get(tpl) -%}
 {%- set assets = assets|default({'logo': '/static/images/lab-logo.png', 'brand': '/static/images/newlogo.png'}, true) -%}
 {%- set number = lbl.get('number') or '' -%}
 {%- set admission = lbl.get('admission') or '' -%}
@@ -35,8 +43,8 @@
     <div class="lbl__content">
         <!-- سربرگ: هویت آزمایشگاه + تاریخ و ساعت -->
         <header class="lbl__header">
+            {#- بدون آیکون ساعت: متن تاریخ/ساعت خودش گویاست و جای کمتری هم می‌گیرد -#}
             <span class="lbl__datetime" data-field="time" title="تاریخ و ساعت ثبت نوبت"{% if not show_time %} hidden{% endif %}>
-                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 <span class="lbl__datetime-value" data-field="datetime">{{ lbl.get('datetime') or '' }}</span>
             </span>
             <div class="lbl__identity">
@@ -51,7 +59,7 @@
         <!-- شماره نوبت: واضح و خوانا، بدون غلبه بر اطلاعات مراجعه‌کننده -->
         <section class="lbl__queue" aria-label="شماره نوبت">
             <div class="lbl__number-box">
-                <span class="lbl__service" data-field="service">{{ lbl.get('service') or 'پذیرش' }}</span>
+                <span class="lbl__service" data-field="service">{{ lbl.get('service') or service_preset or 'پذیرش' }}</span>
                 <span class="lbl__queue-number" data-field="number">{{ number }}</span>
             </div>
         </section>
@@ -62,7 +70,7 @@
             {%- if has_patient_rows %}
             <div class="lbl__record-group lbl__record-group--patient" data-field="patient">
                 {%- if has_admission %}
-                {# در سرویس‌های حداقلی (جواب‌دهی/نمونه‌گیری/نوبت خالی) این تنها
+                {# در سرویس‌های حداقلی (جواب‌دهی/نمونه‌گیری/نوبت آزاد) این تنها
                    ردیف اطلاعاتی لیبل است و باید در هر قالبی دیده شود. #}
                 <div class="lbl__record" data-field="admission"{% if minimal %} style="display:flex"{% endif %}><span class="lbl__record-label">شماره پذیرش</span><span class="lbl__record-value lbl__record-value--num" data-field="admission-value">{{ admission }}</span></div>
                 {%- endif %}
