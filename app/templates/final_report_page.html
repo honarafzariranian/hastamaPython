@@ -254,8 +254,11 @@
         <script src="{{ url_for('static', path='js/responsive-tables.js') }}"></script>
 <script src="{{ url_for('static', path='js/final-report-script.js') }}"></script>
         <script src="{{ url_for('static', path='js/dom-escape.js') }}"></script>        <script src="{{ url_for('static', path='js/toast.js') }}"></script>
-        <script src="{{ url_for('static', path='js/html2pdf.bundle.min.js') }}"></script>
-        <script src="{{ url_for('static', path='js/final-report-print.js') }}"></script>
+        <!-- html2pdf (906 KB) is no longer loaded here: it is fetched on demand by
+             final-report-print.js the first time the "دریافت PDF" button is pressed.
+             Loading it on every page view cost ~906 KB for a report page that is
+             normally read or window.print()ed. -->
+        <script src="{{ url_for('static', path='js/final-report-print.js') }}?v=20260928"></script>
 
 
 

@@ -171,10 +171,9 @@ document.getElementById('captcha').addEventListener('input', function() {
     hideCaptchaError();
 });
 
-// Load initial CAPTCHA on page load
-document.addEventListener('DOMContentLoaded', function() {
-    var img = document.getElementById('captchaImage');
-    if (img && !img.src.includes('data:')) {
-        img.src = '/captcha?t=' + Date.now();
-    }
-});
+// NOTE (performance): the CAPTCHA image is already fetched by the markup
+// (``<img id="captchaImage" src="/captcha">``), which also stores the matching
+// code in the session.  Refetching it here on DOMContentLoaded generated the
+// image a second time on every page view and could overwrite the stored code
+// *after* the user had already typed the first one.  Refresh stays available on
+// the refresh button (see the click handler above) and after a failed attempt.

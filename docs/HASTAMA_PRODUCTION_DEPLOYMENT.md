@@ -29,7 +29,7 @@ cloudflared  (Windows service "cloudflared", AUTOSTART, LocalSystem)
         |
         |  http://127.0.0.1:5000
         v
-uvicorn app.main:app  (Scheduled Task "HastamaServer" at boot)
+uvicorn app.main:app  <- launched ONLY by the "HastamaServer" task (run_server.bat)
         |
         +-- SQL Server Express 127.0.0.1:1433 (loopback)
         +-- notification inbox / SSE stream, APScheduler maintenance jobs
@@ -41,11 +41,25 @@ inbound port is opened for users.
 
 ## Process supervision (the production start path)
 
-**The production application is started only by the `\HastamaServer` scheduled
-task**, which runs `cmd.exe /c E:\Hastama\scripts\run_server.bat`. That script
-waits for SQL Server, rotates the boot log, sets `PYTHONUTF8=1` and
-`PYTHONIOENCODING=utf-8`, and starts uvicorn with
-`--host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`.
+There is exactly one production start chain and one development start chain:
+
+```text
+Production:
+    \HastamaServer                       (scheduled task, at boot, MultipleInstancesPolicy=IgnoreNew)
+        -> cmd.exe /c scripts\run_server.bat
+        -> .venv\Scripts\python.exe -m uvicorn
+               --host 127.0.0.1 --port 5000
+               --proxy-headers --forwarded-allow-ips 127.0.0.1
+        -> 127.0.0.1:5000                (published as https://hastama.ir)
+
+Development:
+    scripts\run_dev.bat
+        -> 127.0.0.1:5001                (never published, never the production port)
+```
+
+`scripts\run_server.bat` waits for SQL Server, rotates the boot log, sets
+`PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`, and then executes the uvicorn
+command above. Nothing else may own `127.0.0.1:5000`.
 
 | Intent | Correct command |
 |---|---|
@@ -113,7 +127,7 @@ Cloudflare side (dashboard, one-off): the tunnel's **Public Hostname** must map
 |---|---|---|
 | `cloudflared` | Windows service, `AUTO_START` | Token file `C:\ProgramData\cloudflared\token` (secret, never copy into the repo) |
 | Hastama app | Scheduled Task `\HastamaServer`, trigger **At system startup**, runs `scripts\run_server.bat` as the service account | Waits for `MSSQL$SQLEXPRESS`, then starts uvicorn on `127.0.0.1:5000` |
-| Watchdog (optional) | Scheduled Task `\HastamaWatchdog`, every 5 minutes, SYSTEM | Only triggers `\HastamaServer` when `127.0.0.1:5000` is not listening |
+| Watchdog | Scheduled Task `\HastamaWatchdog`, every 5 minutes, SYSTEM | **Not a port check.** It identifies the process that owns `127.0.0.1:5000`, requires the Hastama/Uvicorn application signature (`uvicorn app.main:app --port 5000` together with `--host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`), requires supervision evidence (`run_server.bat` ancestry **or** the instance writing `logs\hastama-autostart.log`), then probes `GET http://127.0.0.1:5000/health` for `200`. A non-Hastama owner is reported as `PORT_FOREIGN_OWNER` and is **never** killed; a process that cannot be inspected is `PROCESS_LOOKUP_FAILED`; an identified Hastama process running outside supervision is `UNEXPECTED_PROCESS` and is reclaimed by stopping only that identified process and re-triggering `\HastamaServer`. A silent port is `APPLICATION_DOWN`; a failing `/health` becomes `APPLICATION_UNHEALTHY` and restarts only after the configured consecutive-failure threshold; a fault in the probe itself is `HEALTH_PROBE_ERROR` and can never trigger a restart; restarts are capped per rolling window (`RESTART_SUPPRESSED`). Full model: `docs/network/UNIFIED_URL_ARCHITECTURE.md` §5 |
 
 The NSSM-based `scripts\install_services.ps1` / `remove_services.ps1` pair belongs
 to the retired Caddy topology and is kept only for historical reference; do not

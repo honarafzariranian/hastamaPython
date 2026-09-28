@@ -85,16 +85,30 @@
 
     html {
         min-width: 0;
-        overflow-x: hidden;
-        /* scroll-behavior عمداً smooth نیست: منطق اسکرول فعلی اپ دست‌نخورده بماند */
+        /* ── چرا «clip» و نه «hidden» ───────────────────────────────────────
+           مقدار «hidden» روی html/body، مقدار محاسبه‌شدهٔ آن محورِ دیگر را به
+           «auto» تبدیل می‌کند؛ یعنی body به یک اسکرول‌کانتینر تبدیل می‌شود.
+           چون ارتفاع body خودکار است، دامنهٔ اسکرولش فقط چند پیکسل (اینجا ۴px)
+           می‌شود. روی دستگاه لمسی، ژست کاربر به همان body قفل می‌شود، آن چند
+           پیکسل را مصرف می‌کند و به‌خاطر ``overscroll-behavior-y: none``
+           هرگز به viewport زنجیر نمی‌شود → کاربر صفحه را اسکرول نمی‌کند و
+           نمی‌تواند پایین باکس‌های داشبورد را ببیند (با چرخ ماوس روی دسکتاپ
+           مسیر اسکرول متفاوت است، پس باگ فقط روی موبایل دیده می‌شود).
+           ``clip`` اسکرول‌کانتینر نمی‌سازد — همان انتخابی که admin.css و
+           responsive-mobile.css هم برای همین html/body دارند.  مزیت جانبی:
+           عناصر position:sticky به viewport می‌چسبند، نه به body.
+           scroll-behavior عمداً smooth نیست: منطق اسکرول فعلی دست‌نخورده بماند */
+        overflow-x: clip;
+        /* اینجا (روت) می‌ماند تا از viewport محافظت کند؛ روی body نباشد چون
+           همان لایهٔ واسط بود که زنجیرهٔ اسکرول لمسی را می‌بست. */
+        overscroll-behavior-y: none;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
     }
 
     body {
         min-width: 0;
-        overflow-x: hidden;
-        overscroll-behavior-y: none;
+        overflow-x: clip;
         background:
             radial-gradient(115% 55% at 100% 0%, rgba(13, 148, 136, .10), transparent 58%),
             radial-gradient(95% 50% at 0% 6%, rgba(14, 165, 233, .10), transparent 56%),

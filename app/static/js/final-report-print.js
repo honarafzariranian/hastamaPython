@@ -495,6 +495,37 @@
     /* ── دکمه‌های چاپ و دریافت PDF ───────────────────────────────────
        دکمه چاپ: فرم چاپ مرورگر را باز می‌کند.
        دکمه دریافت PDF: html2pdf روی محتوای VISIBLE صفحه اجرا می‌شود. */
+    // ── html2pdf is loaded on demand ──────────────────────────────────
+    // The bundle is 906 KB and is only needed when the user actually asks for
+    // a PDF (printing the page with window.print() needs no library at all),
+    // so the page no longer includes it in its markup.  Concurrent clicks
+    // share a single download.
+    var HTML2PDF_SRC = '/static/js/html2pdf.bundle.min.js';
+    var html2pdfWaiting = null;
+
+    function loadHtml2Pdf(done) {
+        if (typeof html2pdf !== 'undefined') {
+            done(true);
+            return;
+        }
+        if (html2pdfWaiting) {
+            html2pdfWaiting.push(done);
+            return;
+        }
+        html2pdfWaiting = [done];
+        var flush = function (ok) {
+            var waiting = html2pdfWaiting;
+            html2pdfWaiting = null;
+            (waiting || []).forEach(function (fn) { fn(ok); });
+        };
+        var script = document.createElement('script');
+        script.src = HTML2PDF_SRC;
+        script.async = true;
+        script.onload = function () { flush(typeof html2pdf !== 'undefined'); };
+        script.onerror = function () { flush(false); };
+        document.head.appendChild(script);
+    }
+
     function initPrintButtons() {
         // دکمه چاپ — همان رفتار قبلی
         var printBtn = document.getElementById('printReportBtn');
@@ -512,7 +543,15 @@
             pdfBtn.dataset.prWired = '1';
             pdfBtn.addEventListener('click', function () {
                 if (typeof html2pdf === 'undefined') {
-                    showReportToast('کتابخانه PDF بارگذاری نشده است.', 'error');
+                    // First click: fetch the library, then run this same handler
+                    // again — the body below is unchanged.
+                    loadHtml2Pdf(function (loaded) {
+                        if (!loaded) {
+                            showReportToast('کتابخانه PDF بارگذاری نشد. اتصال شبکه را بررسی کنید.', 'error');
+                            return;
+                        }
+                        pdfBtn.click();
+                    });
                     return;
                 }
                 var originalText = pdfBtn.textContent;

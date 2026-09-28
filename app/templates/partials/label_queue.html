@@ -31,7 +31,7 @@
    همیشه اولویت دارد تا لیبل پذیرش، پذیرش بماند. آینهٔ سمت مرورگر:
    TEMPLATE_SERVICE_LABELS در label-system.js -#}
 {%- set service_preset = template_services.get(tpl) -%}
-{%- set assets = assets|default({'logo': '/static/images/lab-logo.png', 'brand': '/static/images/newlogo.png'}, true) -%}
+{%- set assets = assets|default({'logo': '/static/images/lab-logo.png?v=20260928', 'brand': '/static/images/newlogo.png?v=20260928'}, true) -%}
 {%- set number = lbl.get('number') or '' -%}
 {%- set admission = lbl.get('admission') or '' -%}
 {%- set has_admission = admission|string|trim != '' -%}

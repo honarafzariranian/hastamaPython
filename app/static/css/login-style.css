@@ -344,10 +344,19 @@ body {
 /* ─────────────────────────────────────────────────────────────────
    LAYER 5 — SHELL (split screen)
    ───────────────────────────────────────────────────────────────── */
+/* ``body`` is already a full-height flex column, so the shell takes the space
+   that is left *after* the footer.  It must NOT declare ``min-height: 100dvh``:
+   that made the shell exactly viewport-tall and pushed the sibling
+   ``.login-footer`` below the fold — the whole page was always
+   ``100dvh + footer`` tall, which is why a 42-44 px scrollbar appeared on every
+   screen size.  ``min-height: 0`` is what lets the shell shrink on short
+   viewports instead of forcing overflow; the vertical rhythm inside it is
+   height-aware (see “VIEWPORT FIT” at the end of this file). */
 .login-shell {
     position: relative;
     z-index: 2;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
@@ -356,8 +365,6 @@ body {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-items: center;
     gap: clamp(2rem, 5vw, 5rem);
-    min-height: 100vh;
-    min-height: 100dvh;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -528,7 +535,8 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    animation: riseIn 0.9s var(--ease-out) 0.35s backwards;
+    /* No ``riseIn`` here — see the note above ``.brand-row``: an animated
+       ancestor delays the paint of the login logo (the LCP element). */
 }
 
 /* ── Form Side Bottom Links — Redesigned ───────────────── */
@@ -648,12 +656,18 @@ body {
 }
 
 /* Brand logo glow */
+/* NOTE (performance): ``.brand-row`` and ``.form-side`` deliberately carry no
+   entrance animation.  Both are ancestors of the largest above-the-fold element
+   (the login logo), and ``riseIn`` animates ``opacity`` with ``backwards`` fill,
+   so an animated ancestor keeps that element unpainted until the animation ends.
+   Measured on the production markup: LCP was 1.6 s while ``load`` finished at
+   0.46 s — i.e. ~1.1 s of the entry page's perceived load was animation delay.
+   Everything else on this page keeps its motion. */
 .brand-row {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: clamp(0.5rem, 1.6vw, 0.9rem);
-    animation: riseIn 0.7s var(--ease-out) 0.45s backwards;
 }
 
 .brand {
@@ -1771,3 +1785,297 @@ body.dark-mode .btn {
     background: #f1f5f9; color: #64748b; transition: all 0.2s;
 }
 .pw-req.met { background: #d1fae5; color: #065f46; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWPORT FIT — the login page must never scroll
+   ───────────────────────────────────────────────────────────────
+   ``body`` is a 100dvh flex column, ``.login-shell`` takes the space
+   that is left over and ``.login-footer`` closes the column, so the
+   three of them always add up to exactly one viewport.
+
+   Everything vertical inside the shell is now the smaller of its
+   width-driven value and a height-driven one (``min(clamp(…), Nvh)``).
+   On a tall screen that is identical to the previous design; on a short
+   one (small phone, split-screen window, laptop with browser chrome)
+   the whole stack — shell padding, card, logo, headings, inputs, CAPTCHA,
+   button and the brand column — compresses together instead of spilling
+   out of the viewport.  Keeping the values fluid avoids the abrupt
+   “fits / doesn’t fit” jumps of pure height media queries.
+
+   Only the login page is affected: register.html styles itself with its
+   own ``.register-*`` rules and shares none of these selectors.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Shell: takes the leftover height, never forces 100dvh itself. */
+.login-shell {
+    padding: min(clamp(0.85rem, 3vw, 2.5rem), 3.9vh) clamp(0.9rem, 3vw, 2.5rem);
+    gap: min(clamp(2rem, 5vw, 5rem), 4.4vh);
+}
+
+/* Footer: always last in the column, never pushed below the fold. */
+.login-footer {
+    flex: 0 0 auto;
+    font-size: min(clamp(0.68rem, 1.6vw, 0.8rem), 1.9vh);
+    line-height: 1.3;
+    padding: min(0.5rem, 0.7vh) 1rem min(0.8rem, 1vh);
+}
+
+/* Form column and card. */
+.form-side {
+    gap: min(1rem, 1.5vh);
+}
+
+.login-card {
+    padding: min(clamp(1.2rem, 3vw, 2.2rem), 3.6vh)
+             min(clamp(1rem, 2.8vw, 2rem), 3.4vw)
+             min(clamp(1.2rem, 3vw, 2rem), 3.2vh);
+}
+
+.brand-row {
+    margin-bottom: min(clamp(0.5rem, 1.6vw, 0.9rem), 1vh);
+}
+
+.login-logo {
+    height: min(clamp(3rem, 8vw, 5.4rem), 7vh);
+}
+
+.login-header {
+    margin-bottom: min(clamp(0.6rem, 2vw, 1.3rem), 1.6vh);
+}
+
+.login-header h2 {
+    font-size: min(clamp(1.2rem, 2.4vw, 1.8rem), 2.8vh);
+    margin-bottom: min(0.4rem, 0.8vh);
+}
+
+.login-header p {
+    font-size: min(clamp(0.8rem, 1.4vw, 0.95rem), 1.8vh);
+}
+
+/* Fields, CAPTCHA and the submit button. */
+.login-card .input-wrapper input {
+    padding-top: min(1rem, 1.5vh);
+    padding-bottom: min(0.9rem, 1.3vh);
+    font-size: min(0.98rem, 2vh);
+}
+
+.login-card .input-wrapper label {
+    font-size: min(0.88rem, 1.7vh);
+}
+
+.login-card .captcha-img {
+    height: min(3.25rem, 5.6vh);
+}
+
+.login-card .captcha-group {
+    margin-bottom: min(0.7rem, 1.1vh);
+}
+
+.login-card .form-footer {
+    margin-bottom: min(1.1rem, 1.6vh);
+}
+
+.login-card .btn {
+    padding-top: min(0.95rem, 1.5vh);
+    padding-bottom: min(0.95rem, 1.5vh);
+    font-size: min(1.02rem, 2vh);
+}
+
+.login-card .login-hint {
+    margin-top: min(0.8rem, 1.1vh);
+    font-size: min(0.85rem, 1.7vh);
+}
+
+.login-card .field-error {
+    font-size: min(0.75rem, 1.5vh);
+}
+
+.login-card .form-group + .form-group {
+    margin-top: 0;
+}
+
+/* The two lines under the card. */
+.form-side__note {
+    font-size: min(clamp(0.68rem, 1.6vw, 0.78rem), 1.5vh);
+    line-height: min(1.7, 2.1vh);
+}
+
+/* Brand column (desktop split layout only). */
+.brand-side {
+    padding: min(clamp(0.5rem, 2vw, 2rem), 2.2vh);
+}
+
+.brand-side__logo {
+    margin-bottom: min(clamp(0.7rem, 2.6vw, 2rem), 2vh);
+}
+
+.brand-logo-img {
+    height: min(clamp(3.2rem, 9vw, 6.4rem), 9vh);
+}
+
+.brand-side__title {
+    font-size: min(clamp(1.5rem, 3.6vw, 2.9rem), 3.5vh);
+    margin-bottom: min(0.9rem, 1.2vh);
+}
+
+.brand-side__desc {
+    font-size: min(clamp(0.85rem, 1.4vw, 1.08rem), 2.1vh);
+    line-height: min(1.9, 2.6vh);
+    margin-bottom: min(clamp(1.4rem, 3vw, 2.2rem), 2.4vh);
+}
+
+.brand-side__features {
+    gap: min(clamp(0.7rem, 1.6vw, 1.1rem), 1.6vh);
+    margin-bottom: min(clamp(1.4rem, 3vw, 2rem), 2.4vh);
+}
+
+.brand-side__chips {
+    margin-top: min(1rem, 1.4vh);
+}
+
+/* Keeping “مرا به خاطر بسپار” and “فراموشی رمز عبور؟” on one line: stacked
+   (which is what the ≤560 px width rule asks for) they cost ~25 px, and that
+   is the difference between fitting and scrolling on a small phone. */
+@media (max-height: 760px) {
+    .login-card .form-footer {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+    }
+
+    .login-card .form-footer .forgot-password {
+        text-align: left;
+    }
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────
+   Below ~760 px the card spans the full width, so the shell needs a
+   top padding that clears the floating action buttons pinned at
+   ``top: 1rem; left: 1rem``.  The floor keeps that clearance on tall
+   phones and gives it up only on short ones, where the buttons are
+   shrunk as well. */
+@media (max-width: 760px) {
+    .login-shell {
+        padding-top: max(3.05rem, min(4.5rem, 6.6vh));
+        padding-bottom: min(2.6rem, 2.6vh);
+    }
+}
+
+@media (max-width: 760px) and (max-height: 700px) {
+    .top-actions {
+        top: 0.4rem;
+        left: 0.6rem;
+        gap: 0.4rem;
+    }
+
+    .theme-toggle,
+    .support-toggle {
+        width: 34px;
+        height: 34px;
+    }
+
+    .login-shell {
+        padding-top: 2.75rem;
+    }
+
+    /* The welcome subtitle is the only row on the card that carries no
+       information the form itself does not already show; on a short phone
+       it is what stands between “fits” and “scrollbar”. */
+    .login-header p {
+        display: none;
+    }
+
+    .form-side__note--register {
+        line-height: 1.35;
+    }
+}
+
+/* ── Extreme short/lanscape ──────────────────────────────────────
+   A phone held sideways (≈390 px of height) cannot fit the stacked
+   card at readable sizes.  The logo and the two notes are the only
+   rows with no interaction, so they are the ones that step aside. */
+@media (max-height: 520px) {
+    .brand-row {
+        display: none;
+    }
+
+    .login-header p {
+        display: none;
+    }
+
+    .login-card {
+        padding-top: min(0.9rem, 2.4vh);
+        padding-bottom: min(0.9rem, 2.4vh);
+    }
+
+    .login-card .btn {
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
+    }
+
+    .login-card .captcha-img {
+        height: 36px;
+    }
+
+    .brand-side__desc,
+    .brand-side__chips {
+        display: none;
+    }
+}
+
+/* Under ~430 px of height the stacked card no longer fits at any width,
+   so the two lines beneath it step aside as well.  They are the last
+   thing on the page that is not interactive; the rules and register
+   links still live in the card's own copy of the page on every other
+   viewport, and on a phone-sized viewport a scrollbar is the only
+   alternative. */
+@media (max-height: 430px) {
+    .form-side__note,
+    .form-side__note--register {
+        display: none;
+    }
+}
+
+/* Same tier, but narrow: the floating toggles shrink with the padding
+   that has to clear them. */
+@media (max-width: 760px) and (max-height: 430px) {
+    .theme-toggle,
+    .support-toggle {
+        width: 30px;
+        height: 30px;
+    }
+
+    .login-shell {
+        padding-top: 2.4rem;
+        padding-bottom: min(1.4rem, 1.4vh);
+    }
+}
+
+/* Two-column card for short landscape widths where there is room to
+   sit the fields side by side instead of hiding more content. */
+@media (max-height: 520px) and (min-width: 620px) {
+    .form-side__note,
+    .form-side__note--register {
+        display: none;
+    }
+
+    .login-card {
+        max-width: min(760px, 100%);
+    }
+
+    .login-card form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 0.9rem;
+        align-items: start;
+    }
+
+    .login-card form > .captcha-group,
+    .login-card form > .form-footer,
+    .login-card form > .btn,
+    .login-card form > .login-hint {
+        grid-column: 1 / -1;
+    }
+}
+

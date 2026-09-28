@@ -95,3 +95,65 @@ def test_admin_page_still_loads_the_mobile_layer():
     assert "js/admin-mobile.js" in admin_html
     assert "css/admin-mobile-redesign.css" in admin_html
     assert re.search(r"id=\"dashboardBox\"", admin_html)
+
+
+# ── ۱۴۰۵/۰۷/۰۷ — دام «اسکرول‌کانتینرِ body» ─────────────────────────────
+#
+# گزارش کاربر: روی موبایل صفحهٔ /admin/dashboard اسکرول نمی‌شد و پایین باکس
+# داشبورد دیده نمی‌شد، در حالی که همان صفحه با چرخ ماوس روی دسکتاپ درست
+# اسکرول می‌شد.  علت در لایهٔ موبایل بود:
+#
+#   html { overflow-x: hidden }  →  overflow-y محاسبه‌شده = auto
+#   body { overflow-x: hidden }  →  body یک اسکرول‌کانتینر می‌شود
+#
+# چون ارتفاع body خودکار است، دامنهٔ اسکرولش فقط چند پیکسل بود (اندازه‌گیری
+# زنده: 4px در برابر 1840px دامنهٔ viewport).  روی دستگاه لمسی ژست کاربر به
+# همان body قفل می‌شود، آن چند پیکسل را مصرف می‌کند و چون
+# ``overscroll-behavior-y: none`` روی body بود، هرگز به viewport زنجیر نمی‌شود
+# → «موبایل اسکرول نمی‌شود».  مسیر اسکرول چرخ ماوس متفاوت است، پس باگ روی
+# دسکتاپ دیده نمی‌شد.
+#
+# ``overflow-x: clip`` اسکرول‌کانتینر نمی‌سازد (همان کاری که admin.css و
+# responsive-mobile.css از قبل برای html/body می‌کنند) و ``overscroll-behavior``
+# هم باید روی روت بماند، نه روی body.
+
+
+def _strip_comments(css: str) -> str:
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+
+
+def _rule_block(css: str, anchor: str) -> str:
+    """قاعده‌ای که ``anchor`` داخل آن است را از { تا } هم‌تراز برمی‌گرداند."""
+    at = css.index(anchor)
+    opening = css.rindex("{", 0, at)
+    depth = 0
+    for index in range(opening, len(css)):
+        if css[index] == "{":
+            depth += 1
+        elif css[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return css[opening : index + 1]
+    raise AssertionError("قاعده بسته نشده است")
+
+
+def test_mobile_sheet_does_not_turn_body_into_a_scroll_container():
+    """html/body لایهٔ موبایل نباید اسکرول‌کانتینر بسازند."""
+    html_rule = _strip_comments(_rule_block(MOBILE_CSS, "-webkit-text-size-adjust: 100%"))
+    body_rule = _strip_comments(_rule_block(MOBILE_CSS, "background-attachment: fixed"))
+
+    assert "overflow-x: clip" in html_rule, "html باید clip باشد تا overflow-y=visible بماند"
+    assert "overflow-x: hidden" not in html_rule, "hidden روی html، body را اسکرول‌کانتینر می‌کند"
+
+    assert "overflow-x: clip" in body_rule, "body باید clip باشد، نه hidden"
+    assert "overflow-x: hidden" not in body_rule, "hidden روی body ژست لمسی را قفل می‌کند"
+    assert "overscroll-behavior-y" not in body_rule, "نباید روی body باشد؛ زنجیرهٔ اسکرول لمسی را می‌بندد"
+    assert "overscroll-behavior-y: none" in html_rule, "قفل overscroll باید روی روت بماند"
+
+
+def test_mobile_layer_is_linked_with_a_cache_buster():
+    """بدون توکن نسخه، اصلاح CSS تا ۴ ساعت به گوشی کاربر نمی‌رسد."""
+    admin_html = (ROOT / "app" / "templates" / "admin.html").read_text(encoding="utf-8")
+    assert re.search(
+        r"css/admin-mobile-redesign\.css'\)\s*\}\}\?v=\d+", admin_html
+    ), "لینک لایهٔ موبایل باید ?v=<تاریخ> داشته باشد"

@@ -172,9 +172,15 @@ profile **Private**).
 
 **Mid-day recovery (RR-25, closed 2026-09-27):** the boot task alone would leave
 the URL down if the Python process died during the day, so `\HastamaWatchdog`
-now runs every 5 minutes and re-triggers `\HastamaServer` when the listener is
-gone. It is silent while healthy and writes one line per event to
-`logs\hastama-watchdog.log` (rotated above 2 MB).
+now runs every 5 minutes and starts `\HastamaServer` again when the supervised
+application is gone or no longer serving. It is silent while healthy and writes
+one line per event to `logs\hastama-watchdog.log` (rotated above 2 MB).
+
+The canonical statement of the two startup chains (`\HastamaServer` →
+`scripts\run_server.bat` → uvicorn on `127.0.0.1:5000` for production, and
+`scripts\run_dev.bat` on `127.0.0.1:5001` for development) lives in
+[`docs/HASTAMA_PRODUCTION_DEPLOYMENT.md`](../HASTAMA_PRODUCTION_DEPLOYMENT.md)
+under *Process supervision (the production start path)*.
 
 **Port listening is not health (RR-28, 2026-09-28).** The first watchdog
 implementation asked only "is `127.0.0.1:5000` listening?". A uvicorn process
@@ -198,7 +204,16 @@ so a crash loop cannot become a restart storm. Statuses written to the log:
 `HEALTHY`, `APPLICATION_DOWN`, `PORT_FOREIGN_OWNER`, `UNEXPECTED_PROCESS`,
 `UNEXPECTED_PROCESS_STOPPED`, `APPLICATION_UNHEALTHY`, `HEALTH_PROBE_ERROR`,
 `RESTART_REQUESTED`, `RESTARTED`, `RECOVERY_CONFIRMED`, `RESTART_FAILED`,
-`RESTART_SUPPRESSED`, `PUBLIC_HEALTH_OK|FAILED|NOT_VERIFIED`.
+`RESTART_SUPPRESSED`, `PROCESS_LOOKUP_FAILED`, `PUBLIC_HEALTH_OK|FAILED|NOT_VERIFIED`.
+
+Two limits are part of the design and are not claimed away. **Detection is
+periodic, not instantaneous:** an unsupervised instance or a hung application can
+serve for up to one watchdog interval (5 minutes) before the next run reclaims
+it, and the recovery itself then takes roughly 30–60 s (observed 31–36 s). **A
+deliberate masquerade is possible:** a process started with all four production
+flags *and* whose output is redirected into `logs\hastama-autostart.log` is
+classified as the production instance; that requires administrative intent on the
+server and is accepted as a residual exposure (RR-28).
 
 The probe is deliberately dependency-free: `System.Net.Http` is not loaded in
 Windows PowerShell 5.1, so `/health` is fetched with `HttpWebRequest` and an
@@ -213,7 +228,7 @@ application as unhealthy for exactly that reason.
 
 | Item | Value |
 |---|---|
-| Command | `python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1` |
+| Command | The command **executed by the production launcher** `scripts\run_server.bat` (invoked by the `\HastamaServer` task): `python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`. This is a description of what the launcher runs, **not** a start command to type. Production must **never** be started by hand on port 5000: start it with `scripts\start_server.bat` (which triggers `\HastamaServer`), and use `scripts\run_dev.bat` (`127.0.0.1:5001`) for development |
 | Bind | **loopback only** (`127.0.0.1:5000`) — verified with `netstat -ano`: `TCP 127.0.0.1:5000 LISTENING`; no `0.0.0.0:5000` / LAN listener exists |
 | Versions | uvicorn 0.23.2, FastAPI 0.141.1, Starlette 1.6.0 |
 | Proxy trust | `--proxy-headers` with `--forwarded-allow-ips 127.0.0.1`; application-side `TRUSTED_PROXY_IPS` defaults to `127.0.0.1,::1` (`app/core/net.py`) |
@@ -344,11 +359,18 @@ addresses, no `ws://` literals and no `http://` canonical links in `app/`
 
 ### Measured recovery (2026-09-27)
 
+> **Historical observation.** The rows below record what was measured on
+> 2026-09-27 with the **first, port-only** watchdog implementation. The two
+> watchdog rows no longer describe the current behaviour: since 2026-09-28 the
+> layered model in §5 applies and the log statuses have changed, so those rows
+> are kept as the record of that implementation only, not as a description of
+> the watchdog in the repository today.
+
 | Action | Observed result |
 |---|---|
 | `taskkill` the running uvicorn, then `schtasks /Run /TN HastamaServer` | `127.0.0.1:5000` accepted connections again in ~25 s (SQL wait loop + start), and `https://hastama.ir/health` returned `200` on the next probe; no DNS, firewall or Cloudflare change was needed |
-| Watchdog, healthy host (`-Port 5000`) | `exit 0`, **no** log line written (stays quiet when nothing is wrong) |
-| Watchdog, dead port (`-Port 5999`, dummy task) | Wrote `127.0.0.1:5999 is not listening - starting scheduled task …`, invoked `schtasks /Run`, re-probed, logged `still down after …s` and returned `1` |
+| Watchdog, healthy host (`-Port 5000`) *(port-only implementation, historical)* | `exit 0`, **no** log line written (stays quiet when nothing is wrong) |
+| Watchdog, dead port (`-Port 5999`, dummy task) *(port-only implementation, historical)* | Wrote `127.0.0.1:5999 is not listening - starting scheduled task …`, invoked `schtasks /Run`, re-probed, logged `still down after …s` and returned `1` |
 | Boot log rotation | The 271 MB `logs\hastama-autostart.log` was moved to `.log.1` on the restart and a fresh 9 KB log was opened |
 
 ---
@@ -410,7 +432,7 @@ claimed as passed by this work.
    the only way to prove the router has no port-forward.
 5. **Failover drill (repeat after any infrastructure change).** `schtasks /End /TN HastamaServer` then `schtasks /Run /TN HastamaServer`; `https://hastama.ir` must recover within ~60 s (SQL wait + startup) without any user action. The 2026-09-27 run is recorded in §12; the deliberate *kill-and-wait-for-the-watchdog* drill is still worth doing once during a maintenance window.
 6. ~~Delete the dead LAN-443 firewall rule~~ **Done 2026-09-27**: `Hastama HTTPS LAN` no longer exists; the only remaining rules for this application are their `Block` counterparts.
-7. ~~Consider the watchdog task~~ **Done 2026-09-27**: `\HastamaWatchdog` runs every 5 minutes as `SYSTEM` and re-triggers `\HastamaServer` when the loopback port stops listening (`scripts\watchdog_server.ps1`, `scripts\install_watchdog.ps1`).
+7. ~~Consider the watchdog task~~ **Done 2026-09-27; health model replaced 2026-09-28.** `\HastamaWatchdog` runs every 5 minutes as `SYSTEM` (`scripts\watchdog_server.ps1`, `scripts\install_watchdog.ps1`). It originally re-triggered `\HastamaServer` when the loopback port stopped listening; it now identifies the process owning the port, requires the production flags and supervision evidence, probes `GET /health`, and reclaims the port only from an *identified* Hastama process (§5). Development runs on `scripts\run_dev.bat` (`127.0.0.1:5001`).
 
 ---
 
