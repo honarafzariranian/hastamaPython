@@ -1,9 +1,14 @@
 @echo off
 title Hastama Server - Stop
 echo Stopping Hastama Server...
-taskkill /F /IM python.exe /FI "WINDOWTITLE eq Hastama*" >nul 2>&1
-schtasks /End /TN HastamaServer >nul 2>&1
+rem The old window-title filter never matched the task's console, and
+rem `schtasks /End` on its own left the python child alive while it still owned
+rem 127.0.0.1:5000 - the next start then died with Errno 10048.
+rem stop_server.ps1 identifies the process before stopping it.
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0stop_server.ps1" -Port 5000 -TaskName HastamaServer
 echo.
 echo Server stopped.
+echo NOTE: the HastamaWatchdog task starts it again within 5 minutes (by design).
+echo For a maintenance window use scripts\disable_autostart.bat (disables both tasks).
 echo.
 pause

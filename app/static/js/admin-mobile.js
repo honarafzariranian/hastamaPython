@@ -227,7 +227,7 @@
         var sidebar = document.querySelector('.rightSidebar');
         if (!sidebar) return;
         /* تغییر کلاس active توسط toggleBox در admin.js → همگام‌سازی تب‌ها */
-        var observer = new MutationObserver(function () { syncTabs(); });
+        var observer = new MutationObserver(function () { indexDrawerItems(); syncTabs(); });
         observer.observe(sidebar, { subtree: true, attributes: true, attributeFilter: ['class'] });
         window.addEventListener('popstate', function () { setTimeout(syncTabs, 0); });
     }
@@ -283,10 +283,50 @@
             var item = event.target.closest && event.target.closest('.icon-container');
             if (!item) return;
             setTimeout(function () {
-                syncTabs();
+                /* کشو باید در هر حالت بسته شود؛ اگر syncTabs خطا بدهد و اجرا
+                   متوقف شود، body با mobile-sidebar-open و overflow: hidden
+                   باقی می‌ماند و اسکرول صفحه برای همیشه قفل می‌شود. */
+                try {
+                    syncTabs();
+                } catch (e) { /* نوار تب فقط تزئینی است؛ بستن کشو مقدم است */ }
                 closeDrawer();
             }, 40);
         });
+    }
+
+    /* ── ۳-پ) قفل اسکرول هرگز بدون کشوی باز باقی نمی‌ماند ─────────────────
+       body.mobile-sidebar-open روی موبایل overflow: hidden می‌گیرد تا پشت
+       کشوی باز اسکرول نشود.  اگر این کلاس در حالی بماند که کشو باز نیست
+       (خطا در هندلر بستن، تغییر بریک‌پوینت، برگشت از bfcache)، کاربر صفحه را
+       اسکرول نمی‌شود؛ این نگهبان همان وضعیت را خودکار اصلاح می‌کند. */
+    function releaseStaleScrollLock() {
+        if (!document.body.classList.contains('mobile-sidebar-open')) return;
+        var sidebar = document.querySelector('.rightSidebar');
+        var open = !!sidebar && sidebar.classList.contains('open');
+        if (!open || !isMobile()) {
+            document.body.classList.remove('mobile-sidebar-open');
+        }
+    }
+
+    function watchScrollLock() {
+        releaseStaleScrollLock();
+        var observer = new MutationObserver(releaseStaleScrollLock);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        document.addEventListener('pageshow', releaseStaleScrollLock);
+        window.addEventListener('orientationchange', releaseStaleScrollLock);
+        window.addEventListener('resize', releaseStaleScrollLock);
+    }
+
+    /* ── ۳-ت) ترتیب ورود پله‌ای آیتم‌های کشو ──────────────────────────────
+       CSS با --adm-i برای هر آیتم یک تأخیر کوچک می‌سازد تا کشو یک‌باره و
+       خشک ظاهر نشود.  ترتیب = ترتیب DOM (عنوان، آیتم‌ها، جداکننده، خروج). */
+    function indexDrawerItems() {
+        var sidebar = document.querySelector('.rightSidebar');
+        if (!sidebar) return;
+        var items = sidebar.querySelectorAll('.adm-drawer-head, .icon-container, .sidebar-divider');
+        for (var i = 0; i < items.length; i++) {
+            items[i].style.setProperty('--adm-i', String(Math.min(i, 14)));
+        }
     }
 
     /* ── ۳-ب) عنوان کشو (یک‌بار ساخته می‌شود) ───────────────────────────── */
@@ -483,6 +523,7 @@
     /* ── راه‌اندازی ─────────────────────────────────────────────────────── */
     function init() {
         buildDrawerHead();
+        indexDrawerItems();
         buildTabbar();
         observeSidebar();
         bindDrawerGestures();
@@ -491,6 +532,7 @@
         bindSheetSwipe();
         watchSections();
         bindTabStrips();
+        watchScrollLock();
         window.addEventListener('resize', function () {
             if (isMobile()) {
                 buildTabbar();
@@ -509,6 +551,8 @@
     /* API عمومی برای تست/توسعه */
     window.HastamaAdminMobile = {
         syncTabs: syncTabs,
-        isMobile: isMobile
+        isMobile: isMobile,
+        releaseStaleScrollLock: releaseStaleScrollLock,
+        indexDrawerItems: indexDrawerItems
     };
 })();

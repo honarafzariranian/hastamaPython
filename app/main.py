@@ -33,6 +33,7 @@ from app.services.background_tasks import start_background_tasks, stop_backgroun
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
 from core.config import DEBUG, SECRET_KEY, config
+from app.core.console import safe_print
 from app.core.database import connection_string as _db_connection_string
 from core.number_format import convert_to_persian_numbers
 from core.password_utils import (
@@ -4273,7 +4274,9 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
     username = str(username or "").strip()
     start_date = convert_farsi_to_english(start_date).strip()
     end_date = convert_farsi_to_english(end_date).strip()
-    print(f"[HOZOOR-DBG] endpoint hit: user={username!r} start={start_date!r} end={end_date!r}", flush=True)
+    # ``safe_print`` never raises: this line carries the raw username, and a
+    # non-encodable character here used to fail the whole request with HTTP 500.
+    safe_print(f"[HOZOOR-DBG] endpoint hit: user={username!r} start={start_date!r} end={end_date!r}", flush=True)
     try:
         from_g = JalaliDate.strptime(start_date, "%Y/%m/%d").to_gregorian()
         to_g = JalaliDate.strptime(end_date, "%Y/%m/%d").to_gregorian()
@@ -4315,7 +4318,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             'chaharshanbeh': r[8], 'panjshanbeh': r[9], 'jomeh': r[10]
         } for r in cursor.fetchall()]
     except Exception as shift_err:
-        print(f"get_hozoor shiftha fallback for {username}: {shift_err}")
+        safe_print(f"get_hozoor shiftha fallback for {username}: {shift_err}")
 
     def resolve_work_hours(sh_year, sh_month, sh_day, wd):
         # اول دنبال بازه‌ی تعریف‌شده در shiftha برای همین ماه/روز می‌گردیم.
@@ -4364,7 +4367,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
         rows = cursor_access.fetchall()
     except Exception as access_error:
         _access_error_msg = str(access_error)
-        print(f"get_hozoor Access fallback for {username}: {access_error}")
+        safe_print(f"get_hozoor Access fallback for {username}: {access_error}")
     finally:
         if cursor_access is not None:
             cursor_access.close()
@@ -4417,7 +4420,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
             ORDER BY [date]
         """, (username, from_g, to_g))
         rows_sql = cursor.fetchall()
-        print(f"[HOZOOR-DBG] SQL hozoor table returned {len(rows_sql)} rows for {username!r}, from_g={from_g}, to_g={to_g}", flush=True)
+        safe_print(f"[HOZOOR-DBG] SQL hozoor table returned {len(rows_sql)} rows for {username!r}, from_g={from_g}, to_g={to_g}", flush=True)
 
         for row in rows_sql:
             g_date, vrood, khoroj = row
@@ -4427,7 +4430,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
                 exit_ = normalize_time_value(khoroj)
                 attendance[shamsi] = {"CardNo": "DB", "Date": shamsi, "EntryTime": entry, "ExitTime": exit_}
     except Exception as hozoor_err:
-        print(f"get_hozoor hozoor table fallback for {username}: {hozoor_err}")
+        safe_print(f"get_hozoor hozoor table fallback for {username}: {hozoor_err}")
 
     # **اضافه کردن تمام تاریخ‌های بین from_g و to_g که رکورد ندارند**
     total_days = (to_g - from_g).days
@@ -4447,7 +4450,7 @@ def get_hozoor(request: Request, username: str, start_date: str = Query(...), en
 
     # حالا پردازش نهایی و تعیین وضعیت — خروجی را به صورت مرتب (بر اساس تاریخ) می‌دهیم
     non_zero = sum(1 for d in attendance.values() if d.get('EntryTime','0000') != '0000' or d.get('ExitTime','0000') != '0000')
-    print(f"[HOZOOR-DBG] attendance has {len(attendance)} days, {non_zero} with actual data for {username!r}", flush=True)
+    safe_print(f"[HOZOOR-DBG] attendance has {len(attendance)} days, {non_zero} with actual data for {username!r}", flush=True)
     result = []
     for date_str in sorted(attendance.keys()):
         data = attendance[date_str]

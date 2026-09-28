@@ -328,6 +328,16 @@ for (var k in SECTION_URLS) { URL_TO_SECTION[SECTION_URLS[k]] = k; }
 
 function navTo(boxId, el, url) {
     toggleBox(boxId, el);
+
+    /* موبایل: انتخاب بخش از کشو باید خودِ کشو را هم ببندد.  تا وقتی کشو در
+       حالت باز بماند، body کلاس mobile-sidebar-open دارد و overflow: hidden
+       اسکرول کل صفحه را می‌گیرد؛ نتیجه این بود که کاربر بعد از انتخاب یک بخش
+       از منو، هیچ جای صفحه را نمی‌توانست اسکرول کند. */
+    const drawer = document.querySelector('.rightSidebar');
+    if (drawer && drawer.classList.contains('open') && window.innerWidth <= 768) {
+        closeMobileSidebar();
+    }
+
     if (url && window.history && window.history.pushState) {
         window.history.pushState({box: boxId}, '', url);
     }

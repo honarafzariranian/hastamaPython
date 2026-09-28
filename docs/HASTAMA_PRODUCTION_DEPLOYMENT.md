@@ -39,6 +39,32 @@ uvicorn app.main:app  (Scheduled Task "HastamaServer" at boot)
 FastAPI binds to `127.0.0.1:5000`. Nothing binds to the LAN interface, and no
 inbound port is opened for users.
 
+## Process supervision (the production start path)
+
+**The production application is started only by the `\HastamaServer` scheduled
+task**, which runs `cmd.exe /c E:\Hastama\scripts\run_server.bat`. That script
+waits for SQL Server, rotates the boot log, sets `PYTHONUTF8=1` and
+`PYTHONIOENCODING=utf-8`, and starts uvicorn with
+`--host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`.
+
+| Intent | Correct command |
+|---|---|
+| Start a stopped production instance | `scripts\start_server.bat` (triggers the task) |
+| Stop the production instance | `scripts\stop_server.bat` (identifies the process, then stops it) |
+| Development / debugging | `scripts\run_dev.bat` — binds **127.0.0.1:5001**, never published |
+| Disable restart behaviour for a maintenance window | `scripts\disable_autostart.bat` (disables the server **and** the watchdog task) |
+
+**Never start production by hand** (`python -m uvicorn app.main:app --port 5000`
+from a terminal). Such a process takes the listening socket away from the
+supervised instance and is invisible to it: it runs without the flags and the
+UTF-8 environment above, and it dies when its terminal closes. This happened for
+real on 2026-09-28 (started from a VS Code terminal; the terminal was closed at
+08:27:45 and `https://hastama.ir` returned `502` until the watchdog reclaimed the
+port). The `\HastamaWatchdog` task now identifies the process that owns the port
+and repairs this condition — see
+[`docs/network/UNIFIED_URL_ARCHITECTURE.md`](network/UNIFIED_URL_ARCHITECTURE.md)
+§5.
+
 ## Prerequisites
 
 - Python 3.11+ and the project `.venv` (already provisioned on the server).

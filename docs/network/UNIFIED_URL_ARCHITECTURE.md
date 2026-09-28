@@ -166,14 +166,46 @@ profile **Private**).
 |---|---|
 | Auto-start of the application | Scheduled Task `\HastamaServer` — trigger **At system startup**, run as `hastama` (`LogonType: Password`, `RunLevel: HighestAvailable`), action `cmd.exe /c E:\Hastama\scripts\run_server.bat`, `MultipleInstancesPolicy: IgnoreNew`, no execution time limit |
 | `run_server.bat` | waits for `MSSQL$SQLEXPRESS`, waits 30 s, then starts uvicorn; logs to `logs\hastama-autostart.log` |
-| Manual start/stop | `scripts\start_server.bat` (`schtasks /Run`), `scripts\stop_server.bat` (`schtasks /End`) |
-| Auto-start toggle | `scripts\enable_autostart.bat` / `disable_autostart.bat` |
+| Manual start/stop | `scripts\start_server.bat` (`schtasks /Run`); `scripts\stop_server.bat` runs `scripts\stop_server.ps1`, which identifies the owning process before stopping it (a bare `schtasks /End` orphaned the python child, which kept the port and made the next start fail with `Errno 10048`) |
+| Development instance | `scripts\run_dev.bat` — binds `127.0.0.1:5001`; **never** the production port |
+| Auto-start toggle | `scripts\enable_autostart.bat` / `disable_autostart.bat` — both toggle `\HastamaServer` **and** `\HastamaWatchdog`, otherwise "auto-start disabled" would last five minutes |
 
 **Mid-day recovery (RR-25, closed 2026-09-27):** the boot task alone would leave
 the URL down if the Python process died during the day, so `\HastamaWatchdog`
-now probes `127.0.0.1:5000` every 5 minutes and re-triggers `\HastamaServer`
-when nothing is listening. It is silent while healthy and writes one line per
-intervention to `logs\hastama-watchdog.log`.
+now runs every 5 minutes and re-triggers `\HastamaServer` when the listener is
+gone. It is silent while healthy and writes one line per event to
+`logs\hastama-watchdog.log` (rotated above 2 MB).
+
+**Port listening is not health (RR-28, 2026-09-28).** The first watchdog
+implementation asked only "is `127.0.0.1:5000` listening?". A uvicorn process
+started by hand from a VS Code terminal took the port over, ran without the
+production flags and the UTF-8 environment, and died with its terminal: the
+public URL returned `502` while the watchdog kept reporting the state as healthy.
+The watchdog now applies four layers before it may call the deployment healthy:
+
+| Layer | Question | Failure status |
+|---|---|---|
+| 1. Listener identity | Does the process owning the port run `uvicorn app.main:app --port 5000`? | `PORT_FOREIGN_OWNER` (foreign process is logged, **never** killed, no start attempted) |
+| 2. Production configuration | Does its command line carry `--host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`? | `UNEXPECTED_PROCESS` |
+| 3. Supervision | Does it descend from `scripts\run_server.bat`, or is it the instance writing `logs\hastama-autostart.log` (refreshed every second)? | `UNEXPECTED_PROCESS` |
+| 4. Application health | Does `GET http://127.0.0.1:5000/health` answer `200` within 5 s (no proxy, no database)? | `APPLICATION_UNHEALTHY`, restart after 3 consecutive failures |
+
+An identified Hastama process running outside supervision is logged with its
+PID, executable, command line, ancestry and the missing evidence, then reclaimed:
+the identified process tree is stopped and `\HastamaServer` is started again.
+Restarts are capped at 3 per rolling 30 minutes (`RESTART_SUPPRESSED` afterwards)
+so a crash loop cannot become a restart storm. Statuses written to the log:
+`HEALTHY`, `APPLICATION_DOWN`, `PORT_FOREIGN_OWNER`, `UNEXPECTED_PROCESS`,
+`UNEXPECTED_PROCESS_STOPPED`, `APPLICATION_UNHEALTHY`, `HEALTH_PROBE_ERROR`,
+`RESTART_REQUESTED`, `RESTARTED`, `RECOVERY_CONFIRMED`, `RESTART_FAILED`,
+`RESTART_SUPPRESSED`, `PUBLIC_HEALTH_OK|FAILED|NOT_VERIFIED`.
+
+The probe is deliberately dependency-free: `System.Net.Http` is not loaded in
+Windows PowerShell 5.1, so `/health` is fetched with `HttpWebRequest` and an
+explicit `Proxy = $null`. A failure of the *probe* itself (as opposed to the
+application) is reported as `HEALTH_PROBE_ERROR` and never counts towards the
+restart threshold, because the first version of this watchdog reported a healthy
+application as unhealthy for exactly that reason.
 
 ---
 

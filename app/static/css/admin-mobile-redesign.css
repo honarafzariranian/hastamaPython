@@ -38,6 +38,8 @@
         --adm-bg-2: #f7fafc;
         --adm-surface: #ffffff;
         --adm-surface-2: #f6f9fc;
+        /* لایهٔ نرم روی آیتم‌های کشو؛ در تم تیره بازنویسی می‌شود */
+        --adm-tile-wash: rgba(255, 255, 255, .55);
         /* شیشه به‌قدری مات هست که حتی بدون پشتیبانی backdrop-filter هم
            خوانا و روشن بماند؛ بلور فقط یک لایهٔ زیبایی اضافه است. */
         --adm-glass: rgba(255, 255, 255, .90);
@@ -503,20 +505,46 @@
         transition: color .3s var(--adm-ease-soft), transform .35s var(--adm-ease-spring);
     }
 
+    /* آیکون تب‌ها همان «تایل گرادیانی» سایدبار دسکتاپ است.
+       SVGهای نوار تب رنگ سفید دارند (از سایدبار کپی شده‌اند) و در دسکتاپ روی
+       پس‌زمینهٔ گرادیانی هر لهجه می‌نشینند؛ اینجا هم همان تایل بازسازی می‌شود
+       تا آیکون‌ها مثل دسکتاپ رنگی باشند، نه سفیدِ بی‌رنگ. */
     .adm-tab__icon {
         display: grid;
         place-items: center;
         width: 26px;
         height: 26px;
-        border-radius: 9px;
-        color: currentColor;
-        transition: transform .4s var(--adm-ease-spring), color .3s var(--adm-ease-soft);
+        border-radius: 10px;
+        color: #fff;
+        background: linear-gradient(135deg, var(--tile-from, #64748B), var(--tile-to, #0F172A));
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, .5),
+                    inset 0 -2px 4px rgba(0, 0, 0, .12),
+                    0 6px 12px -8px var(--glow, rgba(15, 23, 42, .4));
+        opacity: .78;
+        transition: transform .4s var(--adm-ease-spring), opacity .3s var(--adm-ease-soft),
+            box-shadow .3s var(--adm-ease-soft);
     }
 
     .adm-tab__icon svg {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
     }
+
+    /* پالت لهجه‌ها — همان مقادیر `.rightSidebar .icon-container[data-accent]`
+       در admin.css، تا رنگ نوار تب موبایل با سایدبار دسکتاپ یکی باشد. */
+    .adm-tab[data-accent="dashboard"]  { --tile-from:#4F8DFF; --tile-to:#7C5CFF; --glow:rgba(91,124,255,.45); }
+    .adm-tab[data-accent="staff"]      { --tile-from:#10B981; --tile-to:#14B8A6; --glow:rgba(16,185,129,.45); }
+    .adm-tab[data-accent="leave"]      { --tile-from:#FBBF24; --tile-to:#F97316; --glow:rgba(245,158,11,.45); }
+    .adm-tab[data-accent="overtime"]   { --tile-from:#A855F7; --tile-to:#EC4899; --glow:rgba(168,85,247,.45); }
+    .adm-tab[data-accent="pass"]       { --tile-from:#06B6D4; --tile-to:#3B82F6; --glow:rgba(14,165,233,.45); }
+    .adm-tab[data-accent="ticket"]     { --tile-from:#F43F5E; --tile-to:#EC4899; --glow:rgba(244,63,94,.42); }
+    .adm-tab[data-accent="automation"] { --tile-from:#087F72; --tile-to:#1686B5; --glow:rgba(8,127,114,.45); }
+    .adm-tab[data-accent="shift"]      { --tile-from:#6366F1; --tile-to:#0EA5E9; --glow:rgba(99,102,241,.45); }
+    .adm-tab[data-accent="attendance"] { --tile-from:#22C55E; --tile-to:#84CC16; --glow:rgba(34,197,94,.42); }
+    .adm-tab[data-accent="payroll"]    { --tile-from:#D97706; --tile-to:#F59E0B; --glow:rgba(217,119,6,.45); }
+    .adm-tab[data-accent="exit"]       { --tile-from:#FB7185; --tile-to:#E11D48; --glow:rgba(244,63,94,.42); }
+    /* تب «بیشتر» لهجهٔ خاصی ندارد؛ خنثی و کم‌رنگ می‌ماند */
+    .adm-tab--more                       { --tile-from:#94A3B8; --tile-to:#475569; --glow:rgba(71,85,105,.4); }
 
     .adm-tab__label {
         max-width: 100%;
@@ -531,8 +559,10 @@
 
     .adm-tab.is-active .adm-tab__icon {
         transform: translateY(-2px) scale(1.06);
-        color: var(--adm-accent);
-        filter: drop-shadow(0 6px 10px var(--adm-accent-glow));
+        opacity: 1;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, .55),
+                    inset 0 -2px 4px rgba(0, 0, 0, .12),
+                    0 10px 18px -8px var(--glow, rgba(15, 23, 42, .45));
     }
 
     .adm-tab:active .adm-tab__icon {
@@ -601,17 +631,50 @@
         -webkit-backdrop-filter: blur(24px) saturate(1.4);
         backdrop-filter: blur(24px) saturate(1.4);
         box-shadow: -30px 0 70px -30px rgba(8, 30, 50, .55) !important;
-        transform: translateX(105%);
-        transition: transform .46s var(--adm-ease);
-        will-change: transform;
+        transform: translateX(104%) scale(.99);
+        opacity: .35;
+        transition: transform .58s var(--adm-ease-spring), opacity .28s var(--adm-ease-soft),
+            box-shadow .45s var(--adm-ease-soft);
+        will-change: transform, opacity;
         overscroll-behavior: contain;
     }
 
-    .rightSidebar.open,
-    .rightSidebar:hover {
+    .rightSidebar.open {
         width: min(88vw, 344px) !important;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
+        opacity: 1;
     }
+
+    /* باز شدن با هاور فقط روی دستگاه‌هایی که واقعاً هاور دارند.  روی لمس،
+       مرورگر بعد از هر تپ :hover را نگه می‌دارد و کشو روی صفحه باقی می‌ماند
+       (کل صفحهٔ ثابت با overscroll-behavior: contain جلوی اسکرول را می‌گیرد). */
+    @media (hover: hover) and (pointer: fine) {
+        .rightSidebar:hover {
+            width: min(88vw, 344px) !important;
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+    /* ── ورود پله‌ای اجزای کشو (باز/بسته شدن بدون پرش یک‌باره) ──────────
+       هر آیتم با --adm-i که در JS بر اساس ترتیب DOM ست می‌شود، با تأخیر
+       کوچکی ظاهر و محو می‌شود؛ در حالت بسته هم همان چیدمان محو می‌گردد
+       تا بستن، «خشک و ناگهانی» نباشد. */
+    .rightSidebar > .adm-drawer-head,
+    .rightSidebar > .icon-container,
+    .rightSidebar > .sidebar-divider {
+        opacity: 0;
+        transform: translateX(22px);
+    }
+
+    .rightSidebar.open > .adm-drawer-head,
+    .rightSidebar.open > .icon-container,
+    .rightSidebar.open > .sidebar-divider {
+        opacity: 1;
+        transform: none;
+    }
+
+
 
     .rightSidebar .mobile-sidebar-close {
         position: absolute;
@@ -696,8 +759,8 @@
 
     .rightSidebar .icon-container.active {
         border-color: var(--adm-line);
-        background: linear-gradient(120deg, var(--tint, rgba(13, 148, 136, .10)), rgba(255, 255, 255, .55));
-        box-shadow: var(--adm-shadow-1);
+        background: linear-gradient(120deg, var(--tint, rgba(13, 148, 136, .10)), var(--adm-tile-wash));
+        box-shadow: var(--adm-shadow-1), 0 12px 24px -20px var(--glow, var(--adm-accent-glow));
     }
 
     .rightSidebar .icon-container.active::before {
@@ -734,20 +797,76 @@
         font-weight: 900;
     }
 
-    /* جداکنندهٔ «خروج» */
+    /* جداکنندهٔ «خروج» — با margin-top: auto به پاورقی کشو می‌چسبد */
     .rightSidebar .sidebar-divider {
-        margin: 8px 4px !important;
+        margin: auto 4px 6px !important;
         height: 1px;
         background: linear-gradient(90deg, transparent, var(--adm-line-strong), transparent);
     }
 
+    /* دکمهٔ خروج: همیشه پایین کشو می‌ماند (حتی وقتی منو بلند است) */
     .rightSidebar .icon-container[data-accent="exit"] {
-        border-color: rgba(244, 63, 94, .18);
-        background: rgba(244, 63, 94, .06);
+        position: sticky;
+        bottom: calc(var(--adm-safe-b) + 2px);
+        z-index: 3;
+        margin-bottom: 0 !important;
+        border-color: rgba(244, 63, 94, .24);
+        background: linear-gradient(115deg, rgba(244, 63, 94, .14), var(--adm-tile-wash));
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 -14px 26px -20px rgba(8, 30, 50, .55);
     }
 
     .rightSidebar .icon-container[data-accent="exit"] .icon-label {
         color: #e11d48;
+        font-weight: 900;
+    }
+
+    /* بازخورد لمسی روی آیتم‌ها و دکمهٔ بستن */
+    .rightSidebar .icon-container:active {
+        transform: scale(.978);
+    }
+
+    .rightSidebar .mobile-sidebar-close {
+        transition: transform .28s var(--adm-ease-spring), background .28s var(--adm-ease-soft),
+            color .28s var(--adm-ease-soft);
+    }
+
+    .rightSidebar .mobile-sidebar-close:active {
+        transform: scale(.9) rotate(-6deg);
+        background: rgba(244, 63, 94, .12);
+        color: #e11d48;
+    }
+
+    /* ── ترتیب ورود پله‌ای (باید پس از قواعد پایه بیاید تا بازنویسی نشود) ──
+       ترتیب transition-delay مطابق ترتیب خصوصیت‌ها در shorthand زیر است:
+       background، border-color، box-shadow، opacity، transform */
+    .rightSidebar > .adm-drawer-head,
+    .rightSidebar > .icon-container,
+    .rightSidebar > .sidebar-divider {
+        transition: background .35s var(--adm-ease-soft), border-color .35s var(--adm-ease-soft),
+            box-shadow .35s var(--adm-ease-soft), opacity .28s var(--adm-ease-soft),
+            transform .45s var(--adm-ease-spring);
+    }
+
+    .rightSidebar.open > .adm-drawer-head,
+    .rightSidebar.open > .icon-container,
+    .rightSidebar.open > .sidebar-divider {
+        transition-delay: 0s, 0s, 0s, calc(var(--adm-i, 0) * 20ms), calc(var(--adm-i, 0) * 20ms);
+    }
+
+    /* لمسهٔ طراحی: هالهٔ برند در بالای کشو (تزئینی و بی‌اثر روی چیدمان) */
+    .rightSidebar::after {
+        content: '';
+        position: absolute;
+        top: -80px;
+        inset-inline-end: -70px;
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 32% 32%, rgba(13, 148, 136, .24), rgba(14, 165, 233, .12) 45%, transparent 68%);
+        pointer-events: none;
+        z-index: 0;
     }
 
     /* پنهان‌سازی اسکرول‌بار کشو */
@@ -2412,33 +2531,45 @@
        ۱۴) منوی پروفایل، تم تیره و اصلاحات ریزی
        ══════════════════════════════════════════════════════════════════ */
 
+    /* منوی پروفایل: یک پنلِ تمام‌عرض که *زیر هدر* باز می‌شود.
+       نکتهٔ مهم: هدر با backdrop-filter شیشه‌ای است و backdrop-filter برای
+       فرزندهای position: fixed «containing block» می‌سازد؛ پس مختصات این پنل
+       نسبت به خود هدر حساب می‌شود، نه viewport. با top: ارتفاع هدر، پنل دقیقاً
+       از لبهٔ پایین هدر شروع می‌شود (و اگر روزی شیشهٔ هدر حذف شود، همان top
+       نسبت به viewport معنی یکسانی دارد). */
     .profile-dropdown {
         position: fixed !important;
-        top: auto !important;
-        bottom: 0 !important;
+        top: calc(var(--adm-header-h) + var(--adm-safe-t)) !important;
+        bottom: auto !important;
         inset-inline: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
-        max-height: 88dvh;
         margin: 0 !important;
-        padding: 8px 14px calc(16px + var(--adm-safe-b)) !important;
+        padding: 10px 14px calc(14px + var(--adm-safe-b)) !important;
         overflow-y: auto;
+        overscroll-behavior: contain;
         border: 0 !important;
-        border-radius: 26px 26px 0 0 !important;
+        border-radius: 0 0 24px 24px !important;
         background: var(--adm-surface) !important;
-        box-shadow: 0 -24px 60px -24px rgba(4, 16, 28, .5) !important;
+        box-shadow: 0 24px 60px -24px rgba(4, 16, 28, .5) !important;
         z-index: 1000 !important;
-        animation: admSheetIn .46s var(--adm-ease-spring) both;
+        /* transition ارتفاعِ قاعدهٔ پایه در موبایل لازم نیست و فقط باز شدن را
+           کند می‌کند؛ باز/بسته شدن با انیمیشن کوتاه انجام می‌شود. */
+        transition: opacity .22s var(--adm-ease-soft), transform .22s var(--adm-ease-soft), visibility .22s;
     }
 
+    /* حالت باز: ارتفاع محدود به فضای بین هدر و نوار تب، به‌همراه انیمیشن ورود.
+       انیمیشن عمداً همین‌جا (و نه در قاعدهٔ کلی) است: با fill-mode: both روی
+       حالت بسته، opacity نهاییِ انیمیشن (۱) روی پنل جمع‌شده می‌ماند و یک نوار
+       خالی زیر هدر دیده می‌شود. */
+    .profile-dropdown.open {
+        max-height: min(72dvh, calc(100dvh - var(--adm-header-h) - var(--adm-tab-h) - 20px)) !important;
+        animation: admSectionIn .34s var(--adm-ease) both;
+    }
+
+    /* دیگر شیت پایین‌چسب نیست؛ دستگیرهٔ کشیدن لازم نیست */
     .profile-dropdown::before {
-        content: '';
-        display: block;
-        width: 46px;
-        height: 4px;
-        margin: 4px auto 10px;
-        border-radius: 999px;
-        background: var(--adm-line-strong);
+        display: none;
     }
 
     .pd-header {
@@ -2566,6 +2697,7 @@
         --adm-bg-2: #0e1c2a;
         --adm-surface: #16232f;
         --adm-surface-2: #1a2a38;
+        --adm-tile-wash: rgba(255, 255, 255, .06);
         --adm-glass: rgba(16, 30, 44, .90);
         --adm-glass-strong: rgba(14, 26, 39, .96);
 
@@ -2769,6 +2901,8 @@
         animation-duration: .001ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: .001ms !important;
+        /* ترتیب پله‌ای هم نباید برای این کاربران تأخیر بسازد */
+        transition-delay: 0s !important;
         scroll-behavior: auto !important;
     }
 }
