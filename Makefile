@@ -39,7 +39,7 @@ run-local: venv
 	PYTHONPATH=. uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 run-lan: venv
-	@echo Use scripts/راه‌اندازی_سرور_شبکه‌محلی.bat on Windows to start FastAPI behind Caddy HTTPS.
+	@echo Use scripts/راه‌اندازی_سرور_شبکه_محلی.bat on Windows to start FastAPI behind Caddy HTTPS.
 	@echo Final URL: https://hastama.local
 
 deploy: generate_dot_env

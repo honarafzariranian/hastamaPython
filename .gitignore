@@ -107,4 +107,8 @@ database/exports/*.sql.gz
 
 # Runtime logs (watchdog + boot log; may contain operational detail)
 logs/
+
+# Scratch files and probes created during a session (directories and files).
+# Kept out of the index so a temporary harness can never be committed by accident.
 _tmp*/
+_tmp*

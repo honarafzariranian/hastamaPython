@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import socket
+from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
@@ -778,15 +779,31 @@ def test_the_firewall_helper_is_scoped_and_exactly_reversible():
     assert "ValidateSet('enable', 'disable', 'status')" in script
 
 
+def _lan_firewall_wrappers() -> dict:
+    """The two operator wrappers, found by what they do rather than by file name.
+
+    The files under ``scripts/`` are named in Persian, so hard-coding a name here
+    would only pin a spelling.  Each wrapper is identified by the action it hands
+    to the helper, which is what actually has to be right.
+    """
+    wrappers = {}
+    for action in ("enable", "disable"):
+        matches = [
+            path
+            for path in sorted(Path("scripts").glob("*.bat"))
+            if ("-Action " + action) in path.read_text(encoding="utf-8")
+        ]
+        assert len(matches) == 1, f"expected exactly one {action} wrapper, found {matches}"
+        wrappers[action] = matches[0]
+    return wrappers
+
+
 def test_the_firewall_wrappers_call_the_helper():
-    for name, action in (
-        ("بازکردن_پورت_شبکه‌محلی.bat", "enable"),
-        ("بستن_پورت_شبکه‌محلی.bat", "disable"),
-    ):
-        text = open("scripts/" + name, encoding="utf-8").read()
-        assert text.startswith("@echo off")
-        assert "lan_access_firewall.ps1" in text
-        assert "-Action " + action in text
+    for action, path in _lan_firewall_wrappers().items():
+        text = path.read_text(encoding="utf-8")
+        assert text.startswith("@echo off"), path.name
+        assert "lan_access_firewall.ps1" in text, path.name
+        assert "-Action " + action in text, path.name
 
 
 def test_the_settings_card_drives_the_toggle_and_the_self_test():
@@ -815,7 +832,10 @@ def test_the_operating_documents_describe_the_mode():
     assert "LAN access mode" in network
     assert "RR-29" in network
     assert "lan_access_firewall.ps1" in network and "lan_access_firewall.ps1" in deployment
-    assert "بازکردن_پورت_شبکه‌محلی.bat" in deployment and "بستن_پورت_شبکه‌محلی.bat" in deployment
+    # The document must name the wrappers as they really are on disk.
+    for wrapper in _lan_firewall_wrappers().values():
+        assert wrapper.name in deployment, wrapper.name
+        assert wrapper.name in network, wrapper.name
     assert "LAN access mode (internet outage fallback)" in deployment
     # The explicit decisions are recorded, not implied.
     assert "RR-29" in register

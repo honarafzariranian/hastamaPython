@@ -59,10 +59,10 @@ repository root holds only the project's conventional entry files (`README.md`,
 | `scripts\آزادسازی_پورت_۵۰۰۰.bat` | Manual recovery: frees port 5000 by killing whatever owns it (warns first) |
 | `scripts\فعال‌سازی_اجرای_خودکار.bat` | Enables both scheduled tasks (`\HastamaServer` + `\HastamaWatchdog`) |
 | `scripts\غیرفعال‌سازی_اجرای_خودکار.bat` | Disables both tasks for a maintenance window |
-| `scripts\بازکردن_پورت_شبکه‌محلی.bat` | Administrator, once: opens inbound TCP 5000 to the local subnet only |
-| `scripts\بستن_پورت_شبکه‌محلی.bat` | Administrator: the exact undo of the previous row |
-| `scripts\راه‌اندازی_سرور_شبکه‌محلی.bat` | Laboratory LAN deployment (FastAPI on 8000 behind Caddy HTTPS) |
-| `scripts\نصب_کلاینت_شبکه‌محلی.bat` | Sets up a Windows client for that laboratory LAN (root certificate) |
+| `scripts\بازکردن_پورت_شبکه_محلی.bat` | Administrator, once: opens inbound TCP 5000 to the local subnet only |
+| `scripts\بستن_پورت_شبکه_محلی.bat` | Administrator: the exact undo of the previous row |
+| `scripts\راه‌اندازی_سرور_شبکه_محلی.bat` | Laboratory LAN deployment (FastAPI on 8000 behind Caddy HTTPS) |
+| `scripts\نصب_کلاینت_شبکه_محلی.bat` | Sets up a Windows client for that laboratory LAN (root certificate) |
 | `scripts\اجرای_فریفاف.bat` | Starts the Freebuff desktop application through the local proxy |
 
 The `.ps1` helpers keep their ASCII names on purpose: Windows PowerShell 5.1
@@ -272,7 +272,7 @@ until an administrator turns it off.
 Setup, once per machine (administrator):
 
 ```text
-scripts\بازکردن_پورت_شبکه‌محلی.bat          open inbound TCP 5000 for the local subnet only
+scripts\بازکردن_پورت_شبکه_محلی.bat          open inbound TCP 5000 for the local subnet only
                                          (disables the Hastama block rule and remembers it)
 master-admin -> system settings          switch "دسترسی از شبکه داخلی" on
                                          the card then shows the address to hand out
@@ -282,7 +282,7 @@ Roll back:
 
 ```text
 master-admin -> system settings          switch it off (effective immediately, no restart)
-scripts\بستن_پورت_شبکه‌محلی.bat         remove the allow rule, restore the block rule
+scripts\بستن_پورت_شبکه_محلی.bat         remove the allow rule, restore the block rule
 scripts\lan_access_firewall.ps1 -Action status    read-only report (no administrator needed)
 ```
 

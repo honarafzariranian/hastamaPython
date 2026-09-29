@@ -42,7 +42,6 @@ STOP_ALL = _read("scripts", "توقف_همه_نمونه‌ها.bat")
 LOGGING = _read("scripts", "dev-logging.json")
 DEPLOYMENT_DOC = _read("docs", "HASTAMA_PRODUCTION_DEPLOYMENT.md")
 NEW_FILES = {
-    "scripts/راه‌اندازی_سرور_شبکه‌محلی.bat": "",
     "scripts/نشست_توسعه_یک‌کلیکی.bat": LAUNCHER,
     "scripts/dev_session.ps1": SESSION_PS1,
     "scripts/توقف_همه_نمونه‌ها.bat": STOP_ALL,

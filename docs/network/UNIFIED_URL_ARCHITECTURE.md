@@ -383,7 +383,7 @@ LAN workstation
 
 | # | Step | Command / place |
 |---|---|---|
-| 1 | Open the loopback *only to the local subnet* on the firewall (administrator, once) | `scripts\بازکردن_پورت_شبکه‌محلی.bat` (or `scripts\lan_access_firewall.ps1 -Action enable`) |
+| 1 | Open the loopback *only to the local subnet* on the firewall (administrator, once) | `scripts\بازکردن_پورت_شبکه_محلی.bat` (or `scripts\lan_access_firewall.ps1 -Action enable`) |
 | 2 | Switch the listener on | `master-admin` → **system settings** → *دسترسی از شبکه داخلی* |
 | 3 | Read the address shown on the card (for example `http://192.168.3.69:5000`) and open it from a workstation | a second machine on the same subnet |
 
@@ -415,7 +415,7 @@ once rather than on every toggle.
 ### Turning it off
 
 1. Switch the listener off in the same card (immediate, no restart).
-2. Optionally run `scripts\بستن_پورت_شبکه‌محلی.bat` to remove the allow rule and
+2. Optionally run `scripts\بستن_پورت_شبکه_محلی.bat` to remove the allow rule and
    restore the original block rule.
 
 ### Persistence and recovery

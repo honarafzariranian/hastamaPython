@@ -1963,7 +1963,7 @@ owner before the system is treated as ready.
 | RR-18 | **Iranian regulatory status unresolved.** AFTA applicability and the data-protection bill's status could not be verified from primary sources | Medium | Needs an authorized Iranian assessor / legal review | Management | **Yes** |
 | RR-19 | **`database/exports/latest.sql` holds plaintext passwords** in the legacy `password` column (`123`, `admin`, …). Untracked from Git on 2026-09-23 and ignored going forward, but the working copy and **Git history** still contain it | High | Restoring from the dump is a documented workflow; history rewrite would break clones. Rotate every credential that appears in the dump and re-export with hashes only | Repository owner / DBA | **Yes** |
 | RR-20 | ~~Production tunnel not yet redeployed~~ **CLOSED 2026-09-23.** External probes: `/` → 302 `/login` (code later switched to 301 after confirmation); `http` → 301 HTTPS; `www` → 301 apex; robots/sitemap updated; `/docs` 404; HSTS present | — | Verified with `curl` against `https://hastama.ir` from off-LAN | Infra | No |
-| RR-21 | **Session cookies: `https_only=True` is always on** (Starlette). On pure-HTTP LAN (`http://127.0.0.1:8000`) the browser will refuse to store the session cookie unless the operator terminates TLS (Caddy/`scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`) | Medium | Deliberate fail-closed choice for the tunnel deploy; local plain-HTTP dev needs a TLS front or a documented exception | Infra | Yes |
+| RR-21 | **Session cookies: `https_only=True` is always on** (Starlette). On pure-HTTP LAN (`http://127.0.0.1:8000`) the browser will refuse to store the session cookie unless the operator terminates TLS (Caddy/`scripts/راه‌اندازی_سرور_شبکه_محلی.bat`) | Medium | Deliberate fail-closed choice for the tunnel deploy; local plain-HTTP dev needs a TLS front or a documented exception | Infra | Yes |
 | RR-22 | **HEAD on GET routes returns 405** from the production edge (observed 2026-09-23 on `/login` and `/`). Security impact: none (GET still works); some monitors use HEAD for uptime | Low | Likely FastAPI/Starlette HEAD handling under the current router setup; fix only if monitoring requires HEAD | Maintainer | No |
 | RR-23 | ~~SQL Server Express still listens on `0.0.0.0:<dynamic>`~~ **CLOSED 2026-09-23.** TCP/IP bound to `127.0.0.1:1433` only (`ListenOnAllIPs=0`, IP4 enabled, IP1–3 disabled); SQL Browser **Stopped/Disabled**; Internet block rules for `49847`/`1434` removed as no longer required | — | `netstat`: only `127.0.0.1:1433`; pyodbc `localhost\SQLEXPRESS` OK; app `/login` 200 after restart | DBA / Infra | No |
 | RR-24 | **Many third-party `Allow` rules use `LocalPort=Any` + `RemoteAddress=Any`** (Teams, VS Code, Chrome helpers, `python.exe`, etc.). They do not expose the app port (5000 is loopback-bound and explicitly Block-listed) but weaken host-wide inbound posture | Medium | Owned by desktop software installs; cleaning them is an ops task outside the app repo | Infra | Yes |
@@ -2760,10 +2760,10 @@ Additionally, `delete_profile_image()` uses `os.path.join("app/static/uploads", 
 **CVSS:** 7.5
 **CWE:** CWE-319 (Cleartext Transmission of Sensitive Information)
 
-**Affected Component:** Deployment configuration, `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`, `Dockerfile`
+**Affected Component:** Deployment configuration, `scripts/راه‌اندازی_سرور_شبکه_محلی.bat`, `Dockerfile`
 
 **Evidence:**
-- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat` runs uvicorn directly without TLS
+- `scripts/راه‌اندازی_سرور_شبکه_محلی.bat` runs uvicorn directly without TLS
 - No TLS termination configuration found
 - Session cookies set without `Secure` flag (when not DEBUG)
 - CSP header uses `ws:` instead of `wss:` for WebSocket
@@ -3497,7 +3497,7 @@ All evidence is sourced directly from the codebase. Key files inspected:
 - `app/services/ticketing.py`
 - `pyproject.toml`
 - `.env` (blocked by security filter)
-- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`
+- `scripts/راه‌اندازی_سرور_شبکه_محلی.bat`
 - `Dockerfile`
 - `Caddyfile`
 
