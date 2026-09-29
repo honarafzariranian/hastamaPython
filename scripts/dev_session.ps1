@@ -3,13 +3,13 @@
     Development session manager for Hastama: take the machine, then give it back.
 
 .DESCRIPTION
-    Used by the double-clickable launcher `run_hastama_dev.bat` (and by the
+    Used by the double-clickable development launcher in scripts\ (and by the
     VS Code tasks) so that working on the code never leaves a second instance of
     the application running somewhere.
 
     The production contract is untouched:
 
-        \HastamaServer   (at boot) -> scripts\run_server.bat -> uvicorn on 5000
+        \HastamaServer   (at boot) -> scripts\<production launcher>.bat -> uvicorn on 5000
         \HastamaWatchdog (every 5 minutes) -> health / identity / restart
 
     Nothing here edits those files, their triggers or their definitions.  A
@@ -33,7 +33,7 @@
     A process is only ever stopped when it is *identified*:
 
       * its command line matches the Hastama application signature (any port), or
-      * it is the `cmd.exe` wrapper of scripts\run_server.bat, or
+      * it is the `cmd.exe` wrapper of the production launcher in scripts\, or
       * it listens on a Hastama port while running THIS repository's
         .venv\Scripts\python.exe (an orphaned reload child).
 
@@ -277,8 +277,10 @@ function Get-HastamaProcesses {
         $commandLine = $process.CommandLine
         if (-not $commandLine) { continue }
         if (Test-IsHastamaApp $commandLine) { $found += $process; continue }
-        # The production launcher wrapper (`cmd.exe /c ...run_server.bat`).
-        if ($process.Name -eq 'cmd.exe' -and $commandLine -match '(?i)run_server\.bat') { $found += $process; continue }
+        # The production launcher wrapper (`cmd.exe /c ...\scripts\*.bat`).  The
+        # launcher file name is Persian, so it is matched generically and this
+        # file stays pure ASCII.
+        if ($process.Name -eq 'cmd.exe' -and $commandLine -match '(?i)[\\/]scripts[\\/][^\\/\s"]*\.bat') { $found += $process; continue }
     }
     return $found
 }
@@ -479,7 +481,7 @@ function Invoke-Restore($state) {
             [void](Start-ElevatedSelf @('-Action', 'restore') -Wait:$true)
             return 0
         }
-        Write-Session "ELEVATION_REFUSED - could not restore the tasks; run scripts\enable_autostart.bat as administrator."
+        Write-Session "ELEVATION_REFUSED - could not restore the tasks; run the auto-start launcher in scripts\ as administrator (see docs\HASTAMA_PRODUCTION_DEPLOYMENT.md)."
         return 1
     }
 
@@ -527,7 +529,7 @@ function Invoke-AwaitDisabled {
     Write-Host "  [WARNING] The autostart tasks are still enabled (administrator rights were"
     Write-Host "            probably declined).  The watchdog can bring the production instance"
     Write-Host "            back on 127.0.0.1:$Port within five minutes."
-    Write-Host "            To park them by hand: scripts\disable_autostart.bat"
+    Write-Host "            To park them by hand: the auto-start disable launcher in scripts\"
     return 1
 }
 

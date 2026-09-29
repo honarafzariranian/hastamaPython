@@ -2082,7 +2082,7 @@ body.dark-mode .btn {
 /* ══════════════════════════════════════════════════════════════
    Login experience — the full-screen loader and the CAPTCHA notice.
    Both are configured in master-admin → system settings
-   (app/services/login_experience.py) and driven by js/script.js.
+   and driven by js/script.js.
    ══════════════════════════════════════════════════════════════ */
 
 .login-loader {

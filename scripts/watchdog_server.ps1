@@ -25,7 +25,8 @@
          four production flags (--host 127.0.0.1 --port 5000 --proxy-headers
          --forwarded-allow-ips 127.0.0.1).
       3. Supervision - the listener must descend from the production launcher
-         (`scripts\run_server.bat`, i.e. the HastamaServer task) OR show that it
+         (`cmd.exe /c ...\scripts\<launcher>.bat`, i.e. the HastamaServer task)
+         OR show that it
          is the production instance by writing to the production log
          (logs\hastama-autostart.log is refreshed every second while the
          supervised instance runs).  Ancestry is supporting evidence, not the
@@ -217,11 +218,17 @@ function Test-HasProductionFlags([string]$CommandLine, [int]$ProbePort) {
 }
 
 # Supervised = an ancestor is the production launcher (the HastamaServer task
-# runs `cmd.exe /c ...\scripts\run_server.bat`).  Parent PIDs are used only as
+# runs `cmd.exe /c ...\scripts\<launcher>.bat`).  Parent PIDs are used only as
 # supporting evidence - the command line of the launcher is the stable marker.
+#
+# The launcher file NAME is deliberately not hardcoded: the operator scripts
+# under scripts\ are named in Persian, and this file is kept pure ASCII on
+# purpose.  Matching any *.bat directly under scripts\ identifies the scheduled
+# task's cmd.exe wrapper without depending on how that file is called; the port,
+# flag and production-log checks above and below carry the real identity.
 function Test-Supervised($Chain) {
     foreach ($node in $Chain) {
-        if ($node.CommandLine -and ($node.CommandLine -match "(?i)run_server\.bat")) { return $true }
+        if ($node.CommandLine -and ($node.CommandLine -match "(?i)[\\/]scripts[\\/][^\\/\s\u0022]*\.bat")) { return $true }
     }
     return $false
 }
@@ -440,7 +447,7 @@ $writesProductionLog = ($logAge -ge 0) -and ($logAge -le $ProductionLogFreshSeco
 if (-not ($hasFlags -and ($isSupervised -or $writesProductionLog))) {
     $missing = @()
     if (-not $hasFlags) { $missing += "production flags" }
-    if (-not $isSupervised) { $missing += "run_server.bat supervision" }
+    if (-not $isSupervised) { $missing += "launcher supervision" }
     if (-not $writesProductionLog) { $missing += "production log writes (age=${logAge}s)" }
     Write-Log "UNEXPECTED_PROCESS" ("127.0.0.1:{0} is served by the Hastama application OUTSIDE supervision; missing: {1}; {2}" -f `
         $Port, ($missing -join ", "), (Format-ProcessLine $listener))

@@ -140,10 +140,10 @@ All verified unreferenced by the application, tests, scripts, tools and deployme
 | `websockets` | ACTIVE_RUNTIME (indirect) | Uvicorn's WebSocket protocol implementation for the call-system WS endpoints. |
 | `python-multipart` | ACTIVE_RUNTIME (indirect) | Required by FastAPI for form/file uploads (`slides/upload`, attachments). |
 | `arazin/` (59 475 files, 296 MB) | ACTIVE_INTEGRATION (vendor) | Araz attendance vendor tree (FoxPro/OCX/MDB). Explicitly out of scope for removal. |
-| `offline/` (45 files, 69 MB) + `Offline-run-server.txt` | ACTIVE_PRODUCTION_INFRASTRUCTURE | Offline install bundle (`install-offline.ps1`, wheels). |
+| `offline/` (45 files, 69 MB) + `offline/Offline-run-server.txt` | ACTIVE_PRODUCTION_INFRASTRUCTURE | Offline install bundle (`install-offline.ps1`, wheels). |
 | `database/` (48 MB), `scripts/export_db.py`, `scripts/restore_db.py` | OPERATIONAL | DB export/restore tooling and dumps. |
-| `nessesary files/` (3 docs, 114 KB) | DOCUMENTATION_ONLY | Persian operational notes (DB export procedure, removing the Windows first-run). |
-| `sql-code.txt` | LEGACY_BUT_REFERENCED | Documents triggers on `avalpss_table` / `totalpass_table` that still exist in the operational DB — a DBA reference, not code. |
+| `docs/guides/` (3 docs, 114 KB; was the misspelled `nessesary files/`) | DOCUMENTATION_ONLY | Persian operational notes (DB export procedure, removing the Windows first-run). |
+| `database/sql-code.txt` | LEGACY_BUT_REFERENCED | Documents triggers on `avalpss_table` / `totalpass_table` that still exist in the operational DB — a DBA reference, not code. |
 | `logs/` (49 MB, gitignored) | OPERATIONAL | Runtime watchdog/boot logs. |
 | `testapp.egg-info/`, `__pycache__/`, `.pytest_cache/` | DEVELOPMENT_ONLY | Build/cache artefacts, gitignored; deleting them would not shrink the deployed app but could disturb the editable install metadata. |
 | `.kilo/` (61 854 files, 523 MB) | UNKNOWN — **not touched** | Another tool's git worktree, listed in `.git/info/exclude`. It is the single largest reclaimable item on disk, but it belongs to an external agent and deleting it would destroy that worktree. Owner decision. |
@@ -251,4 +251,4 @@ Attribution warning: the working tree already contained substantial uncommitted 
 audit started (`app/services/{lan_access,outage,login_experience,iran_access,system_config}.py`,
 `app/static/{sw.js,js/offline-guard.js}`, the login/MFA… UI changes, several new tests and docs).
 This audit did not touch those; it only added the removals listed in §C/§D and the two
-documentation corrections (`OFFLINE_DEPENDENCIES.md`, `ALL_PROJECT_DOCS.md`).
+documentation corrections (`docs/offline/OFFLINE_DEPENDENCIES.md`, `docs/ALL_PROJECT_DOCS.md`).

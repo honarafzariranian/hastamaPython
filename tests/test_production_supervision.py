@@ -3,7 +3,7 @@
 The deployment contract::
 
     \\HastamaServer (scheduled task, at boot)
-        -> cmd.exe /c scripts\\run_server.bat
+        -> cmd.exe /c scripts\\راه‌اندازی_سرور_تولید.bat
         -> .venv\\Scripts\\python.exe -m uvicorn app.main:app
              --host 127.0.0.1 --port 5000
              --proxy-headers --forwarded-allow-ips 127.0.0.1
@@ -42,12 +42,12 @@ def _read(*parts: str) -> str:
 
 WATCHDOG = _read("scripts", "watchdog_server.ps1")
 STOP_PS1 = _read("scripts", "stop_server.ps1")
-STOP_BAT = _read("scripts", "stop_server.bat")
-START_BAT = _read("scripts", "start_server.bat")
-RUN_SERVER = _read("scripts", "run_server.bat")
-RUN_DEV = _read("scripts", "run_dev.bat")
-DISABLE_AUTOSTART = _read("scripts", "disable_autostart.bat")
-ENABLE_AUTOSTART = _read("scripts", "enable_autostart.bat")
+STOP_BAT = _read("scripts", "توقف_سرور.bat")
+START_BAT = _read("scripts", "شروع_سرور.bat")
+RUN_SERVER = _read("scripts", "راه‌اندازی_سرور_تولید.bat")
+RUN_DEV = _read("scripts", "راه‌اندازی_سرور_توسعه.bat")
+DISABLE_AUTOSTART = _read("scripts", "غیرفعال‌سازی_اجرای_خودکار.bat")
+ENABLE_AUTOSTART = _read("scripts", "فعال‌سازی_اجرای_خودکار.bat")
 INSTALL_WATCHDOG = _read("scripts", "install_watchdog.ps1")
 RISK_REGISTER = _read("docs", "security", "RESIDUAL_RISK_REGISTER.md")
 DEPLOYMENT_DOC = _read("docs", "HASTAMA_PRODUCTION_DEPLOYMENT.md")
@@ -109,7 +109,14 @@ def test_watchdog_requires_the_production_flags():
 
 
 def test_watchdog_accepts_supervision_or_production_log_evidence():
-    assert "run_server.bat" in WATCHDOG, "supervision is identified via the launcher"
+    # The launchers are named in Persian, so the watchdog matches the scheduled
+    # task's `cmd.exe /c ...\scripts\<launcher>.bat` wrapper generically and must
+    # never hardcode one file name.
+    assert r"[\\/]scripts[\\/]" in WATCHDOG, (
+        "supervision is identified via the launcher path under the scripts folder"
+    )
+    assert r"\.bat" in WATCHDOG, "the launcher wrapper must still be matched"
+    assert "run_server.bat" not in WATCHDOG, "the launcher name must not be hardcoded"
     assert "hastama-autostart.log" in WATCHDOG, (
         "an orphaned production process is recognised by writing the production log"
     )
@@ -203,7 +210,7 @@ def test_run_server_keeps_the_production_startup():
 
 def test_run_server_declares_itself_the_only_production_start_path():
     assert "PRODUCTION START PATH" in RUN_SERVER
-    assert "run_dev.bat" in RUN_SERVER
+    assert "راه‌اندازی_سرور_توسعه.bat" in RUN_SERVER
 
 
 def test_development_launcher_cannot_take_the_production_port():
@@ -214,7 +221,7 @@ def test_development_launcher_cannot_take_the_production_port():
 
 def test_start_helper_uses_the_scheduled_task():
     assert "schtasks /Run /TN HastamaServer" in START_BAT
-    assert "run_dev.bat" in START_BAT, "the helper must point developers elsewhere"
+    assert "راه‌اندازی_سرور_توسعه.bat" in START_BAT, "the helper must point developers elsewhere"
 
 
 def test_stop_helper_identifies_the_process_before_stopping_it():
@@ -237,9 +244,9 @@ def test_autostart_toggles_cover_both_tasks():
 
 
 def test_manual_port_killer_warns_and_shows_the_owner():
-    manual = _read("scripts", "stop every 5000.bat")
+    manual = _read("scripts", "آزادسازی_پورت_۵۰۰۰.bat")
     assert "MANUAL RECOVERY" in manual
-    assert "stop_server.bat" in manual
+    assert "توقف_سرور.bat" in manual
     assert "tasklist" in manual, "the operator must see what is being killed"
 
 
@@ -247,7 +254,7 @@ def test_manual_port_killer_warns_and_shows_the_owner():
 
 
 def test_documentation_states_the_production_start_path():
-    assert "run_dev.bat" in DEPLOYMENT_DOC
+    assert "راه‌اندازی_سرور_توسعه.bat" in DEPLOYMENT_DOC
     assert "PROCESS" in DEPLOYMENT_DOC or "Process supervision" in DEPLOYMENT_DOC
     assert "Never start production by hand" in DEPLOYMENT_DOC
 

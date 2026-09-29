@@ -355,6 +355,45 @@ def revoke_all_sessions(by_username: str = "system", keep_usernames=()) -> int:
                 pass
 
 
+def master_admin_usernames() -> tuple:
+    """Accounts that stay logged in during a bulk cut (``MASTER_ADMIN_USERNAMES``).
+
+    Same list the outage mode uses: an administrator who terminates every
+    session must not lock themselves (and the other master administrators) out
+    of the control plane that is used to put things right again.
+    """
+    raw = os.getenv("MASTER_ADMIN_USERNAMES", "ali")
+    return tuple(item.strip() for item in raw.split(",") if item.strip())
+
+
+def delete_all_session_records() -> int:
+    """Delete every row of the session registry and return how many were removed.
+
+    This is the destructive counterpart of :func:`revoke_all_sessions`: it also
+    drops the login history, not just the active flags.  Every browser holding a
+    signed session cookie is logged out at its next request, because
+    :func:`validate_session` can no longer find its ``sid``.
+    """
+    conn = None
+    try:
+        conn = _connect()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM dbo.user_sessions")
+        changed = cur.rowcount or 0
+        conn.commit()
+        _cache_invalidate()
+        return changed
+    except Exception as exc:
+        logger.warning("session registry purge failed: %s", type(exc).__name__)
+        return 0
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 def reset_state_for_tests() -> None:
     """Testing helper — clears caches and failure flags."""
     global _table_unavailable, _table_ready

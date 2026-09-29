@@ -2,7 +2,7 @@
 
 زمینهٔ نیاز (۱۴۰۵/۰۷/۰۶ خورشیدی):
   قرارداد تولید در `tests/test_production_supervision.py` تثبیت شده است: فقط
-  `\\HastamaServer` -> `scripts\\run_server.bat` می‌تواند 127.0.0.1:5000 را در
+  `\\HastamaServer` -> `scripts\\راه‌اندازی_سرور_تولید.bat` می‌تواند 127.0.0.1:5000 را در
   اختیار بگیرد و نگهبان هر نمونهٔ غیرنظارت‌شده‌ای را برمی‌گرداند.  اما وقتی روی
   خود کد کار می‌کنیم به‌طور موقت به عکس این نیاز داریم:
 
@@ -12,13 +12,13 @@
       استارت خودکار فقط به‌هنگام بوت شدن سرور معنی داشته باشد؛
     * و در پایان، همه‌چیز به حالت عادی برگردد.
 
-  پس فایل‌های زیر اضافه شدند (تعریف تسک‌ها، `run_server.bat` و
+  پس فایل‌های زیر اضافه شدند (تعریف تسک‌ها، `راه‌اندازی_سرور_تولید.bat` و
   `watchdog_server.ps1` دست‌نخورده می‌مانند؛ فقط وضعیت enabled/disabled تسک‌ها
   برای مدت نشست تغییر می‌کند):
 
-    run_hastama_dev.bat        نقطهٔ ورود یک‌کلیکی (ریشهٔ مخزن)
+    scripts\نشست_توسعه_یک‌کلیکی.bat   نقطهٔ ورود یک‌کلیکی
     scripts\\dev_session.ps1    مغز کار: بستن نمونه‌ها، پارک/برگرداندن تسک‌ها
-    scripts\\stop_all_hastama.bat
+    scripts\توقف_همه_نمونه‌ها.bat
     scripts\\dev-logging.json  لاگ UTF-8 روی کنسول + فایل کراندار
 
   این تست‌ها همان قراردادها را قفل می‌کنند، به‌ویژه این‌که کشتن فرایندها
@@ -37,14 +37,15 @@ def _read(*parts: str) -> str:
 
 
 SESSION_PS1 = _read("scripts", "dev_session.ps1")
-LAUNCHER = _read("run_hastama_dev.bat")
-STOP_ALL = _read("scripts", "stop_all_hastama.bat")
+LAUNCHER = _read("scripts", "نشست_توسعه_یک‌کلیکی.bat")
+STOP_ALL = _read("scripts", "توقف_همه_نمونه‌ها.bat")
 LOGGING = _read("scripts", "dev-logging.json")
 DEPLOYMENT_DOC = _read("docs", "HASTAMA_PRODUCTION_DEPLOYMENT.md")
 NEW_FILES = {
-    "run_hastama_dev.bat": LAUNCHER,
+    "scripts/راه‌اندازی_سرور_شبکه‌محلی.bat": "",
+    "scripts/نشست_توسعه_یک‌کلیکی.bat": LAUNCHER,
     "scripts/dev_session.ps1": SESSION_PS1,
-    "scripts/stop_all_hastama.bat": STOP_ALL,
+    "scripts/توقف_همه_نمونه‌ها.bat": STOP_ALL,
     "scripts/dev-logging.json": LOGGING,
 }
 
@@ -197,8 +198,9 @@ def test_the_new_scripts_never_rewrite_the_production_start_paths():
     assert SESSION_PS1.count("Remove-Item") == SESSION_PS1.count('Remove-Item "$SessionLog.1"'), (
         "تنها فایلی که این اسکریپت حذف می‌کند لاگ خودش است"
     )
-    # تنها اشاره به run_server.bat برای «شناسایی» است، نه اجرا.
-    assert r"run_server\.bat" in SESSION_PS1
+    # تنها اشاره به لانچر تولیدی برای «شناسایی» است، نه اجرا؛ نام فایل فارسی است
+    # پس الگو عمومی و ASCII است.
+    assert r"[\\/]scripts[\\/]" in SESSION_PS1
     # اشاره به نگهبان فقط در توضیحات مجاز است (امضای مشترک)، نه در کد اجرایی.
     for line in SESSION_PS1.splitlines():
         if "watchdog_server.ps1" in line:
@@ -231,11 +233,11 @@ def test_the_development_log_is_utf8_and_bounded():
 def test_the_manual_stop_tool_starts_nothing():
     assert "-Action stop-all" in STOP_ALL
     assert "uvicorn" not in STOP_ALL
-    assert "start_server.bat" in STOP_ALL, "کاربر باید بداند چطور تولید را برگرداند"
+    assert "شروع_سرور.bat" in STOP_ALL, "کاربر باید بداند چطور تولید را برگرداند"
 
 
 def test_documentation_describes_the_development_session():
-    assert "run_hastama_dev.bat" in DEPLOYMENT_DOC
-    assert "run_hastama_dev.bat --check" in DEPLOYMENT_DOC
-    assert "stop_all_hastama.bat" in DEPLOYMENT_DOC
+    assert "نشست_توسعه_یک‌کلیکی.bat" in DEPLOYMENT_DOC
+    assert "نشست_توسعه_یک‌کلیکی.bat --check" in DEPLOYMENT_DOC
+    assert "توقف_همه_نمونه‌ها.bat" in DEPLOYMENT_DOC
     assert "Park" in DEPLOYMENT_DOC or "park" in DEPLOYMENT_DOC

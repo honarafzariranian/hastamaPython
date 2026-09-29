@@ -450,7 +450,13 @@ def test_the_endpoints_are_registered_and_audited():
 def test_the_service_is_wired_into_startup():
     source = open("app/main.py", encoding="utf-8").read()
     assert "login_experience.start()" in source
-    assert "import iran_access, lan_access, login_experience, outage" in source
+    # The service bundle is imported in one statement; assert membership rather
+    # than the exact text so adding another service cannot break this wiring test.
+    import_line = next(
+        line for line in source.splitlines() if line.startswith("from app.services import")
+    )
+    for name in ("iran_access", "lan_access", "login_experience", "outage"):
+        assert name in import_line, f"{name} is no longer imported in app/main.py"
     assert "login_experience.public_config()" in source
 
 

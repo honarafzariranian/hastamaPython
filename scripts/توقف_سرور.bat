@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 title Hastama Server - Stop
 echo Stopping Hastama Server...
 rem The old window-title filter never matched the task's console, and
@@ -9,6 +10,6 @@ powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0stop_s
 echo.
 echo Server stopped.
 echo NOTE: the HastamaWatchdog task starts it again within 5 minutes (by design).
-echo For a maintenance window use scripts\disable_autostart.bat (disables both tasks).
+echo For a maintenance window use scripts\غیرفعال‌سازی_اجرای_خودکار.bat (disables both tasks).
 echo.
 pause

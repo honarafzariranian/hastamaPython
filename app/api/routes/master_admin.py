@@ -863,6 +863,58 @@ async def delete_user_session(request: Request, session_key: str):
     return JSONResponse(content={"success": deleted})
 
 
+@router.post("/sessions/terminate-all")
+async def terminate_all_sessions(request: Request):
+    """Close every active session at once (the *خاتمه همه نشست‌ها* button).
+
+    The master-administrator accounts are kept — the same rule outage mode
+    applies — so the operator who pressed the button keeps the control plane
+    they would need to undo the action.  Only the active flags are touched; the
+    login history stays in the table for the audit trail.
+    """
+    admin = _master_admin(request)
+    from app.core.sessions import master_admin_usernames, revoke_all_sessions
+
+    keep = master_admin_usernames()
+    terminated = revoke_all_sessions(admin, keep)
+    log_admin_action(
+        admin_username=admin, action="terminate_all_sessions",
+        target_type="session", target_id="*",
+        description=f"خاتمه گروهی همه نشست‌های فعال ({terminated} نشست)",
+        after_data={"terminated": terminated, "kept_usernames": list(keep)},
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={
+        "success": True,
+        "terminated": terminated,
+        "kept_usernames": list(keep),
+    })
+
+
+@router.delete("/sessions")
+async def delete_all_sessions(request: Request):
+    """Delete every session record (the *حذف همه رکوردها* button).
+
+    Destructive and not reversible: the login history for every account is
+    removed, and because the registry is what makes a signed cookie revocable,
+    every session that is still open is invalidated at its next request.  The
+    action is audited with the number of removed rows, and no account is
+    exempted — this is the deliberate difference from ``terminate-all``.
+    """
+    admin = _master_admin(request)
+    from app.core.sessions import delete_all_session_records
+
+    deleted = delete_all_session_records()
+    log_admin_action(
+        admin_username=admin, action="delete_all_session_records",
+        target_type="session", target_id="*",
+        description=f"حذف گروهی همه رکوردهای نشست ({deleted} رکورد)",
+        after_data={"deleted": deleted},
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "deleted": deleted})
+
+
 # ══════════════════════════════════════════════════════════════
 # PASSWORD RESETS
 # ══════════════════════════════════════════════════════════════

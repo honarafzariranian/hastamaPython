@@ -780,8 +780,8 @@ def test_the_firewall_helper_is_scoped_and_exactly_reversible():
 
 def test_the_firewall_wrappers_call_the_helper():
     for name, action in (
-        ("enable_lan_firewall.bat", "enable"),
-        ("disable_lan_firewall.bat", "disable"),
+        ("بازکردن_پورت_شبکه‌محلی.bat", "enable"),
+        ("بستن_پورت_شبکه‌محلی.bat", "disable"),
     ):
         text = open("scripts/" + name, encoding="utf-8").read()
         assert text.startswith("@echo off")
@@ -815,7 +815,7 @@ def test_the_operating_documents_describe_the_mode():
     assert "LAN access mode" in network
     assert "RR-29" in network
     assert "lan_access_firewall.ps1" in network and "lan_access_firewall.ps1" in deployment
-    assert "enable_lan_firewall.bat" in deployment and "disable_lan_firewall.bat" in deployment
+    assert "بازکردن_پورت_شبکه‌محلی.bat" in deployment and "بستن_پورت_شبکه‌محلی.bat" in deployment
     assert "LAN access mode (internet outage fallback)" in deployment
     # The explicit decisions are recorded, not implied.
     assert "RR-29" in register

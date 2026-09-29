@@ -2,7 +2,7 @@
 rem ===================================================================
 rem  DEVELOPMENT ONLY - never use this for the production instance.
 rem  The production application is owned by the HastamaServer scheduled task
-rem  (scripts\run_server.bat) on 127.0.0.1:5000 and is published as
+rem  (scripts\راه‌اندازی_سرور_تولید.bat) on 127.0.0.1:5000 and is published as
 rem  https://hastama.ir through the Cloudflare Tunnel.
 rem  A second uvicorn on port 5000 would take the port from the supervised
 rem  instance; this launcher therefore binds 127.0.0.1:5001 and is not

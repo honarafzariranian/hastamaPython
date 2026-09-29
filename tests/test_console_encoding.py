@@ -119,7 +119,7 @@ def test_package_import_configures_utf8_console():
 
 def test_launcher_forces_utf8_for_the_scheduled_task():
     """Belt and braces: the interpreter is told about UTF-8 before it starts."""
-    launcher = (ROOT / "scripts" / "run_server.bat").read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "راه‌اندازی_سرور_تولید.bat").read_text(encoding="utf-8")
     assert "set PYTHONUTF8=1" in launcher
     assert "set PYTHONIOENCODING=utf-8" in launcher
 

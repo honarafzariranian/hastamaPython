@@ -27,7 +27,7 @@ from app.api.routes.araz_api import router as araz_router
 from app.api.routes.master_admin import router as master_admin_router
 from app.api.routes.registration import router as registration_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
-from app.services import iran_access, lan_access, login_experience, outage
+from app.services import client_assets, iran_access, lan_access, login_experience, outage
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
 from core.config import DEBUG, SECRET_KEY, config
@@ -610,6 +610,93 @@ def _drop_secure_cookie_flag(value: bytes) -> bytes:
     )
 
 
+class _ClientAssetMinifierMiddleware:
+    """Deliver JavaScript/CSS/HTML without developer comments (production only).
+
+    Off by default: with ``HASTAMA_MINIFY_CLIENT_ASSETS`` unset nothing changes,
+    so development, tests and the LAN tools keep the readable sources.  When the
+    flag is set (production does it in ``scripts/راه‌اندازی_سرور_تولید.bat``), responses for
+    ``/static/**.js``/``.css`` and for ``text/html`` pages are replaced by their
+    comment-free form produced by :mod:`app.services.client_assets`.
+
+    The transformation is *refused* rather than guessed: a JavaScript file whose
+    token stream changes, an unterminated literal, an unbalanced CSS block or a
+    body that is not UTF-8 all fall back to the original bytes.  Everything else
+    (status code, headers, other content types, streaming and non-GET requests)
+    passes through untouched.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+        self.static_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or not client_assets.enabled():
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        is_static = path.startswith("/static/") and path.endswith((".js", ".css"))
+
+        start: dict = {}
+        chunks: list[bytes] = []
+        rewriting = False
+
+        async def _send(message):
+            nonlocal rewriting
+            mtype = message.get("type")
+            if mtype == "http.response.start":
+                headers = {k.lower(): v for k, v in message.get("headers", [])}
+                if is_static:
+                    rewriting = (
+                        message.get("status") == 200
+                        and headers.get(b"content-type", b"").split(b";")[0].strip()
+                        in (b"text/javascript", b"application/javascript", b"text/css")
+                    )
+                else:
+                    rewriting = (
+                        scope.get("method") in ("GET", "HEAD")
+                        and message.get("status") == 200
+                        and headers.get(b"content-type", b"").startswith(b"text/html")
+                    )
+                if not rewriting:
+                    await send(message)
+                    return
+                start.update(message)
+                return
+            if mtype == "http.response.body" and rewriting:
+                chunks.append(message.get("body", b""))
+                if message.get("more_body"):
+                    return
+                raw = b"".join(chunks)
+                try:
+                    if is_static:
+                        body = client_assets.minified_static_bytes(self.static_root, path)
+                        body = raw if body is None else body
+                    else:
+                        body = client_assets.rewrite_body(path, raw, content_type=b"text/html")
+                except Exception:  # pragma: no cover - never break a page over a comment
+                    body = raw
+                headers = [
+                    (k, v)
+                    for k, v in start.get("headers", [])
+                    if k.lower() not in (b"content-length", b"etag")
+                ]
+                headers.append((b"content-length", str(len(body)).encode()))
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": start.get("status", 200),
+                        "headers": headers,
+                    }
+                )
+                await send({"type": "http.response.body", "body": body})
+                return
+            await send(message)
+
+        await self.app(scope, receive, _send)
+
+
 def _master_admin_scope(scope: Scope) -> bool:
     """True when *scope* carries a signed master-administrator session.
 
@@ -939,6 +1026,8 @@ app.add_middleware(_OutageGateMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
 app.add_middleware(_HeadMethodMiddleware)
 app.add_middleware(_SecurityHeadersMiddleware)
+# Comment-free delivery is opt-in (production launcher); see the class docstring.
+app.add_middleware(_ClientAssetMinifierMiddleware)
 # Outermost, so nothing re-applies ``Secure`` afterwards: only the plain-HTTP LAN
 # listener loses the flag (see ``_LanCookieMiddleware``).
 app.add_middleware(_LanCookieMiddleware)

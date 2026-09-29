@@ -1120,7 +1120,7 @@
                                 <div class="contentTarikh">{{ ticket.ticket_description }}</div>
                             </div>
                             <div class="virayeshVAhazf">
-                                <button class="trash-btn" onclick="showConfirmDialog('{{ ticket.ticket_id }}')">
+                                <button class="trash-btn" data-action="confirm-delete-ticket" data-ticket-id="{{ ticket.ticket_id }}">
                                     <img src="/static/images/trash.png" alt="حذف">
                                     <span class="tooltip-text-table-del">حذف</span>
                                 </button>
@@ -1164,7 +1164,7 @@
                         {% for ticket in ticket_records %}
                         <tr>
                             <td class="virayesh-ticket">
-                                <button class="trash-btn" onclick="showConfirmDialog('{{ ticket.ticket_id }}')">
+                                <button class="trash-btn" data-action="confirm-delete-ticket" data-ticket-id="{{ ticket.ticket_id }}">
                                     <img src="/static/images/trash.png" alt="حذف">
                                     <span class="tooltip-text-table-del">حذف</span>
                                 </button>

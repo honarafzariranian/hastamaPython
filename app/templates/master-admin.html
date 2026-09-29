@@ -464,6 +464,11 @@
                 <div id="maPagination" class="ma-pagination"></div>
 
             {% elif active_section == 'sessions' %}
+                <div class="ma-filters">
+                    <span id="maSessionBulkCount" class="ma-empty__text" style="color:#64748b">—</span>
+                    <button type="button" class="ma-btn ma-btn--danger" id="maTerminateAllSessions">خاتمه همه نشست‌ها</button>
+                    <button type="button" class="ma-btn ma-btn--danger" id="maDeleteAllSessions">حذف همه رکوردها</button>
+                </div>
                 <div class="ma-panel-card"><div class="ma-panel-card__body--flush" id="maTableContainer"><div class="ma-skeleton" style="height:240px;margin:20px"></div></div></div>
                 <div id="maPagination" class="ma-pagination"></div>
 

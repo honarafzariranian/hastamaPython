@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal EnableExtensions
 title Hastama - development session (127.0.0.1:5000)
 
@@ -15,13 +16,14 @@ rem       Cloudflare Tunnel and https://hastama.ir serve THIS code;
 rem    4. when this console ends, the tasks are enabled again and, if production
 rem       was serving before, the supervised instance is started again.
 rem
-rem  Production itself is untouched: \HastamaServer -> scripts\run_server.bat.
-rem  For an isolated development instance on port 5001 use scripts\run_dev.bat.
+rem  Production itself is untouched: \HastamaServer -> scripts\راه‌اندازی_سرور_تولید.bat.
+rem  For an isolated development instance on port 5001 use scripts\راه‌اندازی_سرور_توسعه.bat.
 rem ===================================================================
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
-set "REPO=%~dp0"
+set "REPO=%~dp0..\"
+for %%I in ("%~dp0..") do set "REPO=%%~fI\"
 set "PY=%REPO%.venv\Scripts\python.exe"
 set "PS=powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File"
 set "SESSION=%REPO%scripts\dev_session.ps1"
@@ -77,7 +79,7 @@ echo Parking the autostart tasks for this session (one UAC prompt is normal)...
 %PS% "%SESSION%" -Action hold-tasks -WatchPid %SESSION_PID%
 if errorlevel 1 (
     echo [WARNING] The tasks could not be parked automatically.
-    echo           Run this file as administrator, or use scripts\disable_autostart.bat
+    echo           Run this file as administrator, or use scripts\غیرفعال‌سازی_اجرای_خودکار.bat
 )
 %PS% "%SESSION%" -Action await-disable -TimeoutSeconds 15
 

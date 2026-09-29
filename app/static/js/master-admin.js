@@ -93,6 +93,13 @@
   }
   window.__maEsc = esc;
 
+  /* Persian digits for the few counts this page prints.  ``hastamaToFA`` is the
+     shared helper (number-format.js); the fallback keeps the value readable when
+     that file is not loaded on this page. */
+  function faNum(v) {
+    return typeof window.hastamaToFA === 'function' ? window.hastamaToFA(v) : String(v);
+  }
+
   const state = { page: 1, perPage: 25, filters: {} };
 
   function renderPagination(container, total, pages, onPage) {
@@ -188,14 +195,11 @@
   }
 
   // ── Label Studio (استودیو لیبل نوبت) ─────────────────────────
-  // اینجا فقط *رابط* استودیو است؛ خود سیستم چاپ و لیبل یکی است و جای دیگری
-  // زندگی می‌کند:
-  //   • app/static/js/label-system.js             → موتور مشترک (استودیو + کیوسک)
-  //   • app/templates/partials/label_queue.html   → مارک‌آپ واحد لیبل
-  //   • app/templates/label_print_document.html   → سند واحد چاپ
-  //   • app/services/label_render.py              → همان‌ها روی سرور
-  // تنظیمات در system_config ذخیره می‌شود، پس هر تغییری در این صفحه روی
-  // لیبل‌هایی که کیوسک چاپ می‌کند هم اعمال می‌شود.
+  // این‌جا فقط *رابط* استودیو است؛ خود سیستم چاپ و لیبل یکی است و جای دیگری
+  // زندگی می‌کند: یک موتور مشترک برای استودیو و کیوسک، یک مارک‌آپ واحد لیبل و
+  // یک سند چاپ که سمت سرور ساخته می‌شود.
+  // تنظیمات سمت سرور ذخیره می‌شود، پس هر تغییری در این صفحه روی لیبل‌هایی که
+  // کیوسک چاپ می‌کند هم اعمال می‌شود.
   let labelStudioReady = false;
 
   function initLabelStudio() {
@@ -825,7 +829,28 @@
       ];
       renderTable(container, cols, res.data, 'نشست فعالی موجود نیست');
       renderPagination(pagEl, res.total, res.pages, loadSessions);
+      bindSessionBulkActions(res.total);
     } catch (e) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری نشست‌ها</div></div>'; }
+  }
+
+  /* ── Bulk session actions ─────────────────────────────────
+     The two buttons live in the panel (master-admin.html), not in the table, so
+     they are bound here — once — instead of using an inline handler. */
+  let sessionBulkBound = false;
+
+  function bindSessionBulkActions(activeCount) {
+    const counter = document.getElementById('maSessionBulkCount');
+    if (counter) {
+      counter.textContent = activeCount
+        ? `${faNum(activeCount)} نشست فعال`
+        : 'نشست فعالی وجود ندارد';
+    }
+    if (sessionBulkBound) return;
+    sessionBulkBound = true;
+    const terminateAll = document.getElementById('maTerminateAllSessions');
+    const deleteAll = document.getElementById('maDeleteAllSessions');
+    if (terminateAll) terminateAll.addEventListener('click', () => window.ma_terminateAllSessions());
+    if (deleteAll) deleteAll.addEventListener('click', () => window.ma_deleteAllSessions());
   }
 
   // ── Password Resets ──────────────────────────────────────
@@ -1139,7 +1164,7 @@
         <div class="ma-lan-warning ma-lan-warning--error">
           <b>هشدار:</b> فایل فهرست آی‌پی ایران خوانده نشد (${esc(i.list_error || 'نامشخص')}).
           تا زمانی که این فایل در دسترس نباشد، هیچ ورودی مسدود <b>نمی‌شود</b>؛ برای جلوگیری از قفل شدن کاربران ایرانی، فیلتر در این حالت بی‌اثر می‌ماند.
-          با دکمهٔ «به‌روزرسانی فهرست» یا اجرای <code>scripts\refresh_iran_ip_ranges.py</code> روی سرور آن را بازسازی کنید.
+          با دکمهٔ «به‌روزرسانی فهرست» (یا اسکریپت بازسازی فهرست روی سرور) آن را بازسازی کنید.
         </div>`;
     const refreshError = i.last_refresh_error
       ? `<div class="ma-settings-card__meta" style="margin-top:8px">آخرین به‌روزرسانی با هشدار انجام شد: <code>${esc(i.last_refresh_error)}</code></div>`
@@ -1920,6 +1945,38 @@
     if (!yes) return;
     await api(`/sessions/${key}/terminate`, { method: 'POST' });
     showToast('نشست خاتمه یافت');
+    loadSessions();
+  };
+
+  window.ma_terminateAllSessions = async function () {
+    const yes = await maConfirm({
+      title: 'خاتمه همه نشست‌ها',
+      msg: 'همه نشست‌های فعال کاربران خاتمه می‌یابند و کاربران باید دوباره وارد شوند. نشست مدیران ارشد حفظ می‌شود تا دسترسی شما به این صفحه قطع نشود.',
+      confirmText: 'همه خاتمه یابند',
+      type: 'danger'
+    });
+    if (!yes) return;
+    try {
+      const res = await api('/sessions/terminate-all', { method: 'POST' });
+      const kept = (res.kept_usernames || []).join('، ');
+      showToast(`${faNum(res.terminated || 0)} نشست خاتمه یافت` +
+        (kept ? ` (نشست ${kept} حفظ شد)` : ''), 'success');
+    } catch (e) { /* toast shown */ }
+    loadSessions();
+  };
+
+  window.ma_deleteAllSessions = async function () {
+    const yes = await maConfirm({
+      title: 'حذف همه رکوردهای نشست',
+      msg: 'تمام رکوردهای نشست (فعال و تاریخچهٔ ورود) برای همیشه حذف می‌شوند. این عملیات قابل بازگشت نیست و همهٔ کاربران — از جمله نشست‌های مدیران — در درخواست بعدی خود باید دوباره وارد شوند.',
+      confirmText: 'همه حذف شوند',
+      type: 'danger'
+    });
+    if (!yes) return;
+    try {
+      const res = await api('/sessions', { method: 'DELETE' });
+      showToast(`${faNum(res.deleted || 0)} رکورد نشست حذف شد`, 'success');
+    } catch (e) { /* toast shown */ }
     loadSessions();
   };
 

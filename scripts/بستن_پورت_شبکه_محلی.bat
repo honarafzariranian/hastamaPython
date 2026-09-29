@@ -1,7 +1,7 @@
 @echo off
 title Hastama - close port 5000 to the local subnet
 rem ===================================================================
-rem  ADMINISTRATOR ONLY - the exact undo of scripts\enable_lan_firewall.bat.
+rem  ADMINISTRATOR ONLY - the exact undo of scripts\بازکردن_پورت_شبکه_محلی.bat.
 rem
 rem  Removes "Hastama - Allow Uvicorn 5000 (LAN)" and re-enables the block
 rem  rules that the enable step disabled (remembered in

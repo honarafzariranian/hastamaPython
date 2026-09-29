@@ -46,7 +46,7 @@ cloudflared  (Windows service "cloudflared", RUNNING / AUTO_START, LocalSystem)
 uvicorn app.main:app --host 127.0.0.1 --port 5000
                      --proxy-headers --forwarded-allow-ips 127.0.0.1
         ^
-        |  launched ONLY by the "\HastamaServer" scheduled task -> cmd /c scripts\run_server.bat
+        |  launched ONLY by the "\HastamaServer" scheduled task -> cmd /c scripts\راه‌اندازی_سرور_تولید.bat
         |
         +-- SQL Server Express 127.0.0.1:1433 (loopback only)
         +-- notification inbox / SSE stream, APScheduler maintenance jobs
@@ -62,7 +62,7 @@ Verified live details:
   ```text
   python.exe    <uv python>  -m uvicorn app.main:app --host 127.0.0.1 --port 5000 ...
       ^ python.exe  ".venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 5000 ...
-          ^ cmd.exe   "cmd.exe" /c E:\Hastama\scripts\run_server.bat
+          ^ cmd.exe   "cmd.exe" /c E:\Hastama\scripts\راه‌اندازی_سرور_تولید.bat
               ^ svchost.exe -k netsvcs -p -s Schedule      (Task Scheduler)
   ```
 
@@ -70,7 +70,7 @@ Verified live details:
 
   | Task | Identity | Trigger | Policy | Action |
   |---|---|---|---|---|
-  | `\HastamaServer` | user `hastama` (RID `…-500`), LogonType Password, RunLevel HighestAvailable | At system startup | `IgnoreNew`, `ExecutionTimeLimit=PT0S` | `cmd.exe /c E:\Hastama\scripts\run_server.bat` |
+  | `\HastamaServer` | user `hastama` (RID `…-500`), LogonType Password, RunLevel HighestAvailable | At system startup | `IgnoreNew`, `ExecutionTimeLimit=PT0S` | `cmd.exe /c E:\Hastama\scripts\راه‌اندازی_سرور_تولید.bat` |
   | `\HastamaWatchdog` | `SYSTEM` | every 5 minutes (`PT5M`) | `IgnoreNew` | `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "E:\Hastama\scripts\watchdog_server.ps1" -Port 5000 -TaskName HastamaServer` (WorkingDirectory `E:\Hastama`) |
 
 * **Firewall** — `Hastama - Block Uvicorn 5000 / SQL Server 1433 / SMB 445 / RDP 3389 (TCP+UDP)`,
@@ -136,7 +136,7 @@ treated as health.
 |---|---|---|
 | 1. Listener identity | Owning process command line matches the application signature `(?i)(-m\s+uvicorn\s+app\.main:app\|uvicorn(\.exe)?\s+app\.main:app)` **and** carries `--port 5000` | `PORT_FOREIGN_OWNER`, `PROCESS_LOOKUP_FAILED` |
 | 2. Production flags | All four flags present: `--host 127.0.0.1`, `--port 5000`, `--proxy-headers`, `--forwarded-allow-ips 127.0.0.1` | `UNEXPECTED_PROCESS` |
-| 3. Supervision evidence | Ancestor command line matches `run_server.bat` **OR** the instance is writing `logs\hastama-autostart.log` (fresh ≤ `ProductionLogFreshSeconds` = 120 s) | `UNEXPECTED_PROCESS` |
+| 3. Supervision evidence | Ancestor command line matches `راه‌اندازی_سرور_تولید.bat` **OR** the instance is writing `logs\hastama-autostart.log` (fresh ≤ `ProductionLogFreshSeconds` = 120 s) | `UNEXPECTED_PROCESS` |
 | 4. Application health | `GET http://127.0.0.1:5000/health` returns `200` within 5 s | `APPLICATION_UNHEALTHY` (after the streak threshold), `HEALTH_PROBE_ERROR` |
 
 **Safety rules baked in:**
@@ -184,19 +184,19 @@ obvious and the wrong path hard:
 |---|---|
 | `scripts\watchdog_server.ps1` | The 4-layer supervisor described in §4 |
 | `scripts\stop_server.ps1` **(new)** | Identity-gated stop: identifies the owner with `Test-IsHastamaApp`, stops **only** identified processes, **refuses** a foreign owner, clears the task, waits for port release. Uses the same signature regex as the watchdog (enforced by a test) |
-| `scripts\stop_server.bat` | Now calls the helper. Its old `WINDOWTITLE` filter **never matched**, so the script had been silently ineffective |
-| `scripts\run_dev.bat` **(new)** | **DEVELOPMENT ONLY** — `--host 127.0.0.1 --port 5001`, UTF-8 env, never port 5000 |
-| `scripts\run_server.bat` | Added a `title` and a "PRODUCTION START PATH — do not bypass" header. The start line, flags and UTF-8 environment are **unchanged** |
-| `scripts\start_server.bat` | Triggers the task (the correct way to start production) |
-| `scripts\stop every 5000.bat` | Warns and prints the current port owner via `tasklist` |
-| `scripts\disable_autostart.bat` / `enable_autostart.bat` | Now toggle **both** `\HastamaServer` and `\HastamaWatchdog`, so a maintenance window is not silently re-opened by the watchdog |
+| `scripts\توقف_سرور.bat` | Now calls the helper. Its old `WINDOWTITLE` filter **never matched**, so the script had been silently ineffective |
+| `scripts\راه‌اندازی_سرور_توسعه.bat` **(new)** | **DEVELOPMENT ONLY** — `--host 127.0.0.1 --port 5001`, UTF-8 env, never port 5000 |
+| `scripts\راه‌اندازی_سرور_تولید.bat` | Added a `title` and a "PRODUCTION START PATH — do not bypass" header. The start line, flags and UTF-8 environment are **unchanged** |
+| `scripts\شروع_سرور.bat` | Triggers the task (the correct way to start production) |
+| `scripts\آزادسازی_پورت_۵۰۰۰.bat` | Warns and prints the current port owner via `tasklist` |
+| `scripts\غیرفعال‌سازی_اجرای_خودکار.bat` / `فعال‌سازی_اجرای_خودکار.bat` | Now toggle **both** `\HastamaServer` and `\HastamaWatchdog`, so a maintenance window is not silently re-opened by the watchdog |
 
 The single sentence that ties it together, also present in the deployment doc:
 
 > **Never start production by hand.** `python -m uvicorn app.main:app --port 5000` from a terminal
 > steals the listening socket from the supervised instance, runs without the flags and the UTF-8
-> environment, and dies with its terminal. Use `scripts\start_server.bat` (production) or
-> `scripts\run_dev.bat` (development, port 5001).
+> environment, and dies with its terminal. Use `scripts\شروع_سرور.bat` (production) or
+> `scripts\راه‌اندازی_سرور_توسعه.bat` (development, port 5001).
 
 ---
 
@@ -242,13 +242,13 @@ and no temporary file was left behind.
  docs/HASTAMA_PRODUCTION_DEPLOYMENT.md    |  26 ++
  docs/network/UNIFIED_URL_ARCHITECTURE.md |  42 ++-
  docs/security/RESIDUAL_RISK_REGISTER.md  |   6 +-
- scripts/disable_autostart.bat            |   7 +-
- scripts/enable_autostart.bat             |   4 +-
- scripts/run_dev.bat                      |  19 ++
- scripts/run_server.bat                   |  17 ++
- scripts/start_server.bat                 |   6 +
- scripts/stop every 5000.bat              |  18 +-
- scripts/stop_server.bat                  |   9 +-
+ scripts/غیرفعال‌سازی_اجرای_خودکار.bat            |   7 +-
+ scripts/فعال‌سازی_اجرای_خودکار.bat             |   4 +-
+ scripts/راه‌اندازی_سرور_توسعه.bat                      |  19 ++
+ scripts/راه‌اندازی_سرور_تولید.bat                   |  17 ++
+ scripts/شروع_سرور.bat                 |   6 +
+ scripts/آزادسازی_پورت_۵۰۰۰.bat              |  18 +-
+ scripts/توقف_سرور.bat                  |   9 +-
  scripts/stop_server.ps1                  |  95 +++++++
  scripts/watchdog_server.ps1              | 473 +++++++++++++++++++++++++++++--
  tests/test_console_encoding.py           | 232 ++++++++++++++++
@@ -287,7 +287,7 @@ were corrected:
    annotated *(port-only implementation, historical)*, with a block note explaining that they no
    longer describe the repository.
 4. URL doc §6 *Command* row — relabelled as the command **executed by the production launcher**
-   `scripts\run_server.bat`, explicitly "not a start command to type. Production must **never** be
+   `scripts\راه‌اندازی_سرور_تولید.bat`, explicitly "not a start command to type. Production must **never** be
    started by hand on port 5000".
 5. **RR-25** — kept as closed, but the condition it acts on is now stated as widened on 2026-09-28
    and redirected to RR-28; evidence row extended with the re-verification sequence.
@@ -296,10 +296,10 @@ were corrected:
 7. `PROCESS_LOOKUP_FAILED` added to the status list in the URL doc.
 8. Added the two documented design limits (detection window; deliberate masquerade).
 9. Deployment architecture diagram line marked
-   `<- launched ONLY by the "HastamaServer" task (run_server.bat)`.
+   `<- launched ONLY by the "HastamaServer" task (راه‌اندازی_سرور_تولید.bat)`.
 
-Also added: the canonical **two-chain block** (Production `\HastamaServer` → `run_server.bat` →
-`127.0.0.1:5000`; Development `scripts\run_dev.bat` → `127.0.0.1:5001`) in the deployment doc, plus
+Also added: the canonical **two-chain block** (Production `\HastamaServer` → `راه‌اندازی_سرور_تولید.bat` →
+`127.0.0.1:5000`; Development `scripts\راه‌اندازی_سرور_توسعه.bat` → `127.0.0.1:5001`) in the deployment doc, plus
 a cross-reference from the URL doc §5 so there is exactly one normative statement of the start path.
 
 **Search proof for the fix:** the sweep
@@ -361,7 +361,7 @@ has no working IPv6 while Cloudflare publishes AAAA records — browsers are una
 * **Secret/URL hygiene:** `.env` untracked and gitignored, `SECRET_KEY` is a 96-character random
   value; no `ws://` literals and no hard-coded `http://` canonical links in `app/`.
 * **Log hygiene:** the 271 MB `logs\hastama-autostart.log.log.1` was deleted (`logs\` is back to
-  ~1.4 MB) and `run_server.bat` rotates above 50 MB.
+  ~1.4 MB) and `راه‌اندازی_سرور_تولید.bat` rotates above 50 MB.
 * **Cleanup:** the temporary validation account `_validation` was deleted
   (`deleted rows=1, remaining=0`), and every `_tmp_*` harness created during this work was removed.
   `_tmp_uvicorn.err` is git-tracked and was restored with `git checkout --` rather than deleted.
@@ -374,7 +374,7 @@ has no working IPv6 while Cloudflare publishes AAAA records — browsers are una
 
 ```text
 listener       127.0.0.1:5000 LISTENING (pid 13776), 1 instance
-chain          python <- .venv\Scripts\python.exe <- cmd.exe /c run_server.bat <- svchost (Schedule)
+chain          python <- .venv\Scripts\python.exe <- cmd.exe /c راه‌اندازی_سرور_تولید.bat <- svchost (Schedule)
 tasks          \HastamaServer  Running      \HastamaWatchdog  Ready (next run 09:55)
 cloudflared    STATE 4 RUNNING
 health         local  http://127.0.0.1:5000/health = 200
@@ -422,11 +422,11 @@ parts without adding a verified guarantee.
 
 | Intent | Command |
 |---|---|
-| Start production | `scripts\start_server.bat` (triggers `\HastamaServer`) |
-| Stop production | `scripts\stop_server.bat` (identity-gated) |
-| Develop / debug | `scripts\run_dev.bat` → `127.0.0.1:5001` (**never** 5000) |
-| Maintenance window | `scripts\disable_autostart.bat` (disables **both** tasks) |
-| Who owns port 5000? | `netstat -ano \| findstr :5000` then `tasklist \| findstr <pid>`, or `scripts\stop every 5000.bat` |
+| Start production | `scripts\شروع_سرور.bat` (triggers `\HastamaServer`) |
+| Stop production | `scripts\توقف_سرور.bat` (identity-gated) |
+| Develop / debug | `scripts\راه‌اندازی_سرور_توسعه.bat` → `127.0.0.1:5001` (**never** 5000) |
+| Maintenance window | `scripts\غیرفعال‌سازی_اجرای_خودکار.bat` (disables **both** tasks) |
+| Who owns port 5000? | `netstat -ano \| findstr :5000` then `tasklist \| findstr <pid>`, or `scripts\آزادسازی_پورت_۵۰۰۰.bat` |
 | Did the watchdog act? | `logs\hastama-watchdog.log` (bounded) and `logs\hastama-watchdog-state.json` |
 | Is the app alive? | `logs\hastama-autostart.log` (refreshed ~1×/s) and `GET /health` |
 

@@ -191,7 +191,7 @@ Recommendation: *bind Uvicorn to `127.0.0.1:5000`; firewall-deny inbound 5000/14
 
 | Item | Status | Evidence |
 |---|---|---|
-| Uvicorn bind `127.0.0.1:5000` | **PASS** | Live PID `uvicorn … --host 127.0.0.1 --port 5000`; `scripts/run_server.bat` corrected from `0.0.0.0` → `127.0.0.1`; `install_autostart.ps1` / `start_server.bat` messages updated |
+| Uvicorn bind `127.0.0.1:5000` | **PASS** | Live PID `uvicorn … --host 127.0.0.1 --port 5000`; `scripts/راه‌اندازی_سرور_تولید.bat` corrected from `0.0.0.0` → `127.0.0.1`; `install_autostart.ps1` / `شروع_سرور.bat` messages updated |
 | Deny inbound TCP 5000 | **PASS** | `Hastama - Block Uvicorn 5000 (Inbound)` Block/Any; loopback still serves 200 |
 | Deny inbound TCP 1433 | **PASS** | `Hastama - Block SQL Server 1433 (Inbound)` Block/Any |
 | Deny inbound 445 | **PARTIAL → PASS (Internet)** | No Internet path; SMB Allow rules scoped `LocalSubnet`; extra `Hastama - Block SMB 445 (Internet)` |

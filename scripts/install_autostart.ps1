@@ -5,8 +5,19 @@
 
 $TaskName = "HastamaServer"
 $InstallRoot = Split-Path -Parent $PSScriptRoot
-$BatFile = Join-Path $InstallRoot "scripts\run_server.bat"
 $LogsDir = Join-Path $InstallRoot "logs"
+
+# The production launcher is named in Persian, and this installer is deliberately
+# kept pure ASCII (Windows PowerShell 5.1 reads a BOM-less script with the ANSI
+# code page, which would garble an Arabic-script literal).  The launcher is
+# therefore found by what it does instead of by how it is called: it is the only
+# launcher under scripts\ that binds the production port with the proxy flags.
+$BatFile = Get-ChildItem -LiteralPath (Join-Path $InstallRoot "scripts") -Filter "*.bat" |
+    Where-Object {
+        (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "--port 5000" -and
+        (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "--forwarded-allow-ips 127\.0\.0\.1"
+    } |
+    Select-Object -First 1 -ExpandProperty FullName
 
 # --- Validate ---
 if (-not (Test-Path $BatFile)) {

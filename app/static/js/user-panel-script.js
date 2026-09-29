@@ -51,6 +51,13 @@ window.addEventListener('load', function() {
             case 'confirm-delete':
                 if (typeof confirmDelete === 'function') confirmDelete();
                 break;
+            case 'confirm-delete-ticket':
+                // The ticket id arrives as a data-attribute (HTML-escaped by Jinja),
+                // never as a JS string literal built inside an inline handler.
+                if (typeof showConfirmDialog === 'function') {
+                    showConfirmDialog(el.getAttribute('data-ticket-id'));
+                }
+                break;
             case 'open-hourly-pass':
                 if (typeof openHourlyPassModal === 'function') openHourlyPassModal();
                 break;
@@ -629,6 +636,15 @@ function convertToPersianNumbers(input) {
 //تنظمیات نوار ابزار کناری//تنظمیات نوار ابزار کناری//تنظمیات نوار ابزار کناری//تنظمیات نوار ابزار کناری//تنظمیات نوار ابزار کناری
 
 function logout() {
+    // پاک‌سازی داده‌های گزارشی که همین مرورگر کش کرده است (حضور، اضافه‌کار،
+    // مرخصی، مرخصی ساعتی و نام کاربری‌ها). روی ترمینال مشترک، ماندن این داده‌ها
+    // پس از خروج یک افشای اطلاعاتی است؛ هیچ تصمیم سروری به این کش وابسته نیست.
+    ['reports', 'username', 'overtimeReports', 'overtimeReportData', 'hourlyPassReportData',
+     'hourlyPassUsername', 'hozoorReportData', 'leaveReportData', 'numRecords',
+     'selectedUsername', 'totalPresenceTime', 'totalOvertime', 'totalDelayTime',
+     'totalEarlyStart', 'totalEarlyExit', 'payrollPreviewData'].forEach(function (key) {
+        try { localStorage.removeItem(key); sessionStorage.removeItem(key); } catch (e) { /* ignore */ }
+    });
     fetch('/logout', {
         method: 'GET',
         credentials: 'same-origin'

@@ -332,10 +332,10 @@ Additionally, `delete_profile_image()` uses `os.path.join("app/static/uploads", 
 **CVSS:** 7.5
 **CWE:** CWE-319 (Cleartext Transmission of Sensitive Information)
 
-**Affected Component:** Deployment configuration, `start_hastama.bat`, `Dockerfile`
+**Affected Component:** Deployment configuration, `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`, `Dockerfile`
 
 **Evidence:**
-- `start_hastama.bat` runs uvicorn directly without TLS
+- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat` runs uvicorn directly without TLS
 - No TLS termination configuration found
 - Session cookies set without `Secure` flag (when not DEBUG)
 - CSP header uses `ws:` instead of `wss:` for WebSocket
@@ -1069,7 +1069,7 @@ All evidence is sourced directly from the codebase. Key files inspected:
 - `app/services/ticketing.py`
 - `pyproject.toml`
 - `.env` (blocked by security filter)
-- `start_hastama.bat`
+- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`
 - `Dockerfile`
 - `Caddyfile`
 

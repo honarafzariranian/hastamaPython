@@ -9,7 +9,7 @@ rem  disables that block rule, then adds an allow rule limited to the local
 rem  subnet (Domain/Private profiles only).  Nothing is opened to the
 rem  Internet and no firewall rule outside Hastama is touched.
 rem
-rem  Undo: scripts\disable_lan_firewall.bat
+rem  Undo: scripts\بستن_پورت_شبکه_محلی.bat
 rem  Report (no administrator needed): scripts\lan_access_firewall.ps1 -Action status
 rem ===================================================================
 echo.

@@ -10,9 +10,8 @@
      * چاپ: اول چاپ بی‌صدای سرور (`POST /api/queue/print`)، در صورت خطا همان
        سند چاپ سرور (`POST /api/label/print-document`) در مرورگر چاپ می‌شود
 
-   مارک‌آپ لیبل و سند چاپ فقط روی سرور ساخته می‌شوند
-   (app/templates/partials/label_queue.html و app/templates/label_print_document.html)
-   تا خروجی استودیو و کیوسک دقیقاً یکی باشد.
+   مارک‌آپ لیبل و سند چاپ فقط روی سرور ساخته می‌شوند تا خروجی استودیو و
+   کیوسک دقیقاً یکی باشد.
    ═══════════════════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -140,8 +139,8 @@
   }
 
   /* ── تنظیمات: شکل واحد ────────────────────────────────────────────────── */
-  /* همان کلیدهایی که app/services/ticket_print.py:normalize_label_settings
-     می‌پذیرد (شکل قدیمی localStorage هم پشتیبانی می‌شود). */
+  /* همان کلیدهایی که نرمال‌کنندهٔ سمت سرور می‌پذیرد
+     (شکل قدیمی localStorage هم پشتیبانی می‌شود). */
   function normalizeSettings(raw) {
     raw = raw || {};
     var template = String(pickNumber(raw, ['template', 'maLabelTemplate'], 'queue')).toLowerCase();

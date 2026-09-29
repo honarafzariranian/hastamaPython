@@ -3,7 +3,8 @@
     Stops the production Hastama application cleanly.
 
 .DESCRIPTION
-    Called by scripts\stop_server.bat.  The scheduled task is stopped as well,
+    Called by the Persian-named stop launcher next to this file (scripts\*.bat).
+    The scheduled task is stopped as well,
     but only after the process that owns the listening socket has been
     identified and stopped:
 

@@ -168,11 +168,11 @@ profile **Private**).
 
 | Component | State |
 |---|---|
-| Auto-start of the application | Scheduled Task `\HastamaServer` — trigger **At system startup**, run as `hastama` (`LogonType: Password`, `RunLevel: HighestAvailable`), action `cmd.exe /c E:\Hastama\scripts\run_server.bat`, `MultipleInstancesPolicy: IgnoreNew`, no execution time limit |
-| `run_server.bat` | waits for `MSSQL$SQLEXPRESS`, waits 30 s, then starts uvicorn; logs to `logs\hastama-autostart.log` |
-| Manual start/stop | `scripts\start_server.bat` (`schtasks /Run`); `scripts\stop_server.bat` runs `scripts\stop_server.ps1`, which identifies the owning process before stopping it (a bare `schtasks /End` orphaned the python child, which kept the port and made the next start fail with `Errno 10048`) |
-| Development instance | `scripts\run_dev.bat` — binds `127.0.0.1:5001`; **never** the production port |
-| Auto-start toggle | `scripts\enable_autostart.bat` / `disable_autostart.bat` — both toggle `\HastamaServer` **and** `\HastamaWatchdog`, otherwise "auto-start disabled" would last five minutes |
+| Auto-start of the application | Scheduled Task `\HastamaServer` — trigger **At system startup**, run as `hastama` (`LogonType: Password`, `RunLevel: HighestAvailable`), action `cmd.exe /c E:\Hastama\scripts\راه‌اندازی_سرور_تولید.bat`, `MultipleInstancesPolicy: IgnoreNew`, no execution time limit |
+| `راه‌اندازی_سرور_تولید.bat` | waits for `MSSQL$SQLEXPRESS`, waits 30 s, then starts uvicorn; logs to `logs\hastama-autostart.log` |
+| Manual start/stop | `scripts\شروع_سرور.bat` (`schtasks /Run`); `scripts\توقف_سرور.bat` runs `scripts\stop_server.ps1`, which identifies the owning process before stopping it (a bare `schtasks /End` orphaned the python child, which kept the port and made the next start fail with `Errno 10048`) |
+| Development instance | `scripts\راه‌اندازی_سرور_توسعه.bat` — binds `127.0.0.1:5001`; **never** the production port |
+| Auto-start toggle | `scripts\فعال‌سازی_اجرای_خودکار.bat` / `غیرفعال‌سازی_اجرای_خودکار.bat` — both toggle `\HastamaServer` **and** `\HastamaWatchdog`, otherwise "auto-start disabled" would last five minutes |
 
 **Mid-day recovery (RR-25, closed 2026-09-27):** the boot task alone would leave
 the URL down if the Python process died during the day, so `\HastamaWatchdog`
@@ -181,8 +181,8 @@ application is gone or no longer serving. It is silent while healthy and writes
 one line per event to `logs\hastama-watchdog.log` (rotated above 2 MB).
 
 The canonical statement of the two startup chains (`\HastamaServer` →
-`scripts\run_server.bat` → uvicorn on `127.0.0.1:5000` for production, and
-`scripts\run_dev.bat` on `127.0.0.1:5001` for development) lives in
+`scripts\راه‌اندازی_سرور_تولید.bat` → uvicorn on `127.0.0.1:5000` for production, and
+`scripts\راه‌اندازی_سرور_توسعه.bat` on `127.0.0.1:5001` for development) lives in
 [`docs/HASTAMA_PRODUCTION_DEPLOYMENT.md`](../HASTAMA_PRODUCTION_DEPLOYMENT.md)
 under *Process supervision (the production start path)*.
 
@@ -197,7 +197,7 @@ The watchdog now applies four layers before it may call the deployment healthy:
 |---|---|---|
 | 1. Listener identity | Does the process owning the port run `uvicorn app.main:app --port 5000`? | `PORT_FOREIGN_OWNER` (foreign process is logged, **never** killed, no start attempted) |
 | 2. Production configuration | Does its command line carry `--host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`? | `UNEXPECTED_PROCESS` |
-| 3. Supervision | Does it descend from `scripts\run_server.bat`, or is it the instance writing `logs\hastama-autostart.log` (refreshed every second)? | `UNEXPECTED_PROCESS` |
+| 3. Supervision | Does it descend from `scripts\راه‌اندازی_سرور_تولید.bat`, or is it the instance writing `logs\hastama-autostart.log` (refreshed every second)? | `UNEXPECTED_PROCESS` |
 | 4. Application health | Does `GET http://127.0.0.1:5000/health` answer `200` within 5 s (no proxy, no database)? | `APPLICATION_UNHEALTHY`, restart after 3 consecutive failures |
 
 An identified Hastama process running outside supervision is logged with its
@@ -232,7 +232,7 @@ application as unhealthy for exactly that reason.
 
 | Item | Value |
 |---|---|
-| Command | The command **executed by the production launcher** `scripts\run_server.bat` (invoked by the `\HastamaServer` task): `python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`. This is a description of what the launcher runs, **not** a start command to type. Production must **never** be started by hand on port 5000: start it with `scripts\start_server.bat` (which triggers `\HastamaServer`), and use `scripts\run_dev.bat` (`127.0.0.1:5001`) for development |
+| Command | The command **executed by the production launcher** `scripts\راه‌اندازی_سرور_تولید.bat` (invoked by the `\HastamaServer` task): `python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 --proxy-headers --forwarded-allow-ips 127.0.0.1`. This is a description of what the launcher runs, **not** a start command to type. Production must **never** be started by hand on port 5000: start it with `scripts\شروع_سرور.bat` (which triggers `\HastamaServer`), and use `scripts\راه‌اندازی_سرور_توسعه.bat` (`127.0.0.1:5001`) for development |
 | Bind | **loopback only** (`127.0.0.1:5000`) — verified with `netstat -ano`: `TCP 127.0.0.1:5000 LISTENING`; no `0.0.0.0:5000` / LAN listener exists |
 | Versions | uvicorn 0.23.2, FastAPI 0.141.1, Starlette 1.6.0 |
 | Proxy trust | `--proxy-headers` with `--forwarded-allow-ips 127.0.0.1`; application-side `TRUSTED_PROXY_IPS` defaults to `127.0.0.1,::1` (`app/core/net.py`) |
@@ -383,7 +383,7 @@ LAN workstation
 
 | # | Step | Command / place |
 |---|---|---|
-| 1 | Open the loopback *only to the local subnet* on the firewall (administrator, once) | `scripts\enable_lan_firewall.bat` (or `scripts\lan_access_firewall.ps1 -Action enable`) |
+| 1 | Open the loopback *only to the local subnet* on the firewall (administrator, once) | `scripts\بازکردن_پورت_شبکه‌محلی.bat` (or `scripts\lan_access_firewall.ps1 -Action enable`) |
 | 2 | Switch the listener on | `master-admin` → **system settings** → *دسترسی از شبکه داخلی* |
 | 3 | Read the address shown on the card (for example `http://192.168.3.69:5000`) and open it from a workstation | a second machine on the same subnet |
 
@@ -415,7 +415,7 @@ once rather than on every toggle.
 ### Turning it off
 
 1. Switch the listener off in the same card (immediate, no restart).
-2. Optionally run `scripts\disable_lan_firewall.bat` to remove the allow rule and
+2. Optionally run `scripts\بستن_پورت_شبکه‌محلی.bat` to remove the allow rule and
    restore the original block rule.
 
 ### Persistence and recovery
@@ -684,7 +684,7 @@ addresses, no `ws://` literals and no `http://` canonical links in `app/`
 
 | Scenario | Behaviour |
 |---|---|
-| Windows restart | `cloudflared` service (AUTO_START) + `HastamaServer` task (boot trigger) start automatically; SQL wait loop in `run_server.bat` avoids racing SQL Server |
+| Windows restart | `cloudflared` service (AUTO_START) + `HastamaServer` task (boot trigger) start automatically; SQL wait loop in `راه‌اندازی_سرور_تولید.bat` avoids racing SQL Server |
 | Internet interruption | Tunnel reconnects on its own; users keep the same URL and simply retry |
 | `cloudflared` restart | Loopback origin is unaffected; requests resume as soon as the tunnel is back |
 | Application restart | No DNS, no firewall and no Cloudflare change needed — the tunnel dials `127.0.0.1:5000` again |
@@ -768,7 +768,7 @@ claimed as passed by this work.
    the only way to prove the router has no port-forward.
 5. **Failover drill (repeat after any infrastructure change).** `schtasks /End /TN HastamaServer` then `schtasks /Run /TN HastamaServer`; `https://hastama.ir` must recover within ~60 s (SQL wait + startup) without any user action. The 2026-09-27 run is recorded in §12; the deliberate *kill-and-wait-for-the-watchdog* drill is still worth doing once during a maintenance window.
 6. ~~Delete the dead LAN-443 firewall rule~~ **Done 2026-09-27**: `Hastama HTTPS LAN` no longer exists; the only remaining rules for this application are their `Block` counterparts.
-7. ~~Consider the watchdog task~~ **Done 2026-09-27; health model replaced 2026-09-28.** `\HastamaWatchdog` runs every 5 minutes as `SYSTEM` (`scripts\watchdog_server.ps1`, `scripts\install_watchdog.ps1`). It originally re-triggered `\HastamaServer` when the loopback port stopped listening; it now identifies the process owning the port, requires the production flags and supervision evidence, probes `GET /health`, and reclaims the port only from an *identified* Hastama process (§5). Development runs on `scripts\run_dev.bat` (`127.0.0.1:5001`).
+7. ~~Consider the watchdog task~~ **Done 2026-09-27; health model replaced 2026-09-28.** `\HastamaWatchdog` runs every 5 minutes as `SYSTEM` (`scripts\watchdog_server.ps1`, `scripts\install_watchdog.ps1`). It originally re-triggered `\HastamaServer` when the loopback port stopped listening; it now identifies the process owning the port, requires the production flags and supervision evidence, probes `GET /health`, and reclaims the port only from an *identified* Hastama process (§5). Development runs on `scripts\راه‌اندازی_سرور_توسعه.bat` (`127.0.0.1:5001`).
 
 ---
 
@@ -783,7 +783,7 @@ claimed as passed by this work.
 | Login reloads to `/login` | Cookie rejected: check the request is HTTPS and the app sees `X-Forwarded-Proto: https` (uvicorn `--proxy-headers`, `TRUSTED_PROXY_IPS`) |
 | WebSocket stuck "connecting" | `Origin` must match the hostname (browser same-origin); Cloudflare WebSockets must be enabled; `MAX_WS_CONNECTIONS` not exhausted |
 | SSE not updating | `/api/notifications/stream` must return `200` and stay open; check `X-Accel-Buffering`/no-store headers survive the edge; `cf-cache-status` must be `DYNAMIC` |
-| Redirects point at `http://…` | Something generates absolute URLs from the scheme: verify the proxy flags (`scripts\run_server.bat`) and that no code hard-codes `http://hastama.ir` (`tests/test_network_url_policy.py` fails if it does) |
+| Redirects point at `http://…` | Something generates absolute URLs from the scheme: verify the proxy flags (`scripts\راه‌اندازی_سرور_تولید.bat`) and that no code hard-codes `http://hastama.ir` (`tests/test_network_url_policy.py` fails if it does) |
 | Slow first response | Server-side DNS: primary `5.200.200.200` times out before the secondary answers |
 | Tunnel up but nothing served | Tunnel ingress in the dashboard (public hostname → `http://127.0.0.1:5000`) |
 

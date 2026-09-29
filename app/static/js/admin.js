@@ -2872,6 +2872,18 @@ function showConfirmDialog(username) {
     };
 }
 
+// Delegated delete trigger.  The username travels in a data-attribute that Jinja
+// HTML-escapes, instead of a JavaScript string literal inside an inline handler:
+// HTML entities are decoded by the parser before the JS engine sees the code, so
+// a legacy username containing a quote could otherwise break out of the string.
+// Delegation also keeps the page one step away from inline handlers, which CSP
+// would otherwise have to keep allowing.
+document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-confirm-user]');
+    if (!button) return;
+    showConfirmDialog(button.getAttribute('data-confirm-user'));
+});
+
 // بستن مدال تایید حذف
 function closeConfirmDialog() {
     document.getElementById('confirmDeleteModal').style.display = "none";
@@ -4138,6 +4150,15 @@ if (applyAllBtn) {
 // تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج// تنظیمات دکمه خروج
 
 function logout() {
+    // پاک‌سازی داده‌های گزارشی که همین مرورگر کش کرده است (حضور، اضافه‌کار،
+    // مرخصی، مرخصی ساعتی و نام کاربری‌ها). روی ترمینال مشترک، ماندن این داده‌ها
+    // پس از خروج یک افشای اطلاعاتی است؛ هیچ تصمیم سروری به این کش وابسته نیست.
+    ['reports', 'username', 'overtimeReports', 'overtimeReportData', 'hourlyPassReportData',
+     'hourlyPassUsername', 'hozoorReportData', 'leaveReportData', 'numRecords',
+     'selectedUsername', 'totalPresenceTime', 'totalOvertime', 'totalDelayTime',
+     'totalEarlyStart', 'totalEarlyExit', 'payrollPreviewData'].forEach(function (key) {
+        try { localStorage.removeItem(key); sessionStorage.removeItem(key); } catch (e) { /* ignore */ }
+    });
     fetch('/logout', {
         method: 'GET',
         credentials: 'same-origin'

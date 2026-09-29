@@ -1,14 +1,18 @@
 # Hastama - All Project Markdown Documents (Merged)
 
-*Generated: 2026-09-24 08:36:59*
+*Generated: 2026-09-24 08:36:59 (table of contents re-pointed 2026-09-29 after the files were grouped by topic)*
 *Source: git-tracked `*.md` files only (excludes `.kilo/`, `.venv/`, `.pytest_cache/`)*
 *File count: 26*
+
+> **Snapshot.** The merged bodies below are verbatim copies of the documents as
+> they stood on 2026-09-24, so the paths, file names and script names *inside*
+> them are the ones in use on that date.  The table of contents is current.
 
 ## Table of Contents
 
 1. [AGENTS.md](#agentsmd)
-2. [ARAZ_OCXFST_INVESTIGATION_REPORT.md](#arazocxfstinvestigationreportmd)
-3. [ARAZ_T7_PROTOCOL_REPORT.md](#arazt7protocolreportmd)
+2. [docs/araz/ARAZ_OCXFST_INVESTIGATION_REPORT.md](#arazocxfstinvestigationreportmd)
+3. [docs/araz/ARAZ_T7_PROTOCOL_REPORT.md](#arazt7protocolreportmd)
 4. [docs/HASTAMA_PRODUCTION_DEPLOYMENT.md](#docshastamaproductiondeploymentmd)
 5. [docs/LAN_HTTPS_PUSH_SETUP.md](#docslanhttpspushsetupmd)
 6. [docs/mobile-tables.md](#docsmobile-tablesmd)
@@ -23,14 +27,14 @@
 15. [docs/security/SQL_INJECTION_REVIEW.md](#docssecuritysqlinjectionreviewmd)
 16. [docs/security/TEST_EVIDENCE_SUMMARY.md](#docssecuritytestevidencesummarymd)
 17. [docs/security/THREAT_MODEL.md](#docssecuritythreatmodelmd)
-18. [HASTAMA_AFTA_SECURITY_AUDIT.md](#hastamaaftasecurityauditmd)
-19. [HASTAMA_AFTA_SECURITY_AUDIT_FINAL.md](#hastamaaftasecurityauditfinalmd)
-20. [HASTAMA_AFTA_SECURITY_AUDIT_VERIFIED.md](#hastamaaftasecurityauditverifiedmd)
-21. [HASTAMA_SECURITY_FINAL_VERIFICATION.md](#hastamasecurityfinalverificationmd)
-22. [HASTAMA_SECURITY_HARDENING_CHANGELOG.md](#hastamasecurityhardeningchangelogmd)
+18. [docs/security/HASTAMA_AFTA_SECURITY_AUDIT.md](#hastamaaftasecurityauditmd)
+19. [docs/security/HASTAMA_AFTA_SECURITY_AUDIT_FINAL.md](#hastamaaftasecurityauditfinalmd)
+20. [docs/security/HASTAMA_AFTA_SECURITY_AUDIT_VERIFIED.md](#hastamaaftasecurityauditverifiedmd)
+21. [docs/security/HASTAMA_SECURITY_FINAL_VERIFICATION.md](#hastamasecurityfinalverificationmd)
+22. [docs/security/HASTAMA_SECURITY_HARDENING_CHANGELOG.md](#hastamasecurityhardeningchangelogmd)
 23. [offline/README.md](#offlinereadmemd)
-24. [OFFLINE_AUDIT_REPORT.md](#offlineauditreportmd)
-25. [OFFLINE_DEPENDENCIES.md](#offlinedependenciesmd)
+24. [docs/offline/OFFLINE_AUDIT_REPORT.md](#offlineauditreportmd)
+25. [docs/offline/OFFLINE_DEPENDENCIES.md](#offlinedependenciesmd)
 26. [README.md](#readmemd)
 
 
@@ -1884,7 +1888,7 @@ Recommendation: *bind Uvicorn to `127.0.0.1:5000`; firewall-deny inbound 5000/14
 
 | Item | Status | Evidence |
 |---|---|---|
-| Uvicorn bind `127.0.0.1:5000` | **PASS** | Live PID `uvicorn … --host 127.0.0.1 --port 5000`; `scripts/run_server.bat` corrected from `0.0.0.0` → `127.0.0.1`; `install_autostart.ps1` / `start_server.bat` messages updated |
+| Uvicorn bind `127.0.0.1:5000` | **PASS** | Live PID `uvicorn … --host 127.0.0.1 --port 5000`; `scripts/راه‌اندازی_سرور_تولید.bat` corrected from `0.0.0.0` → `127.0.0.1`; `install_autostart.ps1` / `شروع_سرور.bat` messages updated |
 | Deny inbound TCP 5000 | **PASS** | `Hastama - Block Uvicorn 5000 (Inbound)` Block/Any; loopback still serves 200 |
 | Deny inbound TCP 1433 | **PASS** | `Hastama - Block SQL Server 1433 (Inbound)` Block/Any |
 | Deny inbound 445 | **PARTIAL → PASS (Internet)** | No Internet path; SMB Allow rules scoped `LocalSubnet`; extra `Hastama - Block SMB 445 (Internet)` |
@@ -1959,7 +1963,7 @@ owner before the system is treated as ready.
 | RR-18 | **Iranian regulatory status unresolved.** AFTA applicability and the data-protection bill's status could not be verified from primary sources | Medium | Needs an authorized Iranian assessor / legal review | Management | **Yes** |
 | RR-19 | **`database/exports/latest.sql` holds plaintext passwords** in the legacy `password` column (`123`, `admin`, …). Untracked from Git on 2026-09-23 and ignored going forward, but the working copy and **Git history** still contain it | High | Restoring from the dump is a documented workflow; history rewrite would break clones. Rotate every credential that appears in the dump and re-export with hashes only | Repository owner / DBA | **Yes** |
 | RR-20 | ~~Production tunnel not yet redeployed~~ **CLOSED 2026-09-23.** External probes: `/` → 302 `/login` (code later switched to 301 after confirmation); `http` → 301 HTTPS; `www` → 301 apex; robots/sitemap updated; `/docs` 404; HSTS present | — | Verified with `curl` against `https://hastama.ir` from off-LAN | Infra | No |
-| RR-21 | **Session cookies: `https_only=True` is always on** (Starlette). On pure-HTTP LAN (`http://127.0.0.1:8000`) the browser will refuse to store the session cookie unless the operator terminates TLS (Caddy/`start_hastama.bat`) | Medium | Deliberate fail-closed choice for the tunnel deploy; local plain-HTTP dev needs a TLS front or a documented exception | Infra | Yes |
+| RR-21 | **Session cookies: `https_only=True` is always on** (Starlette). On pure-HTTP LAN (`http://127.0.0.1:8000`) the browser will refuse to store the session cookie unless the operator terminates TLS (Caddy/`scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`) | Medium | Deliberate fail-closed choice for the tunnel deploy; local plain-HTTP dev needs a TLS front or a documented exception | Infra | Yes |
 | RR-22 | **HEAD on GET routes returns 405** from the production edge (observed 2026-09-23 on `/login` and `/`). Security impact: none (GET still works); some monitors use HEAD for uptime | Low | Likely FastAPI/Starlette HEAD handling under the current router setup; fix only if monitoring requires HEAD | Maintainer | No |
 | RR-23 | ~~SQL Server Express still listens on `0.0.0.0:<dynamic>`~~ **CLOSED 2026-09-23.** TCP/IP bound to `127.0.0.1:1433` only (`ListenOnAllIPs=0`, IP4 enabled, IP1–3 disabled); SQL Browser **Stopped/Disabled**; Internet block rules for `49847`/`1434` removed as no longer required | — | `netstat`: only `127.0.0.1:1433`; pyodbc `localhost\SQLEXPRESS` OK; app `/login` 200 after restart | DBA / Infra | No |
 | RR-24 | **Many third-party `Allow` rules use `LocalPort=Any` + `RemoteAddress=Any`** (Teams, VS Code, Chrome helpers, `python.exe`, etc.). They do not expose the app port (5000 is loopback-bound and explicitly Block-listed) but weaken host-wide inbound posture | Medium | Owned by desktop software installs; cleaning them is an ops task outside the app repo | Infra | Yes |
@@ -2756,10 +2760,10 @@ Additionally, `delete_profile_image()` uses `os.path.join("app/static/uploads", 
 **CVSS:** 7.5
 **CWE:** CWE-319 (Cleartext Transmission of Sensitive Information)
 
-**Affected Component:** Deployment configuration, `start_hastama.bat`, `Dockerfile`
+**Affected Component:** Deployment configuration, `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`, `Dockerfile`
 
 **Evidence:**
-- `start_hastama.bat` runs uvicorn directly without TLS
+- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat` runs uvicorn directly without TLS
 - No TLS termination configuration found
 - Session cookies set without `Secure` flag (when not DEBUG)
 - CSP header uses `ws:` instead of `wss:` for WebSocket
@@ -3493,7 +3497,7 @@ All evidence is sourced directly from the codebase. Key files inspected:
 - `app/services/ticketing.py`
 - `pyproject.toml`
 - `.env` (blocked by security filter)
-- `start_hastama.bat`
+- `scripts/راه‌اندازی_سرور_شبکه‌محلی.bat`
 - `Dockerfile`
 - `Caddyfile`
 

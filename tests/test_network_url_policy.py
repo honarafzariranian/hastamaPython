@@ -223,7 +223,7 @@ def test_bridge_agent_uses_the_public_url():
 
 
 def test_autostart_script_binds_loopback_and_states_proxy_trust():
-    bat = _read("scripts", "run_server.bat")
+    bat = _read("scripts", "راه‌اندازی_سرور_تولید.bat")
     assert "--host 127.0.0.1 --port 5000" in bat
     assert "--proxy-headers" in bat
     assert "--forwarded-allow-ips 127.0.0.1" in bat
@@ -231,7 +231,7 @@ def test_autostart_script_binds_loopback_and_states_proxy_trust():
 
 
 def test_operator_scripts_point_users_at_the_canonical_url_only():
-    start = _read("scripts", "start_server.bat")
+    start = _read("scripts", "شروع_سرور.bat")
     assert "https://hastama.ir" in start
     assert "open http://127.0.0.1:5000" not in start
 

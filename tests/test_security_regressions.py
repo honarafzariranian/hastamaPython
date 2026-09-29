@@ -181,11 +181,11 @@ class TestSecretManagement:
         needle = "meyer#perko"
         offenders = []
         targets = [
-            "HASTAMA_AFTA_SECURITY_AUDIT.md",
-            "HASTAMA_AFTA_SECURITY_AUDIT_FINAL.md",
-            "HASTAMA_AFTA_SECURITY_AUDIT_VERIFIED.md",
-            "HASTAMA_SECURITY_FINAL_VERIFICATION.md",
-            "HASTAMA_SECURITY_HARDENING_CHANGELOG.md",
+            os.path.join("docs", "security", "HASTAMA_AFTA_SECURITY_AUDIT.md"),
+            os.path.join("docs", "security", "HASTAMA_AFTA_SECURITY_AUDIT_FINAL.md"),
+            os.path.join("docs", "security", "HASTAMA_AFTA_SECURITY_AUDIT_VERIFIED.md"),
+            os.path.join("docs", "security", "HASTAMA_SECURITY_FINAL_VERIFICATION.md"),
+            os.path.join("docs", "security", "HASTAMA_SECURITY_HARDENING_CHANGELOG.md"),
         ]
         for root, dirs, files in os.walk("docs"):
             dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__"}]
