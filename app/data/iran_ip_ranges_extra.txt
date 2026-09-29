@@ -1,0 +1,19 @@
+# Operator maintained exceptions for the Iran-only access filter.
+#
+# Every CIDR here is merged on top of app/data/iran_ip_ranges.txt, and — unlike
+# that generated file — is never rewritten by the "refresh list" action or by
+# scripts/refresh_iran_ip_ranges.py, so an exception survives a list refresh.
+#
+# One CIDR per line, '#' starts a comment.  Keep the list short: every entry is
+# a range of non-Iranian addresses that may use the system.  The settings card
+# reports how many are in force (status key: extra_ranges).
+#
+# 31.171.96.0/21 — Delta Telecom Ltd (AZ, AS29049; RIPE "DeltaTelecom").
+#   Iranian users whose ISP or office network egresses through this Azerbaijani
+#   shared NAT pool were answered with the "foreign IP / VPN" page although they
+#   run no VPN: several neighbouring addresses of the same /24 (.25, .29, .216)
+#   plus 31.171.101.199 were blocked on their way to /login on 2026-09-29 (see
+#   dbo.audit_logs, action='iran_only_blocked').  A registry country says where
+#   the space is registered, not where the visitor is sitting.
+#   Delete this line once those users have a domestic egress again.
+31.171.96.0/21

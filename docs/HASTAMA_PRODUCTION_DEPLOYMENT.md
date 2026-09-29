@@ -70,6 +70,26 @@ reads a BOM-less script with the ANSI code page, so the watchdog and session
 helpers stay ASCII and identify the launchers by their path under `scripts\`
 instead of by file name.
 
+### The one legacy name: `scripts\run_server.bat`
+
+`.bat` files are read *and their child command lines are built* through the
+console code page, so a batch file cannot reference a Persian-named file: a
+literal `call "...\راه‌اندازی_سرور_تولید.bat"` fails with *The system cannot find
+the path specified* even after `chcp 65001`, and `findstr` cannot even open the
+file. cmd.exe **can** run such a launcher when the path arrives on a UTF-16
+command line, which is how the scheduled task and Explorer do it — the
+limitation is only *inside* a batch file.
+
+`scripts\run_server.bat` therefore survives as an ASCII-named bridge: it asks
+PowerShell (UTF-16 throughout) for the launcher that declares the production
+port and the production-only `HASTAMA_MINIFY_CLIENT_ASSETS` switch, and runs it.
+It exists because the `\HastamaServer` task was registered against that name and
+the task cannot be repointed without the Windows password it stores
+(`LogonType=Password`; `schtasks /Change` and `Set-ScheduledTask` both refuse
+without it).  After `scripts\فعال‌سازی_اجرای_خودکار.bat` (or
+`install_autostart.ps1`) has been run once as administrator — it re-registers
+the task with the Persian name — delete this bridge.
+
 ## Process supervision (the production start path)
 
 There is exactly one production start chain and one development start chain:
@@ -375,6 +395,15 @@ filter-breaker) off and come back.
   machine's proxy variables.  If a legitimate Iranian client is ever refused,
   refresh the list first — a range allocated after the bundled snapshot is the
   expected cause.
+* **If a user with no VPN is still refused**, compare the address shown on the
+  warning page with the registries: an Iranian ISP or office may egress through a
+  neighbouring country's allocation, which no refresh will ever fix.  Add that
+  network, with its reason, to `app/data/iran_ip_ranges_extra.txt` (one CIDR per
+  line — merged on top of the generated list, never rewritten by a refresh, and
+  picked up without a restart).  The card then reports it as *بازه‌های استثنای
+  دستی*.  Keep the file short, because every line lets foreign addresses in, and
+  remove the entry once those users have a domestic egress.  `dbo.audit_logs`
+  (`action='iran_only_blocked'`) lists the addresses that were refused.
 * **Settings live in `system_config`** (`iran_only_*` keys) and are re-applied at
   runtime; nothing here needs a restart.  Blocks are audited
   (`iran_only_blocked`, throttled to one entry per address per 5 minutes).  Full

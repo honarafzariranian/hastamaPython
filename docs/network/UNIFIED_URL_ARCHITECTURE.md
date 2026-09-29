@@ -557,6 +557,19 @@ on the server cannot decide what we ship). If the range file cannot be read the
 filter reports *armed but blind* on the card and stops rejecting anything — it
 must never turn into a silent lockout.
 
+A registry country is where the space is *registered*, not where the visitor is
+sitting, so the two disagree in both directions. `app/data/iran_ip_ranges_extra.txt`
+is an operator maintained supplement that is merged on top of the generated list
+for the networks where they disagree — one CIDR per line with a reason, e.g.
+`31.171.96.0/21` (Delta Telecom, AZ, AS29049), through whose shared NAT pool
+Iranian users of some ISPs and offices arrive with no VPN at all. The supplement
+is deliberately a **separate file**: the refresh above rewrites
+`iran_ip_ranges.txt` and would silently discard a hand edit, while the supplement
+survives every refresh and is picked up without a restart. Its cost is explicit —
+every line is a range of foreign addresses that may enter — so the settings card
+reports how many are in force (`extra_ranges`) and the file carries a reason per
+entry. Both files are part of the same load stamp.
+
 ### What is never blocked (the filter stays manageable)
 
 * **internal** addresses — the watchdog's `/health`, the printer side, an

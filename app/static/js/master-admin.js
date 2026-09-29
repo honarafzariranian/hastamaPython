@@ -1152,6 +1152,9 @@
         : '<span class="ma-lan-state ma-lan-state--warn"><i class="ma-lan-state__dot"></i>فعال، اما فهرست آی‌پی در دسترس نیست (چیزی مسدود نمی‌شود)</span>');
     const rows = [
       ['بازه‌های ایران (IPv4 / IPv6)', String(i.ranges_ipv4 || 0) + ' / ' + String(i.ranges_ipv6 || 0)],
+      ['بازه‌های استثنای دستی', (parseInt(i.extra_ranges, 10) || 0)
+        ? (String(i.extra_ranges) + ' بازه از ' + esc(i.extra_file || 'فایل استثنا'))
+        : 'ندارد'],
       ['نسخهٔ فهرست', i.list_generated ? new Date(i.list_generated).toLocaleString('fa-IR') : '—'],
       ['آخرین به‌روزرسانی از منبع', i.last_refresh ? new Date(i.last_refresh).toLocaleString('fa-IR') : '—'],
       ['ورودهای مسدودشده', blocked.toLocaleString('fa-IR')],

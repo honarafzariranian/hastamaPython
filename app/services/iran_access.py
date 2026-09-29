@@ -36,6 +36,18 @@ download is an explicit administrator action, and if the list cannot be read the
 feature stops filtering (and says so, loudly, in the settings card) instead of
 silently locking every Iranian user out.
 
+Operators need an escape hatch, because a *registry* country and an *actual*
+user location disagree in both directions: Iranian ISPs and offices sometimes
+egress through a neighbouring country's allocation (a shared NAT pool that the
+registries mark ``AZ``, ``TR``, ``AE`` …), so a user with no VPN at all is
+treated as foreign.  ``app/data/iran_ip_ranges_extra.txt`` is merged on top of
+the generated list for exactly those networks.  It is deliberately **not** the
+generated file: :func:`update_list_from_registries` rewrites
+``iran_ip_ranges.txt`` and would silently discard a hand edit, while the
+supplement survives every refresh.  It is the blunt instrument of last resort —
+preferable to switching the whole filter off, but every range in it is a range
+of foreign addresses that may enter.
+
 The settings live in ``system_config`` and are edited in
 ``master-admin → system settings``; everything is applied without a restart.
 See ``docs/network/UNIFIED_URL_ARCHITECTURE.md`` §9d and RR-31.
@@ -122,6 +134,13 @@ JSON_PREFIXES = (
 
 DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "iran_ip_ranges.txt"
 
+#: Operator maintained supplement, merged on top of the generated list and
+#: **never** rewritten by a refresh.  One CIDR per line, ``#`` starts a comment.
+#: Every line here is an exception that lets non-Iranian addresses in, so the
+#: file carries a reason per entry and the settings card reports how many are in
+#: force.  A missing or broken file is an empty supplement, never an error.
+EXTRA_PATH = Path(__file__).resolve().parents[1] / "data" / "iran_ip_ranges_extra.txt"
+
 #: Authoritative, machine readable allocations.  ``extended`` carries the record
 #: start and the address count (ipv4) or the prefix length (ipv6).
 REGISTRY_SOURCES = (
@@ -148,7 +167,18 @@ class IranAccessError(RuntimeError):
 class _ListImage:
     """Parsed, binary-searchable picture of the Iranian address space."""
 
-    __slots__ = ("v4_starts", "v4_ends", "v6_starts", "v6_ends", "v4_count", "v6_count", "loaded", "error")
+    __slots__ = (
+        "v4_starts",
+        "v4_ends",
+        "v6_starts",
+        "v6_ends",
+        "v4_count",
+        "v6_count",
+        "extra_v4_count",
+        "extra_v6_count",
+        "loaded",
+        "error",
+    )
 
     def __init__(self) -> None:
         self.v4_starts: list = []
@@ -157,6 +187,8 @@ class _ListImage:
         self.v6_ends: list = []
         self.v4_count = 0
         self.v6_count = 0
+        self.extra_v4_count = 0
+        self.extra_v6_count = 0
         self.loaded = False
         self.error = ""
 
@@ -242,7 +274,7 @@ class _IranState:
 
         self.image = _ListImage()
         self.loaded_at: Optional[str] = None
-        self.file_stamp: Optional[float] = None
+        self.file_stamp: Optional[tuple] = None
         self.last_refresh: Optional[str] = None
         self.last_refresh_error = ""
 
@@ -259,18 +291,51 @@ _state = _IranState()
 
 # ── Loading ─────────────────────────────────────────────────────────────────
 
-def _load_list(force: bool = False) -> None:
-    """(Re)read the range file when it changed on disk; never raises."""
+def _list_stamp() -> Optional[tuple]:
+    """Identity of both range files, or ``None`` when the generated one is gone.
+
+    The supplement is part of the stamp so that editing it by hand on the server
+    is picked up by the next request, exactly like replacing the main file.
+    """
     try:
-        mtime = DATA_PATH.stat().st_mtime
+        main = DATA_PATH.stat().st_mtime
     except OSError:
+        return None
+    try:
+        extra = EXTRA_PATH.stat().st_mtime
+    except OSError:
+        extra = 0.0
+    return (main, extra)
+
+
+def _load_extra_bounds() -> dict:
+    """Parse the operator maintained supplement; never raises.
+
+    A missing file is an empty supplement.  A *broken* file is an empty one too:
+    the exception list is a convenience, so a typo in it must not take the
+    generated list down with it.
+    """
+    try:
+        text = EXTRA_PATH.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {"v4": [], "v6": []}
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Iranian list supplement unreadable: %s: %s", type(exc).__name__, exc)
+        return {"v4": [], "v6": []}
+    return parse_list_text(text)
+
+
+def _load_list(force: bool = False) -> None:
+    """(Re)read the range files when they changed on disk; never raises."""
+    stamp = _list_stamp()
+    if stamp is None:
         if force or _state.image.loaded:
             _state.image = _ListImage()
             _state.image.error = "فایل فهرست آی‌پی ایران یافت نشد."
             logger.error("Iranian address list is missing at %s", DATA_PATH)
         return
 
-    if not force and _state.image.loaded and mtime == _state.file_stamp:
+    if not force and _state.image.loaded and stamp == _state.file_stamp:
         return
 
     try:
@@ -282,22 +347,33 @@ def _load_list(force: bool = False) -> None:
         return
 
     parsed = parse_list_text(text)
+    extra = _load_extra_bounds()
+    extra_v4 = _merge(list(extra["v4"]))
+    extra_v6 = _merge(list(extra["v6"]))
     image = _ListImage()
-    image.v4_starts, image.v4_ends = _merge(parsed["v4"])
-    image.v6_starts, image.v6_ends = _merge(parsed["v6"])
+    image.v4_starts, image.v4_ends = _merge(parsed["v4"] + extra["v4"])
+    image.v6_starts, image.v6_ends = _merge(parsed["v6"] + extra["v6"])
     image.v4_count = len(image.v4_starts)
     image.v6_count = len(image.v6_starts)
+    image.extra_v4_count = len(extra_v4[0])
+    image.extra_v6_count = len(extra_v6[0])
     image.loaded = bool(image.v4_count or image.v6_count)
     if not image.loaded:
         image.error = "فهرست آی‌پی ایران خالی است."
         logger.error("Iranian address list parsed empty (%s)", DATA_PATH)
 
     _state.image = image
-    _state.file_stamp = mtime
+    _state.file_stamp = stamp
     _state.loaded_at = datetime.now(timezone.utc).isoformat()
     logger.warning(
         "Iranian address list loaded: %s ipv4 + %s ipv6 ranges", image.v4_count, image.v6_count
     )
+    if image.extra_v4_count or image.extra_v6_count:
+        logger.warning(
+            "Iranian address list supplement merged: %s extra range(s) from %s",
+            image.extra_v4_count + image.extra_v6_count,
+            EXTRA_PATH,
+        )
 
 
 def _in_bounds(starts: list, ends: list, value: int) -> bool:
@@ -443,6 +519,9 @@ def status() -> dict:
         "list_updated_at": metadata["mtime"],
         "ranges_ipv4": image.v4_count,
         "ranges_ipv6": image.v6_count,
+        "extra_file": EXTRA_PATH.name,
+        "extra_exists": EXTRA_PATH.exists(),
+        "extra_ranges": image.extra_v4_count + image.extra_v6_count,
         "loaded_at": _state.loaded_at,
         "last_refresh": _state.last_refresh,
         "last_refresh_error": _state.last_refresh_error,

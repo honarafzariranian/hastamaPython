@@ -123,6 +123,92 @@ def test_comments_blank_lines_and_junk_are_ignored():
     assert len(parsed["v6"]) == 1
 
 
+# ── the manual exception list ────────────────────────────────────────────────
+
+
+def test_the_manual_exception_list_is_merged_on_top_of_the_generated_one(only_iran):
+    """An operator exception must be usable and visible, not a hidden edit."""
+    assert only_iran.EXTRA_PATH.exists(), "app/data/iran_ip_ranges_extra.txt must be committed"
+    status = only_iran.status()
+    assert status["extra_exists"] is True
+    assert status["extra_ranges"] >= 1
+    assert status["extra_file"] in status["list_path"] or status["extra_file"]
+    # The exception really changed the verdict for the blocked network.
+    verdict = only_iran.check_ip("31.171.100.240")
+    assert verdict["blocked"] is False
+    assert verdict["kind"] == "iran"
+    assert verdict["range"].startswith("31.171.96.0/")
+    # …and it did not open the whole neighbourhood: a plain foreign address stays out.
+    assert only_iran.check_ip("8.8.8.8")["blocked"] is True
+
+
+def test_an_exception_survives_a_list_refresh(only_iran, monkeypatch, tmp_path):
+    """A refresh rewrites the generated file; the hand written exceptions must not be lost."""
+    target = tmp_path / "iran_ip_ranges.txt"
+    monkeypatch.setattr(only_iran, "DATA_PATH", target)
+    monkeypatch.setattr(only_iran, "_download", lambda url: _REGISTRY_FIXTURE)
+    try:
+        status = _run(only_iran.refresh())
+        assert status["extra_ranges"] >= 1
+        assert only_iran.check_ip("31.171.100.240")["blocked"] is False
+    finally:
+        monkeypatch.undo()
+        only_iran._load_list(force=True)
+    assert only_iran.check_ip("31.171.100.240")["blocked"] is False
+
+
+def test_a_broken_exception_file_never_takes_the_generated_list_down(only_iran, monkeypatch, tmp_path):
+    broken = tmp_path / "iran_ip_ranges_extra.txt"
+    broken.write_text("not-an-address\n999.1.2.3/24\n", encoding="utf-8")
+    monkeypatch.setattr(only_iran, "EXTRA_PATH", broken)
+    try:
+        only_iran._load_list(force=True)
+        status = only_iran.status()
+        assert status["list_loaded"] is True
+        assert status["enforcing"] is True
+        assert status["extra_ranges"] == 0
+        # Without its exception line the AZ network is foreign again — proof the
+        # exception came from the supplement and not from the generated list.
+        assert only_iran.check_ip("31.171.100.240")["blocked"] is True
+    finally:
+        monkeypatch.undo()
+        only_iran._load_list(force=True)
+
+
+def test_a_missing_exception_file_is_simply_an_empty_exception(only_iran, monkeypatch, tmp_path):
+    monkeypatch.setattr(only_iran, "EXTRA_PATH", tmp_path / "absent.txt")
+    try:
+        only_iran._load_list(force=True)
+        assert only_iran.status()["extra_ranges"] == 0
+        assert only_iran.status()["extra_exists"] is False
+        assert only_iran.enforcing() is True
+    finally:
+        monkeypatch.undo()
+        only_iran._load_list(force=True)
+
+
+def test_editing_the_exception_file_on_disk_is_picked_up_without_a_restart(only_iran, monkeypatch, tmp_path):
+    """The stamp covers both files, so an operator edit applies on the next request."""
+    extra = tmp_path / "iran_ip_ranges_extra.txt"
+    monkeypatch.setattr(only_iran, "EXTRA_PATH", extra)
+    try:
+        only_iran._load_list(force=True)
+        assert only_iran.is_blocked("31.171.100.240") is True
+        extra.write_text("31.171.96.0/21\n", encoding="utf-8")
+        _bump_mtime(extra)
+        assert only_iran.is_blocked("31.171.100.240") is False
+    finally:
+        monkeypatch.undo()
+        only_iran._load_list(force=True)
+
+
+def _bump_mtime(path) -> None:
+    """Make an edit visible to the file stamp even on a coarse resolution clock."""
+    import os
+    stamp = path.stat().st_mtime + 2.0
+    os.utime(path, (stamp, stamp))
+
+
 def test_the_list_is_only_ever_rebuilt_from_the_registries():
     """The refresh button must be an explicit, registry-only action."""
     source = open("app/services/iran_access.py", encoding="utf-8").read()

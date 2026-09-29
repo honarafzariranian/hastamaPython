@@ -11,11 +11,16 @@ $LogsDir = Join-Path $InstallRoot "logs"
 # kept pure ASCII (Windows PowerShell 5.1 reads a BOM-less script with the ANSI
 # code page, which would garble an Arabic-script literal).  The launcher is
 # therefore found by what it does instead of by how it is called: it is the only
-# launcher under scripts\ that binds the production port with the proxy flags.
+# launcher under scripts\ that binds the production port with the proxy flags
+# *and* switches on the client-asset minifier.  The third condition matters: the
+# one-click development session also binds 5000 with the proxy flags, so without
+# it the rule matches two files and the first one in directory order wins -
+# which would register a development session as the production start path.
 $BatFile = Get-ChildItem -LiteralPath (Join-Path $InstallRoot "scripts") -Filter "*.bat" |
     Where-Object {
         (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "--port 5000" -and
-        (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "--forwarded-allow-ips 127\.0\.0\.1"
+        (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "--forwarded-allow-ips 127\.0\.0\.1" -and
+        (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -match "HASTAMA_MINIFY_CLIENT_ASSETS"
     } |
     Select-Object -First 1 -ExpandProperty FullName
 
