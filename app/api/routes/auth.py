@@ -19,7 +19,7 @@ from core.password_utils import (
 
 from app.services.captcha import (
     generate_captcha_image, store_captcha_in_session,
-    validate_captcha, captcha_remaining_seconds,
+    validate_captcha, captcha_remaining_seconds, captcha_expired,
 )
 
 from app.core.net import client_ip as _trusted_client_ip
@@ -227,13 +227,25 @@ async def refresh_captcha(request: Request):
 
 @router.get("/captcha/status")
 async def captcha_status(request: Request):
-    """Check if current CAPTCHA is still valid."""
+    """How much life the current CAPTCHA has left (the login page polls this).
+
+    The page uses it to warn the user *while they are still typing* instead of
+    letting them submit a code that died a minute ago.  Nothing here touches the
+    database: the lifetime comes from the in-memory login-experience settings.
+    """
+    from app.services.captcha import captcha_expiry_seconds
+    from app.services import login_experience
+
     remaining = captcha_remaining_seconds(request)
     has_captcha = request.session.get("captcha_code") is not None
     return JSONResponse({
         "success": True,
         "valid": has_captcha and remaining > 0,
         "remaining_seconds": remaining,
+        "has_captcha": has_captcha,
+        "ttl_seconds": captcha_expiry_seconds(),
+        "notice_enabled": login_experience.captcha_notice_enabled(),
+        "warning_lead_seconds": login_experience.CAPTCHA_WARNING_LEAD_SECONDS,
     })
 
 
@@ -322,16 +334,38 @@ async def login(request: Request):
     # ── Validate CAPTCHA (only if enabled) ──
     if captcha_enabled:
         if not captcha_code:
-            return JSONResponse({"success": False, "message": "کد امنیتی الزامی است."})
+            return JSONResponse({
+                "success": False,
+                "message": "لطفاً کد امنیتی را وارد کنید.",
+                "captcha_error": True,
+                "captcha_reason": "missing_input",
+            })
+
+        # Learn *why* a submission is about to fail before validating: an expired
+        # code makes ``validate_captcha`` clear the session, so afterwards the
+        # evidence is gone and every rejection would look the same.
+        captcha_was_present = bool(request.session.get("captcha_code"))
+        captcha_was_expired = captcha_expired(request)
 
         captcha_valid, captcha_msg = validate_captcha(request, captcha_code)
         if not captcha_valid:
+            captcha_reason = (
+                "expired" if captcha_was_expired
+                else ("missing" if not captcha_was_present else "mismatch")
+            )
             log_event_safe(
                 event_type="CAPTCHA", action="validation_failed",
                 ip_address=_client_ip(request), user_agent=_user_agent(request),
                 status="failure", severity="low",
+                metadata={"reason": captcha_reason, "expired": captcha_was_expired},
             )
-            return JSONResponse({"success": False, "message": captcha_msg, "captcha_error": True})
+            return JSONResponse({
+                "success": False,
+                "message": captcha_msg,
+                "captcha_error": True,
+                "captcha_expired": captcha_was_expired,
+                "captcha_reason": captcha_reason,
+            })
 
     # Input length check
     if len(username) > MAX_USERNAME_LENGTH:

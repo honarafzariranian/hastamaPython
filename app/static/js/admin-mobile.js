@@ -294,6 +294,45 @@
         });
     }
 
+    /* ── ۳-ج) بستن کشو با «تپ بیرون» ───────────────────────────────────────
+       پردهٔ پشت کشو pointer-events: none است (دلیلش در admin-mobile-redesign.css
+       آمده: لایهٔ کامپوزیت‌شدهٔ پرده، ورودی‌های روی خودِ کشو را می‌بلعید و هیچ
+       آیتمی کار نمی‌کرد).  بنابراین «تپ بیرون = بستن» را اینجا انجام می‌دهیم و
+       در فاز capture: هم قبل از رسیدن رویداد به محتوای پشت کشو اجرا می‌شود و هم
+       با stopPropagation همان تپ را می‌بلعد تا دکمهٔ زیر پرده اشتباهاً فعال نشود. */
+    function bindOutsideTapClose() {
+        /* پنجرهٔ زمانی کوتاه برای بلعیدن کلیکی که مرورگر بعد از همان تپ بیرون
+           می‌سازد (فاصلهٔ طبیعی pointerdown تا click چند صد میلی‌ثانیه است). */
+        var swallowClickUntil = 0;
+
+        document.addEventListener('pointerdown', function (event) {
+            var sidebar = document.querySelector('.rightSidebar');
+            var target = event.target;
+            var isOpen = !!sidebar && sidebar.classList.contains('open');
+            var insideDrawer = !!sidebar && sidebar.contains(target);
+            var onToggle = !!(target.closest && target.closest('.mobile-menu-toggle'));
+
+            if (!isOpen || !isMobile() || insideDrawer || onToggle) {
+                /* هر تپ تازه، پنجرهٔ بلعیدنِ کلیکِ تپ قبلی را باطل می‌کند تا
+                   کلیکِ تپ بعدی کاربر اشتباهاً خورده نشود. */
+                swallowClickUntil = 0;
+                return;
+            }
+
+            event.stopPropagation();
+            if (event.cancelable) event.preventDefault();
+            swallowClickUntil = window.performance.now() + 400;
+            closeDrawer();
+        }, true);
+
+        document.addEventListener('click', function (event) {
+            if (window.performance.now() > swallowClickUntil) return;
+            swallowClickUntil = 0;
+            event.stopPropagation();
+            if (event.cancelable) event.preventDefault();
+        }, true);
+    }
+
     /* ── ۳-پ) قفل اسکرول هرگز بدون کشوی باز باقی نمی‌ماند ─────────────────
        body.mobile-sidebar-open روی موبایل overflow: hidden می‌گیرد تا پشت
        کشوی باز اسکرول نشود.  اگر این کلاس در حالی بماند که کشو باز نیست
@@ -527,6 +566,7 @@
         buildTabbar();
         observeSidebar();
         bindDrawerGestures();
+        bindOutsideTapClose();
         bindHeaderScroll();
         watchSheets();
         bindSheetSwipe();

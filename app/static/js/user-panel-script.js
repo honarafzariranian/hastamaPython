@@ -861,7 +861,6 @@ function updatePresenceRing() {
     const greenPercent = Math.min(100, Math.max(0, (displayWorkedMinutes / Math.max(shiftState.duration, 1)) * 100));
     const bluePercent = Math.min(100, Math.max(0, (overtimeMinutes / Math.max(shiftState.duration, 1)) * 100));
     const greenLength = (circumference * greenPercent) / 100;
-    const blueLength = (circumference * bluePercent) / 100;
     const blueOffset = -greenLength;
 
     animateTo(greenPercent, bluePercent);
@@ -898,18 +897,6 @@ function closeMobileSidebar() {
     document.removeEventListener('click', documentClickCloseSidebar);
 }
 
-function isSidebarExpanded() {
-    const sidebar = document.querySelector('.sidebar-right');
-    if (!sidebar) return false;
-    // Consider it expanded if it has the `open` class, is hovered, or
-    // its computed width is large (desktop expanded state).
-    try {
-        const computedWidth = parseFloat(getComputedStyle(sidebar).width) || 0;
-        return sidebar.classList.contains('open') || sidebar.matches(':hover') || computedWidth > 100;
-    } catch (e) {
-        return sidebar.classList.contains('open') || sidebar.matches(':hover');
-    }
-}
 
 function collapseReportsSubmenu() {
     const reportsItem = document.getElementById('showMoreEzafetime');
@@ -2100,15 +2087,6 @@ const persianMonthFirstDays = {
     10: 0,  // دی: پنجشنبه
     11: 2,  // بهمن: شنبه
     12: 4   // اسفند: سه‌شنبه
-};
-
-// تعداد روزهای یک سال شمسی
-const daysInPersianYear = 365; // در سال‌های عادی (نه کبیسه)
-
-// محاسبه روز اول هفته برای سال بعد
-const calculateFirstDayOfWeekForNextYear = (firstDayOfWeek, yearIsLeap) => {
-    const totalDaysInYear = yearIsLeap ? daysInPersianYear + 1 : daysInPersianYear;
-    return (firstDayOfWeek + totalDaysInYear) % 7;
 };
 
 // به‌روزرسانی محاسبه روز اول هفته

@@ -16,10 +16,23 @@ from PIL import Image, ImageDraw, ImageFont
 
 # ── Configuration ─────────────────────────────────────────────
 CAPTCHA_LENGTH = 6
+#: Fallback lifetime, in seconds.  The live value comes from
+#: ``app/services/login_experience.py`` (``login → system settings``); this
+#: constant is only used when that setting cannot be read.
 CAPTCHA_EXPIRY_SECONDS = 180  # 3 minutes
 CAPTCHA_SESSION_KEY = "captcha_code"
 CAPTCHA_TS_KEY = "captcha_ts"
 CAPTCHA_ATTEMPTS_KEY = "captcha_attempts"
+
+
+def captcha_expiry_seconds() -> int:
+    """Lifetime of a code, as configured by the operator."""
+    try:
+        from app.services.login_experience import captcha_ttl_seconds
+
+        return int(captcha_ttl_seconds())
+    except Exception:  # pragma: no cover - defensive: never break the login page
+        return CAPTCHA_EXPIRY_SECONDS
 
 # Characters: uppercase + digits (ambiguous chars removed)
 CAPTCHA_CHARS = string.ascii_uppercase.replace("O", "").replace("I", "").replace("0", "").replace("1", "")
@@ -173,7 +186,7 @@ def validate_captcha(request, user_code: str) -> tuple[bool, str]:
         return False, "کد امنیتی یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید."
 
     # Check expiry
-    if time.time() - stored_ts > CAPTCHA_EXPIRY_SECONDS:
+    if time.time() - stored_ts > captcha_expiry_seconds():
         # Expire — clear and force new CAPTCHA
         request.session.pop(CAPTCHA_SESSION_KEY, None)
         request.session.pop(CAPTCHA_TS_KEY, None)
@@ -211,5 +224,18 @@ def captcha_remaining_seconds(request) -> int:
     """Return seconds until current CAPTCHA expires."""
     stored_ts = request.session.get(CAPTCHA_TS_KEY, 0)
     elapsed = time.time() - stored_ts
-    remaining = CAPTCHA_EXPIRY_SECONDS - elapsed
+    remaining = captcha_expiry_seconds() - elapsed
     return max(0, int(remaining))
+
+
+def captcha_expired(request) -> bool:
+    """Whether the stored code is past its lifetime.
+
+    Reads the session only — it never clears anything — so a caller can learn
+    *why* a submission failed **before** :func:`validate_captcha` (which does
+    clear the session) throws the evidence away.  The login endpoint uses it to
+    answer with ``captcha_expired`` and let the page explain what happened.
+    """
+    if not request.session.get(CAPTCHA_SESSION_KEY):
+        return False
+    return captcha_remaining_seconds(request) <= 0

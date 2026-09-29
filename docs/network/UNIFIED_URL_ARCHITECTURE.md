@@ -49,7 +49,11 @@ Three rules keep the model simple:
 
 1. **One name.** `hastama.ir` is the only address communicated to users.
 2. **No inbound at the origin.** The tunnel dials out; TCP 5000/80/443 are never
-   opened to the LAN or the Internet.
+   opened to the LAN or the Internet — with one deliberate, operator-toggled
+   exception: *LAN access mode* (§9b), which exists so the laboratory can keep
+   working while the internet link is down, and which is off by default. When the
+   link really is down, *internet outage mode* (§9c) makes that visible instead of
+   leaving users with a browser error page.
 3. **The origin trusts only loopback.** `cloudflared` is the only direct client
    of port 5000, so forwarded headers are believed only from `127.0.0.1`.
 
@@ -304,6 +308,11 @@ All three Windows Firewall profiles are **ON** with `BlockInbound, AllowOutbound
 | `Hastama - Block RDP 3389 (Internet)` / `… UDP` | Block | Any | Internet → 3389 |
 | `Hastama HTTPS LAN` | **Allow** | Private | `192.168.3.0/24` → **TCP 443** |
 
+When LAN access mode is in use (§9b) the block rule for port 5000 is disabled and
+one allow rule is added — `Hastama - Allow Uvicorn 5000 (LAN)`, `RemoteAddress`
+restricted to the local subnet, `Domain,Private` only. Both changes are made, and
+undone, by `scripts\lan_access_firewall.ps1`.
+
 Findings:
 
 * **No port forwarding / NAT rule exists on the host** (`netsh interface portproxy
@@ -321,6 +330,333 @@ Findings:
   origin publishes nothing, and public traffic arrives only through the tunnel.
   If an administrator wants proof from outside, run a port scan of the
   laboratory's public IP from an off-site network (see §13).
+
+---
+
+## 9b. LAN access mode — the toggled offline fallback
+
+**Default state: off.** With it off, this document describes the system exactly
+as it was: nothing listens on the LAN, and TCP 5000 is block-listed.
+
+When the internet link (and therefore Cloudflare and the tunnel) is down, an
+operator can open a **second, in-process listener** on this machine's laboratory
+address so the workstations keep using the system:
+
+```text
+LAN workstation
+   http://<lan-address>:5000      <- app/services/lan_access.py (toggle)
+        |
+        v
+   127.0.0.1:5000                 <- uvicorn, unchanged
+```
+
+### What the listener is
+
+* **A byte transparent TCP relay**, not a second application server. uvicorn
+  keeps binding loopback; Server-Sent Events (`/api/notifications/stream`) and
+  the call-display WebSocket (`/api/ws/call-display`) pass through untouched,
+  which is exactly what the laboratory screens need.
+* **Plain HTTP on purpose.** No public CA issues a certificate for a private
+  address, so the LAN origin has no TLS. The session cookie therefore loses its
+  `Secure` flag **for LAN requests only** (`_LanCookieMiddleware`); every request
+  over `https://hastama.ir` and over loopback keeps it. See RR-21 / RR-29.
+* **The client address is proved, not trusted.** The relay strips every
+  forwarding header (`X-Forwarded-For` / `-Proto` / `-Host` / `Forwarded` /
+  `X-Real-IP` …) and adds one `X-Forwarded-For` with the real socket peer;
+  uvicorn `--proxy-headers` (trusting `127.0.0.1`) then reports the real LAN
+  address to rate limiting and the audit log. A client can neither forge its
+  address nor claim `X-Forwarded-Proto: https`.
+* **One request per connection.** The relay answers the head it sanitised and
+  asks the origin for `Connection: close`; a keep-alive request would reach the
+  application without that sanitising. WebSocket upgrades keep `Upgrade`.
+  Requests that cannot be parsed are answered `400`, never forwarded.
+* **The `Host` allow-list grows only while it runs.** The LAN address is added to
+  the live `TrustedHostMiddleware` list on start and removed on stop; a wildcard
+  never appears.
+* **No automatic time-out.** The mode stays on until an operator switches it off.
+  That is an explicit decision (RR-29).
+* **Audited.** Enabling, disabling and the built-in self test are written to
+  `dbo.admin_actions` (`enable_lan_access` / `disable_lan_access` /
+  `lan_access_selftest`) with the administrator name and address.
+
+### Turning it on (once)
+
+| # | Step | Command / place |
+|---|---|---|
+| 1 | Open the loopback *only to the local subnet* on the firewall (administrator, once) | `scripts\enable_lan_firewall.bat` (or `scripts\lan_access_firewall.ps1 -Action enable`) |
+| 2 | Switch the listener on | `master-admin` → **system settings** → *دسترسی از شبکه داخلی* |
+| 3 | Read the address shown on the card (for example `http://192.168.3.69:5000`) and open it from a workstation | a second machine on the same subnet |
+
+Step 1 disables the Hastama block rule for port 5000 and adds
+`Hastama - Allow Uvicorn 5000 (LAN)` with `RemoteAddress=LocalSubnet` and the
+`Domain,Private` profiles; nothing is exposed to the Internet and no rule that
+does not belong to Hastama is changed. The rule names it disabled are remembered
+in `logs\lan-access-firewall.json`, so `-Action disable` is an exact undo
+(and `-Action status` prints a read-only report without administrator rights).
+
+Step 1 is what makes the port reachable; step 2 is what makes anything listen.
+While the switch is off, an allowed packet finds no listener and is answered with
+a reset — the in-app switch is the effective control, and the firewall is opened
+once rather than on every toggle.
+
+### Verifying it
+
+* **Relay path** (from the server): the card's *تست مسیر* button, or
+  `POST /master-admin/api/lan-access/selftest`. It fetches `/health` through the
+  LAN listener from this machine, which proves the listener, the rewritten head,
+  the host allow-list and the application — but **not** the firewall, because
+  host-local traffic never traverses it.
+* **Real path** (from a workstation on the same subnet): open the address printed
+  on the card and log in. This is the only test that covers the firewall rule.
+* **Machine state:** `GET /master-admin/api/lan-access` returns `enabled`,
+  `running`, `address`, `url`, `expected_url`, `connections`, `total_connections`,
+  `started_at` and `last_error`.
+
+### Turning it off
+
+1. Switch the listener off in the same card (immediate, no restart).
+2. Optionally run `scripts\disable_lan_firewall.bat` to remove the allow rule and
+   restore the original block rule.
+
+### Persistence and recovery
+
+The choice is stored as the `system_config` key `lan_access_enabled` and is
+re-applied by the application's startup hook, so a reboot during an outage keeps
+the fallback available. If the address could not be bound (the machine changed
+network), the card shows the error and nothing is listening — it never fails
+open.
+
+---
+
+## 9c. Internet outage mode — the page users see when the link is gone
+
+**Default state: armed** (`outage_page_enabled` is on when the row is missing);
+it only ever acts when the probes report a real outage. Managed in
+`master-admin` → **system settings** → *صفحهٔ قطعی اینترنت*.
+
+Users cannot be told anything by a server they cannot reach, so the mode has two
+halves:
+
+| Case | What happens |
+|---|---|
+| **The server lost the internet** (and with it the tunnel) | The outage monitor declares the outage, the active sessions are cut, and every page request that did not come from the laboratory network is answered with the outage page (`503` + `Retry-After: 30`). API callers get JSON (`503`). |
+| **The user's own link died** | The browser cannot reach the server at all — the service worker (`/sw.js`, registered by `/static/js/offline-guard.js`) answers the failed page load from its cache with the same outage page, and an overlay shows it immediately while a session is open. |
+
+```text
+                 outage monitor (app/services/outage.py)
+                 probes every N seconds: TCP 443 to
+                 hastama.ir / 1.1.1.1 / 8.8.8.8
+                          |
+        N consecutive failures           2 consecutive successes
+                          v                          ^
+                 OUTAGE MODE ON  ----------------->  ON -> OFF
+                 - sessions cut (master admins kept)
+                 - pages -> offline.html (503)
+                 - audited: internet_outage_detected / _recovered
+```
+
+### What the outage page is
+
+`app/templates/offline.html`, served at `/offline` (always `200`, so the worker
+can cache it) and rendered as the body of every blocked page request (`503`).  It
+is **self contained on purpose** — no stylesheet, font, image or script from
+anywhere else — because when it is needed the network is exactly what is missing.
+It carries:
+
+* the probe/connection reason, decided in the browser (`navigator.onLine` plus a
+  quiet `/health` poll);
+* the **laboratory address** of this server when LAN access mode is available
+  (§9b), injected by the server so no address is ever hard coded;
+* a *copy address* button, and an automatic return to the system as soon as
+  `/health` answers again.
+
+### What is never blocked (the mode stays manageable)
+
+* requests that arrived on the **laboratory listener** — the internal network
+  keeps working through an outage, which is the point of §9b;
+* **direct local** requests: loopback *without* forwarding headers, i.e. the
+  watchdog's `GET /health`, the printer side, an administrator on the server.
+  A public user always arrives through `cloudflared` on loopback **with**
+  `X-Forwarded-For`/`-Proto`, so "local" cannot be claimed by rewriting a header;
+* an authenticated **master administrator** session (and its session is not cut),
+  so the mode can always be switched off again;
+* `/static/`, `/offline`, `/sw.js`, `/health`, `/robots.txt`, `/sitemap.xml`,
+  `/favicon.ico`;
+* WebSocket upgrades are refused with a clean `503` (not left hanging).
+
+### Settings (all editable at runtime, no restart)
+
+| Key | Meaning | Default |
+|---|---|---|
+| `outage_page_enabled` | master switch for the whole mode | **on** |
+| `outage_probe_interval_seconds` | seconds between probes (5–3600) | 30 |
+| `outage_probe_failures` | consecutive failures that declare an outage (1–20) | 3 |
+| `outage_probe_targets` | `host:port` list; **the first reachable target means online** | `hastama.ir:443, 1.1.1.1:443, 8.8.8.8:443` |
+| `outage_terminate_sessions` | cut the users' sessions when the outage starts | on |
+| `outage_show_lan_address` | show the laboratory address on the page | on |
+| `outage_title`, `outage_message` | the text the users read | see the code constants |
+| `outage_manual` | declare the outage by hand (planned maintenance) | off |
+
+The probe is **TCP only** (raw `socket`, in a worker thread), so the machine's
+`HTTPS_PROXY` settings cannot influence the verdict and a DNS failure counts as an
+outage.  Recovery needs two consecutive successes so a flapping link does not
+open and close the system repeatedly.
+
+### Verifying / operating it
+
+* Card buttons: **پایش همین حالا** probes immediately; **اعلام دستی قطعی** forces
+  the mode regardless of the probes (and cuts sessions if that switch is on).
+* `GET /master-admin/api/outage` returns `enabled`, `active`, `manual`,
+  `monitoring`, `probe_online`, `checked_at`, `detail`, `failures`, `threshold`,
+  `interval_seconds`, `targets`, `since`, `terminated_sessions`.
+* Both transitions and every settings change are audited (`audit_logs`:
+  `internet_outage_detected` / `internet_outage_recovered`; `admin_actions`:
+  `update_outage_settings`, `outage_probe_test`, `enable_outage_manual`,
+  `disable_outage_manual`).
+* The service worker only touches **top level navigations**, and only when the
+  network fails — while the connection is up nothing is served from a cache.
+
+---
+
+## 9d. Iran-only access — a VPN is not a way in
+
+The public URL accepts **Iranian addresses only**. A client whose public address
+is not inside a registered Iranian range is answered with `403` and the warning
+page `app/templates/vpn-warning.html`, which tells the user to switch the VPN
+(proxy / filter-breaker) off and come back — the log-in form would be useless to
+them. Internal addresses are never affected, so the server, the laboratory LAN
+and the LAN fallback of §9b keep working exactly as before.
+
+### Where the verdict comes from
+
+The Iranian address space ships **with the application** as
+`app/data/iran_ip_ranges.txt` — 1599 IPv4 + 571 IPv6 ranges, ~42 KB, generated
+from the RIPE and APNIC *delegated statistics* (only records whose country is
+`IR` and whose status is `allocated` or `assigned`). It is parsed once into
+sorted `(start, end)` integers and searched with a binary search, so a verdict
+costs no network round trip, no external service and no per-request latency:
+
+* the answer is identical while the internet is down — which is precisely when
+  it must still be correct (§9c);
+* no visitor address is ever handed to a third party (no geo-IP API);
+* there is no rate limit to hit and no dependency to fail.
+
+| Client address | Verdict | What happens |
+|---|---|---|
+| Inside an Iranian range | `iran` | allowed |
+| Public, outside every range | `foreign` | `403` + the VPN warning page (JSON for API paths, refused WebSocket upgrade) |
+| Loopback / laboratory LAN / CGNAT / link-local | `internal` | allowed — never filtered |
+| Not an address at all | `unknown` | allowed, and logged; a broken peer value is an infrastructure bug, not a user signal |
+
+Refreshing the list is the **only** network call in the feature, and it is never
+automatic: the card's **به‌روزرسانی فهرست آی‌پی** button (`POST
+/master-admin/api/iran-access/refresh`) or, on the server, `python
+scripts\refresh_iran_ip_ranges.py` (equals ~30 MB from `ftp.ripe.net` and
+`ftp.apnic.net`, downloaded **without** the machine's proxy variables so a VPN
+on the server cannot decide what we ship). If the range file cannot be read the
+filter reports *armed but blind* on the card and stops rejecting anything — it
+must never turn into a silent lockout.
+
+### What is never blocked (the filter stays manageable)
+
+* **internal** addresses — the watchdog's `/health`, the printer side, an
+  administrator on the server, every client of the LAN listener (§9b) and CGNAT
+  subscribers (several Iranian ISPs use `100.64.0.0/10`);
+* an authenticated **master administrator** session, so the switch can be turned
+  off from a machine whose own VPN is on;
+* `/iran-only` (the guide itself) and `/iran-only/check` (the caller's own
+  verdict, used by the page to return on its own), plus `/health`, `/static/`,
+  `/offline`, `/sw.js`, `robots.txt`, `sitemap.xml`, `favicon.ico`.
+
+A client cannot buy an entry with a header: the address comes from
+`app.core.net.client_ip_from_scope`, the same single implementation the rest of
+the application uses, which reads `X-Forwarded-For` **only** from a trusted peer
+and then only its last parsable entry. The gate is therefore added *inside* the
+outage gate and outside the host check, the session registry and every database
+layer.
+
+### Settings (all editable at runtime, no restart)
+
+`master-admin → system settings → فقط آی‌پی ایران`:
+
+| Setting | Key | Default |
+|---|---|---|
+| The filter itself | `iran_only_enabled` | **on** (a missing row means on) |
+| Warning title / message / VPN-off steps | `iran_only_title` / `iran_only_message` / `iran_only_help` | the shipped Persian text |
+| Write a block to the audit log | `iran_only_log_blocked` | on |
+
+### Verifying / operating it
+
+* **تست یک آی‌پی** on the card: type any address (or leave it empty to test the
+  caller's own) and the answer names the classification, the matching range and
+  whether that address would be refused right now.
+* `GET /master-admin/api/iran-access` returns `enabled`, `enforcing`,
+  `list_loaded`, the range counts, the list version and path, `blocked_count`,
+  `allowed_count`, `last_blocked_ip`, and the editable texts.
+* Blocks are counted, and audited (`iran_only_blocked`) **at most once per
+  address per 5 minutes** so a hostile loop cannot flood `audit_logs`; the switch,
+  the texts, the refresh and the counter reset are audited as admin actions.
+* A list refresh that fails leaves the previous file untouched and reports the
+  reason on the card — the filter keeps working from the old list.
+
+---
+
+## 9e. The login page — a loader instead of a busy button, and a CAPTCHA that says when it died
+
+``https://hastama.ir/login`` is the first thing every user sees, so its feedback
+is a setting rather than a hard-coded behaviour
+(`app/services/login_experience.py`, edited in *master-admin → system settings*).
+
+### Pressing ورود
+
+The button keeps one label. There is no *"در حال ورود…"* caption and no green
+success state any more — that whole sequence was removed from
+``app/templates/login.html`` and ``app/static/js/script.js``. Instead:
+
+* the page covers itself with a branded loader (`#loginLoader`) — a spinning
+  brand ring, a title, the visitor's name, a progress bar that fills over the
+  configured duration and a rotating status line;
+* the request to ``/login_user`` leaves **immediately**; the loader is a
+  *minimum display time*, not a delay in front of the server call;
+* once the answer is in **and** the minimum has passed, the browser goes to the
+  page that was requested. A failure lowers the loader exactly the same way and
+  then shows the real message (the card shakes, the hint under the button fills);
+* keyboard entry (Enter) goes through the same path, so the behaviour cannot
+  differ between the mouse and the keyboard.
+
+| Setting | Key | Default | Bounds |
+|---|---|---|---|
+| Loader on/off | `login_loader_enabled` | on | — |
+| Loader duration | `login_loader_seconds` | 3 s | 1–15 s |
+| Loader title / message | `login_loader_title` / `login_loader_message` | the shipped Persian text | 80 / 200 chars |
+
+### The CAPTCHA lifetime
+
+A code lives for a configurable number of seconds and the page now behaves as if
+it knows that:
+
+* it polls ``GET /captcha/status`` (every 5 s, no database work) and shows a
+  countdown in the last 60 seconds;
+* when the code dies it prints *«کد امنیتی منقضی شده است؛ لطفاً روی «کد جدید»
+  بزنید و دوباره وارد شوید.»*, marks the field and pulses the refresh button;
+* pressing ورود with a known-dead code is refused **without** a request (and
+  without the loader), and the state clears itself within one poll interval once
+  a new code exists — including a refresh done in another tab;
+* a submission the server rejects is answered with `captcha_error`, and now also
+  `captcha_expired` and `captcha_reason` (`expired` / `mismatch` / `missing` /
+  `missing_input`). An expired code refreshes the image **and keeps the message on
+  screen** — the old helper erased it at the end, which is why an expired code
+  used to look like nothing had happened at all.
+
+| Setting | Key | Default | Bounds |
+|---|---|---|---|
+| Code lifetime | `login_captcha_ttl_seconds` | 180 s | 30–1800 s |
+| Early warning + expiry message | `login_captcha_notice` | on | — |
+
+Both the loader and the notice respect ``prefers-reduced-motion``. Changing any
+of these values takes effect on the next login-page load (no restart); the page
+reads them from the public ``/api/system-config`` endpoint, which only ever
+publishes these non-secret keys.
 
 ---
 

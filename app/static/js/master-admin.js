@@ -1056,6 +1056,277 @@
   };
 
   // ── System Settings ─────────────────────────────────────
+  /* ── LAN access card ──────────────────────────────────────
+     The relay on the LAN address is the offline fallback: when the internet
+     link is down the workstations of the laboratory reach the system at
+     http://<lan-address>:5000.  Live state comes from /lan-access (address,
+     connections, last error), the persisted choice from the same endpoint. */
+  function lanAccessCard(lan) {
+    const running = !!lan.running;
+    const enabled = !!lan.enabled;
+    const state = running
+      ? '<span class="ma-lan-state ma-lan-state--on"><i class="ma-lan-state__dot"></i>فعال و در حال سرویس‌دهی</span>'
+      : (enabled
+        ? '<span class="ma-lan-state ma-lan-state--warn"><i class="ma-lan-state__dot"></i>فعال است ولی شنونده باز نشده</span>'
+        : '<span class="ma-lan-state ma-lan-state--off"><i class="ma-lan-state__dot"></i>غیرفعال</span>');
+    const rows = [
+      ['آدرسی که رایانه‌های شبکه باید باز کنند', esc(lan.expected_url || '—')],
+      ['آدرس فعال (در حال سرویس‌دهی)', running ? esc(lan.url || '—') : '—'],
+      ['اتصال‌های باز', String(lan.connections == 0 || lan.connections ? lan.connections : 0)],
+    ];
+    const error = lan.last_error
+      ? `<div class="ma-lan-warning ma-lan-warning--error">آخرین خطا: ${esc(lan.last_error)}</div>`
+      : '';
+    return `
+      <div class="ma-settings-card ma-lan-card">
+        <div class="ma-settings-card__header">
+          <div class="ma-settings-card__icon">🏠</div>
+          <div>
+            <div class="ma-settings-card__title">دسترسی از شبکه داخلی (حالت اضطراری)</div>
+            <div class="ma-settings-card__desc">اگر اینترنت قطع شود، رایانه‌های شبکه داخلی می‌توانند سامانه را از آدرس شبکه محلی همین سرور باز کنند. آدرس اینترنتی سامانه دست‌نخورده می‌ماند.</div>
+          </div>
+        </div>
+        <div class="ma-settings-card__body">
+          <label class="ma-toggle">
+            <input type="checkbox" id="maCfgLanAccess" ${enabled ? 'checked' : ''}>
+            <span class="ma-toggle__slider"></span>
+          </label>
+          ${state}
+        </div>
+        <div class="ma-lan-status">
+          ${rows.map(r => `<div class="ma-lan-status__row"><span>${r[0]}:</span><code class="ma-lan-status__value">${r[1]}</code></div>`).join('')}
+        </div>
+        ${error}
+        <div class="ma-lan-warning">
+          <b>توجه:</b> این مسیر روی «اچ‌تی‌تی‌پی ساده» (بدون گواهی) کار می‌کند و فقط باید در شبکه داخلی آزمایشگاه استفاده شود. برای امنیت پورت ۵۰۰۰، ویندوز به‌صورت پیش‌فرض جلوی این اتصال را می‌گیرد؛ <b>یک بار</b> با دسترسی مدیر فایل
+          <code>scripts\lan_access_firewall.ps1</code> را با گزینهٔ <code>enable</code> اجرا کنید تا فقط رایانه‌های همین شبکه اجازهٔ اتصال بگیرند. برای بستن کامل این راه، همان فایل را با گزینهٔ <code>disable</code> اجرا کنید.
+        </div>
+        <div class="ma-settings-card__footer">
+          <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maLanSelftest">تست مسیر (از همین سرور)</button>
+          <div class="ma-settings-card__meta" style="margin-top:8px">تست داخلی فقط مسیر سامانه را بررسی می‌کند و فایروال ویندوز را نمی‌سنجد؛ برای آزمایش واقعی از یک رایانهٔ دیگر شبکه با آدرس بالا وارد شوید.</div>
+        </div>
+      </div>`;
+  }
+
+  /* ── Iran-only access card ───────────────────────────────
+     Only Iranian public addresses may use the public path.  A user who is still
+     behind a VPN (or abroad) is answered with the warning page that asks them to
+     switch it off.  The verdict is made on the server, offline, from the range
+     file shipped with the application — the card edits the switch, the texts and
+     the address list it is using. */
+  function iranAccessCard(i) {
+    const enabled = !!i.enabled;
+    const enforcing = !!i.enforcing;
+    const loaded = !!i.list_loaded;
+    const blocked = parseInt(i.blocked_count, 10) || 0;
+    const allowed = parseInt(i.allowed_count, 10) || 0;
+    const state = !enabled
+      ? '<span class="ma-lan-state ma-lan-state--off"><i class="ma-lan-state__dot"></i>غیرفعال</span>'
+      : (enforcing
+        ? '<span class="ma-lan-state ma-lan-state--on"><i class="ma-lan-state__dot"></i>فعال — فقط آی‌پی ایران پذیرفته می‌شود</span>'
+        : '<span class="ma-lan-state ma-lan-state--warn"><i class="ma-lan-state__dot"></i>فعال، اما فهرست آی‌پی در دسترس نیست (چیزی مسدود نمی‌شود)</span>');
+    const rows = [
+      ['بازه‌های ایران (IPv4 / IPv6)', String(i.ranges_ipv4 || 0) + ' / ' + String(i.ranges_ipv6 || 0)],
+      ['نسخهٔ فهرست', i.list_generated ? new Date(i.list_generated).toLocaleString('fa-IR') : '—'],
+      ['آخرین به‌روزرسانی از منبع', i.last_refresh ? new Date(i.last_refresh).toLocaleString('fa-IR') : '—'],
+      ['ورودهای مسدودشده', blocked.toLocaleString('fa-IR')],
+      ['ورودهای مجاز (از فعال‌سازی)', allowed.toLocaleString('fa-IR')],
+      ['آخرین آی‌پی مسدودشده', i.last_blocked_ip
+        ? (i.last_blocked_ip + (i.last_blocked_at ? ' — ' + new Date(i.last_blocked_at).toLocaleTimeString('fa-IR') : ''))
+        : '—'],
+    ];
+    const listWarning = loaded ? '' : `
+        <div class="ma-lan-warning ma-lan-warning--error">
+          <b>هشدار:</b> فایل فهرست آی‌پی ایران خوانده نشد (${esc(i.list_error || 'نامشخص')}).
+          تا زمانی که این فایل در دسترس نباشد، هیچ ورودی مسدود <b>نمی‌شود</b>؛ برای جلوگیری از قفل شدن کاربران ایرانی، فیلتر در این حالت بی‌اثر می‌ماند.
+          با دکمهٔ «به‌روزرسانی فهرست» یا اجرای <code>scripts\refresh_iran_ip_ranges.py</code> روی سرور آن را بازسازی کنید.
+        </div>`;
+    const refreshError = i.last_refresh_error
+      ? `<div class="ma-settings-card__meta" style="margin-top:8px">آخرین به‌روزرسانی با هشدار انجام شد: <code>${esc(i.last_refresh_error)}</code></div>`
+      : '';
+    return `
+      <div class="ma-settings-card ma-lan-card">
+        <div class="ma-settings-card__header">
+          <div class="ma-settings-card__icon">🛡️</div>
+          <div>
+            <div class="ma-settings-card__title">فقط آی‌پی ایران (مسدودسازی VPN)</div>
+            <div class="ma-settings-card__desc">
+              اگر کسی با VPN یا فیلترشکن (یا از خارج از کشور) وارد شود، سامانه به‌جای فرم ورود یک صفحهٔ راهنما نشان می‌دهد
+              که از او می‌خواهد اول VPN را قطع کند. تشخیص «ایرانی بودن» کاملاً روی سرور و بدون اینترنت انجام می‌شود.
+            </div>
+          </div>
+        </div>
+        <div class="ma-settings-card__body">
+          <label class="ma-toggle">
+            <input type="checkbox" id="maIranEnabled" ${enabled ? 'checked' : ''}>
+            <span class="ma-toggle__slider"></span>
+          </label>
+          ${state}
+        </div>
+        <div class="ma-lan-status">
+          ${rows.map(r => `<div class="ma-lan-status__row"><span>${r[0]}:</span><code class="ma-lan-status__value">${esc(r[1])}</code></div>`).join('')}
+        </div>
+        ${listWarning}
+        ${refreshError}
+        <div class="ma-outage-form">
+          <div class="wide"><label for="maIranTitle">عنوان پیام مسدودی</label><input type="text" id="maIranTitle" value="${esc(i.title || '')}"></div>
+          <div class="wide"><label for="maIranMessage">متن پیام مسدودی</label><textarea id="maIranMessage">${esc(i.message || '')}</textarea></div>
+          <div class="wide"><label for="maIranHelp">راهنمای قطع VPN (هر مورد در یک خط، روی صفحهٔ هشدار شماره‌گذاری می‌شود)</label><textarea id="maIranHelp">${esc(i.help_text || '')}</textarea></div>
+          <div class="wide ma-outage-toggles">
+            <label class="ma-toggle-row" style="font-size:.8rem"><span>ثبت هر تلاش مسدودشده در گزارش رویداد</span><input type="checkbox" id="maIranLogBlocked" ${i.log_blocked ? 'checked' : ''}><i></i></label>
+          </div>
+          <div class="wide">
+            <label for="maIranIp">تست یک آی‌پی (خالی بگذارید تا آی‌پی خودتان بررسی شود)</label>
+            <div class="ma-iran-probe">
+              <input type="text" id="maIranIp" dir="ltr" placeholder="8.8.8.8 یا 2.144.0.1">
+              <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maIranCheck">بررسی</button>
+            </div>
+            <div class="ma-settings-card__meta" id="maIranCheckResult" style="margin-top:8px"></div>
+          </div>
+        </div>
+        <div class="ma-lan-warning">
+          <b>نکته:</b> شبکهٔ داخلی آزمایشگاه، خود سرور (پایش سلامت)، نشست مدیر اصلی و مسیرهای زیرساختی مثل <code>/health</code> و <code>/static/</code>
+          هیچ‌وقت مسدود نمی‌شوند؛ پس این گزینه حتی وقتی روی یک رایانهٔ داخل شبکه هستید هم قابل مدیریت است.
+          کاربرانی که در حال حاضر وصل هستند با قطع شدن VPN بلافاصله مجاز می‌شوند و نیازی به ورود دوباره ندارند.
+        </div>
+        <div class="ma-settings-card__footer" style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="ma-btn ma-btn--primary ma-btn--sm" id="maIranSave">ذخیرهٔ تنظیمات</button>
+          <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maIranRefresh">به‌روزرسانی فهرست آی‌پی</button>
+          <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maIranResetCounters">صفر کردن آمار</button>
+        </div>
+        <div class="ma-settings-card__meta" style="margin-top:8px">به‌روزرسانی فهرست از سرورهای RIPE و APNIC انجام می‌شود (حدود ۳۰ مگابایت دانلود) و فقط با همین دکمه اجرا می‌شود؛ تشخیص آی‌پی هیچ‌وقت به اینترنت نیاز ندارد.</div>
+      </div>`;
+  }
+
+  /* ── Login experience card ───────────────────────────────
+     Two things users meet on /login: the full-screen loader that replaces the
+     old "در حال ورود…" / green button sequence, and the lifetime of the CAPTCHA
+     code (with the warning that tells a user whose code expired to take a new
+     one).  Both are stored in system_config on the server. */
+  function loginExperienceCard(l) {
+    const loaderOn = !!l.loader_enabled;
+    const noticeOn = !!l.captcha_notice;
+    const state = loaderOn
+      ? '<span class="ma-lan-state ma-lan-state--on"><i class="ma-lan-state__dot"></i>لودر فعال — ' + esc(String(l.loader_seconds || 3)) + ' ثانیه</span>'
+      : '<span class="ma-lan-state ma-lan-state--off"><i class="ma-lan-state__dot"></i>لودر غیرفعال (ورود بدون وقفه)</span>';
+    const rows = [
+      ['مدت نمایش لودر', String(l.loader_seconds || 0) + ' ثانیه'],
+      ['اعتبار کد امنیتی', String(l.captcha_ttl_seconds || 0) + ' ثانیه'],
+      ['هشدار زودهنگام انقضا', noticeOn ? ('فعال (از ' + String(l.captcha_warning_lead_seconds || 60) + ' ثانیهٔ آخر)') : 'غیرفعال'],
+    ];
+    return `
+      <div class="ma-settings-card ma-lan-card">
+        <div class="ma-settings-card__header">
+          <div class="ma-settings-card__icon">🚀</div>
+          <div>
+            <div class="ma-settings-card__title">تجربهٔ ورود (لودر و کد امنیتی)</div>
+            <div class="ma-settings-card__desc">
+              با فشردن دکمهٔ ورود، یک لودر تمام‌صفحه با مدت مشخص نمایش داده می‌شود و بعد کاربر به مقصد خودش می‌رود
+              (دیگر خبری از «در حال ورود…» روی دکمه و حالت سبز رنگ نیست). همچنین اگر کد امنیتی منقضی شود،
+              کاربر پیام می‌گیرد که باید کد جدید بگیرد و پیام تا رفرش کردن روی صفحه می‌ماند.
+            </div>
+          </div>
+        </div>
+        <div class="ma-settings-card__body">
+          <label class="ma-toggle">
+            <input type="checkbox" id="maLoginLoaderEnabled" ${loaderOn ? 'checked' : ''}>
+            <span class="ma-toggle__slider"></span>
+          </label>
+          ${state}
+        </div>
+        <div class="ma-lan-status">
+          ${rows.map(r => `<div class="ma-lan-status__row"><span>${r[0]}:</span><code class="ma-lan-status__value">${esc(r[1])}</code></div>`).join('')}
+        </div>
+        <div class="ma-outage-form">
+          <div><label for="maLoginLoaderSeconds">مدت نمایش لودر (ثانیه) — ${esc(String(l.min_seconds || 1))} تا ${esc(String(l.max_seconds || 15))}</label><input type="number" id="maLoginLoaderSeconds" min="${esc(String(l.min_seconds || 1))}" max="${esc(String(l.max_seconds || 15))}" value="${esc(l.loader_seconds || 3)}"></div>
+          <div><label for="maLoginCaptchaTtl">اعتبار کد امنیتی (ثانیه) — ${esc(String(l.min_captcha_ttl_seconds || 30))} تا ${esc(String(l.max_captcha_ttl_seconds || 1800))}</label><input type="number" id="maLoginCaptchaTtl" min="${esc(String(l.min_captcha_ttl_seconds || 30))}" max="${esc(String(l.max_captcha_ttl_seconds || 1800))}" value="${esc(l.captcha_ttl_seconds || 180)}"></div>
+          <div class="wide"><label for="maLoginLoaderTitle">عنوان لودر</label><input type="text" id="maLoginLoaderTitle" value="${esc(l.loader_title || '')}"></div>
+          <div class="wide"><label for="maLoginLoaderMessage">متن زیر عنوان لودر</label><textarea id="maLoginLoaderMessage">${esc(l.loader_message || '')}</textarea></div>
+          <div class="wide ma-outage-toggles">
+            <label class="ma-toggle-row" style="font-size:.8rem"><span>هشدار زودهنگام و پیام انقضای کد امنیتی</span><input type="checkbox" id="maLoginCaptchaNotice" ${noticeOn ? 'checked' : ''}><i></i></label>
+          </div>
+        </div>
+        <div class="ma-lan-warning">
+          <b>نکته:</b> اگر کد امنیتی منقضی شود، دیگر با کد مرده درخواستی به سرور فرستاده نمی‌شود؛ پیام «کد امنیتی منقضی شده است»
+          نمایش داده می‌شود و دکمهٔ «کد جدید» می‌درخشد. با کم کردن مدت اعتبار، امنیت افزایش می‌یابد و با زیاد کردن آن، فرصت بیشتری
+          برای وارد کردن کد (مثلاً روی موبایل) فراهم می‌شود. اگر لودر را خاموش کنید، ورود بی‌درنگ انجام می‌شود.
+        </div>
+        <div class="ma-settings-card__footer" style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="ma-btn ma-btn--primary ma-btn--sm" id="maLoginSave">ذخیرهٔ تنظیمات</button>
+        </div>
+        <div class="ma-settings-card__meta" style="margin-top:8px">تغییرات بی‌درنگ روی صفحهٔ ورود اعمال می‌شوند (بدون ری‌استارت). اگر مرورگر نسخهٔ قدیمی صفحه را کش کرده باشد، یک رفرش کافی است.</div>
+      </div>`;
+  }
+
+  /* ── Internet outage card ────────────────────────────────
+     When the link that carries the public path is gone, the system can cut the
+     users' sessions and answer every page with the outage page (which carries
+     the laboratory address).  The card edits the settings live: interval,
+     failure threshold, probe targets, messages and the two session/page
+     switches.  Everything is stored in system_config on the server. */
+  function outageCard(o) {
+    const enabled = !!o.enabled;
+    const active = !!o.active;
+    const manual = !!o.manual;
+    const state = !enabled
+      ? '<span class="ma-lan-state ma-lan-state--off"><i class="ma-lan-state__dot"></i>غیرفعال</span>'
+      : (active
+        ? '<span class="ma-lan-state ma-lan-state--warn"><i class="ma-lan-state__dot"></i>حالت قطعی ' + (manual ? '(دستی)' : '(خودکار)') + ' فعال است</span>'
+        : (o.probe_online
+          ? '<span class="ma-lan-state ma-lan-state--on"><i class="ma-lan-state__dot"></i>اینترنت سرور وصل است</span>'
+          : '<span class="ma-lan-state ma-lan-state--on"><i class="ma-lan-state__dot"></i>در حال پایش…</span>'));
+    const rows = [
+      ['وضعیت پایش', o.monitoring ? 'در حال اجرا' : 'متوقف'],
+      ['آخرین بررسی', o.checked_at ? new Date(o.checked_at).toLocaleTimeString('fa-IR') : '—'],
+      ['شکست پیاپی', String(o.failures || 0) + ' از ' + String(o.threshold || 0)],
+      ['شروع قطعی', o.since ? new Date(o.since).toLocaleString('fa-IR') : '—'],
+      ['نشست‌های قطع‌شده', String(o.terminated_sessions || 0)],
+    ];
+    const detail = o.detail
+      ? `<div class="ma-settings-card__meta" style="margin-top:8px">آخرین نتیجهٔ پایش: <code>${esc(o.detail)}</code></div>`
+      : '';
+    return `
+      <div class="ma-settings-card ma-lan-card">
+        <div class="ma-settings-card__header">
+          <div class="ma-settings-card__icon">📡</div>
+          <div>
+            <div class="ma-settings-card__title">صفحهٔ قطعی اینترنت</div>
+            <div class="ma-settings-card__desc">به محض قطع شدن اینترنت (چه روی سرور و چه روی رایانهٔ کاربر)، سامانه به‌جای خطای مرورگر یک صفحهٔ راهنما نشان می‌دهد، نشست کاربران را می‌بندد و آدرس شبکهٔ داخلی را اعلام می‌کند. با برگشت اینترنت، همه‌چیز خودکار به حالت عادی برمی‌گردد.</div>
+          </div>
+        </div>
+        <div class="ma-settings-card__body">
+          <label class="ma-toggle">
+            <input type="checkbox" id="maOutageEnabled" ${enabled ? 'checked' : ''}>
+            <span class="ma-toggle__slider"></span>
+          </label>
+          ${state}
+        </div>
+        <div class="ma-lan-status">
+          ${rows.map(r => `<div class="ma-lan-status__row"><span>${r[0]}:</span><code class="ma-lan-status__value">${r[1]}</code></div>`).join('')}
+        </div>
+        ${detail}
+        <div class="ma-outage-form">
+          <div><label for="maOutageInterval">فاصلهٔ پایش (ثانیه)</label><input type="number" id="maOutageInterval" min="5" max="3600" value="${esc(o.interval_seconds || 30)}"></div>
+          <div><label for="maOutageFailures">شکست پیاپی برای اعلام قطعی</label><input type="number" id="maOutageFailures" min="1" max="20" value="${esc(o.threshold || 3)}"></div>
+          <div class="wide"><label for="maOutageTargets">آدرس‌های پایش اینترنت (host:port، با کاما)</label><input type="text" id="maOutageTargets" dir="ltr" value="${esc(o.targets || '')}"></div>
+          <div class="wide"><label for="maOutageTitle">عنوان پیام</label><input type="text" id="maOutageTitle" value="${esc(o.title || '')}"></div>
+          <div class="wide"><label for="maOutageMessage">متن پیام</label><textarea id="maOutageMessage">${esc(o.message || '')}</textarea></div>
+          <div class="wide ma-outage-toggles">
+            <label class="ma-toggle-row" style="font-size:.8rem"><span>خروج خودکار نشست کاربران هنگام قطعی</span><input type="checkbox" id="maOutageTerminate" ${o.terminate_sessions ? 'checked' : ''}><i></i></label>
+            <label class="ma-toggle-row" style="font-size:.8rem"><span>نمایش آدرس شبکهٔ داخلی روی صفحه</span><input type="checkbox" id="maOutageShowLan" ${o.show_lan_address ? 'checked' : ''}><i></i></label>
+          </div>
+        </div>
+        <div class="ma-lan-warning">
+          <b>نکته:</b> با فعال بودن این بخش، در صورت قطع اینترنت همهٔ کاربران <b>خارج از شبکهٔ داخلی</b> خروج زده می‌شوند و صفحهٔ قطعی را می‌بینند. مدیر اصلی، درخواست‌های شبکهٔ داخلی و درخواست‌های محلی سرور (از جمله پایش سلامت) هیچ‌وقت مسدود نمی‌شوند تا سامانه قابل مدیریت بماند. صفحهٔ راهنما در مرورگر کاربران ذخیره می‌شود تا وقتی اینترنت خودشان قطع است هم نمایش داده شود.
+        </div>
+        <div class="ma-settings-card__footer" style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="ma-btn ma-btn--primary ma-btn--sm" id="maOutageSave">ذخیرهٔ تنظیمات</button>
+          <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maOutageCheck">پایش همین حالا</button>
+          <button class="ma-btn ma-btn--ghost ma-btn--sm" id="maOutageManual">${manual ? 'لغو حالت دستی' : 'اعلام دستی قطعی'}</button>
+        </div>
+      </div>`;
+  }
+
   async function loadSystemSettings() {
     const container = document.getElementById('maSystemSettings');
     if (!container) return;
@@ -1063,6 +1334,17 @@
       const res = await api('/config');
       if (!res.success) { container.innerHTML = '<div class="ma-empty"><div class="ma-empty__icon">⚠️</div><div class="ma-empty__text">خطا در بارگذاری تنظیمات</div></div>'; return; }
       const configs = res.data || [];
+      let lanState = { data: {} };
+      try { lanState = await api('/lan-access'); } catch (e) { /* card shows defaults */ }
+      let outageState = { data: {} };
+      try { outageState = await api('/outage'); } catch (e) { /* card shows defaults */ }
+      const outageData = outageState.data || {};
+      let iranState = { data: {} };
+      try { iranState = await api('/iran-access'); } catch (e) { /* card shows defaults */ }
+      const iranData = iranState.data || {};
+      let loginUxState = { data: {} };
+      try { loginUxState = await api('/login-experience'); } catch (e) { /* card shows defaults */ }
+      const loginUxData = loginUxState.data || {};
       const getConfig = (key) => configs.find(c => c.config_key === key) || {};
 
       const captchaCfg = getConfig('captcha_enabled');
@@ -1118,6 +1400,14 @@
               ${idleEnabledCfg.updated_by ? `<span class="ma-settings-card__meta">آخرین تغییر: ${idleEnabledCfg.updated_by} — ${idleEnabledCfg.updated_at ? new Date(idleEnabledCfg.updated_at).toLocaleString('fa-IR') : '—'}</span>` : ''}
             </div>
           </div>
+
+          ${lanAccessCard(lanState.data || {})}
+
+          ${outageCard(outageData)}
+
+          ${iranAccessCard(iranData)}
+
+          ${loginExperienceCard(loginUxData)}
         </div>
 
         <div style="margin-top:24px;padding:16px;background:rgba(99,102,241,.06);border-radius:12px;border:1px solid rgba(99,102,241,.12)">
@@ -1153,6 +1443,180 @@
         }
         await api('/config', { method: 'POST', body: { key: 'idle_timeout_seconds', value: String(val) } });
         showToast('زمان بیکاری ذخیره شد');
+      });
+
+      const lanToggle = document.getElementById('maCfgLanAccess');
+      if (lanToggle) lanToggle.addEventListener('change', async function() {
+        const want = this.checked;
+        this.disabled = true;
+        try {
+          await api('/lan-access', { method: 'POST', body: { enabled: want } });
+          showToast(want ? 'دسترسی از شبکه داخلی فعال شد' : 'دسترسی از شبکه داخلی غیرفعال شد');
+        } catch (e) {
+          this.checked = !want;  // the request failed: never show a state we did not reach
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();  // re-read the live state (address, error, connections)
+        }
+      });
+
+      const lanTest = document.getElementById('maLanSelftest');
+      if (lanTest) lanTest.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          const out = await api('/lan-access/selftest', { method: 'POST' });
+          showToast((out.data && out.data.message) || 'تست انجام شد');
+        } catch (e) {
+          /* api() showed the server message */
+        } finally {
+          this.disabled = false;
+        }
+      });
+
+      const outageSave = document.getElementById('maOutageSave');
+      if (outageSave) outageSave.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          await api('/outage', { method: 'POST', body: {
+            enabled: document.getElementById('maOutageEnabled').checked,
+            interval_seconds: parseInt(document.getElementById('maOutageInterval').value, 10),
+            failures: parseInt(document.getElementById('maOutageFailures').value, 10),
+            targets: document.getElementById('maOutageTargets').value,
+            title: document.getElementById('maOutageTitle').value,
+            message: document.getElementById('maOutageMessage').value,
+            terminate_sessions: document.getElementById('maOutageTerminate').checked,
+            show_lan_address: document.getElementById('maOutageShowLan').checked,
+          }});
+          showToast('تنظیمات صفحهٔ قطعی اینترنت ذخیره شد');
+        } catch (e) {
+          /* api() showed the validation message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      const outageCheck = document.getElementById('maOutageCheck');
+      if (outageCheck) outageCheck.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          const out = await api('/outage/check', { method: 'POST' });
+          const online = out.data && out.data.probe_online;
+          showToast(online ? 'اینترنت سرور در دسترس است' : 'اینترنت سرور در دسترس نیست');
+        } catch (e) {
+          /* api() showed the server message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      const outageManual = document.getElementById('maOutageManual');
+      if (outageManual) outageManual.addEventListener('click', async function() {
+        const want = !outageData.manual;
+        this.disabled = true;
+        try {
+          await api('/outage/manual', { method: 'POST', body: { active: want } });
+          showToast(want ? 'حالت قطعی به‌صورت دستی اعلام شد' : 'حالت قطعی دستی لغو شد');
+        } catch (e) {
+          /* api() showed the server message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      // ── Iran-only access ──
+      const iranSave = document.getElementById('maIranSave');
+      if (iranSave) iranSave.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          await api('/iran-access', { method: 'POST', body: {
+            enabled: document.getElementById('maIranEnabled').checked,
+            title: document.getElementById('maIranTitle').value,
+            message: document.getElementById('maIranMessage').value,
+            help_text: document.getElementById('maIranHelp').value,
+            log_blocked: document.getElementById('maIranLogBlocked').checked,
+          }});
+          showToast('تنظیمات «فقط آی‌پی ایران» ذخیره شد');
+        } catch (e) {
+          /* api() showed the validation message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      const iranCheck = document.getElementById('maIranCheck');
+      if (iranCheck) iranCheck.addEventListener('click', async function() {
+        const input = document.getElementById('maIranIp');
+        const out = document.getElementById('maIranCheckResult');
+        this.disabled = true;
+        try {
+          const res = await api('/iran-access/check', { method: 'POST', body: { ip: input.value.trim() } });
+          const d = (res && res.data) || {};
+          const decision = d.blocked ? '⛔ ورود مسدود می‌شود' : '✅ ورود مجاز است';
+          if (out) out.innerHTML = esc(d.ip || '-') + ' — ' + esc(d.label || '') + ' — ' + decision +
+            (!d.enforcing ? ' <b>(فیلتر غیرفعال است، پس همین حالا هیچ‌کس مسدود نمی‌شود)</b>' : '') +
+            (d.range ? ' — بازهٔ منطبق: <code>' + esc(d.range) + '</code>' : '');
+        } catch (e) {
+          if (out) out.textContent = 'بررسی ناموفق بود';
+        } finally {
+          this.disabled = false;
+        }
+      });
+
+      const iranRefresh = document.getElementById('maIranRefresh');
+      if (iranRefresh) iranRefresh.addEventListener('click', async function() {
+        if (!window.confirm('فهرست آی‌پی ایران از سرورهای RIPE و APNIC دوباره دانلود شود؟ (حدود ۳۰ مگابایت و چند دقیقه)')) return;
+        this.disabled = true;
+        showToast('در حال به‌روزرسانی فهرست آی‌پی ایران…');
+        try {
+          const res = await api('/iran-access/refresh', { method: 'POST' });
+          const d = (res && res.data) || {};
+          showToast('فهرست به‌روز شد: ' + (d.ranges_ipv4 || 0) + ' بازهٔ IPv4 و ' + (d.ranges_ipv6 || 0) + ' بازهٔ IPv6');
+        } catch (e) {
+          /* api() showed the server message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      // ── Login experience (loader + CAPTCHA lifetime) ──
+      const loginSave = document.getElementById('maLoginSave');
+      if (loginSave) loginSave.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          await api('/login-experience', { method: 'POST', body: {
+            loader_enabled: document.getElementById('maLoginLoaderEnabled').checked,
+            loader_seconds: parseInt(document.getElementById('maLoginLoaderSeconds').value, 10),
+            loader_title: document.getElementById('maLoginLoaderTitle').value,
+            loader_message: document.getElementById('maLoginLoaderMessage').value,
+            captcha_notice: document.getElementById('maLoginCaptchaNotice').checked,
+            captcha_ttl_seconds: parseInt(document.getElementById('maLoginCaptchaTtl').value, 10),
+          }});
+          showToast('تنظیمات صفحهٔ ورود ذخیره شد');
+        } catch (e) {
+          /* api() showed the validation message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
+      });
+
+      const iranReset = document.getElementById('maIranResetCounters');
+      if (iranReset) iranReset.addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+          await api('/iran-access/counters/reset', { method: 'POST' });
+          showToast('آمار ورودهای مسدودشده صفر شد');
+        } catch (e) {
+          /* api() showed the server message */
+        } finally {
+          this.disabled = false;
+          loadSystemSettings();
+        }
       });
 
     } catch (e) {

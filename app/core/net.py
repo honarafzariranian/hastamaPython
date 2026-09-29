@@ -104,30 +104,54 @@ def _parse_ip(value: str) -> Optional[str]:
         return None
 
 
+def _decide_client_ip(peer: Optional[str], header: str) -> str:
+    """The single place where a peer address and a header become a verdict."""
+    # The header is only read when the immediate peer is a trusted proxy, and
+    # then only its last parsable entry counts: earlier ones are client supplied.
+    if header and len(header) <= MAX_XFF_LENGTH:
+        entries = header.split(",")[-MAX_XFF_ENTRIES:]
+        for part in reversed(entries):
+            parsed = _parse_ip(part)
+            if parsed:
+                return parsed
+    return peer or "unknown"
+
+
+def client_ip_from_scope(scope: dict) -> str:
+    """Same rules as :func:`client_ip`, for a raw ASGI *scope*.
+
+    Middleware that has to decide before a ``Request`` exists (the internet
+    outage gate and the Iran-only access gate) uses this so that every part of
+    the application derives the client address from exactly one implementation —
+    a second, slightly different copy is how a policy gets bypassed.
+    """
+    peer = _parse_ip(str((scope.get("client") or ("", 0))[0] or ""))
+
+    header = ""
+    if peer and peer in trusted_proxies():
+        try:
+            raw = dict(scope.get("headers", [])).get(b"x-forwarded-for", b"") or b""
+            header = raw.decode("latin-1", "ignore")
+        except Exception:  # pragma: no cover - defensive, malformed ASGI scope
+            header = ""
+
+    return _decide_client_ip(peer, header)
+
+
 def client_ip(request: Request) -> str:
     """Return the best-effort trustworthy client IP for *request*.
 
     Never returns a client supplied string that is not a valid IP literal, so
     the value is safe to store in the database and to render in HTML.
     """
+    peer = _peer_address(request)
     header = ""
     if _peer_is_trusted(request):
         try:
             header = request.headers.get("x-forwarded-for", "") or ""
-        except Exception:  # pragma: no cover - defensive, malformed ASGI scope
+        except Exception:  # pragma: no cover - defensive, malformed request
             header = ""
-
-    if header and len(header) <= MAX_XFF_LENGTH:
-        entries = [part for part in header.split(",")][-MAX_XFF_ENTRIES:]
-        for part in reversed(entries):
-            parsed = _parse_ip(part)
-            if parsed:
-                return parsed
-
-    parsed_peer = _peer_address(request)
-    if parsed_peer:
-        return parsed_peer
-    return "unknown"
+    return _decide_client_ip(peer, header)
 
 
 def is_https(request: Request) -> bool:

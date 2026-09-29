@@ -5742,7 +5742,7 @@ index.
 |---|---|---|
 | CSS | `css/*.css` (admin, user-panel, login, report styles, responsive, tables, ticketing, notification, dark-theme, vazir) | No `@import` of remote, no remote `url()`. All `url()` point to `/static/...`. |
 | JavaScript | `js/*.js` (admin, user-panel-script, script, theme, ticketing, notification-system, report scripts, responsive-tables) | All `fetch()` calls use **relative internal API routes** (`/login_user`, `/get_hozoor/...`, etc.). No `axios`, `XMLHttpRequest` to external hosts, no `WebSocket`, no `EventSource`. |
-| Fonts | `fonts/Vazir.{woff2,woff,ttf}`, `fonts/Shabnam.ttf`, `fonts/Yekan.{woff2,woff,ttf}` | Declared in `css/vazir.css` with local `url('/static/fonts/...')`. No Google Fonts. |
+| Fonts | `fonts/Vazir.{woff2,woff,ttf}` | Declared in `css/vazir.css` with local `url('/static/fonts/...')`. No Google Fonts. `Shabnam.ttf` and `Yekan.{woff2,woff,ttf}` were removed on 2026-09-29: nothing declared a `@font-face` for them and no template, stylesheet or script ever requested the files (see `docs/CLEANUP_AUDIT_REPORT_2026-09-29.md`). |
 | Icons | `images/*.png`, `images/exit.svg`, inline `<svg>` | All local. Inline SVGs use `xmlns="http://www.w3.org/2000/svg"` which is a **namespace declaration, not a network request**. |
 | Images | `images/*` (logos, backgrounds, sliders, avatars, icons) | All referenced via `/static/images/...`. No remote `<img src="https://...">`. |
 | Favicon | `favicon.ico` | Local. |

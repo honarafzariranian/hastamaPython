@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 
 
 def parse_time(value: str | None) -> tuple[int, int] | None:

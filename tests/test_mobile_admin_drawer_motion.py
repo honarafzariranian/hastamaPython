@@ -49,7 +49,14 @@ def test_drawer_opens_with_a_spring_and_fades():
     assert "transform: translateX(" in rule
     assert "opacity:" in rule, "کشوی بسته باید نیم‌محو باشد تا باز شدن نرم دیده شود"
     assert "var(--adm-ease-spring)" in rule, "باز شدن باید ease فنری داشته باشد"
-    assert "will-change: transform, opacity" in rule
+    # باگ ۱۴۰۵/۰۷/۰۶: `will-change: transform, opacity` روی همین قاعده، کشو را
+    # به یک لایهٔ کامپوزیتور مستقل ارتقا می‌داد و منطقهٔ hit-test آن پس از باز
+    # شدن به‌روز نمی‌شد؛ نتیجه این بود که هیچ تپی به آیتم‌های کشو نمی‌رسید و
+    # انتخاب هر بخش فقط کشو را می‌بست. پس کشو باید صریحاً از will-change
+    # انصراف بدهد.
+    assert "will-change: auto" in rule, (
+        "will-change روی کشوی fixed مسیر ورودی آیتم‌ها را می‌بندد"
+    )
 
     open_rule = _rule(MOBILE_CSS, "\n    .rightSidebar.open {\n")
     assert "translateX(0)" in open_rule and "scale(1)" in open_rule
@@ -90,6 +97,13 @@ def test_logout_is_pinned_to_the_bottom_of_the_drawer():
     assert "position: sticky" in exit_rule
     assert "bottom: calc(var(--adm-safe-b)" in exit_rule, "خروج باید بالای ناحیهٔ امن پایین بماند"
     assert "z-index" in exit_rule and "backdrop-filter" in exit_rule
+
+    # بازطراحی ۱۴۰۵/۰۷/۰۶: دکمهٔ خروج باید ظاهرِ کشوی موبایل را داشته باشد، نه
+    # کارت شیشه‌ای شناور دسکتاپ.  blur و سایهٔ بالارونده در کشوی تمام‌قد مثل یک
+    # کارت بی‌ربط روی محتوا می‌افتاد، پس هر دو باید صریحاً خنثی شوند.
+    assert "box-shadow: none !important" in exit_rule, "سایهٔ دسکتاپی خروج در موبایل حذف می‌شود"
+    assert "backdrop-filter: none !important" in exit_rule, "blur شیشه‌ای خروج در موبایل حذف می‌شود"
+    assert "var(--adm-surface)" in exit_rule, "پس‌زمینهٔ خروج باید مات باشد تا اسکرول از پشتش دیده نشود"
 
 
 def test_javascript_indexes_the_drawer_items():

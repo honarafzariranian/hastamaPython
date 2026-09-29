@@ -173,10 +173,11 @@
                         <a href="#" class="forgot-password" id="forgotPasswordBtn">فراموشی رمز عبور؟</a>
                     </div>
 
+                    {#- The button carries one label and nothing else: no busy caption,
+                        no green success state.  The feedback is the full-screen
+                        loader built by js/script.js (see login_experience.py). -#}
                     <button type="button" class="btn h-ux-btn" id="loginBtn">
                         <span class="h-ux-btn-text">ورود</span>
-                        <span class="h-ux-btn-spinner"></span>
-                        <span class="h-ux-btn-loading-text">در حال ورود...</span>
                     </button>
 
                     <p class="login-hint" id="loginHint" role="status" aria-live="polite"></p>
@@ -193,29 +194,20 @@
     </footer>
 
     <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
-    <script src="{{ url_for('static', path='js/script.js') }}?v=20260928"></script>
+    <script src="{{ url_for('static', path='js/script.js') }}?v=20260929"></script>
+    {#- قطع ارتباط: راهنمای آفلاین + آدرس شبکهٔ داخلی (app/static/js/offline-guard.js) -#}
+    <script src="{{ url_for('static', path='js/offline-guard.js') }}"></script>
     <script>
-    /* Prevent Chrome autofill from auto-submitting the form */
+    /* UI-only extras (ripple, password visibility).
+
+       Everything that actually *does* something — the login request, the
+       full-screen loader, the CAPTCHA expiry warning, the field errors — lives
+       in js/script.js.  This block must never grow a second copy of that logic:
+       the old duplicate here wrapped ``window.login`` and re-hid the CAPTCHA
+       message, which is why an expired code produced no visible error at all. */
     (function() {
         var loginBtn = document.getElementById('loginBtn');
-        var usernameInput = document.getElementById('username');
         var passwordInput = document.getElementById('password');
-
-        /* Button click → login */
-        loginBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            login();
-        });
-
-        /* Enter key → login */
-        function handleEnter(e) {
-            if (e.key === 'Enter' || e.keyCode === 13) {
-                e.preventDefault();
-                login();
-            }
-        }
-        usernameInput.addEventListener('keydown', handleEnter);
-        passwordInput.addEventListener('keydown', handleEnter);
 
         /* UI-only enhancements (no functional impact) */
 
@@ -244,60 +236,6 @@
             });
         }
 
-        /* Field-level validation feedback (visual only; login() still guards) */
-        function setFieldState(input, errorEl, msg) {
-            var wrap = input.closest('.input-wrapper');
-            if (!wrap) return;
-            if (msg) {
-                wrap.classList.add('has-error');
-                errorEl.textContent = msg;
-            } else {
-                wrap.classList.remove('has-error');
-                errorEl.textContent = '';
-            }
-        }
-        var usernameError = document.getElementById('usernameError');
-        var passwordError = document.getElementById('passwordError');
-        usernameInput.addEventListener('input', function() { setFieldState(usernameInput, usernameError, ''); });
-        passwordInput.addEventListener('input', function() { setFieldState(passwordInput, passwordError, ''); });
-
-        /* Intercept login() errors visually: empty fields → shake + message */
-        var originalLogin = window.login;
-        window.login = function() {
-            var u = usernameInput.value.trim();
-            var p = passwordInput.value;
-            var hint = document.getElementById('loginHint');
-            if (!u || !p) {
-                if (!u) setFieldState(usernameInput, usernameError, 'لطفاً نام کاربری را وارد کنید');
-                if (!p) setFieldState(passwordInput, passwordError, 'لطفاً رمز عبور را وارد کنید');
-                var card = document.getElementById('loginCard');
-                card.classList.remove('shake');
-                void card.offsetWidth; /* restart animation */
-                card.classList.add('shake');
-                if (hint) {
-                    hint.textContent = '';
-                    void hint.offsetWidth;
-                    hint.textContent = 'لطفاً نام کاربری و رمز عبور را وارد کنید.';
-                }
-                return;
-            }
-            setFieldState(usernameInput, usernameError, '');
-            setFieldState(passwordInput, passwordError, '');
-            if (hint) hint.textContent = '';
-            originalLogin();
-        };
-
-        /* Server-side error → shake + inline hint (notification-system.js not loaded here) */
-        var origShowSystemError = window.showSystemError;
-        window.showSystemError = function(msg) {
-            var card = document.getElementById('loginCard');
-            card.classList.remove('shake');
-            void card.offsetWidth;
-            card.classList.add('shake');
-            var hint = document.getElementById('loginHint');
-            if (hint) hint.textContent = msg || '';
-            if (typeof origShowSystemError === 'function') origShowSystemError(msg);
-        };
     })();
     </script>
 
@@ -663,9 +601,18 @@
     })();
     </script>
 
-    <!-- Fetch system config to toggle CAPTCHA visibility -->
+    <!-- Public settings: whether the CAPTCHA is on, how long it lives, and the
+         loader the user sees after pressing ورود (master-admin → system settings). -->
     <script>
     (function() {
+        function on(flag) {
+            return flag === '1' || flag === 'true' || flag === true;
+        }
+        function seconds(value, fallback) {
+            var parsed = parseInt(value, 10);
+            return (parsed > 0) ? parsed : fallback;
+        }
+
         fetch('/api/system-config')
             .then(function(r) { return r.json(); })
             .then(function(res) {
@@ -673,14 +620,23 @@
                 var cfg = res.data;
                 var captchaGroup = document.getElementById('captchaGroup');
                 if (captchaGroup) {
-                    if (cfg.captcha_enabled === '1' || cfg.captcha_enabled === 'true') {
-                        captchaGroup.style.display = '';
-                    } else {
-                        captchaGroup.style.display = 'none';
-                    }
+                    captchaGroup.style.display = on(cfg.captcha_enabled) ? '' : 'none';
                 }
+                /* Read lazily by js/script.js at click time, so it always sees
+                   the newest values without a reload. */
+                window.HASTAMA_LOGIN_UX = {
+                    loaderEnabled: on(cfg.login_loader_enabled),
+                    loaderSeconds: seconds(cfg.login_loader_seconds, 3),
+                    loaderTitle: cfg.login_loader_title || '',
+                    loaderMessage: cfg.login_loader_message || '',
+                    captchaNotice: on(cfg.login_captcha_notice),
+                    captchaTtl: seconds(cfg.login_captcha_ttl_seconds, 180)
+                };
             })
-            .catch(function() {});
+            .catch(function() { /* the defaults in script.js take over */ })
+            .then(function() {
+                if (window.HastamaLogin) window.HastamaLogin.startCaptchaWatch();
+            });
     })();
     </script>
 </body>

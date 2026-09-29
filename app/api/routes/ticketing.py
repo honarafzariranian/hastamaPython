@@ -8,14 +8,7 @@ from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
-from app.services.ticketing import (
-    MESSAGE_VISIBILITIES,
-    TICKET_PRIORITIES,
-    TICKET_STATUSES,
-    TicketService,
-    actor_from_session,
-    store_private_attachment,
-)
+from app.services.ticketing import MESSAGE_VISIBILITIES, TICKET_PRIORITIES, TicketService, actor_from_session, store_private_attachment
 
 router = APIRouter(prefix="/api/tickets", tags=["ticketing"])
 

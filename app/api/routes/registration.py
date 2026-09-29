@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import re
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse

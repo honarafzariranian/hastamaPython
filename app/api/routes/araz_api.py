@@ -12,10 +12,9 @@ Base URL: /api/araz/
 
 from __future__ import annotations
 
-import asyncio
 import hmac
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 from typing import Optional
 
@@ -24,13 +23,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.core.net import user_agent
-from app.services.araz_connector import (
-    ArazDevice,
-    DEFAULT_IP,
-    DEFAULT_PORT,
-    DEFAULT_DEVICE_NUMBER,
-    ArazProtocol,
-)
+from app.services.araz_connector import ArazDevice, DEFAULT_IP, DEFAULT_PORT, DEFAULT_DEVICE_NUMBER
 from app.services.audit import log_event
 
 # Bridge auth token — mandatory in production; the endpoint fails closed when unset.

@@ -3,14 +3,11 @@ import os
 import re
 import pyodbc
 import jdatetime
-import random
 import pdfkit
-import shutil
 import json
 from datetime import datetime, date, time, timedelta
 from collections import Counter
 from persiantools.jdatetime import JalaliDate
-from typing import List
 from io import BytesIO
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -30,6 +27,7 @@ from app.api.routes.araz_api import router as araz_router
 from app.api.routes.master_admin import router as master_admin_router
 from app.api.routes.registration import router as registration_router
 from app.services.background_tasks import start_background_tasks, stop_background_tasks
+from app.services import iran_access, lan_access, login_experience, outage
 from app.services.presence_summary import build_presence_summary, time_is_inside_range
 from app.services.attendance import compute_attendance_status, format_time_value
 from core.config import DEBUG, SECRET_KEY, config
@@ -571,6 +569,240 @@ def _harden_cookies(headers: list) -> list:
     return hardened
 
 
+class _LanCookieMiddleware:
+    """Drop the ``Secure`` cookie flag on the plain-HTTP LAN listener.
+
+    ``SessionMiddleware(https_only=True)`` marks every session cookie
+    ``Secure``, and a browser *refuses to store* a ``Secure`` cookie that arrived
+    over an insecure origin — a workstation on the laboratory network could
+    therefore never stay logged in over ``http://<lan-address>:5000``.
+
+    Only requests that really arrived on the LAN listener while it runs lose the
+    flag (see ``lan_access.request_is_lan_http``): the public HTTPS origin, the
+    loopback tools and every other request keep ``Secure`` exactly as before.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or not lan_access.request_is_lan_http(scope):
+            await self.app(scope, receive, send)
+            return
+
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                message["headers"] = [
+                    (key, _drop_secure_cookie_flag(value))
+                    if key.lower() == b"set-cookie"
+                    else (key, value)
+                    for key, value in message.get("headers", [])
+                ]
+            await send(message)
+
+        await self.app(scope, receive, _send)
+
+
+def _drop_secure_cookie_flag(value: bytes) -> bytes:
+    """Remove the ``Secure`` attribute, leaving every other flag untouched."""
+    return b";".join(
+        part for part in value.split(b";") if part.strip().lower() != b"secure"
+    )
+
+
+def _master_admin_scope(scope: Scope) -> bool:
+    """True when *scope* carries a signed master-administrator session.
+
+    Outage mode keeps those accounts working (and keeps them logged in), so the
+    system can always be managed while the internet is down — see
+    ``app/services/outage.py``.
+    """
+    try:
+        from app.core.session_cookie import parse_session_cookie
+
+        session = parse_session_cookie(
+            _request_cookies(scope).get("session"), _session_secret, SESSION_MAX_AGE_SECONDS
+        )
+        return session.get("is_master_admin") is True
+    except Exception:  # pragma: no cover - never decide on a broken cookie
+        return False
+
+
+class _OutageGateMiddleware:
+    """Serve the outage page while the internet link that serves users is down.
+
+    The decision to block comes from ``app/services/outage.py`` (probes plus the
+    operator's switches).  Page requests get the outage page with ``503``; API
+    callers get JSON, because they cannot render HTML.  Infrastructure paths, the
+    laboratory listener, direct local callers and master administrators are never
+    blocked, so the mode stays manageable and the watchdog keeps its ``/health``.
+    """
+
+    _JSON_ACCEPT = b"application/json"
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if (
+            scope["type"] not in ("http", "websocket")
+            or not outage.active()
+            or not outage.request_is_subject(scope)
+            or _master_admin_scope(scope)
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        if scope["type"] == "websocket":
+            # A call-display screen connected over the internet path: refuse the
+            # upgrade cleanly instead of leaving the socket hanging.
+            await send(
+                {
+                    "type": "websocket.http.response.start",
+                    "status": 503,
+                    "headers": [
+                        (b"retry-after", b"30"),
+                        (b"content-type", b"text/plain; charset=utf-8"),
+                    ],
+                }
+            )
+            await send(
+                {
+                    "type": "websocket.http.response.body",
+                    "body": b"internet outage",
+                    "more_body": False,
+                }
+            )
+            return
+
+        path = scope.get("path", "")
+        headers = dict(scope.get("headers", []))
+        wants_json = (
+            path.startswith(outage.JSON_PREFIXES)
+            or self._JSON_ACCEPT in headers.get(b"accept", b"")
+            or headers.get(b"x-requested-with", b"").lower() == b"xmlhttprequest"
+        )
+        if wants_json:
+            response = JSONResponse(
+                status_code=503,
+                content={
+                    "success": False,
+                    "outage": True,
+                    "error": "ارتباط سامانه با اینترنت قطع است.",
+                    "message": outage.page_context().get("outage_message") or "",
+                },
+                headers={"Retry-After": "30"},
+            )
+        else:
+            response = templates.TemplateResponse(
+                Request(scope, receive),
+                "offline.html",
+                outage.page_context(),
+                status_code=503,
+                headers={"Retry-After": "30", "Cache-Control": "no-store"},
+            )
+        await response(scope, receive, send)
+
+
+class _IranOnlyGateMiddleware:
+    """Only let Iranian public addresses use the system.
+
+    A user who is still behind a VPN (or abroad) has a public address that is not
+    in any registered Iranian range, so every request is answered with the
+    warning page — which tells them to switch the VPN off and come back — instead
+    of a login form they could never use.  The verdict, and the rule that turns it
+    off, live in ``app/services/iran_access.py``.
+
+    Internal addresses (the server itself, the laboratory LAN, CGNAT), the
+    infrastructure paths, the LAN listener, the direct local callers and master
+    administrators are never affected, so the filter can always be managed — even
+    from a machine whose own VPN is on.
+    """
+
+    _JSON_ACCEPT = b"application/json"
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        # The scope checks come first: ``enforcing()`` re-stats the range file so
+        # that a file replaced on disk is picked up without a restart, and the
+        # exempt paths (every stylesheet and the watchdog's health probe) must not
+        # pay for that.
+        if (
+            scope["type"] not in ("http", "websocket")
+            or not iran_access.request_is_subject(scope)
+            or not iran_access.enforcing()
+            or _master_admin_scope(scope)
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        verdict = iran_access.classify(iran_access.client_ip(scope))
+        if verdict.get("allowed"):
+            iran_access.record_allowed()
+            await self.app(scope, receive, send)
+            return
+
+        iran_access.record_block(scope, verdict)
+        reason = str(verdict.get("label") or "")
+        address = str(verdict.get("ip") or "")
+
+        if scope["type"] == "websocket":
+            # A kiosk or call-display screen over the public path: refuse the
+            # upgrade cleanly instead of leaving the socket hanging.
+            await send(
+                {
+                    "type": "websocket.http.response.start",
+                    "status": 403,
+                    "headers": [
+                        (b"content-type", b"text/plain; charset=utf-8"),
+                        (b"x-hastama-blocked", b"iran-only"),
+                    ],
+                }
+            )
+            await send(
+                {
+                    "type": "websocket.http.response.body",
+                    "body": "iran only".encode("utf-8"),
+                    "more_body": False,
+                }
+            )
+            return
+
+        path = scope.get("path", "")
+        headers = dict(scope.get("headers", []))
+        wants_json = (
+            path.startswith(iran_access.JSON_PREFIXES)
+            or self._JSON_ACCEPT in headers.get(b"accept", b"")
+            or headers.get(b"x-requested-with", b"").lower() == b"xmlhttprequest"
+        )
+        if wants_json:
+            response = JSONResponse(
+                status_code=403,
+                content={
+                    "success": False,
+                    "iran_only": True,
+                    "vpn": True,
+                    "error": "دسترسی فقط از آی‌پی ایران امکان‌پذیر است.",
+                    "message": "لطفاً VPN یا فیلترشکن خود را قطع کنید و دوباره وارد شوید.",
+                    "ip": address,
+                },
+                headers={"Cache-Control": "no-store", "X-Hastama-Blocked": "iran-only"},
+            )
+        else:
+            document = dict(iran_access.page_context(scope, address))
+            document["vpn_reason"] = reason or document.get("vpn_reason", "")
+            response = templates.TemplateResponse(
+                Request(scope, receive),
+                "vpn-warning.html",
+                document,
+                status_code=403,
+                headers={"Retry-After": "30", "Cache-Control": "no-store", "X-Hastama-Blocked": "iran-only"},
+            )
+        await response(scope, receive, send)
+
+
 # ── One canonical public hostname ───────────────────────────────────────────
 # Hastama serves LAN and Internet users through the same URL,
 # ``https://hastama.ir`` (Cloudflare → Cloudflare Tunnel → 127.0.0.1:5000).
@@ -601,6 +833,59 @@ def allowed_hosts() -> list:
     raw = os.getenv("HASTAMA_ALLOWED_HOSTS", "")
     values = [item.strip() for item in raw.split(",") if item.strip()]
     return values or list(_DEFAULT_ALLOWED_HOSTS)
+
+
+#: ``Host`` values accepted *at runtime* on top of the static list above — the
+#: LAN listener address, and only while LAN access is enabled (the relay reports
+#: its bind address on start and clears it on stop).  A wildcard is never added:
+#: host-header poisoning is what the allow-list exists for.
+_extra_allowed_hosts: set = set()
+_published_extra_hosts: set = set()
+
+
+def _find_trusted_host_middleware(node):
+    """The live ``TrustedHostMiddleware`` instance inside a built stack."""
+    depth = 0
+    while node is not None and depth < 32:
+        if isinstance(node, TrustedHostMiddleware):
+            return node
+        node = getattr(node, "app", None)
+        depth += 1
+    return None
+
+
+def set_lan_allowed_hosts(hosts) -> None:
+    """Add or remove runtime ``Host`` allow-list entries (the LAN address).
+
+    ``TrustedHostMiddleware`` copies the list it is built with, so the live
+    instance is updated in place: the LAN address is accepted while the listener
+    runs and disappears again the moment it stops.  Building the stack here —
+    when it has not been built yet — is exactly what the first request would do,
+    and it means the very first LAN request is already accepted.
+    """
+    _extra_allowed_hosts.clear()
+    for host in hosts:
+        normalized = str(host or "").strip().lower().strip("[]")
+        if normalized and "*" not in normalized:
+            _extra_allowed_hosts.add(normalized)
+
+    if app.middleware_stack is None:
+        app.middleware_stack = app.build_middleware_stack()
+    middleware = _find_trusted_host_middleware(app.middleware_stack)
+    if middleware is None:  # pragma: no cover - defensive
+        logger.error("TrustedHostMiddleware not found: LAN host could not be allowed")
+        return
+
+    allowed = list(middleware.allowed_hosts)
+    for host in list(_published_extra_hosts):
+        if host not in _extra_allowed_hosts and host in allowed:
+            allowed.remove(host)
+            _published_extra_hosts.discard(host)
+    for host in _extra_allowed_hosts:
+        if host not in allowed:
+            allowed.append(host)
+            _published_extra_hosts.add(host)
+    middleware.allowed_hosts = allowed
 
 
 class _HeadMethodMiddleware:
@@ -644,15 +929,60 @@ class _HeadMethodMiddleware:
 # Order matters: the last middleware added is the outermost one, so the
 # security headers wrap even a rejected host, and the host check runs before
 # any session, CSRF or database work happens.
+# Inside the host check (a bad ``Host`` is still refused first) but outside the
+# session, CSRF and database layers: a blocked request must not reach them.
+# The outage gate is added *after* the Iran-only gate, so it is the outer one: a
+# link outage is reported first (it is the more informative answer, and it must
+# never be masked by the access policy while we are trying to bring users in).
+app.add_middleware(_IranOnlyGateMiddleware)
+app.add_middleware(_OutageGateMiddleware)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
 app.add_middleware(_HeadMethodMiddleware)
 app.add_middleware(_SecurityHeadersMiddleware)
+# Outermost, so nothing re-applies ``Secure`` afterwards: only the plain-HTTP LAN
+# listener loses the flag (see ``_LanCookieMiddleware``).
+app.add_middleware(_LanCookieMiddleware)
 
 # Browsers request this conventional root URL even when a page does not
 # declare an explicit favicon link.
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     return FileResponse("app/static/favicon.ico", media_type="image/x-icon")
+
+
+@app.get("/offline", include_in_schema=False)
+def offline_page(request: Request):
+    """The outage guide.
+
+    Served with ``200`` on purpose: the service worker caches it (``cache`` APIs
+    reject error responses) and shows it when the browser itself cannot reach the
+    server.  Blocked page requests are answered with the same template plus
+    ``503`` by ``_OutageGateMiddleware``.
+    """
+    return templates.TemplateResponse(
+        request,
+        "offline.html",
+        outage.page_context(),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/sw.js", include_in_schema=False)
+def offline_service_worker():
+    """The outage service worker, served from the origin root.
+
+    A worker only controls paths at or below its own URL, so it cannot live under
+    ``/static/``; ``Service-Worker-Allowed`` states the root scope explicitly and
+    the file itself is never cached, so a new copy is picked up immediately.
+    """
+    return FileResponse(
+        "app/static/sw.js",
+        media_type="application/javascript",
+        headers={
+            "Service-Worker-Allowed": "/",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+    )
 
 # ثبت مسیر استاتیک برای فایل‌های CSS و JavaScript
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -667,9 +997,81 @@ app.include_router(araz_router)
 app.include_router(master_admin_router)
 app.include_router(registration_router)
 
+@app.get("/iran-only", include_in_schema=False)
+def iran_only_page(request: Request):
+    """The standing access-policy guide (the page a blocked request carries).
+
+    Reachable on purpose, with ``200``, from every address: a user who is asked to
+    switch a VPN off needs a URL they can keep, and the warning page itself
+    polls ``/iran-only/check`` to come back on its own.
+    """
+    return templates.TemplateResponse(
+        request,
+        "vpn-warning.html",
+        iran_access.page_context(ip=iran_access.client_ip(request.scope)),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/iran-only/check", include_in_schema=False)
+def iran_only_check(request: Request):
+    """Would *this* caller be allowed in right now?
+
+    Answers about the caller's own address only, so it leaks nothing; the warning
+    page uses it to return to the system the moment the VPN is off.
+    """
+    verdict = iran_access.classify(iran_access.client_ip(request.scope))
+    return JSONResponse(
+        content={
+            "success": True,
+            "allowed": bool(verdict.get("allowed")),
+            "ip": verdict.get("ip") or "",
+            "kind": verdict.get("kind") or "",
+            "enforcing": iran_access.enforcing(),
+        },
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 @app.on_event("startup")
-def start_notification_background_tasks():
+async def start_notification_background_tasks():
     start_background_tasks()
+
+
+@app.on_event("startup")
+async def start_outage_monitor():
+    """Arm internet-outage mode from the saved settings and start probing."""
+    await outage.start()
+
+
+@app.on_event("shutdown")
+async def stop_outage_monitor():
+    """Stop probing; the outage state itself lives in ``system_config``."""
+    await outage.stop()
+
+
+@app.on_event("startup")
+async def start_login_experience_settings():
+    """Load the login loader / CAPTCHA lifetime settings for the login page."""
+    login_experience.start()
+
+
+@app.on_event("startup")
+async def start_iran_access_filter():
+    """Arm the Iran-only filter from the saved settings and load the range file."""
+    iran_access.start()
+
+
+@app.on_event("startup")
+async def start_lan_access_listener():
+    """Re-open the LAN listener when it was left enabled in system settings."""
+    await lan_access.start_from_config()
+
+
+@app.on_event("shutdown")
+async def stop_lan_access_listener():
+    """Close the LAN listener and every tunnel it holds (no dangling sockets)."""
+    await lan_access.stop()
 
 
 @app.on_event("shutdown")
@@ -5089,19 +5491,36 @@ async def logout(request: Request, response: Response):
 
 @app.get("/api/system-config")
 async def public_system_config():
-    """Public endpoint: return public-facing system config keys (no auth required)."""
+    """Public endpoint: the non-secret settings an unauthenticated page needs.
+
+    Only keys that are safe to publish live here: the CAPTCHA switch, the idle
+    timeout, and the login-experience settings (loader duration and texts, the
+    CAPTCHA lifetime and its expiry notice).  Values are strings, as in
+    ``system_config``; the defaults are returned when the database cannot be
+    read, so the login page always behaves predictably.
+
+    The login-experience values come from the service (already validated and
+    clamped there) rather than from the raw row, so a hand-edited value cannot
+    put a nonsense duration in front of the user.
+    """
     from app.core.database import connect as db_connect
-    keys = ('captcha_enabled', 'idle_timeout_enabled', 'idle_timeout_seconds')
+
     config = {'captcha_enabled': '1', 'idle_timeout_enabled': '1', 'idle_timeout_seconds': '300'}
+    keys = tuple(config.keys())
     try:
         conn = db_connect()
         cur = conn.cursor()
-        cur.execute("SELECT config_key, config_value FROM system_config WHERE config_key IN (?,?,?)", keys)
+        cur.execute(
+            "SELECT config_key, config_value FROM system_config "
+            f"WHERE config_key IN ({','.join('?' * len(keys))})",
+            keys,
+        )
         for row in cur.fetchall():
             config[row[0]] = row[1]
         conn.close()
     except Exception:
         pass
+    config.update(login_experience.public_config())
     return JSONResponse(content={"success": True, "data": config})
 
 

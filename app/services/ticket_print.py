@@ -25,11 +25,9 @@ Only the standard library is used (plus Edge + Windows/.NET print APIs).
 """
 from __future__ import annotations
 
-import html
 import logging
 import os
 import platform
-import re
 import shutil
 import subprocess
 import tempfile
@@ -40,11 +38,7 @@ from typing import Any, Optional
 # The label renderer owns the markup, the escaping, the minimal-service rule and
 # the date/time formatting (one source for studio preview, kiosk and server).
 from app.services import label_render
-from app.services.label_render import (  # re-exported for callers/tests
-    esc,
-    is_minimal_label_service,
-    to_persian_digits,
-)
+from app.services.label_render import is_minimal_label_service, to_persian_digits
 from app.services.label_render import MINIMAL_LABEL_SERVICES as _MINIMAL_SERVICES
 
 logger = logging.getLogger(__name__)

@@ -649,7 +649,14 @@
         opacity: .35;
         transition: transform .58s var(--adm-ease-spring), opacity .28s var(--adm-ease-soft),
             box-shadow .45s var(--adm-ease-soft);
-        will-change: transform, opacity;
+        /* توجه — این خط قبلاً `will-change: transform, opacity` بود و باعث
+           یک باگ واقعی می‌شد: با will-change، مرورگر کشو را به یک لایهٔ
+           کامپوزیتورِ مستقل ارتقا می‌دهد و منطقهٔ hit-test کامپوزیت‌شدهٔ آن
+           پس از باز شدن به‌روز نمی‌شود.  نتیجه: هیچ ورودی‌ای داخل کشو
+           نمی‌رسید؛ تپ روی هر گزینه فقط کشو را می‌بست و هیچ بخشی عوض نمی‌شد
+           (پردهٔ پایین در hit-test برنده می‌شد).  انیمیشن transform بدون این
+           راهنما هم روی لایهٔ کامپوزیتور اجرا می‌شود، پس حذفش هزینه‌ای ندارد. */
+        will-change: auto;
         overscroll-behavior: contain;
     }
 
@@ -667,6 +674,28 @@
             width: min(88vw, 344px) !important;
             transform: translateX(0) scale(1);
             opacity: 1;
+        }
+
+        /* هاور باید مثل حالت «باز» اجزای کشو را هم نشان بدهد؛ در غیر این صورت
+           کشو با هاور باز می‌شد ولی آیتم‌ها در حالت محوِ بسته (opacity: 0)
+           باقی می‌ماندند و فقط یک کشوی خالی دیده می‌شد. */
+        .rightSidebar:hover > .adm-drawer-head,
+        .rightSidebar:hover > .icon-container,
+        .rightSidebar:hover > .sidebar-divider {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* کشوی بستهٔ موبایل نباید هیچ ورودی‌ای بگیرد.  کشو با transform روی یک
+       لایهٔ کامپوزیتور جدا می‌نشیند و تا یک فریم پس از جابه‌جایی، منطقهٔ
+       hit-test آن همان جای قبلی است؛ روی دستگاه لمسی یعنی تپ‌های لبهٔ راست
+       صفحه به کشوی بیرون‌ازتصویر می‌رسید.  این محافظ فقط روی دستگاه‌های
+       بدون هاور است، چون روی دسکتاپِ باریک با ماوس، کشو باید با :hover باز
+       شود و برای هاور شدن باید رویداد بگیرد. */
+    @media (hover: none) {
+        .rightSidebar:not(.open) {
+            pointer-events: none;
         }
     }
 
@@ -818,17 +847,24 @@
         background: linear-gradient(90deg, transparent, var(--adm-line-strong), transparent);
     }
 
-    /* دکمهٔ خروج: همیشه پایین کشو می‌ماند (حتی وقتی منو بلند است) */
+    /* ── دکمهٔ خروج در کشوی موبایل ──────────────────────────────────────────
+       در دسکتاپ «خروج» یک کارت شیشه‌ای است که پایین ریل آیکون‌ها شناور
+       می‌ماند؛ به همین دلیل blur و سایهٔ بالارونده دارد.  در کشوی موبایل که
+       تمام‌قد است و خودش اسکرول می‌شود، همان ترکیب مثل یک کارت بی‌ربط روی
+       محتوا می‌افتاد.  اینجا خروج یک ردیف تمام‌عرضِ ساده است: پس‌زمینهٔ
+       ماتِ ملایم (تا آیتم‌های در حال اسکرول از پشتش دیده نشوند)، بدون blur و
+       بدون سایه؛ به‌خاطر sticky بودن هم همیشه در دسترس می‌ماند. */
     .rightSidebar .icon-container[data-accent="exit"] {
         position: sticky;
         bottom: calc(var(--adm-safe-b) + 2px);
         z-index: 3;
         margin-bottom: 0 !important;
-        border-color: rgba(244, 63, 94, .24);
-        background: linear-gradient(115deg, rgba(244, 63, 94, .14), var(--adm-tile-wash));
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-        box-shadow: 0 -14px 26px -20px rgba(8, 30, 50, .55);
+        border-color: rgba(244, 63, 94, .26) !important;
+        background: linear-gradient(115deg, rgba(244, 63, 94, .13), rgba(244, 63, 94, .05)),
+            var(--adm-surface) !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        box-shadow: none !important;
     }
 
     .rightSidebar .icon-container[data-accent="exit"] .icon-label {
@@ -886,6 +922,15 @@
     /* پنهان‌سازی اسکرول‌بار کشو */
     .rightSidebar::-webkit-scrollbar { width: 0; height: 0; }
 
+    /* ── پردهٔ پشت کشو (Scrim) — فقط تزئینی، هرگز گیرندهٔ ورودی نیست ───────
+       این لایه تمام‌صفحه است و z-index آن (790) از کشو (800) کمتر است، اما
+       روی مرورگر واقعی همین کافی نبود: کشو با transform روی یک لایهٔ
+       کامپوزیتور جدا رندر می‌شود و منطقهٔ hit-test کامپوزیت‌شده تا یک فریم پس
+       از باز شدن، هنوز کشو را بیرون از تصویر می‌دانست؛ در همان بازه، ورودی
+       به پردهٔ تمام‌صفحه می‌رسید.  نتیجهٔ عملی: تپ روی «کارکنان» و بقیهٔ
+       آیتم‌ها فقط کشو را می‌بست و هیچ بخشی عوض نمی‌شد.  پس پرده ورودی
+       نمی‌گیرد و «تپ بیرون = بستن» در JS (bindOutsideTapClose در
+       admin-mobile.js) و در فاز capture انجام می‌شود. */
     .mobile-sidebar-overlay {
         position: fixed;
         inset: 0;
@@ -897,12 +942,14 @@
         backdrop-filter: blur(3px);
         opacity: 0;
         visibility: hidden;
+        pointer-events: none !important;
         transition: opacity .34s var(--adm-ease-soft), visibility .34s linear;
     }
 
     body.mobile-sidebar-open .mobile-sidebar-overlay {
         opacity: 1;
         visibility: visible;
+        pointer-events: none !important;
     }
 
     body.mobile-sidebar-open {

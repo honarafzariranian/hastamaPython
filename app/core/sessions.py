@@ -317,6 +317,44 @@ def revoke_user_sessions(username: str, by_username: str = "system") -> int:
                 pass
 
 
+def revoke_all_sessions(by_username: str = "system", keep_usernames=()) -> int:
+    """Terminate every active session except the *keep_usernames* accounts.
+
+    Used by internet-outage mode, which cuts the users' connection to the system
+    the moment the outage is detected.  The master administrators are kept so the
+    system stays manageable while the outage lasts.  Returns the number of
+    sessions that were closed.
+    """
+    keep = {(str(name or "").strip().lower()) for name in (keep_usernames or ()) if str(name or "").strip()}
+    conn = None
+    try:
+        conn = _connect()
+        cur = conn.cursor()
+        sql = (
+            "UPDATE dbo.user_sessions SET is_active = 0, logout_at = SYSUTCDATETIME(), "
+            "terminated_by = ? WHERE is_active = 1"
+        )
+        params: list = [by_username]
+        if keep:
+            placeholders = ",".join("?" for _ in keep)
+            sql += f" AND LOWER(LTRIM(RTRIM(username))) NOT IN ({placeholders})"
+            params.extend(sorted(keep))
+        cur.execute(sql, tuple(params))
+        changed = cur.rowcount or 0
+        conn.commit()
+        _cache_invalidate()
+        return changed
+    except Exception as exc:
+        logger.warning("bulk session revoke (all) failed: %s", type(exc).__name__)
+        return 0
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 def reset_state_for_tests() -> None:
     """Testing helper — clears caches and failure flags."""
     global _table_unavailable, _table_ready

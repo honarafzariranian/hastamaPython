@@ -1232,3 +1232,159 @@ body.dark-theme .ma-sidebar-left .icon-label {
     background: var(--card-bg);
     border-color: var(--border);
 }
+
+/* ── LAN access card (offline fallback) ────────────────── */
+/* The card carries a live state, the address to hand to the workstations and the
+   plain-HTTP / firewall warning: it needs the full row, not a third column. */
+.ma-lan-card { grid-column: 1 / -1; }
+.ma-lan-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--adm-surface-2, #f8fafc);
+    border: 1px solid var(--border, #eef2f7);
+    border-radius: 10px;
+}
+.ma-lan-status__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .8rem;
+    color: var(--text-secondary, #64748b);
+}
+.ma-lan-status__value {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text, #1e293b);
+    direction: ltr;
+    unicode-bidi: embed;
+}
+.ma-lan-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 700;
+}
+.ma-lan-state__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.ma-lan-state--on { background: rgba(16,185,129,.14); color: #047857; }
+.ma-lan-state--warn { background: rgba(245,158,11,.16); color: #b45309; }
+.ma-lan-state--off { background: rgba(148,163,184,.18); color: #475569; }
+.ma-lan-warning {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(245,158,11,.10);
+    border: 1px solid rgba(245,158,11,.28);
+    font-size: .79rem;
+    line-height: 1.9;
+    color: #92400e;
+}
+.ma-lan-warning code {
+    direction: ltr;
+    unicode-bidi: embed;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    background: rgba(0,0,0,.05);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+.ma-lan-warning--error {
+    background: rgba(244,63,94,.10);
+    border-color: rgba(244,63,94,.30);
+    color: #9f1239;
+}
+
+/* ── Internet outage card (shares the status/warning look) ── */
+.ma-outage-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px 18px;
+    margin-top: 16px;
+}
+.ma-outage-form > .wide { grid-column: 1 / -1; }
+.ma-outage-form label {
+    display: block;
+    font-size: .78rem;
+    color: var(--text-secondary, #64748b);
+    margin-bottom: 6px;
+}
+.ma-outage-form input[type=text],
+.ma-outage-form input[type=number],
+.ma-outage-form textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text, #1e293b);
+    font-family: inherit;
+    font-size: .85rem;
+    line-height: 1.7;
+}
+.ma-outage-form input:focus,
+.ma-outage-form textarea:focus { outline: none; border-color: #6366f1; }
+.ma-outage-form textarea { min-height: 76px; resize: vertical; }
+.ma-outage-toggles { display: flex; flex-wrap: wrap; gap: 12px 26px; }
+.ma-outage-toggles .ma-toggle-row { border-bottom: 0; padding: 0; flex: 1 1 260px; }
+.dark-mode .ma-outage-form input[type=text],
+.dark-theme .ma-outage-form input[type=text],
+.dark-mode .ma-outage-form input[type=number],
+.dark-theme .ma-outage-form input[type=number],
+.dark-mode .ma-outage-form textarea,
+.dark-theme .ma-outage-form textarea {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+.dark-mode .ma-settings-card.ma-lan-card,
+.dark-theme .ma-settings-card.ma-lan-card {
+    --adm-surface-2: #0f172a;
+}
+.dark-mode .ma-lan-state--on, .dark-theme .ma-lan-state--on { color: #6ee7b7; }
+.dark-mode .ma-lan-state--warn, .dark-theme .ma-lan-state--warn { color: #fcd34d; }
+.dark-mode .ma-lan-state--off, .dark-theme .ma-lan-state--off { color: #cbd5e1; }
+.dark-mode .ma-lan-warning, .dark-theme .ma-lan-warning {
+    color: #fcd34d;
+    background: rgba(245,158,11,.14);
+}
+.dark-mode .ma-lan-warning--error, .dark-theme .ma-lan-warning--error {
+    color: #fda4af;
+    background: rgba(244,63,94,.16);
+}
+
+/* ── Iran-only access card (the address tester) ── */
+.ma-iran-probe {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 2px;
+}
+.ma-iran-probe input {
+    flex: 1 1 220px;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text, #1e293b);
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: .85rem;
+}
+.ma-iran-probe input:focus { outline: none; border-color: #6366f1; }
+.ma-iran-probe button { white-space: nowrap; }
+.dark-mode .ma-iran-probe input,
+.dark-theme .ma-iran-probe input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}

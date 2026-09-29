@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 
-import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
 from app.core.database import connect as db_connect
 from fastapi.responses import StreamingResponse

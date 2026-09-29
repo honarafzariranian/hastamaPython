@@ -13,25 +13,18 @@ reads and system-config writes, i.e. a complete vertical privilege escalation.
 """
 from __future__ import annotations
 
-import json
 import logging
-from datetime import date, datetime, timezone, timedelta
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Optional
 
-import pyodbc
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from app.core.database import connect as db_connect
 
 logger = logging.getLogger(__name__)
-from app.services.audit import (
-    log_event, log_admin_action, log_system_error,
-    create_security_event, terminate_session,
-    approve_password_reset, reject_password_reset,
-    generate_request_id, generate_event_id,
-)
+from app.services.audit import log_admin_action, terminate_session, approve_password_reset, reject_password_reset
 
 router = APIRouter(prefix="/master-admin/api", tags=["master-admin"])
 
@@ -1609,6 +1602,397 @@ async def update_config(request: Request):
         return JSONResponse(content={"success": False, "message": "خطای داخلی سرور"}, status_code=500)
     finally:
         conn.close()
+
+
+# ── LAN access (offline fallback path) ──────────────────────
+#
+# The system normally serves one canonical HTTPS URL only.  When the internet
+# link is down the laboratory still needs the application, so an optional second
+# listener can be opened on this machine's LAN address (see
+# ``app/services/lan_access.py``).  It is switched here, at runtime, and it is
+# never left on by a timer: the operator decides.
+
+@router.get("/lan-access")
+async def get_lan_access(request: Request):
+    """Current state of the LAN listener (address, port, connections, error)."""
+    _master_admin(request)
+    from app.services import lan_access
+
+    return JSONResponse(content={"success": True, "data": lan_access.status()})
+
+
+@router.post("/lan-access")
+async def set_lan_access(request: Request):
+    """Enable or disable LAN access (persisted, applied without a restart)."""
+    admin = _master_admin(request)
+    from app.services import lan_access
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="بدنه درخواست نامعتبر است.")
+    enabled = lan_access.truthy(data.get("enabled"))
+
+    status = await lan_access.set_enabled(enabled, actor=admin)
+    log_admin_action(
+        admin_username=admin,
+        action="enable_lan_access" if enabled else "disable_lan_access",
+        target_type="system_config",
+        target_id=lan_access.ENABLED_KEY,
+        description=(
+            ("فعال‌سازی" if enabled else "غیرفعال‌سازی")
+            + f" دسترسی از شبکه داخلی (آدرس: {status.get('url') or '—'})"
+        ),
+        after_data={
+            "enabled": enabled,
+            "running": status.get("running"),
+            "address": status.get("address"),
+            "port": status.get("port"),
+            "saved": status.get("saved"),
+        },
+        ip_address=_client_ip(request),
+    )
+
+    if enabled and not status.get("running"):
+        return JSONResponse(
+            content={
+                "success": False,
+                "message": status.get("last_error") or "شونده شبکه داخلی باز نشد.",
+                "data": status,
+            },
+            status_code=409,
+        )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+@router.post("/lan-access/selftest")
+async def lan_access_selftest(request: Request):
+    """Fetch ``/health`` through the LAN listener from the server itself.
+
+    Proves the relay (listener + rewritten head + host allow-list + application);
+    it cannot prove the Windows firewall, which needs a real workstation.
+    """
+    admin = _master_admin(request)
+    from app.services import lan_access
+
+    result = await lan_access.self_test()
+    log_admin_action(
+        admin_username=admin,
+        action="lan_access_selftest",
+        target_type="system_config",
+        target_id=lan_access.ENABLED_KEY,
+        description=f"تست داخلی مسیر شبکه داخلی: {result.get('status_line') or 'بدون پاسخ'}",
+        after_data=result,
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": bool(result.get("ok")), "data": result})
+
+
+# ── Internet outage mode ────────────────────────────────────
+#
+# When the link that carries the public path goes down, an operator can put the
+# system into outage mode: sessions are cut, every page request is answered with
+# the outage page (which carries the laboratory address) and everything returns
+# to normal automatically once the link is back — see ``app/services/outage.py``.
+
+@router.get("/outage")
+async def get_outage(request: Request):
+    """Current state: monitoring, probe result, outage window, the settings."""
+    _master_admin(request)
+    from app.services import outage
+
+    return JSONResponse(content={"success": True, "data": outage.status()})
+
+
+@router.post("/outage")
+async def set_outage(request: Request):
+    """Save the outage settings and apply them immediately (no restart)."""
+    admin = _master_admin(request)
+    from app.services import outage
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="بدنه درخواست نامعتبر است.")
+    try:
+        status = await outage.apply_settings(data, actor=admin)
+    except outage.OutageError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    log_admin_action(
+        admin_username=admin,
+        action="update_outage_settings",
+        target_type="system_config",
+        target_id=outage.ENABLED_KEY,
+        description=(
+            "تنظیمات صفحهٔ قطعی اینترنت: "
+            f"{'فعال' if status.get('enabled') else 'غیرفعال'}، "
+            f"پایش هر {status.get('interval_seconds')} ثانیه، "
+            f"آستانه {status.get('threshold')} شکست"
+        ),
+        after_data={
+            "enabled": status.get("enabled"),
+            "interval_seconds": status.get("interval_seconds"),
+            "failures": status.get("threshold"),
+            "targets": status.get("targets"),
+            "terminate_sessions": status.get("terminate_sessions"),
+            "show_lan_address": status.get("show_lan_address"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+@router.post("/outage/check")
+async def check_outage(request: Request):
+    """Probe the internet right now and apply the result (the card's test button)."""
+    admin = _master_admin(request)
+    from app.services import outage
+
+    status = await outage.check_now()
+    log_admin_action(
+        admin_username=admin,
+        action="outage_probe_test",
+        target_type="system_config",
+        target_id=outage.TARGETS_KEY,
+        description=(
+            "تست پایش اینترنت: "
+            + ("وصل" if status.get("probe_online") else "قطع")
+            + f" ({status.get('detail') or '—'})"
+        ),
+        after_data={
+            "online": status.get("probe_online"),
+            "failures": status.get("failures"),
+            "active": status.get("active"),
+            "detail": status.get("detail"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+@router.post("/outage/manual")
+async def set_outage_manual(request: Request):
+    """Declare the outage by hand (or clear it) — for planned maintenance."""
+    admin = _master_admin(request)
+    from app.services import outage, system_config
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="بدنه درخواست نامعتبر است.")
+    active = system_config.truthy(data.get("active"))
+    status = await outage.set_manual(active, actor=admin)
+
+    log_admin_action(
+        admin_username=admin,
+        action="enable_outage_manual" if active else "disable_outage_manual",
+        target_type="system_config",
+        target_id=outage.MANUAL_KEY,
+        description=(
+            ("اعلام دستی" if active else "لغو")
+            + " حالت قطعی اینترنت"
+            + (" (نشست‌ها بسته شد: " + str(status.get("terminated_sessions")) + ")" if active else "")
+        ),
+        after_data={"active": status.get("active"), "enabled": status.get("enabled")},
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+# ── Iran-only access ────────────────────────────────────────
+#
+# Only Iranian public addresses may use the public path: a user who is still
+# behind a VPN (or abroad) is answered with the warning page that asks them to
+# switch it off.  The verdict is made offline from the range file shipped with
+# the application — see ``app/services/iran_access.py``.
+
+@router.get("/iran-access")
+async def get_iran_access(request: Request):
+    """Current state: armed or not, the address list it is using, the counters."""
+    _master_admin(request)
+    from app.services import iran_access
+
+    return JSONResponse(content={"success": True, "data": iran_access.status()})
+
+
+@router.post("/iran-access")
+async def set_iran_access(request: Request):
+    """Save the filter settings (switch, texts) and apply them immediately."""
+    admin = _master_admin(request)
+    from app.services import iran_access
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="بدنه درخواست نامعتبر است.")
+    try:
+        status = iran_access.apply_settings(data, actor=admin)
+    except iran_access.IranAccessError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    log_admin_action(
+        admin_username=admin,
+        action="update_iran_only_settings",
+        target_type="system_config",
+        target_id=iran_access.ENABLED_KEY,
+        description=(
+            "تنظیمات «فقط آی‌پی ایران»: "
+            f"{'فعال' if status.get('enabled') else 'غیرفعال'}"
+            + (" (فهرست آی‌پی بارگذاری نشده)" if not status.get("list_loaded") else "")
+        ),
+        after_data={
+            "enabled": status.get("enabled"),
+            "enforcing": status.get("enforcing"),
+            "log_blocked": status.get("log_blocked"),
+            "ranges_ipv4": status.get("ranges_ipv4"),
+            "ranges_ipv6": status.get("ranges_ipv6"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+@router.post("/iran-access/check")
+async def check_iran_access(request: Request):
+    """Test an address (or the caller's own) against the current range list."""
+    admin = _master_admin(request)
+    from app.services import iran_access
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    ip = str((data or {}).get("ip") or "").strip()[:64]
+    if not ip:
+        ip = _client_ip(request)
+    verdict = iran_access.check_ip(ip)
+
+    log_admin_action(
+        admin_username=admin,
+        action="iran_only_test",
+        target_type="ip_address",
+        target_id=str(verdict.get("ip") or "")[:45],
+        description=(
+            f"تست آی‌پی «{verdict.get('ip') or '-'}»: {verdict.get('label') or '-'}"
+            + (" — ورود مسدود می‌شود" if verdict.get("blocked") else " — ورود مجاز است")
+        ),
+        after_data={
+            "ip": verdict.get("ip"),
+            "kind": verdict.get("kind"),
+            "blocked": verdict.get("blocked"),
+            "range": verdict.get("range"),
+            "enforcing": verdict.get("enforcing"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": verdict})
+
+
+@router.post("/iran-access/refresh")
+async def refresh_iran_access(request: Request):
+    """Rebuild the Iranian range list from the RIPE and APNIC registries.
+
+    The only network call in the whole feature, and it is never automatic: the
+    filter keeps working offline from whatever list is on disk.
+    """
+    admin = _master_admin(request)
+    from app.services import iran_access
+
+    try:
+        status = await iran_access.refresh()
+    except iran_access.IranAccessError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+
+    log_admin_action(
+        admin_username=admin,
+        action="iran_only_list_refresh",
+        target_type="system_config",
+        target_id=iran_access.ENABLED_KEY,
+        description=(
+            "به‌روزرسانی فهرست آی‌پی ایران: "
+            f"{status.get('ranges_ipv4')} بازهٔ IPv4 و {status.get('ranges_ipv6')} بازهٔ IPv6"
+        ),
+        after_data={
+            "ranges_ipv4": status.get("ranges_ipv4"),
+            "ranges_ipv6": status.get("ranges_ipv6"),
+            "generated": status.get("list_generated"),
+            "sources_failed": status.get("sources_failed"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+@router.post("/iran-access/counters/reset")
+async def reset_iran_access_counters(request: Request):
+    """Clear the blocked/allowed counters shown on the card."""
+    admin = _master_admin(request)
+    from app.services import iran_access
+
+    status = iran_access.reset_counters()
+    log_admin_action(
+        admin_username=admin,
+        action="iran_only_counters_reset",
+        target_type="system_config",
+        target_id=iran_access.ENABLED_KEY,
+        description="صفر کردن شمارندهٔ ورودهای مسدودشده (فقط آمار، بدون تغییر تنظیمات)",
+        after_data={"blocked_count": 0, "allowed_count": 0},
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
+
+
+# ── Login experience ────────────────────────────────────────
+#
+# The full-screen loader the user sees after pressing *ورود* and the lifetime of
+# the CAPTCHA code on the same page — see ``app/services/login_experience.py``.
+
+@router.get("/login-experience")
+async def get_login_experience(request: Request):
+    """Current loader/CAPTCHA settings and the bounds they are validated against."""
+    _master_admin(request)
+    from app.services import login_experience
+
+    return JSONResponse(content={"success": True, "data": login_experience.status()})
+
+
+@router.post("/login-experience")
+async def set_login_experience(request: Request):
+    """Save the login-page settings and apply them immediately (no restart)."""
+    admin = _master_admin(request)
+    from app.services import login_experience
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="بدنه درخواست نامعتبر است.")
+    try:
+        status = login_experience.apply_settings(data, actor=admin)
+    except login_experience.LoginExperienceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    log_admin_action(
+        admin_username=admin,
+        action="update_login_experience",
+        target_type="system_config",
+        target_id=login_experience.ENABLED_KEY,
+        description=(
+            "تنظیمات صفحهٔ ورود: "
+            f"لودر {'فعال' if status.get('loader_enabled') else 'غیرفعال'} "
+            f"({status.get('loader_seconds')} ثانیه)، "
+            f"اعتبار کد امنیتی {status.get('captcha_ttl_seconds')} ثانیه، "
+            f"هشدار انقضا {'فعال' if status.get('captcha_notice') else 'غیرفعال'}"
+        ),
+        after_data={
+            "loader_enabled": status.get("loader_enabled"),
+            "loader_seconds": status.get("loader_seconds"),
+            "captcha_ttl_seconds": status.get("captcha_ttl_seconds"),
+            "captcha_notice": status.get("captcha_notice"),
+        },
+        ip_address=_client_ip(request),
+    )
+    return JSONResponse(content={"success": True, "data": status})
 
 
 # ── Label printer discovery ───────────────────────────────────

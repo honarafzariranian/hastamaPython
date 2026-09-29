@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/dark-theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/hastama-ux.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/training.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/admin-mobile-redesign.css') }}?v=20260929">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin-mobile-redesign.css') }}?v=20260930">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
 </head>
 
@@ -161,7 +161,10 @@
             </div>
 
         </header>
-        <div class="mobile-sidebar-overlay" onclick="closeMobileSidebar()" aria-hidden="true"></div>
+        <!-- پردهٔ پشت کشو فقط تزئینی است و هیچ ورودی‌ای نمی‌گیرد
+             (pointer-events: none در لایهٔ موبایل).  «تپ بیرون = بستن» را
+             bindOutsideTapClose در admin-mobile.js انجام می‌دهد. -->
+        <div class="mobile-sidebar-overlay" aria-hidden="true"></div>
 
         <div class="navarha">
 
@@ -2784,11 +2787,12 @@
 <script src="{{ url_for('static', path='js/hastama-ux.js') }}"></script>
 <script>window.__modernTicketing = true;</script>
 <script src="{{ url_for('static', path='js/admin.js') }}?v=2"></script>
-<script src="{{ url_for('static', path='js/admin-mobile.js') }}?v=1"></script>
+<script src="{{ url_for('static', path='js/admin-mobile.js') }}?v=2"></script>
 <script>window.__notificationToastReady = true;</script>
 <script src="{{ url_for('static', path='js/ticketing.js') }}"></script>
 <script src="{{ url_for('static', path='js/internal-automation-admin.js') }}"></script>
 <script src="{{ url_for('static', path='js/notification-system.js') }}?v=16"></script>
+<script src="{{ url_for('static', path='js/offline-guard.js') }}"></script>
     <script src="{{ url_for('static', path='vendor/persian-date/persian-date.min.js') }}"></script>
 
     <!-- Registration Requests JS -->

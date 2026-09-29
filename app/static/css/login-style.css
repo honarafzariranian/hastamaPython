@@ -2079,3 +2079,182 @@ body.dark-mode .btn {
     }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Login experience — the full-screen loader and the CAPTCHA notice.
+   Both are configured in master-admin → system settings
+   (app/services/login_experience.py) and driven by js/script.js.
+   ══════════════════════════════════════════════════════════════ */
+
+.login-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(900px 500px at 75% -10%, rgba(99, 102, 241, .20) 0%, rgba(248, 250, 252, .96) 45%, rgba(241, 245, 249, .98) 100%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+    animation: loginLoaderIn .26s ease both;
+}
+
+.login-loader__card {
+    width: 100%;
+    max-width: 380px;
+    padding: 34px 26px 28px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 24px;
+    box-shadow: 0 30px 70px rgba(15, 23, 42, .20);
+    animation: loginLoaderCardIn .42s cubic-bezier(.2, .9, .25, 1.15) both;
+}
+
+.login-loader__ring {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 16px;
+}
+.login-loader__ring-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid rgba(99, 102, 241, .13);
+}
+.login-loader__ring-spin {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(99, 102, 241, 0) 0 52%, #6366f1 80%, #22d3ee 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    animation: loginLoaderSpin 1.05s linear infinite;
+}
+.login-loader__mark {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    background: url("/static/images/login-mobile-logo.png") center / contain no-repeat;
+}
+.login-loader--done .login-loader__ring-spin {
+    animation: none;
+    background: conic-gradient(#10b981 0 100%);
+}
+.login-loader--done .login-loader__mark { transform: scale(1.06); }
+
+.login-loader__title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+.login-loader__message {
+    font-size: .84rem;
+    line-height: 1.9;
+    color: #64748b;
+    min-height: 1.9em;
+}
+.login-loader__bar {
+    height: 6px;
+    margin: 18px 0 12px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, .13);
+    overflow: hidden;
+}
+.login-loader__bar > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #22d3ee);
+    animation-name: loginLoaderBar;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+}
+.login-loader__step {
+    font-size: .76rem;
+    color: #94a3b8;
+    min-height: 1.6em;
+}
+
+body.dark-mode .login-loader,
+body.dark-theme .login-loader {
+    background: radial-gradient(900px 500px at 75% -10%, rgba(99, 102, 241, .22) 0%, rgba(15, 23, 42, .96) 45%, rgba(2, 6, 23, .98) 100%);
+}
+body.dark-mode .login-loader__card,
+body.dark-theme .login-loader__card {
+    background: #0f172a;
+    border-color: rgba(51, 65, 85, .7);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
+}
+body.dark-mode .login-loader__title,
+body.dark-theme .login-loader__title { color: #f1f5f9; }
+body.dark-mode .login-loader__ring-track,
+body.dark-theme .login-loader__ring-track { border-color: rgba(148, 163, 184, .20); }
+
+@keyframes loginLoaderIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes loginLoaderCardIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes loginLoaderSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes loginLoaderBar {
+    from { width: 4%; }
+    to   { width: 100%; }
+}
+
+/* CAPTCHA lifetime: the countdown hint and the expired state. */
+.captcha-hint {
+    margin: 6px 0 0;
+    font-size: .74rem;
+    color: #64748b;
+    text-align: center;
+}
+.login-card .captcha-hint { font-size: min(0.76rem, 1.6vh); }
+
+.captcha-group.captcha-expired .captcha-input {
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, .12);
+}
+.captcha-group.captcha-expired .captcha-refresh {
+    animation: captchaRefreshPulse 1.4s ease-in-out infinite;
+    border-color: #f43f5e;
+    color: #e11d48;
+}
+.captcha-group.captcha-shake {
+    animation: captchaShake .45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+body.dark-mode .captcha-hint,
+body.dark-theme .captcha-hint { color: #94a3b8; }
+
+@keyframes captchaRefreshPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .30); }
+    50%      { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); }
+}
+@keyframes captchaShake {
+    10%, 90%      { transform: translateX(-2px); }
+    20%, 80%      { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60%      { transform: translateX(7px); }
+}
+
+/* Motion is decoration here: nobody should be forced to watch it. */
+@media (prefers-reduced-motion: reduce) {
+    .login-loader,
+    .login-loader__card,
+    .login-loader__ring-spin,
+    .captcha-group.captcha-expired .captcha-refresh,
+    .captcha-group.captcha-shake {
+        animation: none !important;
+    }
+    .login-loader__bar > i { width: 100%; }
+}
+

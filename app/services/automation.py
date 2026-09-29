@@ -2,9 +2,7 @@
 import os
 import threading
 from datetime import timezone
-from typing import Optional
 import pyodbc
-from app.services.ticketing import store_private_attachment
 
 _SCHEMA_READY = False
 _SCHEMA_LOCK = threading.Lock()
