@@ -284,7 +284,7 @@ final class MasterAdminSettingsTest extends TestCase
         $this->asMasterAdmin();
 
         $this->db->count = 5;
-        $this->db->filterCounts = ['open' => 3, 'resolved' => 2];
+        $this->db->openCount = 3;
         $this->db->rows = [];
 
         $response = $this->get('/master-admin/api/tickets/stats');
@@ -823,6 +823,9 @@ class FakeSettingsConnection extends Connection
     /** The rows behind the ticket detail's event `SELECT`. */
     public array $eventRows = [];
 
+    /** The rows behind the list's `GROUP BY status` tally. */
+    public array $statusCounts = [];
+
     /** The session row behind the registry's `SELECT`. */
     public array $sessionRows = [];
 
@@ -896,13 +899,32 @@ class FakeSettingsConnection extends Connection
      */
     private function respond(string $sql, array $bindings = []): mixed
     {
+        // A **bare** `SELECT COUNT(*)` is a count.  A `COUNT(*)` inside a larger
+        // SELECT is not: the message list carries
+        // `(SELECT COUNT(*) FROM ticket_attachments …)` in its column list, and
+        // matching on the substring alone answered it with a count object, so the
+        // detail's messages came back empty.
+        if (preg_match('/^SELECT\s+COUNT\(\*\)/i', $sql) === 1) {
+            return (object) ['total' => $bindings === [] ? $this->openCountFor($sql) : $this->countFor($bindings)];
+        }
+
+        // The list's per-status tally.
+        if (stripos($sql, 'GROUP BY status') !== false) {
+            return $this->statusCounts;
+        }
+
+        $table = $this->mainFromTable($sql);
+
+        if ($table !== null) {
+            return match ($table) {
+                'ticket_attachments' => $this->attachmentRows,
+                'ticket_messages' => $this->messageRows,
+                'ticket_events' => $this->eventRows,
+                default => $this->rows,
+            };
+        }
+
         return match (true) {
-            stripos($sql, 'COUNT(*)') !== false => (object) ['total' => $bindings === [] ? $this->openCountFor($sql) : $this->countFor($bindings)],
-            stripos($sql, 'FROM tickets') !== false => $this->rows,
-            stripos($sql, 'ticket_messages') !== false => $this->messageRows,
-            stripos($sql, 'ticket_attachments') !== false => $this->attachmentRows,
-            stripos($sql, 'ticket_events') !== false => $this->eventRows,
-            stripos($sql, 'ticket_categories') !== false => $this->rows,
             stripos($sql, 'user_sessions') !== false => $this->sessionRows,
             stripos($sql, 'user_table') !== false => $this->rows,
             stripos($sql, 'system_config') !== false => $this->rows,
@@ -910,6 +932,30 @@ class FakeSettingsConnection extends Connection
             stripos($sql, 'SELECT') !== false => $this->rows,
             default => null,
         };
+    }
+
+    /**
+     * The table the statement itself selects from.
+     *
+     * Both the message and the attachment queries reference the *other* table
+     * inside a subquery, and in the message query that subquery's `FROM` appears
+     * in the string **before** the statement's own — so the first `FROM` in the
+     * raw SQL is the wrong one.  Parenthesised groups are stripped first, which
+     * removes every subquery's `FROM` and leaves the statement's own.
+     */
+    private function mainFromTable(string $sql): ?string
+    {
+        $stripped = $sql;
+
+        while (($without = (string) preg_replace('/\([^()]*\)/', '', $stripped)) !== $stripped) {
+            $stripped = $without;
+        }
+
+        if (preg_match('/FROM\s+(ticket_attachments|ticket_messages|ticket_events|ticket_categories|tickets)\b/i', $stripped, $match) === 1) {
+            return strtolower($match[1]);
+        }
+
+        return null;
     }
 
     /**

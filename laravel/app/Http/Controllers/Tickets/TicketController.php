@@ -10,16 +10,14 @@ use App\Support\Legacy\LegacyPath;
 use App\Support\Legacy\LegacyQuery;
 use App\Support\Legacy\LegacyValidationException;
 use App\Support\Legacy\LegacyWhitespace;
-use App\Support\Ticketing\TicketLookupException;
-use App\Support\Ticketing\TicketPermissionException;
-use App\Support\Ticketing\TicketValidationException;
 use App\Support\Tickets\TicketPayload;
 use App\Support\Tickets\TicketService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -79,7 +77,7 @@ final class TicketController extends Controller
     {
         $this->actor($request);
 
-        return response()->json(['items' => (new TicketService())->categories()]);
+        return response()->json(['items' => (new TicketService)->categories()]);
     }
 
     /**
@@ -152,7 +150,7 @@ final class TicketController extends Controller
         [$actor, $isAdmin, $isMasterAdmin] = $this->actor($request);
 
         return response()->json(
-            (new TicketService())->listTickets(
+            (new TicketService)->listTickets(
                 $actor,
                 $isAdmin,
                 $params['page'],
@@ -180,7 +178,7 @@ final class TicketController extends Controller
 
         [$actor, $isAdmin] = $this->actor($request);
 
-        $ticket = (new TicketService())->getTicket($ticketId, $actor, $isAdmin);
+        $ticket = (new TicketService)->getTicket($ticketId, $actor, $isAdmin);
 
         if ($ticket === null) {
             throw LegacyHttpException::detail(404, 'تیکت پیدا نشد.');
@@ -216,7 +214,7 @@ final class TicketController extends Controller
         }
 
         try {
-            $ticket = (new TicketService())->createTicket(
+            $ticket = (new TicketService)->createTicket(
                 $actor,
                 $isAdmin,
                 $payload['recipient_username'],
@@ -250,7 +248,7 @@ final class TicketController extends Controller
         }
 
         try {
-            $ticket = (new TicketService())->addMessage(
+            $ticket = (new TicketService)->addMessage(
                 $ticketId,
                 $actor,
                 $isAdmin,
@@ -283,7 +281,7 @@ final class TicketController extends Controller
         [$actor, $isAdmin] = $this->actor($request);
 
         try {
-            $ticket = (new TicketService())->updateTicket(
+            $ticket = (new TicketService)->updateTicket(
                 $ticketId,
                 $actor,
                 $isAdmin,
@@ -321,7 +319,7 @@ final class TicketController extends Controller
      * `Path(...).unlink(missing_ok=True)` — so a refused message id does not
      * leave orphaned bytes behind.
      */
-    public function storeAttachment(Request $request, string $ticketId): JsonResponse
+    public function storeAttachment(Request $request, string $ticketId): JsonResponse|Response
     {
         $errors = [];
         $ticketId = $this->pathInt($ticketId, 'ticket_id', $errors);
@@ -380,7 +378,7 @@ final class TicketController extends Controller
 
         try {
             return response()->json(
-                (new TicketService())->addAttachment($ticketId, $actor, $isAdmin, $metadata),
+                (new TicketService)->addAttachment($ticketId, $actor, $isAdmin, $metadata),
             );
         } catch (Throwable $exception) {
             $this->attachments->forget($metadata['path']);
@@ -416,7 +414,7 @@ final class TicketController extends Controller
 
         [$actor, $isAdmin] = $this->actor($request);
 
-        $service = new TicketService();
+        $service = new TicketService;
 
         $attachment = $service->attachment($ticketId, $attachmentId, $actor, $isAdmin);
 
@@ -480,26 +478,19 @@ final class TicketController extends Controller
     }
 
     /**
-     * `_domain_error(exc)` — the three mapped exception types, and the module's
-     * own 500.
+     * `_domain_error(exc)` — the Python's mapping, with the service's refusals
+     * already carrying their status.
      *
-     * The service raises the Python's domain errors as markers; the statuses
-     * and the default message are the Python's.
+     * The service raises the Python's `PermissionError`/`LookupError`/
+     * `ValueError` as {@see LegacyHttpException} with the status `_domain_error`
+     * would have chosen (403/404/422); anything else is the module's own 500.
      *
      * @throws LegacyHttpException
      */
     private function domainError(Throwable $exception): LegacyHttpException
     {
-        if ($exception instanceof TicketPermissionException) {
-            return LegacyHttpException::detail(403, $exception->getMessage());
-        }
-
-        if ($exception instanceof TicketLookupException) {
-            return LegacyHttpException::detail(404, $exception->getMessage());
-        }
-
-        if ($exception instanceof TicketValidationException) {
-            return LegacyHttpException::detail(422, $exception->getMessage());
+        if ($exception instanceof LegacyHttpException) {
+            return $exception;
         }
 
         return LegacyHttpException::detail(500, 'خطا در پردازش تیکت.');

@@ -2,12 +2,10 @@
 
 namespace App\Support\Tickets;
 
+use App\Support\Legacy\LegacyHttpException;
 use App\Support\Legacy\LegacySerializer;
 use App\Support\Legacy\LegacyWhitespace;
 use App\Support\Ticketing\NotificationPublisher;
-use App\Support\Ticketing\TicketLookupException;
-use App\Support\Ticketing\TicketPermissionException;
-use App\Support\Ticketing\TicketValidationException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -228,8 +226,8 @@ final class TicketService
      * `get_ticket()` — one ticket with its messages, attachments and events.
      *
      * @return array<string, mixed>|null `null` when the ticket does not exist
-     *                                     **or** the actor may not see it — the
-     *                                     two are one answer in the Python.
+     *                                   **or** the actor may not see it — the
+     *                                   two are one answer in the Python.
      */
     public function getTicket(int $ticketId, string $actor, bool $isAdmin): ?array
     {
@@ -329,13 +327,13 @@ final class TicketService
     ): array {
         return DB::connection()->transaction(function () use ($actor, $isAdmin, $recipientUsername, $subject, $body, $priority, $categoryId): array {
             if (! in_array(mb_strtolower($recipientUsername), self::masterAdminUsernames(), true)) {
-                throw new TicketPermissionException('تیکت‌های پشتیبانی فقط برای مدیر اصلی سامانه ارسال می‌شوند.');
+                throw LegacyHttpException::detail(403, 'تیکت‌های پشتیبانی فقط برای مدیر اصلی سامانه ارسال می‌شوند.');
             }
 
             $recipient = $this->verifyUser($recipientUsername);
 
             if (mb_strtolower($recipient) === mb_strtolower($actor)) {
-                throw new TicketValidationException('ارسال تیکت برای خودتان مجاز نیست.');
+                throw LegacyHttpException::detail(422, 'ارسال تیکت برای خودتان مجاز نیست.');
             }
 
             // Re-checked after the pydantic strip: `" a"` is two characters long
@@ -344,7 +342,7 @@ final class TicketService
             $body = $this->cleanText($body, 'توضیحات', 2, 4000);
 
             if (! in_array($priority, self::TICKET_PRIORITIES, true)) {
-                throw new TicketValidationException('اولویت تیکت معتبر نیست.');
+                throw LegacyHttpException::detail(422, 'اولویت تیکت معتبر نیست.');
             }
 
             if ($categoryId !== null) {
@@ -354,7 +352,7 @@ final class TicketService
                 );
 
                 if ($exists === null) {
-                    throw new TicketLookupException('دسته‌بندی تیکت پیدا نشد.');
+                    throw LegacyHttpException::detail(404, 'دسته‌بندی تیکت پیدا نشد.');
                 }
             }
 
@@ -411,21 +409,21 @@ final class TicketService
             $body = $this->cleanText($body, 'متن پیام', 1, 4000);
 
             if (! in_array($visibility, self::MESSAGE_VISIBILITIES, true)) {
-                throw new TicketValidationException('نوع پیام معتبر نیست.');
+                throw LegacyHttpException::detail(422, 'نوع پیام معتبر نیست.');
             }
 
             $ticket = $this->ticketRow($ticketId, $actor, $isAdmin);
 
             if ($ticket === null) {
-                throw new TicketLookupException('تیکت پیدا نشد.');
+                throw LegacyHttpException::detail(404, 'تیکت پیدا نشد.');
             }
 
             if ($visibility === 'internal' && ! $isAdmin) {
-                throw new TicketPermissionException('ثبت یادداشت داخلی فقط برای پشتیبانی مجاز است.');
+                throw LegacyHttpException::detail(403, 'ثبت یادداشت داخلی فقط برای پشتیبانی مجاز است.');
             }
 
             if ($ticket['status'] === 'closed') {
-                throw new TicketValidationException('تیکت بسته‌شده قابل پاسخ نیست.');
+                throw LegacyHttpException::detail(422, 'تیکت بسته‌شده قابل پاسخ نیست.');
             }
 
             $messageId = DB::connection()->table('ticket_messages')->insertGetId([
@@ -503,27 +501,27 @@ final class TicketService
             $ticket = $this->ticketRow($ticketId, $actor, $isAdmin);
 
             if ($ticket === null) {
-                throw new TicketLookupException('تیکت پیدا نشد.');
+                throw LegacyHttpException::detail(404, 'تیکت پیدا نشد.');
             }
 
             if (! $isAdmin && ($status !== null || $priority !== null || $categoryId !== null || $assignedTo !== null)) {
                 if (! in_array($status, ['resolved', 'open'], true) || $priority !== null || $categoryId !== null || $assignedTo !== null) {
-                    throw new TicketPermissionException('تغییر این مشخصات فقط برای پشتیبانی مجاز است.');
+                    throw LegacyHttpException::detail(403, 'تغییر این مشخصات فقط برای پشتیبانی مجاز است.');
                 }
             }
 
             if ($status !== null) {
                 if (! in_array($status, self::TICKET_STATUSES, true)) {
-                    throw new TicketValidationException('وضعیت تیکت معتبر نیست.');
+                    throw LegacyHttpException::detail(422, 'وضعیت تیکت معتبر نیست.');
                 }
 
                 if ($status !== $ticket['status'] && ! in_array($status, self::ALLOWED_TRANSITIONS[$ticket['status']] ?? [], true)) {
-                    throw new TicketValidationException('تغییر وضعیت انتخاب‌شده مجاز نیست.');
+                    throw LegacyHttpException::detail(422, 'تغییر وضعیت انتخاب‌شده مجاز نیست.');
                 }
             }
 
             if ($priority !== null && ! in_array($priority, self::TICKET_PRIORITIES, true)) {
-                throw new TicketValidationException('اولویت تیکت معتبر نیست.');
+                throw LegacyHttpException::detail(422, 'اولویت تیکت معتبر نیست.');
             }
 
             if ($categoryId !== null) {
@@ -533,7 +531,7 @@ final class TicketService
                 );
 
                 if ($exists === null) {
-                    throw new TicketLookupException('دسته‌بندی تیکت پیدا نشد.');
+                    throw LegacyHttpException::detail(404, 'دسته‌بندی تیکت پیدا نشد.');
                 }
             }
 
@@ -666,11 +664,11 @@ final class TicketService
             $ticket = $this->ticketRow($ticketId, $actor, $isAdmin);
 
             if ($ticket === null) {
-                throw new TicketLookupException('تیکت پیدا نشد.');
+                throw LegacyHttpException::detail(404, 'تیکت پیدا نشد.');
             }
 
             if ($ticket['status'] === 'closed') {
-                throw new TicketValidationException('تیکت بسته‌شده قابل تغییر نیست.');
+                throw LegacyHttpException::detail(422, 'تیکت بسته‌شده قابل تغییر نیست.');
             }
 
             $messageVisibility = 'public';
@@ -682,7 +680,7 @@ final class TicketService
                 );
 
                 if ($messageRow === null) {
-                    throw new TicketLookupException('پیام مقصد پیوست پیدا نشد.');
+                    throw LegacyHttpException::detail(404, 'پیام مقصد پیوست پیدا نشد.');
                 }
 
                 $messageVisibility = trim((string) $messageRow->visibility);
@@ -898,7 +896,7 @@ final class TicketService
         );
 
         if ($row === null) {
-            throw new TicketLookupException('کاربر موردنظر پیدا نشد.');
+            throw LegacyHttpException::detail(404, 'کاربر موردنظر پیدا نشد.');
         }
 
         return LegacyWhitespace::strip((string) $row->username);
@@ -918,11 +916,11 @@ final class TicketService
         $length = mb_strlen($value);
 
         if ($length < $minimum) {
-            throw new TicketValidationException($field.' الزامی است.');
+            throw LegacyHttpException::detail(422, $field.' الزامی است.');
         }
 
         if ($length > $maximum) {
-            throw new TicketValidationException('طول '.$field.' بیشتر از حد مجاز است.');
+            throw LegacyHttpException::detail(422, 'طول '.$field.' بیشتر از حد مجاز است.');
         }
 
         return $value;

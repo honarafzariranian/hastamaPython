@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
  * Every handler in `app/main.py` for this generation is a stub:
  *
  * ```python
+ *
  * @app.get("/get_ticket_requests_admin")
  * async def get_ticket_requests_admin(request: Request):
  *     return JSONResponse(status_code=410, content={"success": False, "error": "این مسیر قدیمی تیکت منسوخ شده است."})

@@ -164,13 +164,13 @@ final class PublicSupportTicketController extends Controller
             ."📍 **آی‌پی درخواست‌دهنده:** {$ip}\n"
             // The Python read the machine's local clock (`time.strftime`); this
             // deployment's wall clock is `hastama.display_timezone`.
-            ."🕐 **زمان درخواست:** ".now(LegacyDate::timezone())->format('Y-m-d H:i:s')."\n\n"
-            ."⚠️ این کاربر نام کاربری و رمز عبور خود را فراموش کرده و امکان استفاده از بازیابی رمز عبور را ندارد. "
-            ."لطفاً پس از بر هویت، نام کاربری و رمز عبور جدیدی برای ایشان ایجاد کنید."
+            .'🕐 **زمان درخواست:** '.now(LegacyDate::timezone())->format('Y-m-d H:i:s')."\n\n"
+            .'⚠️ این کاربر نام کاربری و رمز عبور خود را فراموش کرده و امکان استفاده از بازیابی رمز عبور را ندارد. '
+            .'لطفاً پس از بر هویت، نام کاربری و رمز عبور جدیدی برای ایشان ایجاد کنید.'
         );
 
         try {
-            $result = (new TicketService())->createTicket(
+            $result = (new TicketService)->createTicket(
                 actor: '__anonymous__',
                 isAdmin: false,
                 recipientUsername: 'ali',

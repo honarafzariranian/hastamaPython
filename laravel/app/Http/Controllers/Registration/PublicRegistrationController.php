@@ -13,6 +13,7 @@ use App\Support\Legacy\LegacySerializer;
 use App\Support\Legacy\PersianText;
 use App\Support\Registration\DisplayText;
 use App\Support\Registration\DisplayTextError;
+use App\Support\Registration\PasswordHashBinding;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -307,6 +308,10 @@ final class PublicRegistrationController extends Controller
         // enough to need the rate limit above.
         $passwordHash = LegacyPassword::hash($password);
 
+        // The `varbinary(64)` binding, chosen per driver by the shared helper —
+        // the offline suite runs on sqlite, which has no `CONVERT()`.
+        [$hashExpression, $hashParameter] = PasswordHashBinding::for($passwordHash);
+
         $ipAddress = ClientAddress::for($request);
         $userAgent = ClientAddress::userAgent($request);
 
@@ -358,7 +363,7 @@ final class PublicRegistrationController extends Controller
                  (request_id, first_name, last_name, father_name, national_id, mobile,
                   username, password_hash, department, work_hours, substitute,
                   created_ip, created_user_agent)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, '.LegacyCredentialWriter::HASH_EXPRESSION.', ?, ?, ?, ?, ?)',
+                 VALUES (?, ?, ?, ?, ?, ?, ?, '.$hashExpression.', ?, ?, ?, ?, ?)',
                 [
                     $requestId,
                     $firstName,
@@ -367,7 +372,7 @@ final class PublicRegistrationController extends Controller
                     $nationalId !== '' ? $nationalId : null,
                     $mobile !== '' ? $mobile : null,
                     $username,
-                    bin2hex($passwordHash),
+                    $hashParameter,
                     $department,
                     $workHours !== '' ? $workHours : null,
                     $substitute !== '' ? $substitute : null,

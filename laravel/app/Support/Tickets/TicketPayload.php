@@ -179,8 +179,8 @@ final class TicketPayload
      * @param  array<string, mixed>  $fields  The decoded body.
      * @param  array<int, array<string, mixed>>  $errors  Appended to, in place.
      * @param  string|null  $stripMessage  The validator's message when the
-     *                                      stripped value is empty, or `null`
-     *                                      when the field has no validator.
+     *                                     stripped value is empty, or `null`
+     *                                     when the field has no validator.
      * @return string|null The accepted value, or `null` when the field is absent
      *                     (and not required) or was refused.
      */
@@ -285,7 +285,6 @@ final class TicketPayload
      *
      * @param  array<string, mixed>  $fields
      * @param  array<int, array<string, mixed>>  $errors  Appended to, in place.
-     * @return int|null
      */
     private static function categoryField(array $fields, array &$errors): ?int
     {
