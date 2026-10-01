@@ -105,7 +105,7 @@ final class ArazDeviceController extends Controller
 
             return response()->json([
                 'device_time' => $deviceTime->datetime()->format('Y-m-d\TH:i:s'),
-                'server_time' => (new DateTimeImmutable())->format('Y-m-d\TH:i:s.u'),
+                'server_time' => (new DateTimeImmutable)->format('Y-m-d\TH:i:s.u'),
             ]);
         } finally {
             $device->disconnect();
@@ -126,7 +126,7 @@ final class ArazDeviceController extends Controller
 
             return response()->json([
                 'success' => $success,
-                'server_time' => (new DateTimeImmutable())->format('Y-m-d\TH:i:s.u'),
+                'server_time' => (new DateTimeImmutable)->format('Y-m-d\TH:i:s.u'),
             ]);
         } finally {
             $device->disconnect();

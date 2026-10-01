@@ -221,6 +221,7 @@ final class RegistrationTest extends TestCase
     #[Test]
     public function submit_stores_the_request_and_never_returns_the_password(): void
     {
+        $this->mockDatabaseConnection();
         DB::shouldReceive('selectOne')->andReturn(null);
         DB::shouldReceive('insert')->once()->andReturn(1);
 
@@ -229,7 +230,7 @@ final class RegistrationTest extends TestCase
             'last_name' => 'رضایی',
             'username' => 'alireza',
             'password' => 'Sup3rSecret!',
-            'national_id' => '0012345678',
+            'national_id' => '0012345679',
             'mobile' => '09123456789',
             'department' => 'بیوشیمی',
         ]);
@@ -293,7 +294,7 @@ final class RegistrationTest extends TestCase
                 'علی',
                 'رضایی',
                 'بیوشیمی',
-                null,
+                '',
                 '16:00 - 09:00'
             )
             ->andReturnNull();
@@ -345,6 +346,7 @@ final class RegistrationTest extends TestCase
     #[Test]
     public function submit_is_rate_limited_after_five_attempts(): void
     {
+        $this->mockDatabaseConnection();
         DB::shouldReceive('selectOne')->andReturn(null);
         DB::shouldReceive('insert')->andReturn(1);
 
@@ -427,6 +429,18 @@ final class RegistrationTest extends TestCase
     // ── Helpers ──────────────────────────────────────────────────────────
 
     /**
+     * Mock the `DB` facade's `connection()`, which `PasswordHashBinding`
+     * calls to choose its `varbinary` expression.  Without this, a mocked
+     * facade answers the call with a `BadMethodCallException`.
+     */
+    private function mockDatabaseConnection(): void
+    {
+        $connection = Mockery::mock();
+        $connection->shouldReceive('getDriverName')->andReturn('sqlite');
+        DB::shouldReceive('connection')->andReturn($connection);
+    }
+
+    /**
      * Establish the session an administrator's browser would hold: the
      * Laravel guard identity, the legacy session flags, and a registry token
      * (the `legacy.session:optional` middleware fails open when the registry
@@ -444,7 +458,7 @@ final class RegistrationTest extends TestCase
 
     private function signIn(string $username, bool $isAdmin): static
     {
-        $user = new User();
+        $user = new User;
         $user->setAttribute('username', $username);
         $user->setAttribute('role', $isAdmin ? 'admin' : 'user');
 

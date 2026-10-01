@@ -21,12 +21,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('api/araz')->group(function (): void {
-    Route::get('/config', [ArazConfigController::class, 'show'])
-        ->name('araz.config.show');
-    Route::post('/config', [ArazConfigController::class, 'update'])
-        ->name('araz.config.update');
-
     Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void {
+        Route::get('/config', [ArazConfigController::class, 'show'])
+            ->name('araz.config.show');
+        Route::post('/config', [ArazConfigController::class, 'update'])
+            ->name('araz.config.update');
         Route::get('/test', [ArazDeviceController::class, 'test'])
             ->name('araz.test');
         Route::get('/time', [ArazDeviceController::class, 'time'])

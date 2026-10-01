@@ -87,12 +87,22 @@ final class ArazDevice
         $this->socket = null;
     }
 
-    /** Whether the device is reachable and answered `test_connection`. */
+    /**
+     * Whether the device answered `test_connection`.
+     *
+     * The Python catches every failure here and answers `false` rather than
+     * propagating, so a device that accepts the connection but misbehaves on
+     * this verb is reported as `connected: false` rather than throwing.
+     */
     public function testConnection(): bool
     {
-        $this->sendRequest(self::TEST_CONNECTION);
+        try {
+            $this->sendRequest(self::TEST_CONNECTION);
 
-        return true;
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

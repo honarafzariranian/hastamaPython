@@ -199,7 +199,7 @@ final class ArazBridgeSyncController extends Controller
                     } catch (Throwable $exception) {
                         $failed++;
                         $errors[] = "{$record['username']}@{$record['tarikh']}: ".$exception::class;
-                        Log::warning("Bridge sync record error: ".$exception::class.': '.$exception->getMessage());
+                        Log::warning('Bridge sync record error: '.$exception::class.': '.$exception->getMessage());
                     }
                 }
             });
@@ -413,13 +413,13 @@ final class ArazBridgeSyncController extends Controller
             foreach (['username', 'tarikh', 'vorood', 'khorooj'] as $field) {
                 if (! array_key_exists($field, $fields)) {
                     throw new LegacyValidationException([
-                        $this->error('missing', $field, 'Field required', $record, [], [$index]),
+                        $this->recordError('missing', $index, $field, 'Field required', $record),
                     ]);
                 }
 
                 if (! is_string($fields[$field])) {
                     throw new LegacyValidationException([
-                        $this->error('string_type', $field, 'Input should be a valid string', $fields[$field], [], [$index]),
+                        $this->recordError('string_type', $index, $field, 'Input should be a valid string', $fields[$field]),
                     ]);
                 }
 
@@ -466,8 +466,28 @@ final class ArazBridgeSyncController extends Controller
     }
 
     /**
+     * A field inside one record of the `records` list — FastAPI's `loc` is the
+     * whole path: `body → records → index → field`.
+     *
+     * @return array<string, mixed>
+     */
+    private function recordError(
+        string $type,
+        int $index,
+        string $field,
+        string $message,
+        mixed $input,
+    ): array {
+        return [
+            'type' => $type,
+            'loc' => ['body', 'records', $index, $field],
+            'msg' => $message,
+            'input' => $input,
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $ctx
-     * @param  array<int, mixed>  $locSuffix
      * @return array<string, mixed>
      */
     private function error(
@@ -476,11 +496,10 @@ final class ArazBridgeSyncController extends Controller
         string $message,
         mixed $input,
         array $ctx = [],
-        array $locSuffix = [],
     ): array {
         $error = [
             'type' => $type,
-            'loc' => array_merge(['body', $field], $locSuffix),
+            'loc' => ['body', $field],
             'msg' => $message,
             'input' => $input,
         ];

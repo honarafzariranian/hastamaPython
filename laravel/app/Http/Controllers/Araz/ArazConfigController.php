@@ -70,8 +70,6 @@ final class ArazConfigController extends Controller
 
     /**
      * `ip: Optional[str]` — a present value must be a string.
-     *
-     * @return string
      */
     private function stringField(mixed $value, string $field): string
     {
@@ -90,8 +88,6 @@ final class ArazConfigController extends Controller
      * Pydantic's lax integer parse: an int, or a string of digits, or an
      * integral float.  A string that is not digits is `int_parsing`; any
      * other non-integer is `int_type`.
-     *
-     * @return int
      */
     private function intField(mixed $value, string $field): int
     {
@@ -119,8 +115,6 @@ final class ArazConfigController extends Controller
 
     /**
      * `timeout: Optional[float]` — an int, a float, or a numeric string.
-     *
-     * @return float
      */
     private function floatField(mixed $value, string $field): float
     {

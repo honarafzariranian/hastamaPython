@@ -11,7 +11,6 @@ use App\Support\Legacy\LegacyQuery;
 use App\Support\Legacy\LegacySerializer;
 use App\Support\Registration\ApprovedAccountWriter;
 use App\Support\Registration\DisplayText;
-use App\Support\Registration\DisplayTextError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -226,15 +225,17 @@ final class AdminRegistrationController extends Controller
             )->next_id;
 
             DB::transaction(function () use ($row, $nextId, $adminUsername, $requestId): void {
+                // The Python's `req["…"] or ""` — a NULL department,
+                // substitute or work-hours is stored as an empty string.
                 $this->accounts->create(
                     $nextId,
                     $row->username,
                     $row->password_hash,
                     $row->first_name,
                     $row->last_name,
-                    $row->department,
-                    $row->substitute,
-                    $row->work_hours,
+                    $row->department ?? '',
+                    $row->substitute ?? '',
+                    $row->work_hours ?? '',
                 );
 
                 DB::update(

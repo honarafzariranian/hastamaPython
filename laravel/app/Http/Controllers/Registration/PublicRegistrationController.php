@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Registration;
 
 use App\Http\Controllers\Controller;
 use App\Services\Audit\AuditLogger;
-use App\Services\Auth\LegacyCredentialWriter;
 use App\Support\Http\ClientAddress;
 use App\Support\Legacy\LegacyIds;
 use App\Support\Legacy\LegacyPassword;
