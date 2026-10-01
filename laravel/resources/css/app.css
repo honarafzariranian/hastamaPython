@@ -1,0 +1,213 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind scans these trees for class names.  Being explicit keeps the build
+ * deterministic (the scaffold only listed the pagination vendor views).
+ */
+@source '../../resources/views/**/*.blade.php';
+@source '../../resources/js/**/*.vue';
+@source '../../resources/js/**/*.js';
+
+/*
+ * Dark mode is driven by the theme contract that the existing application
+ * already established in app/static/js/theme.js:
+ *
+ *   localStorage 'hastama-theme' in {'light','dark'}, DEFAULT LIGHT
+ *   (the existing app never follows prefers-color-scheme)
+ *   <html data-theme="dark">  plus the legacy classes 'dark-mode' / 'dark-theme'
+ *
+ * `data-theme` on <html> is the signal Tailwind reads here; the legacy classes
+ * are still applied for any ported stylesheet that selects on them.
+ */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * Brand palette — copied from the running application's design tokens
+ * (app/static/css/call-tokens.css) so the migrated UI keeps the same colours
+ * instead of importing a generic theme.
+ */
+@theme {
+    --font-sans: 'Vazir', Tahoma, Arial, sans-serif;
+
+    --color-primary: #0ea5e9;
+    --color-primary-dark: #0284c7;
+    --color-primary-deeper: #0369a1;
+    --color-primary-light: #38bdf8;
+
+    --color-brand-purple: #8b5cf6;
+    --color-brand-teal: #14b8a6;
+    --color-brand-gold: #f0c040;
+
+    --color-success: #22c55e;
+    --color-error: #ef4444;
+    --color-warning: #f59e0b;
+
+    --radius-token-sm: 8px;
+    --radius-token-md: 12px;
+    --radius-token-lg: 16px;
+    --radius-token-xl: 20px;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Typography — local Vazir only
+ * ---------------------------------------------------------------------------
+ * No external font host is used anywhere.  public/fonts holds the same three
+ * files the current application serves from app/static/fonts.
+ */
+@font-face {
+    font-family: 'Vazir';
+    src: local('Vazir'),
+        url('/fonts/Vazir.woff2') format('woff2'),
+        url('/fonts/Vazir.woff') format('woff'),
+        url('/fonts/Vazir.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Legacy-compatible tokens
+ * ---------------------------------------------------------------------------
+ * The existing stylesheets are written against `--c-*` (call tokens) and
+ * `--dk-*` (dark theme) custom properties.  Re-declaring them here means a
+ * stylesheet ported in a later phase keeps working while the layouts are
+ * rebuilt as components, instead of needing a rewrite at the same time.
+ */
+:root {
+    --c-primary: #0ea5e9;
+    --c-primary-dark: #0284c7;
+    --c-primary-deeper: #0369a1;
+    --c-primary-light: #38bdf8;
+    --c-primary-ghost: rgb(14 165 233 / 0.08);
+
+    --c-purple: #8b5cf6;
+    --c-teal: #14b8a6;
+    --c-gold: #f0c040;
+
+    --c-success: #22c55e;
+    --c-error: #ef4444;
+    --c-warning: #f59e0b;
+
+    --c-font: 'Vazir', Tahoma, Arial, sans-serif;
+}
+
+[data-theme='dark'] {
+    /* Values taken verbatim from app/static/css/dark-theme.css `body.dark-mode` */
+    --dk-bg: #0f1725;
+    --dk-bg-2: #131c2d;
+    --dk-surface: #182233;
+    --dk-surface-2: #1e2a3d;
+    --dk-surface-3: #243349;
+    --dk-line: #27334a;
+    --dk-border: #2c3a52;
+    --dk-text: #e8edf5;
+    --dk-text-2: #9fadc2;
+    --dk-text-3: #7c8aa0;
+    --dk-accent: #38bdf8;
+    --dk-accent-2: #22c55e;
+    --dk-danger: #f87171;
+    --dk-warn: #fbbf24;
+    --dk-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+    --dk-shadow-sm: 0 4px 14px rgb(0 0 0 / 0.35);
+
+    color-scheme: dark;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Base layer
+ * ---------------------------------------------------------------------------
+ */
+@layer base {
+    html {
+        /* The whole product is Persian RTL; direction is set in the document
+           element, but box-direction defaults are normalised here too. */
+        font-family: var(--c-font);
+        -webkit-text-size-adjust: 100%;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100dvh;
+        background-color: #f4f7fb;
+        color: #0f172a;
+        transition: background-color 250ms ease, color 250ms ease;
+    }
+
+    [data-theme='dark'] body {
+        background-color: var(--dk-bg);
+        color: var(--dk-text);
+    }
+
+    /* Native controls (scrollbar, select, date picker) follow the theme. */
+    [data-theme='dark'] {
+        color-scheme: dark;
+    }
+
+    :focus-visible {
+        outline: 3px solid rgb(14 165 233 / 0.45);
+        outline-offset: 2px;
+    }
+
+    /* Printing is always light so paper reports stay legible. */
+    @media print {
+        body,
+        [data-theme='dark'] body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+    }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Component helpers used by the shell
+ * ---------------------------------------------------------------------------
+ */
+@layer components {
+    .h-card {
+        border-radius: var(--radius-token-lg);
+        border: 1px solid rgb(15 23 42 / 0.08);
+        background: #fff;
+        box-shadow: 0 4px 16px rgb(15 23 42 / 0.06);
+    }
+
+    [data-theme='dark'] .h-card {
+        border-color: var(--dk-border);
+        background: var(--dk-surface);
+        box-shadow: var(--dk-shadow-sm);
+    }
+
+    .h-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: var(--radius-token-md);
+        padding: 0.55rem 1.1rem;
+        font-weight: 600;
+        transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    }
+
+    .h-btn-primary {
+        background: var(--c-primary);
+        color: #fff;
+    }
+
+    .h-btn-primary:hover {
+        background: var(--c-primary-dark);
+    }
+
+    .h-btn-ghost {
+        border: 1px solid rgb(15 23 42 / 0.12);
+        color: inherit;
+        background: transparent;
+    }
+
+    [data-theme='dark'] .h-btn-ghost {
+        border-color: var(--dk-border);
+    }
+}

@@ -112,3 +112,9 @@ logs/
 # Kept out of the index so a temporary harness can never be committed by accident.
 _tmp*/
 _tmp*
+
+# Migration audit extraction harness: the scripts regenerate the inventories in
+# docs/migration/ from the live source tree and the live database.  The raw dumps
+# (schema.json, routes.json, frontend.json, triggers.sql) are regenerable, so only
+# the hand-written documents under docs/migration/ are tracked.
+.audit/
