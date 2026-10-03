@@ -15,13 +15,42 @@ use Symfony\Component\HttpFoundation\Response;
  * wire, with the same content type and the same headers, so a browser, a
  * service worker or a crawler cannot tell the two servers apart.
  *
- * The two files are served from the Python tree (`app/static/…`) rather than
- * copied into `public/`, because the running deployment's copy is the source of
+ * They are served from the Python tree (`app/static/…`) rather than copied into
+ * `public/`, because the running deployment's copy is the source of
  * truth during the side-by-side period — a favicon or a service worker that
  * drifted between the two trees would be a bug nobody can see in a diff.
  */
 final class StaticAssetsController extends Controller
 {
+    /**
+     * The `Content-Type` values the Python's `mimetypes` table produced for the
+     * extensions this tree actually carries.
+     *
+     * A map rather than a runtime guess because the only files the application
+     * serves from here are images, fonts, stylesheets and MP3s, and a
+     * `nosniff`-protected response must not depend on what the host happens to
+     * have registered for `.mp3`.
+     *
+     * @var array<string, string>
+     */
+    private const MIME = [
+        'css' => 'text/css',
+        'gif' => 'image/gif',
+        'ico' => 'image/x-icon',
+        'jpeg' => 'image/jpeg',
+        'jpg' => 'image/jpeg',
+        'js' => 'text/javascript',
+        'json' => 'application/json',
+        'mp3' => 'audio/mpeg',
+        'png' => 'image/png',
+        'svg' => 'image/svg+xml',
+        'ttf' => 'font/ttf',
+        'txt' => 'text/plain',
+        'webp' => 'image/webp',
+        'woff' => 'font/woff',
+        'woff2' => 'font/woff2',
+    ];
+
     /**
      * `GET /favicon.ico` — the icon itself.
      *
@@ -46,6 +75,60 @@ final class StaticAssetsController extends Controller
         return $this->serveFile('sw.js', 'application/javascript', [
             'Service-Worker-Allowed' => '/',
             'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
+    }
+
+    /**
+     * `GET /static/{path}` — the legacy static tree.
+     *
+     * The Python mounted the whole directory (`app.mount("/static",
+     * StaticFiles(directory="app/static"))`), and two of its subtrees are
+     * referenced by URL from the call surfaces: `/static/audio/sample_call/…`
+     * (the 2 000 spoken-number MP3s a display plays for a call) and
+     * `/static/slides/…` (the images the wall screens cycle between calls).  The
+     * two JSON endpoints hand out exactly those URLs, so unless the same paths
+     * answer here, the TV shows a broken `<img>` and stays silent.
+     *
+     * The tree is served from the Python checkout for the same reason the favicon
+     * is: an uploaded slide or a re-rendered MP3 must appear on both servers on
+     * the same day, not only on whichever one copied it last.
+     *
+     * What `StaticFiles` guaranteed and is reproduced here: only regular files
+     * below the root are ever read (a `..`, an empty or absolute segment, or a
+     * symlink escaping the tree is a 404), the extension decides the
+     * `Content-Type`, and `BinaryFileResponse` supplies `Last-Modified`,
+     * `Accept-Ranges` and range slicing, which is what lets an `<audio>` seek.
+     *
+     * No directory listing and no `.html` fallback exist on either server, so a
+     * path naming a directory is simply a 404 here too.  An extension the map
+     * does not know is `application/octet-stream` rather than a guess: a stray
+     * `.html` file in the tree must never execute on this origin.
+     */
+    public function legacyAsset(string $path): Response
+    {
+        $relative = str_replace('\\', '/', trim($path, '/'));
+
+        if ($relative === '' || str_contains($relative, "\0")) {
+            abort(404);
+        }
+
+        foreach (explode('/', $relative) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                abort(404);
+            }
+        }
+
+        $root = realpath(base_path('../app/static'));
+        $file = $root === false ? false : realpath($root.'/'.$relative);
+
+        // `realpath` resolves symlinks, so the containment test cannot be walked
+        // around with a link planted inside the tree.
+        if ($file === false || ! is_file($file) || ! str_starts_with($file, $root.DIRECTORY_SEPARATOR)) {
+            abort(404);
+        }
+
+        return new BinaryFileResponse($file, Response::HTTP_OK, [
+            'Content-Type' => self::MIME[strtolower(pathinfo($file, PATHINFO_EXTENSION))] ?? 'application/octet-stream',
         ]);
     }
 

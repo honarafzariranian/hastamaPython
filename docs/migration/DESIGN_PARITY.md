@@ -324,6 +324,74 @@ the bridge markers, so it keeps the bundle's order effects; it has not been
 measured against `register.html` yet.  The real fix for this whole class of
 leak remains the per-route stylesheet set in `§7`.
 
+### 3.7 The call display lost its layout chain and its runtime — **fixed**
+
+Reported as *“`/call-display` must look and behave exactly like the Python
+page”*.  Two independent defects, both from the same cause: the page had been
+rewritten as a Vue screen instead of ported from
+`app/templates/call-display.html` + `app/static/js/call-display.js`.
+
+**Layout.**  `call-display.css` hangs the screen's full-screen grid on
+`html, body` (`overflow:hidden`, `min-height:100vh`, a flex column) and relies
+on `main.cd-content { flex: 1 }` to place the hero.  In the SPA that chain is
+cut: the content lives in
+`#app → .min-h-screen.bg-gray-50 … → .p-4 sm:p-6 → .router-content → .call-display-page`,
+so `flex: 1` applied to nothing and the whole screen collapsed into a
+`display:block` stack.  The bundle also imports `dark-theme.css`, which
+`call-display.html` never loads.
+
+Fixed without touching any legacy file, in the component's own `<style>`:
+
+| rule | what it restores |
+|---|---|
+| `:is(html, body):has(.cd-slideshow)` → `--cd-bg-deep`, `--cd-text`, `color-scheme: light`, `background-image: none` | the display's own body colours, and kills `dark-theme.css:1317`'s `body.dark-mode` gradient in both themes |
+| `#app:has(.cd-slideshow)`, `… .call-display-page` → `width/height: 100%`, flex column, `overflow: hidden` | the `html → body → main` chain, so `.cd-content { flex: 1 }` measures like the Python page |
+| `applyPythonDocument()` on mount | the document's own `<title>سامانه فراخوان نمونه‌گیری — نمایشگر</title>`, `/favicon.ico?v=20260812`, `body.call-display-page`, and `dark-mode`/`dark-theme`/`data-theme` removed from `<html>`/`<body>` |
+
+`ownChrome` and the route's `public` meta already skip `AppLayout`'s header and
+constrained `<main>` (`resources/js/layouts/AppLayout.vue:176`), so the page
+element is the only element between `#app` and the display's markup.  The
+document state is saved and restored on unmount, the same contract
+`CallManagementPage.vue:413` uses for its `cs-theme`.
+
+**Markup.**  The Vue template now reproduces the template element-for-element —
+`cd-slideshow` → particles → overlay → topbar → `main.cd-content` → footer —
+including `id`s the script addresses (`heroCall`, `slot1..4`, `statusDot`,
+`statusText`), which the old Vue page had renamed.  A Vitest test parses the
+Jinja template with a mini DOM parser (tolerant of `{{ }}`/`@`/`:` in attribute
+values, which the HTML spec does not allow in a name) and walks both trees node
+by node: tag, attributes, classes and text.  The only tolerated deltas are the
+Inertia wrapper, the bindings' braces, the `…` comment markers and the `is-*`
+/`cd-status-row--*` classes the scripts add at runtime.
+
+**Behaviour.**  Slides never turned because the CSS keys on `.is-active`
+while the page toggled `.cd-slide-visible`; a called number was silent because
+the page watched a `call-display-audio` window event that nothing in either
+backend dispatches; the `activateOverlay` div was never rendered, so the
+autoplay unlock had nothing to click; `hideChrome()` did not exist, so a screen
+with slides kept its header, footer and queue panel on air; and a reload sent
+the last call back to every TV (`renderHero` replayed no animation,
+`loadDisplayQueue` did not suppress it).  Each was ported from the reference
+script rather than re-invented — including its quirks, such as `initAudio()`
+setting `audioReady = true` unconditionally after the play chain, and
+`refresh_display` reloading through a `sessionStorage` flag.
+
+**Assets.**  `/static/audio/sample_call/fa-IR-DilaraNeural/*.mp3` (2000
+tracks) and `/static/slides/*` — the URLs `/api/calls/slides/active` publishes
+— were served by FastAPI's `StaticFiles` mount (`app/main.py:1077`) and had no
+Laravel counterpart.  `GET /static/{path}` now reads the same tree
+(`StaticAssetsController::legacyAsset`) with the same refusals (no listing, no
+`..`), returns `BinaryFileResponse` so `Accept-Ranges` keeps `<audio>` seeking,
+and maps only media types (`audio/mpeg`, images, fonts) so no stray `.html` can
+execute from `app/static`.
+
+**Verified with:** `laravel/resources/js/pages/call/CallDisplayPage.test.js`
+(40 checks: static DOM, WS protocol, call/repeat/remove/reset, the refresh flag,
+audio unlock and MP3 queue, slideshow and chrome timers, both fallback states)
+plus `npm run build`.  `php` is not installed in this container, so the Laravel
+HTTP layer and the `/static` passthrough are source-checked only; neither a
+paired browser screenshot nor a live websocket replay was possible.
+
 ---
 
 ## 4. Remaining gaps (not fixed in this pass)

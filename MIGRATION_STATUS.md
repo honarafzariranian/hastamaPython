@@ -43,10 +43,15 @@ pass.  Nothing in the “Verified” column below is claimed for a page it was n
 >   `body:has(.app-shell)`, `body:has(.ma-page-shell)`) plus a three-declaration order bridge
 >   scoped to `body:has(.login-card)`.  `/login` is now value-for-value identical to the
 >   running server; see `docs/migration/DESIGN_PARITY.md` §3.6.
-> * **Still open on the cascade**: `rules.html` and `call-display.html` never loaded
->   `dark-theme.css` in the legacy build, so in the running application they stay light in dark
->   mode while the SPA themes them.  Closing it needs per-route stylesheets — see
->   `DESIGN_PARITY.md` §7.
+> * **Closed for the call display**: `call-display.html` never loaded `dark-theme.css`, so the
+>   running application keeps the TV page light in dark mode while the SPA themed it.  The Vue
+>   page now detaches `dark-mode` / `dark-theme` / `data-theme` from `<html>` and `<body>` for
+>   as long as it is mounted (restoring them on unmount, the way `CallManagementPage.vue`
+>   handles its own `cs-theme`), re-applies the Python document's own `<title>`, favicon and
+>   `call-display-page` body class, and continues the document's flex column through `#app`
+>   (`#app:has(.cd-slideshow)`) so `.cd-content { flex: 1 }` sizes like the Python page.
+>   *Still open on the cascade:* `rules.html`, which is themed by the bundle but not by the
+>   legacy build — see `DESIGN_PARITY.md` §7.
 
 > **Client routing to the ported handlers (2026-10-03).**  Logging in as `admin` failed against
 > the Laravel app: the browser posted to `/api/login_user`, which is not a route, and the login

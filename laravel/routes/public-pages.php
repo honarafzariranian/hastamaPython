@@ -54,6 +54,18 @@ Route::get('/favicon.ico', [StaticAssetsController::class, 'favicon'])->name('pu
 
 Route::get('/sw.js', [StaticAssetsController::class, 'serviceWorker'])->name('public.sw.js');
 
+/*
+ * The legacy static tree (`app/static`), served under the same `/static/…`
+ * URLs the Python mounted.  Two subtrees are load-bearing for the call
+ * surfaces: `/static/audio/sample_call/fa-IR-DilaraNeural/*.mp3`, which the
+ * wall screens play for a call, and `/static/slides/*`, which the
+ * `/api/calls/slides/active` response lists as `url`.  Registered before
+ * `routes/web.php`, so the SPA fallback never swallows them.
+ */
+Route::get('/static/{path}', [StaticAssetsController::class, 'legacyAsset'])
+    ->where('path', '.*')
+    ->name('public.static');
+
 Route::get('/robots.txt', [StaticAssetsController::class, 'robotsTxt'])->name('public.robots');
 
 Route::get('/sitemap.xml', [StaticAssetsController::class, 'sitemapXml'])->name('public.sitemap');
