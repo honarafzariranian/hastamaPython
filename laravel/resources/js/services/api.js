@@ -59,7 +59,16 @@ function normalizeError(error) {
     const status = error.response?.status ?? 0;
     const body = error.response?.data;
 
-    let message = typeof body?.message === 'string' && body.message !== '' ? body.message : null;
+    /*
+     * The legacy fetch readers look at `detail` first (FastAPI's HTTPException
+     * body), then `message`, then `error` (the `{"success": false, "error": …}`
+     * refusals).  Reading all three keeps the toasts identical to the running
+     * application; previously a 422 from the call surface surfaced the generic
+     * «اطلاعات ارسالی معتبر نیست.» instead of the server's own wording.
+     */
+    const pick = (value) => (typeof value === 'string' && value !== '' ? value : null);
+
+    let message = pick(body?.detail) ?? pick(body?.message) ?? pick(body?.error);
 
     if (!message) {
         if (status === 0) {
@@ -103,10 +112,12 @@ function unwrap(response) {
     const body = response.data;
 
     if (body && typeof body === 'object' && body.success === false) {
-        const error = new Error(body.message || 'درخواست ناموفق بود.');
+        /* Same key order as normalizeError: detail → message → error. */
+        const text = body.detail || body.message || body.error || 'درخواست ناموفق بود.';
+        const error = new Error(text);
         error.apiFailure = {
             success: false,
-            message: body.message || 'درخواست ناموفق بود.',
+            message: text,
             status: response.status,
             errors: body.errors ?? null,
             offline: false,
