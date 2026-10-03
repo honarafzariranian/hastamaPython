@@ -23,7 +23,7 @@ final class CallPageController extends Controller
      */
     public function display(Request $request): Response
     {
-        return $this->denied($request) ?? response()->view('app');
+        return $this->denied($request) ?? $this->legacyTemplate($request, 'call-display.html');
     }
 
     /**
@@ -31,7 +31,7 @@ final class CallPageController extends Controller
      */
     public function management(Request $request): Response
     {
-        return $this->denied($request) ?? response()->view('app');
+        return $this->denied($request) ?? $this->legacyTemplate($request, 'call-management.html');
     }
 
     /**
@@ -58,6 +58,59 @@ final class CallPageController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Serve the legacy Python page shell, with only the runtime config Laravel must inject.
+     */
+    private function legacyTemplate(Request $request, string $file): Response
+    {
+        $path = dirname(base_path()) . '/app/templates/' . $file;
+
+        abort_unless(is_file($path), 404);
+
+        $html = (string) file_get_contents($path);
+        $injected = '<script>'.$this->realtimeBootstrap($request).'</script>';
+
+        if (str_contains($html, '</head>')) {
+            $html = str_replace('</head>', $injected."\n</head>", $html);
+        } else {
+            $html = $injected.$html;
+        }
+
+        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    /**
+     * Runtime configuration for the legacy call-page scripts.
+     *
+     * The original Python pages talked to a raw WebSocket endpoint at
+     * `/api/ws/call-display`. Laravel's real-time layer is Reverb (Pusher
+     * protocol), so the legacy scripts need the connection facts injected at
+     * render time while the visual HTML stays byte-for-byte identical.
+     */
+    private function realtimeBootstrap(Request $request): string
+    {
+        $scheme = (string) (config('reverb.apps.apps.0.options.scheme') ?: ($request->isSecure() ? 'https' : 'http'));
+        $host = (string) (config('reverb.apps.apps.0.options.host') ?: $request->getHost());
+        $port = config('reverb.apps.apps.0.options.port');
+        $path = (string) (config('reverb.servers.reverb.path') ?: '');
+        $appKey = (string) (config('reverb.apps.apps.0.key') ?: '');
+
+        $config = [
+            'mode' => $appKey !== '' ? 'reverb' : 'legacy',
+            'appKey' => $appKey,
+            'host' => $host,
+            'port' => $port === null ? null : (int) $port,
+            'scheme' => $scheme,
+            'path' => $path,
+            'displayChannel' => 'call-display',
+            'previewChannel' => 'call-display.preview',
+            'eventName' => 'display.message',
+            'audioActivatedUrl' => '/api/calls/audio-activated',
+        ];
+
+        return 'window.HastamaRealtime = '.json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).';';
     }
 
     /**

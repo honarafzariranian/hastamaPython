@@ -648,6 +648,7 @@ final class CallSystemSurfaceTest extends TestCase
             'api/calls/repeat' => ['POST', 'kiosk.write:calls-repeat'],
             'api/calls/test-display' => ['POST', 'kiosk.write:calls-test'],
             'api/calls/test-voice' => ['POST', 'kiosk.write:calls-test'],
+            'api/calls/audio-activated' => ['POST', 'kiosk.write:calls-test'],
             'api/calls/test-audio' => ['POST', 'kiosk.write:calls-test'],
             'api/calls/reset-display' => ['POST', 'kiosk.write:reset-display'],
             'api/calls/refresh-display' => ['POST', 'kiosk.write:refresh-display'],

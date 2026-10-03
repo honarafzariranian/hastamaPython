@@ -23,6 +23,89 @@
     var reconnectDelay = 1000;
     var maxReconnectDelay = 30000;
     var reconnectTimer = null;
+    var realtimeConfig = window.HastamaRealtime || {};
+    var realtimeMode = realtimeConfig.mode || 'legacy';
+
+    function isRealtimeReverb() {
+        return realtimeMode === 'reverb' && !!realtimeConfig.appKey;
+    }
+
+    function realtimeWsUrl() {
+        if (!isRealtimeReverb()) {
+            var legacyProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return legacyProto + '//' + location.host + '/api/ws/call-display';
+        }
+
+        var scheme = realtimeConfig.scheme || (location.protocol === 'https:' ? 'https' : 'http');
+        var wsProto = scheme === 'https' ? 'wss:' : 'ws:';
+        var host = realtimeConfig.host || location.hostname || location.host;
+        var port = realtimeConfig.port;
+        var path = realtimeConfig.path || '';
+
+        if (port === null || typeof port === 'undefined' || port === '') {
+            port = location.port || (wsProto === 'wss:' ? 443 : 80);
+        }
+        if (path && path.charAt(0) !== '/') path = '/' + path;
+        path = path.replace(/\/$/, '');
+
+        var authority = host;
+        var hasPort = String(host).indexOf(':') !== -1;
+        var isDefaultPort = (wsProto === 'wss:' && Number(port) === 443) || (wsProto === 'ws:' && Number(port) === 80);
+        if (!hasPort && port && !isDefaultPort) authority += ':' + port;
+
+        return wsProto + '//' + authority + path + '/app/' + encodeURIComponent(realtimeConfig.appKey) + '?protocol=7&client=hastama-legacy&version=1.0&flash=false';
+    }
+
+    function realtimeEventName() {
+        return realtimeConfig.eventName || 'display.message';
+    }
+
+    function handleRealtimePayload(msg) {
+        if (!msg || msg.type === 'pong') return;
+        if (msg.type === 'reception_call' && msg.data) {
+            addToQueue(msg.data);
+            if (!msg.data.is_test) addHistoryItem(msg.data);
+        }
+        if (msg.type === 'reset_display') {
+            for (var m = 0; m < QUEUE_MAX; m++) queueData[m] = null;
+            renderQueue();
+        }
+    }
+
+    function handleRealtimeFrame(rawFrame) {
+        try {
+            var msg = JSON.parse(rawFrame);
+
+            if (!isRealtimeReverb()) {
+                handleRealtimePayload(msg);
+                return;
+            }
+
+            if (msg.event === 'pusher:connection_established') {
+                reconnectDelay = 1000;
+                try {
+                    ws.send(JSON.stringify({
+                        event: 'pusher:subscribe',
+                        data: { channel: realtimeConfig.previewChannel || 'call-display.preview' }
+                    }));
+                } catch (e) { /* ignore */ }
+                return;
+            }
+
+            if (msg.event === 'pusher:ping') {
+                try { ws.send(JSON.stringify({ event: 'pusher:pong', data: {} })); } catch (e) { /* ignore */ }
+                return;
+            }
+
+            if (msg.event !== realtimeEventName()) return;
+
+            var payload = msg.data;
+            if (typeof payload === 'string') {
+                payload = JSON.parse(payload);
+            }
+            handleRealtimePayload(payload);
+        } catch (e) {}
+    }
 
     /* ── Tab switching ── */
     window.switchCsTab = function (tabId, btnEl) {
@@ -500,44 +583,33 @@
         }
     }
 
-    /* ── WebSocket ── */
+    /* ── WebSocket / Reverb ── */
     function connectWS() {
-        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var url = proto + '//' + location.host + '/api/ws/call-display';
+        var url = realtimeWsUrl();
         try { ws = new WebSocket(url); } catch (e) { scheduleReconnect(); return; }
 
         setStatus('connecting');
 
         ws.onopen = function () {
             reconnectDelay = 1000;
-            /* وضعیت اتصال توسط loadStatus بر اساس real_displays تعیین می‌شود */
-            /* Management page identifies as preview, not a real TV display */
-            try {
-                ws.send(JSON.stringify({ tag: 'preview' }));
-            } catch (e) { /* ignore */ }
-            ws._pingInterval = setInterval(function () {
-                if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping');
-            }, 30000);
+            if (!isRealtimeReverb()) {
+                try {
+                    ws.send(JSON.stringify({ tag: 'preview' }));
+                } catch (e) { /* ignore */ }
+                ws._pingInterval = setInterval(function () {
+                    if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping');
+                }, 30000);
+                return;
+            }
+            ws._pingInterval = null;
         };
 
         ws.onmessage = function (evt) {
-            try {
-                var msg = JSON.parse(evt.data);
-                if (msg.type === 'pong') return;
-                if (msg.type === 'reception_call' && msg.data) {
-                    addToQueue(msg.data);
-                    if (!msg.data.is_test) addHistoryItem(msg.data);
-                }
-                // remove_call handled locally by removeFromDisplay — skip WS echo
-                if (msg.type === 'reset_display') {
-                    for (var m = 0; m < QUEUE_MAX; m++) queueData[m] = null;
-                    renderQueue();
-                }
-            } catch (e) {}
+            handleRealtimeFrame(evt.data);
         };
 
         ws.onclose = function () {
-            clearInterval(ws._pingInterval);
+            clearInterval(ws && ws._pingInterval);
             setStatus('connecting');
             scheduleReconnect();
         };
