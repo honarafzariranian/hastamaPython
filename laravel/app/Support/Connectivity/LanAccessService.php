@@ -4,7 +4,6 @@ namespace App\Support\Connectivity;
 
 use App\Support\SystemConfigStore;
 use RuntimeException;
-use Throwable;
 
 /**
  * Optional LAN listener — the fallback path for an internet outage.
@@ -23,12 +22,17 @@ final class LanAccessService
     public const ENABLED_DESCRIPTION = 'دسترسی رایانه‌های شبکه داخلی به سامانه (حالت اضطراری قطع اینترنت)';
 
     public const DEFAULT_UPSTREAM_ADDRESS = '127.0.0.1';
+
     public const DEFAULT_PORT = 5000;
 
     public const MAX_CONNECTIONS = 128;
+
     public const MAX_HEAD_BYTES = 64 * 1024;
+
     public const MAX_HEADER_LINES = 200;
+
     public const UPSTREAM_TIMEOUT_SECONDS = 10.0;
+
     public const HEAD_TIMEOUT_SECONDS = 15.0;
 
     /** @var array{intent: bool, running: bool, bind_address: string, port: int, connections: int, total_connections: int, started_at: string|null, last_error: string} */

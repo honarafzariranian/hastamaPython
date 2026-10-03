@@ -13,10 +13,20 @@
  *     carried into the printing layer during that phase instead of being
  *     invented into the web chrome.
  */
-import { RouterLink, RouterView } from 'vue-router';
+import { computed } from 'vue';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useTheme } from '@/composables/useTheme';
 
 const { isDark, toggleTheme } = useTheme();
+
+/*
+ * Public pages (the login page above all) are full-screen and have their own
+ * chrome — the Python `/login` renders edge to edge with no application header,
+ * so the shell's white bar must not appear on them.  The route's `meta.public`
+ * flag is what decides that; every panel route keeps the shell.
+ */
+const route = useRoute();
+const isPublic = computed(() => route.meta?.public === true);
 
 /*
  * The logo lives in public/ because it is a same-origin local asset, not a
@@ -28,7 +38,15 @@ const logoUrl = '/images/lab-logo.png';
 </script>
 
 <template>
-    <div class="h-shell">
+    <!--
+        A public page renders bare: no shell, no header, no constrained main.
+        The login page owns the whole viewport (the Python `/login` is a
+        full-screen document with its own background scene), so wrapping it in
+        the shell would put a white bar and a max-width column above it.
+    -->
+    <RouterView v-if="isPublic" />
+
+    <div v-else class="h-shell">
         <a class="h-skip" href="#main">پرش به محتوای اصلی</a>
 
         <header class="h-header">

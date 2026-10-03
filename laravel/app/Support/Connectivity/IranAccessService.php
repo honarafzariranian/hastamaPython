@@ -19,9 +19,13 @@ use Throwable;
 final class IranAccessService
 {
     public const ENABLED_KEY = 'iran_only_enabled';
+
     public const TITLE_KEY = 'iran_only_title';
+
     public const MESSAGE_KEY = 'iran_only_message';
+
     public const HELP_KEY = 'iran_only_help';
+
     public const LOG_KEY = 'iran_only_log_blocked';
 
     private const DESCRIPTIONS = [
@@ -40,14 +44,18 @@ final class IranAccessService
         ."روی گوشی اندروید: تنظیمات ← شبکه و اینترنت ← VPN ← اتصال را قطع کنید.\n"
         ."روی iPhone: تنظیمات ← General ← VPN & Device Management ← اتصال را قطع کنید.\n"
         ."اگر از افزونهٔ مرورگر (فیلترشکن) استفاده می‌کنید، آن را غیرفعال یا حذف کنید.\n"
-        ."پس از قطع VPN، این صفحه را دوباره بارگذاری کنید تا وارد شوید.";
+        .'پس از قطع VPN، این صفحه را دوباره بارگذاری کنید تا وارد شوید.';
 
     public const MAX_TITLE_CHARS = 120;
+
     public const MAX_MESSAGE_CHARS = 800;
+
     public const MAX_HELP_CHARS = 1200;
+
     public const MAX_ANSWERED_IP_CHARS = 45;
 
     public const BLOCK_LOG_INTERVAL_SECONDS = 300;
+
     public const MAX_TRACKED_ADDRESSES = 500;
 
     public const REGISTRY_SOURCES = [
@@ -56,10 +64,13 @@ final class IranAccessService
     ];
 
     public const COUNTRY = 'IR';
+
     public const KEEP_STATUSES = ['allocated', 'assigned'];
 
     public const DOWNLOAD_TIMEOUT_SECONDS = 90;
+
     public const MAX_DOWNLOAD_BYTES = 64 * 1024 * 1024;
+
     public const MAX_LIST_ENTRIES = 20000;
 
     /** @var array<string, mixed> */
@@ -313,6 +324,7 @@ final class IranAccessService
                 throw $exception;
             } catch (Throwable $exception) {
                 $failures[] = $exception::class.' @ '.parse_url($url, PHP_URL_HOST);
+
                 continue;
             }
 
@@ -1101,9 +1113,16 @@ final class IranAccessService
     {
         $bytes = [];
 
-        for ($i = $count - 1; $i >= 0; $i--) {
-            $bytes[$i] = $value & 0xFF;
-            $value >>= 8;
+        // MSB first, so `implode('.', …)` in `intToIp()` prints the address in
+        // the usual order.  The previous loop filled the array from index
+        // `$count - 1` down to `0`, which left the **least** significant byte
+        // first in the array's internal order — and `implode` follows that
+        // order, not the keys — so `intToIp()` answered `1.0.0.127` for
+        // `127.0.0.1`.  Every consumer reads the bytes by key (`isGlobal()`
+        // checks `$bytes[0]`), which is why the reversal was invisible until
+        // `/iran-only/check` published the address on the wire.
+        for ($i = 0; $i < $count; $i++) {
+            $bytes[$i] = ($value >> (8 * ($count - 1 - $i))) & 0xFF;
         }
 
         return $bytes;

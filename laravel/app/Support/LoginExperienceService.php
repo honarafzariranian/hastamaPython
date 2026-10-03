@@ -2,9 +2,7 @@
 
 namespace App\Support;
 
-use App\Support\SystemConfigStore;
 use RuntimeException;
-use Throwable;
 
 /**
  * Login experience — the loader that greets a user and the CAPTCHA lifetime.
@@ -15,10 +13,15 @@ use Throwable;
 final class LoginExperienceService
 {
     public const ENABLED_KEY = 'login_loader_enabled';
+
     public const SECONDS_KEY = 'login_loader_seconds';
+
     public const TITLE_KEY = 'login_loader_title';
+
     public const MESSAGE_KEY = 'login_loader_message';
+
     public const NOTICE_KEY = 'login_captcha_notice';
+
     public const TTL_KEY = 'login_captcha_ttl_seconds';
 
     private const DESCRIPTIONS = [
@@ -31,17 +34,23 @@ final class LoginExperienceService
     ];
 
     public const DEFAULT_TITLE = 'در حال آماده‌سازی میزکار شما…';
+
     public const DEFAULT_MESSAGE = 'لطفاً چند لحظه صبر کنید؛ در حال ورود به سامانه هستما.';
 
     public const DEFAULT_SECONDS = 3;
+
     public const MIN_SECONDS = 1;
+
     public const MAX_SECONDS = 15;
 
     public const DEFAULT_CAPTCHA_TTL_SECONDS = 180;
+
     public const MIN_CAPTCHA_TTL_SECONDS = 30;
+
     public const MAX_CAPTCHA_TTL_SECONDS = 1800;
 
     public const MAX_TITLE_CHARS = 80;
+
     public const MAX_MESSAGE_CHARS = 200;
 
     public const CAPTCHA_WARNING_LEAD_SECONDS = 60;

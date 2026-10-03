@@ -1,9 +1,76 @@
 @import 'tailwindcss';
 
 /*
- * Tailwind scans these trees for class names.  Being explicit keeps the build
- * deterministic (the scaffold only listed the pagination vendor views).
+ * ---------------------------------------------------------------------------
+ * The legacy stylesheet, ported verbatim from app/static/css.
+ * ---------------------------------------------------------------------------
+ *
+ * The brief is explicit: the migrated UI must look exactly like the running
+ * application, not like a redesign.  These files ARE the running
+ * application's appearance — the same selectors, the same values, the same
+ * dark-theme contract — so they are imported after Tailwind and win over the
+ * scaffold's utility classes wherever they overlap.
+ *
+ * The paths were rewritten from /static/... to the Laravel public/ equivalents
+ * (/fonts, /images) and the image assets copied across; nothing else changed.
  */
+@import './legacy/vazir.css';
+@import './legacy/call-tokens.css';
+@import './legacy/hastama-ux.css';
+@import './legacy/toast.css';
+@import './legacy/tables.css';
+@import './legacy/responsive-tables.css';
+@import './legacy/responsive-mobile.css';
+@import './legacy/login-style.css';
+@import './legacy/user-panel-style.css';
+@import './legacy/admin.css';
+@import './legacy/admin-mobile-redesign.css';
+@import './legacy/master-admin.css';
+@import './legacy/call-system-standalone.css';
+@import './legacy/call-display.css';
+@import './legacy/ticketing.css';
+@import './legacy/user-ticketing.css';
+@import './legacy/notification-system.css';
+@import './legacy/rules.css';
+@import './legacy/training.css';
+@import './legacy/internal-automation.css';
+@import './legacy/final-report-style.css';
+@import './legacy/final-report-modern.css';
+@import './legacy/final-report-print.css';
+@import './legacy/leave-report-style.css';
+@import './legacy/hourlypass-report-style.css';
+@import './legacy/overtime-report-style.css';
+@import './legacy/payroll-report-preview.css';
+@import './legacy/label-print.css';
+
+/*
+ * ---------------------------------------------------------------------------
+ * The theme layer goes LAST — and the order is a behaviour, not a preference.
+ * ---------------------------------------------------------------------------
+ *
+ * In the running application every panel loaded its own stylesheet and then
+ * `dark-theme.css` after it:
+ *
+ *     admin.html         admin.css … dark-theme.css
+ *     user-panel.html    user-panel-style.css … dark-theme.css
+ *     master-admin.html  admin.css, master-admin.css, … dark-theme.css (last)
+ *
+ * That order decides a real winner, because `admin.css` carries an old
+ * `.dark-theme body { color: #f8fafc }` block and `dark-theme.css` carries
+ * `body.dark-mode { color: var(--dk-text) }` — the same specificity, so the
+ * later file wins.  The legacy comment above dark-theme.css's replacement rule
+ * says as much (".dark-theme body in admin.css is replaced here").
+ *
+ * Imported third (as it was), `admin.css` won and **every** dark-mode page took
+ * the admin panel's text colour: measured on `/login`, Laravel rendered
+ * `rgb(248, 250, 252)` where the running application renders
+ * `rgb(232, 237, 245)`.  One global sheet set cannot reproduce a per-page load
+ * order, so the import order below follows the order the panels actually used,
+ * and the remaining per-page differences are recorded in
+ * docs/migration/DESIGN_PARITY.md §3.5.
+ */
+@import './legacy/dark-theme.css';
+
 @source '../../resources/views/**/*.blade.php';
 @source '../../resources/js/**/*.vue';
 @source '../../resources/js/**/*.js';
@@ -135,6 +202,12 @@
         background-color: #f4f7fb;
         color: #0f172a;
         transition: background-color 250ms ease, color 250ms ease;
+        /* The running application ships no reset layer: a page that never
+           declared a body line-height inherited `normal`.  Tailwind's preflight
+           sets 1.5 on `html`, which used to leak into every ported page (it made
+           the login card 5px taller than the Python original).  Legacy sheets
+           that do declare one are unlayered and still win. */
+        line-height: normal;
     }
 
     [data-theme='dark'] body {
@@ -210,4 +283,25 @@
     [data-theme='dark'] .h-btn-ghost {
         border-color: var(--dk-border);
     }
+}
+
+/*
+ * Login cascade bridge (see docs/migration/DESIGN_PARITY.md §3.6).
+ * The running application loaded login-style.css *after* dark-theme.css and
+ * hastama-ux.css; one bundle cannot, so the three declarations that this
+ * order decided on /login are restated here for the login card only.
+ * Selectors are scoped to `body:has(.login-card)` — a marker only the login
+ * screen has — and the values are copied unchanged from login-style.css.
+ */
+body:has(.login-card) .h-ux-btn {
+    font-weight: 700;
+}
+
+body:has(.login-card) .input-wrapper input::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+}
+
+body:has(.login-card).dark-mode {
+    --shadow-card: 0 30px 70px -12px rgba(0, 0, 0, 0.55), 0 4px 18px rgba(0, 0, 0, 0.3);
 }

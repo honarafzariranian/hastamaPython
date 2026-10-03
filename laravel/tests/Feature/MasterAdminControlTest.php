@@ -269,16 +269,19 @@ final class MasterAdminControlTest extends TestCase
     /**
      * Every paginated list validates the same two bounds.
      *
-     * @return array<string, string>
+     * PHPUnit 12 requires every dataset to be an array of arguments, so each
+     * path is wrapped.
+     *
+     * @return array<string, array{string}>
      */
     public static function paginatedLists(): array
     {
         return [
-            'subscriptions' => '/master-admin/api/subscriptions',
-            'password resets' => '/master-admin/api/password-resets',
-            'security events' => '/master-admin/api/security',
-            'errors' => '/master-admin/api/errors',
-            'admin actions' => '/master-admin/api/admin-actions',
+            'subscriptions' => ['/master-admin/api/subscriptions'],
+            'password resets' => ['/master-admin/api/password-resets'],
+            'security events' => ['/master-admin/api/security'],
+            'errors' => ['/master-admin/api/errors'],
+            'admin actions' => ['/master-admin/api/admin-actions'],
         ];
     }
 

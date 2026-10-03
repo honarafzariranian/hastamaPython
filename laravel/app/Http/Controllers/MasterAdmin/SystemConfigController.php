@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\MasterAdmin;
 
+use App\Models\SystemConfig;
 use App\Services\Audit\AuditLogger;
 use App\Support\Http\ClientAddress;
 use App\Support\Http\MasterAdminActor;
 use App\Support\Legacy\LegacySerializer;
-use App\Models\SystemConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

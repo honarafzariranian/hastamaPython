@@ -248,7 +248,7 @@ final class MasterAdminSettingsTest extends TestCase
                 'subject' => 'Test ticket', 'status' => 'open', 'priority' => 'high',
                 'category_id' => '1', 'category_name' => 'General', 'assigned_to' => null,
                 'created_at' => '2026-09-30 08:53:41.864', 'updated_at' => '2026-09-30 08:53:41.864',
-                'last_message_at' => '2026-09-30 08:53:41.864', 'sla_due_at' => '2026-10-02 08:53:41.864',
+                'last_message_at' => '2026-09-30 08:53:41.864', 'sla_due_at' => '2027-01-01 08:53:41.864',
                 'last_message_preview' => 'Hello', 'last_responder' => 'user1',
             ],
         ];
@@ -981,6 +981,6 @@ class FakeSettingsConnection extends Connection
      */
     private function openCountFor(string $sql): int
     {
-        return stripos($sql, "status NOT IN") !== false ? $this->openCount : $this->count;
+        return stripos($sql, 'status NOT IN') !== false ? $this->openCount : $this->count;
     }
 }

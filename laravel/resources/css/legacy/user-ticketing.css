@@ -1,0 +1,259 @@
+/* ==========================================================================\n   تیکتینگ کاربر: لانچر → مرکز پشتیبانی → فهرست و جزئیات → مکالمه → فرم جدید → موبایل\n   ========================================================================== */\n/* User Support Center v2 — intentionally separate from the admin workspace. */
+.user-panel-page .user-ticketing-legacy { display: none !important; }
+.user-support-launcher {
+    display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+    min-height: 0; padding: 16px; border: 1px solid rgba(0,184,148,.22);
+    border-radius: 22px; background: linear-gradient(145deg, #f2fffb 0%, #fff 72%);
+    box-shadow: 0 8px 20px rgba(13,59,78,.06); text-align: right;
+}
+.support-launcher-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: #0d3b4e; color: #fff; font-size: 1.35rem; font-weight: 900; }
+.support-launcher-copy h3 { margin: 0; color: #0d3b4e; font-size: 1.08rem; }
+.support-launcher-copy p { margin: 8px 0 0; color: #4d6b7a; font-size: .76rem; line-height: 1.8; }
+.support-launcher-action { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 7px 11px; border: 0; border-radius: 11px; background: #0d3b4e; color: #fff; cursor: pointer;    font: 700 .7rem 'Vazir', sans-serif; }
+.support-launcher-action span { color: #7ed321; font-size: 1.1rem; }
+
+.user-support-center[hidden], .user-ticket-create[hidden] { display: none !important; }
+/* ---------- مرکز پشتیبانی کاربر ---------- */
+.user-support-center, .user-ticket-create {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    justify-content: center;
+}
+
+.user-support-backdrop, .user-ticket-create-backdrop { position: absolute; inset: 0; background: rgba(7, 29, 42, 0); backdrop-filter: blur(0px); transition: background 0.3s ease, backdrop-filter 0.3s ease; }
+.user-ticket-create.is-open .user-ticket-create-backdrop { background: rgba(7, 29, 42, .64); backdrop-filter: blur(7px); }
+.user-ticket-create.is-closing .user-ticket-create-backdrop { background: rgba(7, 29, 42, 0); backdrop-filter: blur(0px); }
+.user-support-dialog { position: relative; display: flex; flex-direction: column; width: min(1320px, 100%); height: min(900px, calc(100dvh - 36px)); overflow: hidden; border: 1px solid rgba(56,182,255,.2); border-radius: 26px; background: #f7fbfd; box-shadow: 0 28px 90px rgba(7,29,42,.3); color: #0d3b4e; }
+
+.user-support-header {
+        display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(13, 59, 78, .1);
+    background: #fff;
+    flex-direction: row-reverse;
+}
+
+.user-support-heading {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    text-align: end;
+}
+
+.user-support-heading h2 { margin: 0; font-size: clamp(1.1rem, 2vw, 1.45rem); }
+.user-support-heading p { margin: 4px 0 0; color: #4d6b7a; font-size: .75rem; }
+.user-support-back { display: none; }
+
+.user-support-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-direction: row-reverse;
+}
+
+.user-support-refresh, .user-support-close { width: 38px; height: 38px; border: 1px solid rgba(13,59,78,.12); border-radius: 11px; background: #fff; color: #0d3b4e; cursor: pointer; font-size: 1.2rem; }
+.user-support-new, .user-support-send, .user-support-empty-action { min-height: 38px; padding: 8px 13px; border: 0; border-radius: 10px; background: #0d3b4e; color: #fff; cursor: pointer; font: 700 .74rem 'Vazir', sans-serif; }
+.user-support-new:hover, .user-support-send:hover, .user-support-empty-action:hover { background: #07556e; }
+.user-support-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding: 15px 24px; background: #fff; }
+.user-support-summary button { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 54px; padding: 9px 12px; border: 1px solid rgba(13,59,78,.1); border-radius: 13px; background: #f8fbfd; color: #4d6b7a; cursor: pointer; font: inherit; text-align: right; }
+.user-support-summary button.is-active { border-color: rgba(0,184,148,.5); background: #effcf8; color: #0d3b4e; box-shadow: inset 0 -2px #00b894; }
+.user-support-summary strong { color: #00a886; font-size: 1.15rem; }
+.user-support-summary span { font-size: .7rem; font-weight: 700; }
+.user-support-layout { display: grid; grid-template-columns: 205px minmax(300px, .82fr) minmax(390px, 1.3fr); gap: 12px; min-height: 0; flex: 1; padding: 0 24px 14px; }
+.user-support-nav, .user-support-list-pane, .user-support-detail { min-width: 0; overflow: hidden; border: 1px solid rgba(13,59,78,.1); border-radius: 17px; background: #fff; }
+.user-support-nav { display: flex; flex-direction: column; gap: 3px; padding: 13px 9px; background: #f1f8fb; }
+.user-support-nav-title { padding: 4px 9px 12px; color: #0d3b4e; font-size: .78rem; font-weight: 900; }
+.user-support-nav button { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 7px 9px; border: 0; border-radius: 9px; background: transparent; color: #4d6b7a; cursor: pointer; font: 700 .69rem 'Vazir', sans-serif; text-align: right; }
+.user-support-nav button:hover, .user-support-nav button.is-active { background: #fff; color: #0d3b4e; box-shadow: 0 3px 9px rgba(13,59,78,.07); }
+.user-support-nav button span { color: #38b6ff; font-size: 1.1rem; }
+.user-support-help { margin-top: auto; padding: 11px 9px; border-top: 1px solid rgba(13,59,78,.1); color: #4d6b7a; font-size: .64rem; line-height: 1.7; }
+.user-support-help strong { display: block; margin-bottom: 3px; color: #0d3b4e; }
+.user-support-list-pane { display: flex; flex-direction: column; }
+.user-support-list-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 9px; padding: 15px; border-bottom: 1px solid rgba(13,59,78,.1); }
+.user-support-eyebrow { display: block; margin-bottom: 4px; color: #00a886; font-size: .63rem; font-weight: 900; }
+.user-support-list-head h3, .user-support-activity h3 { margin: 0; color: #0d3b4e; font-size: .95rem; }
+.user-support-search { flex: 0 1 210px; }
+.user-support-search input { width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid rgba(13,59,78,.13); border-radius: 9px; outline: 0; background: #f7fbfd; color: #0d3b4e; font: .68rem 'Vazir', sans-serif; }
+.user-support-search input:focus, .user-ticket-create-form input:focus, .user-ticket-create-form select:focus, .user-ticket-create-form textarea:focus, .user-support-composer textarea:focus { border-color: #38b6ff; box-shadow: 0 0 0 3px rgba(56,182,255,.15); }
+.user-support-ticket-list { display: flex; flex-direction: column; gap: 7px; min-height: 0; overflow: auto; padding: 10px; }
+.user-support-ticket { position: relative; padding: 11px 12px; border: 1px solid rgba(13,59,78,.1); border-radius: 12px; background: #fff; cursor: pointer; }
+.user-support-ticket::before { content: ''; position: absolute; inset-block: 11px; inset-inline-start: 0; width: 3px; border-radius: 0 3px 3px 0; background: #38b6ff; }
+.user-support-ticket.is-waiting::before { background: #f5c948; }
+.user-support-ticket:hover, .user-support-ticket:focus-visible { border-color: rgba(56,182,255,.55); outline: 0; box-shadow: 0 4px 12px rgba(13,59,78,.07); }
+.user-support-ticket-top, .user-support-ticket-foot, .user-support-ticket-activity { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+.user-support-ticket-number { color: #4d6b7a; font-size: .62rem; font-weight: 800; direction: ltr; }
+.user-support-ticket-subject { margin: 8px 0 7px; color: #0d3b4e; font-size: .76rem; line-height: 1.6; overflow-wrap: anywhere; }
+.user-support-ticket-activity { justify-content: flex-start; flex-wrap: wrap; color: #4d6b7a; font-size: .61rem; }
+.user-support-ticket-foot { margin-top: 8px; }
+.user-support-ticket-foot > span { max-width: 62%; overflow: hidden; color: #4d6b7a; font-size: .61rem; text-overflow: ellipsis; white-space: nowrap; }
+.user-support-pagination { display: flex; justify-content: center; min-height: 39px; }
+.user-support-detail { display: flex; flex-direction: column; }
+.user-support-detail-empty { display: grid; place-items: center; align-content: center; height: 100%; padding: 28px; color: #4d6b7a; text-align: center; }
+.user-support-empty-mark, .user-support-empty-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 11px; border-radius: 15px; background: #e9f8f5; color: #00a886; font-size: 1.35rem; }
+.user-support-detail-empty h3, .user-support-empty-list h3 { margin: 0; color: #0d3b4e; font-size: .9rem; }
+.user-support-detail-empty p, .user-support-empty-list p { max-width: 280px; margin: 7px 0 0; color: #4d6b7a; font-size: .7rem; line-height: 1.8; }
+.user-support-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 15px 17px 9px; border-bottom: 1px solid rgba(13,59,78,.1); }
+.user-support-detail-head h3 { margin: 5px 0 3px; color: #0d3b4e; font-size: .92rem; overflow-wrap: anywhere; }
+.user-support-detail-head p { margin: 0; color: #4d6b7a; font-size: .62rem; }
+.user-support-detail-close { width: 29px; height: 29px; border: 0; border-radius: 8px; background: #f1f6f8; color: #0d3b4e; cursor: pointer; font-size: 1.1rem; }
+.user-support-detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 10px 17px 3px; color: #4d6b7a; font-size: .63rem; }
+.user-support-progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 17px 10px; }
+.user-support-progress span { position: relative; padding-top: 13px; color: #91a4ad; font-size: .57rem; text-align: center; }
+.user-support-progress span::before { content: ''; position: absolute; inset-block-start: 0; inset-inline: 25%; height: 4px; border-radius: 4px; background: #e2edf1; }
+.user-support-progress span.is-done::before, .user-support-progress span.is-current::before { background: #00b894; }
+.user-support-progress span.is-current { color: #0d3b4e; font-weight: 900; }
+.user-support-timeline { display: flex; flex: 1; flex-direction: column; gap: 9px; min-height: 130px; overflow: auto; padding: 5px 17px 12px; }
+.user-support-message { max-width: 86%; padding: 10px 12px; border: 1px solid rgba(13,59,78,.1); border-radius: 13px; background: #f2f8fb; }
+.user-support-message.is-mine { align-self: flex-start; background: #eafaf6; border-color: rgba(0,184,148,.18); }
+.user-support-message.is-support { align-self: flex-end; background: #f2f8fb; }
+.user-support-message.is-system { align-self: center; max-width: 92%; padding: 7px 10px; border-style: dashed; background: #fbfaf2; color: #88722b; }
+.user-support-message-head { display: flex; justify-content: space-between; gap: 12px; color: #4d6b7a; font-size: .6rem; }
+.user-support-message-head strong { color: #0d3b4e; }
+.user-support-message-body { margin: 6px 0 0; color: #0d3b4e; font-size: .72rem; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.user-support-event { align-self: center; color: #91a4ad; font-size: .59rem; }
+.user-support-attachments { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.user-support-attachments a { padding: 4px 7px; border-radius: 7px; background: rgba(56,182,255,.1); color: #0876a9; font-size: .6rem; overflow-wrap: anywhere; text-decoration: none; }
+.user-support-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 17px 9px; }
+.user-support-secondary-action { min-height: 30px; padding: 5px 8px; border: 1px solid rgba(13,59,78,.12); border-radius: 8px; background: #fff; color: #0d3b4e; cursor: pointer; font: 700 .61rem 'Vazir', sans-serif; }
+.user-support-secondary-action:hover { border-color: #38b6ff; background: #f2faff; }
+.user-support-composer { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: end; padding: 9px 17px 14px; border-top: 1px solid rgba(13,59,78,.1); background: #fff; }
+.user-support-composer textarea { width: 100%; min-height: 42px; max-height: 120px; padding: 8px 10px; border: 1px solid rgba(13,59,78,.13); border-radius: 9px; outline: 0; resize: vertical; color: #0d3b4e; font: .7rem/1.8 'Vazir', sans-serif; }
+.user-support-file-button { display: grid; place-items: center; min-height: 38px; padding: 5px 7px; border: 1px solid rgba(13,59,78,.13); border-radius: 9px; color: #0876a9; cursor: pointer; font-size: .62rem; white-space: nowrap; }
+.user-support-file-button input { display: none; }
+.user-support-upload-status { grid-column: 1 / -1; min-height: 14px; color: #4d6b7a; font-size: .59rem; }
+
+.user-support-activity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 0 24px 14px;
+    padding: 10px 14px;
+    border: 1px solid rgba(0,184,148,.15);
+    border-radius: 12px;
+    background: #f2fbf9;
+    flex-direction: row-reverse;
+}
+
+.matnepaeinticketing{
+    text-align: right;
+}
+
+.user-support-activity p { margin: 0; color: #4d6b7a; font-size: .65rem; }
+.user-support-empty-list { display: grid; place-items: center; align-content: center; min-height: 220px; padding: 24px 15px; text-align: center; }
+.user-support-empty-list .user-support-empty-icon { margin-bottom: 8px; }
+.user-support-empty-action { margin-top: 13px; }
+.user-support-skeleton { height: 87px; border-radius: 12px; background: linear-gradient(90deg, #f0f5f7 25%, #f8fbfc 50%, #f0f5f7 75%); background-size: 200% 100%; animation: user-support-shimmer 1.3s infinite; }
+@keyframes user-support-shimmer { to { background-position: -200% 0; } }
+
+/* ---------- فرم ایجاد درخواست ---------- */
+.user-ticket-create { overflow: auto; }
+.user-ticket-create-dialog { position: relative; width: min(640px, 100%); max-height: calc(100dvh - 36px); overflow: auto; border: 1px solid rgba(56,182,255,.22); border-radius: 24px; background: #fff; box-shadow: 0 28px 90px rgba(7,29,42,.3); direction: rtl; text-align: right; opacity: 0; transform: scale(0.92) translateY(12px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.user-ticket-create.is-open .user-ticket-create-dialog { opacity: 1; transform: scale(1) translateY(0); }
+.user-ticket-create.is-closing .user-ticket-create-dialog { opacity: 0; transform: scale(0.92) translateY(12px); }
+.user-ticket-create-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 22px 24px 14px; }
+.user-ticket-create-head h2 { margin: 0; color: #0d3b4e; font-size: 1.2rem; }
+.user-ticket-create-head p { margin: 5px 0 0; color: #4d6b7a; font-size: .7rem; }
+.user-ticket-close { width: 34px; height: 34px; border: 0; border-radius: 9px; background: #f1f6f8; color: #0d3b4e; cursor: pointer; font-size: 1.25rem; transition: background 0.15s, transform 0.15s; }
+.user-ticket-close:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; transform: rotate(90deg); }
+.user-ticket-steps { display: flex; gap: 7px; padding: 0 24px 17px; color: #91a4ad; font-size: .62rem; }
+.user-ticket-steps span { padding-bottom: 6px; border-bottom: 2px solid #e2edf1; }
+.user-ticket-steps span.is-active { border-color: #00b894; color: #00866c; font-weight: 900; }
+.user-ticket-create-form { padding: 0 24px 20px; }
+.user-ticket-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.user-ticket-form-grid label { display: flex; flex-direction: column; gap: 6px; color: #4d6b7a; font-size: .68rem; font-weight: 800; }
+.user-ticket-form-grid label.span-2 { grid-column: 1 / -1; }
+.user-ticket-form-grid input, .user-ticket-form-grid select, .user-ticket-form-grid textarea { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid rgba(13,59,78,.14); border-radius: 9px; outline: 0; background: #f8fbfd; color: #0d3b4e; font: .72rem 'Vazir', sans-serif; }
+.user-ticket-form-grid textarea { min-height: 115px; resize: vertical; line-height: 1.8; }
+.user-ticket-form-grid small { color: #91a4ad; font-size: .59rem; font-weight: 400; }
+.user-attachment-picker input { padding: 8px; background: #fff; }
+.user-ticket-create-error { min-height: 18px; margin-top: 9px; color: #b42318; font-size: .67rem; }
+.user-ticket-create-form footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
+.user-ticket-cancel { min-height: 40px; padding: 8px 13px; border: 1px solid rgba(13,59,78,.14); border-radius: 9px; background: #fff; color: #4d6b7a; cursor: pointer; font: 700 .7rem 'Vazir', sans-serif; }
+
+.user-ticket-submit { min-height: 40px; padding: 8px 14px; border: 0; border-radius: 9px; background: #00b894; color: #fff; cursor: pointer; font: 700 .7rem 'Vazir', sans-serif; }
+.user-ticket-submit:disabled, .user-support-send:disabled { cursor: wait; opacity: .55; }
+
+.user-panel-page.user-support-open { overflow: hidden; }
+/* ---------- واکنش‌گرایی و موبایل ---------- */
+@media (max-width: 1100px) {
+    .user-support-layout { grid-template-columns: 180px minmax(280px, 1fr); }
+    .user-support-detail { grid-column: 1 / -1; min-height: 370px; }
+}
+@media (max-width: 700px) {
+    .user-support-center { padding: 0; place-items: stretch; }
+    .user-support-dialog { width: 100%; height: 100dvh; border-radius: 0; }
+    .user-support-header { padding: 14px; }
+    .user-support-heading { gap: 8px; }
+    .user-support-back { display: block; width: 32px; height: 32px; border: 0; background: transparent; color: #0d3b4e; font-size: 1.2rem; }
+    .user-support-new { padding-inline: 9px; font-size: .65rem; }
+    .user-support-summary { gap: 5px; padding: 10px 14px; }
+    .user-support-summary button { min-height: 47px; flex-direction: column; justify-content: center; gap: 0; padding: 5px; }
+    .user-support-summary span { font-size: .56rem; }
+    .user-support-summary strong { font-size: .95rem; }
+    .user-support-layout { display: flex; flex-direction: column; padding: 0 10px 10px; gap: 8px; overflow: auto; }
+    .user-support-nav { display: grid; grid-template-columns: repeat(2, 1fr); flex: 0 0 auto; padding: 8px; }
+    .user-support-nav-title, .user-support-help { grid-column: 1 / -1; }
+    .user-support-help { margin-top: 5px; }
+    .user-support-list-pane { min-height: 300px; flex: 0 0 390px; }
+    .user-support-list-head { flex-direction: column; }
+    .user-support-search { flex-basis: auto; width: 100%; }
+    .user-support-detail { min-height: 500px; flex: 0 0 500px; }
+    .user-support-message { max-width: 94%; }
+    .user-support-composer { grid-template-columns: 1fr auto; }
+    .user-support-composer textarea { grid-column: 1 / -1; }
+    .user-support-activity { margin: 0 10px 10px; }
+    .user-support-activity p { display: none; }
+    .user-ticket-create { padding: 8px; }
+    .user-ticket-create-dialog { max-height: calc(100dvh - 16px); border-radius: 18px; direction: rtl; }
+    .user-ticket-create-head, .user-ticket-create-form { padding-inline: 16px; }
+    .user-ticket-steps { padding-inline: 16px; }
+    .user-ticket-form-grid { grid-template-columns: 1fr; }
+    .user-ticket-form-grid label.span-2 { grid-column: auto; }
+    .user-ticket-create-form footer button { flex: 1; }
+}
+
+/* RTL workspace order: filters on the right, list in the middle, details on the left. */
+.user-support-layout { direction: rtl; grid-template-columns: 205px minmax(300px, .82fr) minmax(390px, 1.3fr); }
+.user-support-nav, .user-support-list-pane, .user-support-detail, .user-support-list-head, .user-support-ticket, .user-support-detail-head, .user-support-detail-meta, .user-support-detail-actions, .user-support-composer { direction: rtl; text-align: right; }
+.user-support-nav button, .user-support-search input { direction: rtl; text-align: right; }
+.user-support-list-head { align-items: center; }
+.user-support-search { margin-right: auto; margin-left: 0; }
+.user-support-ticket-top, .user-support-ticket-foot, .user-support-ticket-activity { direction: rtl; }
+.user-support-ticket::before { inset-inline-start: auto; inset-inline-end: 0; border-radius: 3px 0 0 3px; }
+.user-support-ticket { padding-right: 15px; padding-left: 12px; }
+.user-support-message-head, .user-support-message-body, .user-support-attachments { direction: rtl; text-align: right; }
+@media (max-width: 1050px) {
+    .user-support-layout { grid-template-columns: 185px minmax(260px, .9fr) minmax(320px, 1.15fr); padding-right: 16px; padding-left: 16px; }
+}
+@media (max-width: 780px) {
+    .user-support-layout { display: flex; flex-direction: column; overflow: auto; padding: 0 12px 12px; }
+    .user-support-nav { flex: 0 0 auto; order: 1; }
+    .user-support-list-pane { flex: 0 0 310px; order: 2; }
+    .user-support-detail { flex: 1 0 430px; order: 3; }
+    .user-support-list-head { flex-wrap: wrap; }
+    .user-support-search { flex: 1 1 100%; margin: 5px 0 0; }
+}
+@media (prefers-reduced-motion: reduce) { .user-support-skeleton { animation: none; } }
+body.dark-mode .user-support-launcher { background: linear-gradient(145deg, #183a3b, #182233 72%); border-color: rgba(0,184,148,.35); }
+body.dark-mode .user-support-dialog, body.dark-mode .user-ticket-create-dialog { background: #182233; color: #e8edf5; }
+body.dark-mode .user-support-header, body.dark-mode .user-support-summary, body.dark-mode .user-support-detail, body.dark-mode .user-support-list-pane, body.dark-mode .user-support-ticket, body.dark-mode .user-support-message.is-support, body.dark-mode .user-ticket-create-head { background: #182233; }
+body.dark-mode .user-support-nav { background: #131c2d; }
+body.dark-mode .user-support-nav button:hover, body.dark-mode .user-support-nav button.is-active, body.dark-mode .user-support-summary button, body.dark-mode .user-support-summary button.is-active, body.dark-mode .user-support-secondary-action, body.dark-mode .user-ticket-cancel { background: #1e2a3d; color: #e8edf5; }
+body.dark-mode .user-support-heading h2, body.dark-mode .user-support-list-head h3, body.dark-mode .user-support-activity h3, body.dark-mode .user-support-detail-head h3, body.dark-mode .user-support-detail-empty h3, body.dark-mode .user-support-empty-list h3, body.dark-mode .user-support-message-body, body.dark-mode .user-ticket-create-head h2 { color: #e8edf5; }
+body.dark-mode .user-support-heading p, body.dark-mode .user-support-ticket-subject, body.dark-mode .user-support-message-head strong { color: #e8edf5; }
+body.dark-mode .user-support-heading p, body.dark-mode .user-support-ticket-activity, body.dark-mode .user-support-ticket-foot > span, body.dark-mode .user-support-detail-head p, body.dark-mode .user-support-detail-meta, body.dark-mode .user-support-detail-empty p, body.dark-mode .user-support-empty-list p, body.dark-mode .user-support-activity p, body.dark-mode .user-ticket-create-head p, body.dark-mode .user-ticket-form-grid label { color: #9fadc2; }
+body.dark-mode .user-ticket-form-grid input, body.dark-mode .user-ticket-form-grid select, body.dark-mode .user-ticket-form-grid textarea, body.dark-mode .user-support-search input, body.dark-mode .user-support-composer textarea { background: #1e2a3d; color: #e8edf5; border-color: #2c3a52; }
+body.dark-mode .user-support-message.is-mine { background: #173b39; }
+body.dark-mode .user-support-message.is-system { background: #3a3520; }
+body.dark-mode .user-support-activity { background: #173b39; }

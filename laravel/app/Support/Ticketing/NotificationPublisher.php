@@ -3,7 +3,6 @@
 namespace App\Support\Ticketing;
 
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 /**
  * Publish a durable event from another subsystem into the notification inbox.

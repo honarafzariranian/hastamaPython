@@ -19,13 +19,21 @@ use Throwable;
 final class OutageService
 {
     public const ENABLED_KEY = 'outage_page_enabled';
+
     public const INTERVAL_KEY = 'outage_probe_interval_seconds';
+
     public const FAILURES_KEY = 'outage_probe_failures';
+
     public const TARGETS_KEY = 'outage_probe_targets';
+
     public const LOGOUT_KEY = 'outage_terminate_sessions';
+
     public const SHOW_LAN_KEY = 'outage_show_lan_address';
+
     public const TITLE_KEY = 'outage_title';
+
     public const MESSAGE_KEY = 'outage_message';
+
     public const MANUAL_KEY = 'outage_manual';
 
     private const DESCRIPTIONS = [
@@ -47,15 +55,23 @@ final class OutageService
     public const DEFAULT_MESSAGE = 'دسترسی به سامانه از مسیر اینترنت برقرار نیست. اگر در شبکهٔ داخلی آزمایشگاه هستید، سامانه از آدرس زیر در دسترس است. پس از برقراری اینترنت، این صفحه به‌صورت خودکار بسته می‌شود.';
 
     public const DEFAULT_INTERVAL_SECONDS = 30;
+
     public const DEFAULT_FAILURES = 3;
+
     public const RECOVERY_SUCCESSES = 2;
 
     public const MIN_INTERVAL_SECONDS = 5;
+
     public const MAX_INTERVAL_SECONDS = 3600;
+
     public const MIN_FAILURES = 1;
+
     public const MAX_FAILURES = 20;
+
     public const MAX_TITLE_CHARS = 120;
+
     public const MAX_MESSAGE_CHARS = 600;
+
     public const PROBE_TIMEOUT_SECONDS = 4.0;
 
     /** @var array<string, mixed> */

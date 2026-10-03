@@ -148,7 +148,7 @@ final class PrinterService
      * then any label-looking queue that is ready, then any label-looking queue.
      *
      * @param  array<int, array<string, mixed>>|null  $printers
- */
+     */
     public static function pickLabelPrinter(?array $printers = null): ?array
     {
         $rows = $printers ?? array_map(static fn (array $row): array => self::decorate($row), self::rawPrinters());

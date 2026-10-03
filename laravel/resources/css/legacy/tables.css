@@ -1,0 +1,692 @@
+/* ==========================================================================
+   tables.css — لایهٔ طراحی یکپارچهٔ جداول دسکتاپ سامانهٔ هستما
+   --------------------------------------------------------------------------
+   این فایل، ظاهر همهٔ جداول پنل مدیریت، پنل کاربری و صفحات گزارش را در
+   حالت دسکتاپ یکدست می‌کند (بدون هیچ تغییری در رفتار/منطق جداول):
+
+     • ظرف جدول      : گوشهٔ گرد، حاشیهٔ ملایم، سایهٔ بسیار سبک
+     • هدر           : پس‌زمینهٔ خنثی، تایپوگرافی مشخص، جدایی از ردیف‌ها
+     • ردیف‌ها        : ارتفاع ثابت، فاصلهٔ افقی راحت، خط تفکیک ظریف
+     • زبرا/هاور      : نوارهای متناوب بسیار ملایم + هایلایت ردیف
+     • نشان وضعیت    : سیستم نشان یکپارچه (قرص نرم + رنگ معنایی)
+     • دکمه‌های اکشن : دکمهٔ آیکونی هم‌اندازه با حالت‌های هاور رنگی
+     • RTL           : با خصوصیات منطقی (border-start-*) هماهنگ است
+
+   قواعد کلیدی:
+     ۱) فقط در «نمایش صفحه و عرض ≥ ۷۶۹px» اعمال می‌شود؛ لایهٔ موبایل
+        (responsive-tables) و حالت چاپ دست‌نخورده می‌مانند.
+     ۲) بعد از استایل‌های صفحه و قبل از dark-theme.css لود می‌شود؛
+        بنابراین رنگ‌های تم تیره همیشه اولویت آخر را دارند.
+     ۳) ساختار DOM جدول‌ها اصلاً تغییر نمی‌کند؛ همه‌چیز از طریق CSS است.
+   ========================================================================== */
+
+@media screen and (min-width: 769px) {
+
+  /* ----------------------------------------------------------------------
+     توکن‌های طراحی مشترک (رنگ‌ها با پالت موجود برنامه هماهنگ‌اند)
+     ---------------------------------------------------------------------- */
+  :root {
+    --tbl-radius: 12px;
+    --tbl-border: #e2e8f0;
+    --tbl-line: #f1f5f9;
+    --tbl-header-bg: #f8fafc;
+    --tbl-header-ink: #1e293b;
+    --tbl-ink: #334155;
+    --tbl-ink-strong: #0f172a;
+    --tbl-hover: #f1f5f9;
+    --tbl-zebra: rgba(15, 23, 42, 0.02);
+    --tbl-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.05);
+  }
+
+  /* ----------------------------------------------------------------------
+     فهرست سراسری جدول‌های تحت پوشش (مثل فهرست dark-theme.css)
+     ---------------------------------------------------------------------- */
+  .request-table,
+  .vacation-table,
+  .individual-report-table,
+  .overTime-table,
+  .overTime-allreport-table,
+  .overTimeindivisualReport-table,
+  .hourlyPassReport-table,
+  .hourlyPassTotaluserReport-table,
+  .hourlyPassIndivisualuserReport-table,
+  .ticketUsersReport-table,
+  .hozoorUsersReport-table,
+  .ezafeKarUsersReport-table,
+  .morkhcUsersReport-table,
+  .hourlyPassUsersReport-table,
+  .passsaatiReport-table,
+  #OverTimeTable,
+  #leaveTable,
+  #ticket-status-table,
+  #ticket-status-table-popup,
+  #HozoorTableReport,
+  #hozoorUsersReportTable,
+  #ezafeKarUsersReportTable,
+  #morkhcUsersReportTable,
+  #hourlyPassUsersReportTable {
+    --tbl-radius: 12px;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۱) ظرف جدول — گوشهٔ گرد + حاشیهٔ ملایم + سایهٔ بسیار سبک
+     ---------------------------------------------------------------------- */
+  .request-table,
+  .vacation-table,
+  .individual-report-table,
+  .overTime-table,
+  .overTime-allreport-table,
+  .overTimeindivisualReport-table,
+  .hourlyPassReport-table,
+  .hourlyPassTotaluserReport-table,
+  .hourlyPassIndivisualuserReport-table,
+  .ticketUsersReport-table,
+  .hozoorUsersReport-table,
+  .ezafeKarUsersReport-table,
+  .morkhcUsersReport-table,
+  .hourlyPassUsersReport-table,
+  .passsaatiReport-table,
+  #OverTimeTable,
+  #leaveTable,
+  #ticket-status-table,
+  #ticket-status-table-popup,
+  #HozoorTableReport,
+  #hozoorUsersReportTable,
+  #ezafeKarUsersReportTable,
+  #morkhcUsersReportTable,
+  #hourlyPassUsersReportTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--tbl-border);
+    border-radius: var(--tbl-radius);
+    background-color: #ffffff;
+    box-shadow: var(--tbl-shadow);
+    font-size: 14px;
+  }
+
+  /* جدول‌های کوچک داشبورد داخل کارت خودشان هستند؛ بدون قاب دوم */
+  .dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    box-shadow: none;
+    font-size: 13px;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۲) هدر جدول — پس‌زمینهٔ خنثی + تایپوگرافی مشخص + خط جدایی
+        (رنگ پس‌زمینه روی th است تا گوشه‌های گرد درست بریده شوند)
+     ---------------------------------------------------------------------- */
+  .request-table thead th,
+  .vacation-table thead th,
+  .individual-report-table thead th,
+  .overTime-table thead th,
+  .overTime-allreport-table thead th,
+  .overTimeindivisualReport-table thead th,
+  .hourlyPassReport-table thead th,
+  .hourlyPassTotaluserReport-table thead th,
+  .hourlyPassIndivisualuserReport-table thead th,
+  .ticketUsersReport-table thead th,
+  .hozoorUsersReport-table thead th,
+  .ezafeKarUsersReport-table thead th,
+  .morkhcUsersReport-table thead th,
+  .hourlyPassUsersReport-table thead th,
+  .passsaatiReport-table thead th,
+  .dashboard-table thead th,
+  #OverTimeTable thead th,
+  #leaveTable thead th,
+  #ticket-status-table thead th,
+  #ticket-status-table-popup thead th,
+  #HozoorTableReport thead th,
+  #hozoorUsersReportTable thead th,
+  #ezafeKarUsersReportTable thead th,
+  #morkhcUsersReportTable thead th,
+  #hourlyPassUsersReportTable thead th {
+    background-color: var(--tbl-header-bg);
+    color: var(--tbl-header-ink);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    padding: 12px 14px;
+    text-align: center;
+    vertical-align: middle;
+    border: 0;
+    border-bottom: 1px solid var(--tbl-border);
+  }
+
+  /* ----------------------------------------------------------------------
+     ۳) سلول‌های بدنه — ارتفاع ردیف یکدست + فاصلهٔ افقی راحت
+     ---------------------------------------------------------------------- */
+  .request-table th, .request-table td,
+  .vacation-table th, .vacation-table td,
+  .individual-report-table th, .individual-report-table td,
+  .overTime-table th, .overTime-table td,
+  .overTime-allreport-table th, .overTime-allreport-table td,
+  .overTimeindivisualReport-table th, .overTimeindivisualReport-table td,
+  .hourlyPassReport-table th, .hourlyPassReport-table td,
+  .hourlyPassTotaluserReport-table th, .hourlyPassTotaluserReport-table td,
+  .hourlyPassIndivisualuserReport-table th, .hourlyPassIndivisualuserReport-table td,
+  .ticketUsersReport-table th, .ticketUsersReport-table td,
+  .hozoorUsersReport-table th, .hozoorUsersReport-table td,
+  .ezafeKarUsersReport-table th, .ezafeKarUsersReport-table td,
+  .morkhcUsersReport-table th, .morkhcUsersReport-table td,
+  .hourlyPassUsersReport-table th, .hourlyPassUsersReport-table td,
+  .passsaatiReport-table th, .passsaatiReport-table td,
+  #OverTimeTable th, #OverTimeTable td,
+  #leaveTable th, #leaveTable td,
+  #ticket-status-table th, #ticket-status-table td,
+  #ticket-status-table-popup th, #ticket-status-table-popup td,
+  #HozoorTableReport th, #HozoorTableReport td,
+  #hozoorUsersReportTable th, #hozoorUsersReportTable td,
+  #ezafeKarUsersReportTable th, #ezafeKarUsersReportTable td,
+  #morkhcUsersReportTable th, #morkhcUsersReportTable td,
+  #hourlyPassUsersReportTable th, #hourlyPassUsersReportTable td {
+    padding: 11px 14px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* ردیف‌های بدنه: حذف شبکهٔ سلولی قدیمی → فقط خط تفکیک زیر ردیف */
+  .request-table tbody td,
+  .vacation-table tbody td,
+  .individual-report-table tbody td,
+  .overTime-table tbody td,
+  .overTime-allreport-table tbody td,
+  .overTimeindivisualReport-table tbody td,
+  .hourlyPassReport-table tbody td,
+  .hourlyPassTotaluserReport-table tbody td,
+  .hourlyPassIndivisualuserReport-table tbody td,
+  .ticketUsersReport-table tbody td,
+  .hozoorUsersReport-table tbody td,
+  .ezafeKarUsersReport-table tbody td,
+  .morkhcUsersReport-table tbody td,
+  .hourlyPassUsersReport-table tbody td,
+  .passsaatiReport-table tbody td,
+  #OverTimeTable tbody td,
+  #leaveTable tbody td,
+  #ticket-status-table tbody td,
+  #ticket-status-table-popup tbody td,
+  #HozoorTableReport tbody td,
+  #hozoorUsersReportTable tbody td,
+  #ezafeKarUsersReportTable tbody td,
+  #morkhcUsersReportTable tbody td,
+  #hourlyPassUsersReportTable tbody td {
+    border: 0;
+    border-bottom: 1px solid var(--tbl-line);
+    color: var(--tbl-ink);
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  /* آخرین ردیف — بدون خط زیر تا قاب جدول تمیز بسته شود */
+  .request-table tbody tr:last-child td,
+  .vacation-table tbody tr:last-child td,
+  .individual-report-table tbody tr:last-child td,
+  .overTime-table tbody tr:last-child td,
+  .overTime-allreport-table tbody tr:last-child td,
+  .overTimeindivisualReport-table tbody tr:last-child td,
+  .hourlyPassReport-table tbody tr:last-child td,
+  .hourlyPassTotaluserReport-table tbody tr:last-child td,
+  .hourlyPassIndivisualuserReport-table tbody tr:last-child td,
+  .ticketUsersReport-table tbody tr:last-child td,
+  .hozoorUsersReport-table tbody tr:last-child td,
+  .ezafeKarUsersReport-table tbody tr:last-child td,
+  .morkhcUsersReport-table tbody tr:last-child td,
+  .hourlyPassUsersReport-table tbody tr:last-child td,
+  .passsaatiReport-table tbody tr:last-child td,
+  #OverTimeTable tbody tr:last-child td,
+  #leaveTable tbody tr:last-child td,
+  #ticket-status-table tbody tr:last-child td,
+  #ticket-status-table-popup tbody tr:last-child td,
+  #HozoorTableReport tbody tr:last-child td,
+  #hozoorUsersReportTable tbody tr:last-child td,
+  #ezafeKarUsersReportTable tbody tr:last-child td,
+  #morkhcUsersReportTable tbody tr:last-child td,
+  #hourlyPassUsersReportTable tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۴) گوشه‌های گرد جدول — با خصوصیات منطقی (سازگار با RTL)
+     ---------------------------------------------------------------------- */
+  .request-table thead tr:first-child th:first-child,
+  .vacation-table thead tr:first-child th:first-child,
+  .individual-report-table thead tr:first-child th:first-child,
+  .overTime-table thead tr:first-child th:first-child,
+  .overTime-allreport-table thead tr:first-child th:first-child,
+  .overTimeindivisualReport-table thead tr:first-child th:first-child,
+  .hourlyPassReport-table thead tr:first-child th:first-child,
+  .hourlyPassTotaluserReport-table thead tr:first-child th:first-child,
+  .hourlyPassIndivisualuserReport-table thead tr:first-child th:first-child,
+  .ticketUsersReport-table thead tr:first-child th:first-child,
+  .hozoorUsersReport-table thead tr:first-child th:first-child,
+  .ezafeKarUsersReport-table thead tr:first-child th:first-child,
+  .morkhcUsersReport-table thead tr:first-child th:first-child,
+  .hourlyPassUsersReport-table thead tr:first-child th:first-child,
+  .passsaatiReport-table thead tr:first-child th:first-child,
+  #OverTimeTable thead tr:first-child th:first-child,
+  #leaveTable thead tr:first-child th:first-child,
+  #ticket-status-table thead tr:first-child th:first-child,
+  #ticket-status-table-popup thead tr:first-child th:first-child,
+  #HozoorTableReport thead tr:first-child th:first-child,
+  #hozoorUsersReportTable thead tr:first-child th:first-child,
+  #ezafeKarUsersReportTable thead tr:first-child th:first-child,
+  #morkhcUsersReportTable thead tr:first-child th:first-child,
+  #hourlyPassUsersReportTable thead tr:first-child th:first-child {
+    border-start-start-radius: var(--tbl-radius);
+  }
+
+  .request-table thead tr:first-child th:last-child,
+  .vacation-table thead tr:first-child th:last-child,
+  .individual-report-table thead tr:first-child th:last-child,
+  .overTime-table thead tr:first-child th:last-child,
+  .overTime-allreport-table thead tr:first-child th:last-child,
+  .overTimeindivisualReport-table thead tr:first-child th:last-child,
+  .hourlyPassReport-table thead tr:first-child th:last-child,
+  .hourlyPassTotaluserReport-table thead tr:first-child th:last-child,
+  .hourlyPassIndivisualuserReport-table thead tr:first-child th:last-child,
+  .ticketUsersReport-table thead tr:first-child th:last-child,
+  .hozoorUsersReport-table thead tr:first-child th:last-child,
+  .ezafeKarUsersReport-table thead tr:first-child th:last-child,
+  .morkhcUsersReport-table thead tr:first-child th:last-child,
+  .hourlyPassUsersReport-table thead tr:first-child th:last-child,
+  .passsaatiReport-table thead tr:first-child th:last-child,
+  #OverTimeTable thead tr:first-child th:last-child,
+  #leaveTable thead tr:first-child th:last-child,
+  #ticket-status-table thead tr:first-child th:last-child,
+  #ticket-status-table-popup thead tr:first-child th:last-child,
+  #HozoorTableReport thead tr:first-child th:last-child,
+  #hozoorUsersReportTable thead tr:first-child th:last-child,
+  #ezafeKarUsersReportTable thead tr:first-child th:last-child,
+  #morkhcUsersReportTable thead tr:first-child th:last-child,
+  #hourlyPassUsersReportTable thead tr:first-child th:last-child {
+    border-start-end-radius: var(--tbl-radius);
+  }
+
+  .request-table tbody tr:last-child td:first-child,
+  .vacation-table tbody tr:last-child td:first-child,
+  .individual-report-table tbody tr:last-child td:first-child,
+  .overTime-table tbody tr:last-child td:first-child,
+  .overTime-allreport-table tbody tr:last-child td:first-child,
+  .overTimeindivisualReport-table tbody tr:last-child td:first-child,
+  .hourlyPassReport-table tbody tr:last-child td:first-child,
+  .hourlyPassTotaluserReport-table tbody tr:last-child td:first-child,
+  .hourlyPassIndivisualuserReport-table tbody tr:last-child td:first-child,
+  .ticketUsersReport-table tbody tr:last-child td:first-child,
+  .hozoorUsersReport-table tbody tr:last-child td:first-child,
+  .ezafeKarUsersReport-table tbody tr:last-child td:first-child,
+  .morkhcUsersReport-table tbody tr:last-child td:first-child,
+  .hourlyPassUsersReport-table tbody tr:last-child td:first-child,
+  .passsaatiReport-table tbody tr:last-child td:first-child,
+  #OverTimeTable tbody tr:last-child td:first-child,
+  #leaveTable tbody tr:last-child td:first-child,
+  #ticket-status-table tbody tr:last-child td:first-child,
+  #ticket-status-table-popup tbody tr:last-child td:first-child,
+  #HozoorTableReport tbody tr:last-child td:first-child,
+  #hozoorUsersReportTable tbody tr:last-child td:first-child,
+  #ezafeKarUsersReportTable tbody tr:last-child td:first-child,
+  #morkhcUsersReportTable tbody tr:last-child td:first-child,
+  #hourlyPassUsersReportTable tbody tr:last-child td:first-child {
+    border-end-start-radius: var(--tbl-radius);
+  }
+
+  .request-table tbody tr:last-child td:last-child,
+  .vacation-table tbody tr:last-child td:last-child,
+  .individual-report-table tbody tr:last-child td:last-child,
+  .overTime-table tbody tr:last-child td:last-child,
+  .overTime-allreport-table tbody tr:last-child td:last-child,
+  .overTimeindivisualReport-table tbody tr:last-child td:last-child,
+  .hourlyPassReport-table tbody tr:last-child td:last-child,
+  .hourlyPassTotaluserReport-table tbody tr:last-child td:last-child,
+  .hourlyPassIndivisualuserReport-table tbody tr:last-child td:last-child,
+  .ticketUsersReport-table tbody tr:last-child td:last-child,
+  .hozoorUsersReport-table tbody tr:last-child td:last-child,
+  .ezafeKarUsersReport-table tbody tr:last-child td:last-child,
+  .morkhcUsersReport-table tbody tr:last-child td:last-child,
+  .hourlyPassUsersReport-table tbody tr:last-child td:last-child,
+  .passsaatiReport-table tbody tr:last-child td:last-child,
+  #OverTimeTable tbody tr:last-child td:last-child,
+  #leaveTable tbody tr:last-child td:last-child,
+  #ticket-status-table tbody tr:last-child td:last-child,
+  #ticket-status-table-popup tbody tr:last-child td:last-child,
+  #HozoorTableReport tbody tr:last-child td:last-child,
+  #hozoorUsersReportTable tbody tr:last-child td:last-child,
+  #ezafeKarUsersReportTable tbody tr:last-child td:last-child,
+  #morkhcUsersReportTable tbody tr:last-child td:last-child,
+  #hourlyPassUsersReportTable tbody tr:last-child td:last-child {
+    border-end-end-radius: var(--tbl-radius);
+  }
+
+  /* ----------------------------------------------------------------------
+     ۵) زبرا + هاور — بسیار ملایم؛ ردیف‌های تعطیل (holiday-row) مستثنا هستند
+     ---------------------------------------------------------------------- */
+  .request-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .vacation-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .individual-report-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .overTime-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .overTime-allreport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .overTimeindivisualReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .hourlyPassReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .hourlyPassTotaluserReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .hourlyPassIndivisualuserReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .ticketUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .hozoorUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .ezafeKarUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .morkhcUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .hourlyPassUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .passsaatiReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+  .dashboard-table tbody tr:not(.holiday-row):nth-child(even) td,
+  #OverTimeTable tbody tr:not(.holiday-row):nth-child(even) td,
+  #leaveTable tbody tr:not(.holiday-row):nth-child(even) td,
+  #ticket-status-table tbody tr:not(.holiday-row):nth-child(even) td,
+  #ticket-status-table-popup tbody tr:not(.holiday-row):nth-child(even) td,
+  #HozoorTableReport tbody tr:not(.holiday-row):nth-child(even) td,
+  #hozoorUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+  #ezafeKarUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+  #morkhcUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+  #hourlyPassUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td {
+    background-color: var(--tbl-zebra);
+  }
+
+  .request-table tbody tr:not(.holiday-row):hover td,
+  .vacation-table tbody tr:not(.holiday-row):hover td,
+  .individual-report-table tbody tr:not(.holiday-row):hover td,
+  .overTime-table tbody tr:not(.holiday-row):hover td,
+  .overTime-allreport-table tbody tr:not(.holiday-row):hover td,
+  .overTimeindivisualReport-table tbody tr:not(.holiday-row):hover td,
+  .hourlyPassReport-table tbody tr:not(.holiday-row):hover td,
+  .hourlyPassTotaluserReport-table tbody tr:not(.holiday-row):hover td,
+  .hourlyPassIndivisualuserReport-table tbody tr:not(.holiday-row):hover td,
+  .ticketUsersReport-table tbody tr:not(.holiday-row):hover td,
+  .hozoorUsersReport-table tbody tr:not(.holiday-row):hover td,
+  .ezafeKarUsersReport-table tbody tr:not(.holiday-row):hover td,
+  .morkhcUsersReport-table tbody tr:not(.holiday-row):hover td,
+  .hourlyPassUsersReport-table tbody tr:not(.holiday-row):hover td,
+  .passsaatiReport-table tbody tr:not(.holiday-row):hover td,
+  .dashboard-table tbody tr:not(.holiday-row):hover td,
+  #OverTimeTable tbody tr:not(.holiday-row):hover td,
+  #leaveTable tbody tr:not(.holiday-row):hover td,
+  #ticket-status-table tbody tr:not(.holiday-row):hover td,
+  #ticket-status-table-popup tbody tr:not(.holiday-row):hover td,
+  #HozoorTableReport tbody tr:not(.holiday-row):hover td,
+  #hozoorUsersReportTable tbody tr:not(.holiday-row):hover td,
+  #ezafeKarUsersReportTable tbody tr:not(.holiday-row):hover td,
+  #morkhcUsersReportTable tbody tr:not(.holiday-row):hover td,
+  #hourlyPassUsersReportTable tbody tr:not(.holiday-row):hover td {
+    background-color: var(--tbl-hover);
+  }
+
+  /* ----------------------------------------------------------------------
+     ۶) جدول‌های کوچک داشبورد — فشرده اما هم‌خانواده
+     ---------------------------------------------------------------------- */
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 7px 10px;
+    font-size: 12.5px;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۷) نشان وضعیت — قرص نرم با رنگ معنایی یکسان در همهٔ جداول
+        (کلاس‌های وضعیت قبلاً توسط منطق موجود درج می‌شوند)
+     ---------------------------------------------------------------------- */
+  .status-navbar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    min-height: 28px;
+    padding: 3px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .status-navbar:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  /* تایید شده */
+  .status-navbar.approved {
+    background-color: rgba(34, 197, 94, 0.13);
+    color: #15803d;
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  /* رد شده */
+  .status-navbar.rejected {
+    background-color: rgba(239, 68, 68, 0.11);
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  /* انتظار تایید / در حال پیگیری */
+  .status-navbar.pending,
+  .status-navbar.status-following {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.34);
+  }
+  /* انصراف / لغو */
+  .status-navbar.cancelled {
+    background-color: rgba(100, 116, 139, 0.12);
+    color: #475569;
+    border-color: rgba(100, 116, 139, 0.28);
+  }
+  /* ارسال شده */
+  .status-navbar.status-sent {
+    background-color: rgba(14, 165, 233, 0.12);
+    color: #0369a1;
+    border-color: rgba(14, 165, 233, 0.3);
+  }
+  /* خوانده شده */
+  .status-navbar.status-read {
+    background-color: rgba(139, 92, 246, 0.12);
+    color: #6d28d9;
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+  /* پاسخ داده شده */
+  .status-navbar.status-answered {
+    background-color: rgba(20, 184, 166, 0.13);
+    color: #0f766e;
+    border-color: rgba(20, 184, 166, 0.32);
+  }
+
+  /* منوی کشویی تغییر وضعیت — قرص‌های نرم هماهنگ با نشان‌ها */
+  .status-dropdown {
+    border-radius: 10px;
+    border-color: #e2e8f0;
+    padding: 6px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+  }
+
+  .status-dropdown .status-option {
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  .status-dropdown .status-option:hover {
+    background-color: #f1f5f9;
+  }
+
+  .status-dropdown .status-option.approved {
+    background-color: rgba(34, 197, 94, 0.13);
+    color: #15803d;
+  }
+  .status-dropdown .status-option.rejected {
+    background-color: rgba(239, 68, 68, 0.11);
+    color: #b91c1c;
+  }
+  .status-dropdown .status-option.pending {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+  }
+  .status-dropdown .status-option.cancelled {
+    background-color: rgba(100, 116, 139, 0.12);
+    color: #475569;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۸) نشان وضعیت خنثی (پنل کاربری) — جایی که وضعیت با CSS رنگ معنایی ندارد
+     ---------------------------------------------------------------------- */
+  /* وضعیت تیکت‌ها */
+  #ticket-status-table .vazeiyat-ticket > span:first-child,
+  #ticket-status-table-popup .vazeiyat-ticket > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 3px 14px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background-color: #eef2f7;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
+  /* وضعیت مرخصی‌ها (جدول مرخصی پنل کاربری) */
+  #leaveTable tbody td:first-child {
+    background-color: #eef2f7;
+    color: #475569;
+    border-radius: 999px;
+    border-bottom: 0;
+    font-weight: 700;
+  }
+
+  /* وضعیت اضافه‌کاری (پاپ‌آپ مشروح پنل کاربری) */
+  #OverTimeTable tbody .vazeiyat-ezafetime {
+    background-color: #eef2f7;
+    color: #475569;
+    border-radius: 999px;
+    border-bottom: 0;
+    font-weight: 700;
+  }
+
+  /* وضعیت پاس ساعتی (پاپ‌آپ مشروح پنل کاربری) */
+  #passsaatiReportTable tbody td:first-child {
+    background-color: #eef2f7;
+    color: #475569;
+    border-radius: 999px;
+    border-bottom: 0;
+    font-weight: 700;
+  }
+
+  /* وضعیت حضور (جدول ساعت‌زن پنل کاربری) */
+  #HozoorTableReport tbody .vazeiyat-hozoorTime {
+    background-color: #eef2f7;
+    color: #475569;
+    border-radius: 999px;
+    border-bottom: 0;
+    font-weight: 700;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۹) دکمه‌های اکشن جدول — هم‌اندازه، آیکون ثابت، هاور رنگی ملایم
+        (فقط ظاهر؛ هندلرها و رفتار دست‌نخورده می‌مانند)
+     ---------------------------------------------------------------------- */
+  .edit-btn,
+  .trash-btn,
+  .view-btn,
+  .check-btn,
+  .trash-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 2px;
+    border: none;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .edit-btn img,
+  .trash-btn img,
+  .view-btn img,
+  .check-btn img,
+  .trash-icon img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .edit-btn:hover {
+    background-color: #e0f2fe;
+  }
+
+  .trash-btn:hover,
+  .trash-icon:hover {
+    background-color: #fee2e2;
+  }
+
+  .view-btn:hover {
+    background-color: #ccfbf1;
+  }
+
+  .check-btn:hover {
+    background-color: #dcfce7;
+  }
+
+  .edit-btn:focus-visible,
+  .trash-btn:focus-visible,
+  .view-btn:focus-visible,
+  .check-btn:focus-visible,
+  .trash-icon:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  /* دکمهٔ متنی «تایید تغییرات» در جداول مدیریت */
+  .update-button,
+  .confirm-changes-btn {
+    min-height: 32px;
+    padding: 6px 18px;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۱۰) محتوای بلند — جلوگیری از به‌هم‌ریختگی چیدمان در جدول تیکت‌ها
+         (سلول اقدامات و وضعیت که منوی بازشو دارند بریده نمی‌شوند)
+     ---------------------------------------------------------------------- */
+  #ticket-status-table td,
+  #ticket-status-table-popup td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #ticket-status-table td.virayesh-ticket,
+  #ticket-status-table td.vazeiyat-ticket,
+  #ticket-status-table-popup td.virayesh-ticket,
+  #ticket-status-table-popup td.vazeiyat-ticket {
+    overflow: visible;
+  }
+
+  /* ----------------------------------------------------------------------
+     ۱۱) حالت خالی — ظاهر یکدست برای پیام «داده‌ای وجود ندارد»
+     ---------------------------------------------------------------------- */
+  .no-ticket-message {
+    margin: 12px 0;
+    padding: 18px 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+  }
+}

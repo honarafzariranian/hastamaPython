@@ -6,9 +6,9 @@ use App\Services\Audit\AuditLogger;
 use App\Support\Connectivity\LanAccessService;
 use App\Support\Http\ClientAddress;
 use App\Support\Http\MasterAdminActor;
+use App\Support\SystemConfigStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Throwable;
 
 /**
  * The master-admin LAN access surface.
@@ -49,7 +49,7 @@ final class LanAccessController extends MasterAdminController
             return $this->detail(400, 'بدنه درخواست نامعتبر است.');
         }
 
-        $enabled = \App\Support\SystemConfigStore::truthy($decoded['enabled'] ?? false);
+        $enabled = SystemConfigStore::truthy($decoded['enabled'] ?? false);
 
         $status = LanAccessService::setEnabled($enabled, $this->adminUsername());
 

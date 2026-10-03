@@ -1,0 +1,536 @@
+/* ==========================================================================
+   responsive-mobile.css — لایه تکمیلی تجربه موبایل / تبلت سامانه هستما
+   --------------------------------------------------------------------------
+   اصل مهم: این فایل هیچ قانونی خارج از Media Query ندارد. تمام قواعد فقط
+   در عرض‌های کمتر از 1200px اعمال می‌شوند و نسخه دسکتاپ (1200px به بالا)
+   دقیقاً مانند قبل و بدون هیچ تغییر ظاهری رندر می‌شود.
+
+   ساختار:
+     ۱) تبلت        →  768px تا 1199px
+     ۲) موبایل پنل کاربری  → تا 860px (برک‌پوینت فعلی پنل کاربری)
+     ۳) موبایل پنل مدیریت  → تا 768px (برک‌پوینت فعلی پنل مدیریت)
+     ۴) موبایل کوچک  → تا 480px
+   ========================================================================== */
+
+
+/* ==========================================================================
+   ۱) تبلت — 768px تا 1199px
+   ========================================================================== */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+
+    /* پنل کاربری: جلوگیری از بریده شدن متن ساعت/تاریخ هدر در تبلت */
+    .app-shell .topbar-clock-pill {
+        width: auto;
+        min-width: 0;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* پنل کاربری: کارت‌ها در تبلت به اندازه محتوای خودشان باشند */
+    .app-shell .stats-row,
+    .app-shell .top-cards-row,
+    .app-shell .calendar-row,
+    .app-shell .two-col-row,
+    .app-shell .timeline-request-row {
+        align-items: start;
+    }
+}
+
+
+/* ==========================================================================
+   ۲) موبایل پنل کاربری — تا 860px
+   ========================================================================== */
+@media screen and (max-width: 860px) {
+
+    /* --- ۲-۱) رفع باگ جابه‌جایی محتوای مدال‌ها -----------------------------
+       در نسخه قبلی، به فرزندان static مدال (modal-content و ...) علاوه بر خود
+       مدال، transform مرکز‌چین داده می‌شد و محتوا از صفحه خارج می‌شد.
+       اینجا فقط خودِ دیالوگ (position: fixed/relative) مرکز می‌شود و محتوای
+       داخلی به جریان عادی برمی‌گردد. -------------------------------------- */
+
+    .morakhaci-sabt .modal .modal-content {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0;
+        max-height: none !important;
+        overflow: visible !important;
+        text-align: right;
+    }
+
+    /* پاپ‌آپ تأیید حذف (محتوای داخلی overlay تمام‌صفحه است) */
+    .modal-hazf .modal-content-hazfPopup {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: min(100% - 48px, 340px) !important;
+        max-width: 100% !important;
+        margin: 24px auto !important;
+        max-height: calc(100dvh - 110px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
+
+    /* پاپ‌آپ لیست تیکت‌ها (داخل overlay فلکسی مرکزچین می‌شود) */
+    .popup-overlay .ticket-status-box {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: min(100% - 24px, 540px) !important;
+        max-width: calc(100vw - 24px) !important;
+        margin: 0 !important;
+        max-height: calc(100dvh - 48px) !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    /* پاپ‌آپ حضور (کارت داخلی) */
+    .popupHozoor-overlay .popupHozoor-content {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: min(100% - 24px, 460px) !important;
+        max-width: calc(100vw - 24px) !important;
+        height: auto !important;
+        margin: 0 !important;
+        max-height: calc(100dvh - 48px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
+
+    /* --- ۲-۲) کارت‌های داشبورد: عدم کش‌آمدن به ارتفاع بلندترین کارت ردیف */
+    .top-cards-row,
+    .stats-row,
+    .calendar-row,
+    .two-col-row,
+    .timeline-request-row {
+        align-items: start;
+    }
+
+    /* --- ۲-۳) باکس‌های گزارش: اسکرول افقی کنترل‌شده برای جدول‌های پهن */
+    .report-hour-box {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* جدول مرخصی داخل پاپ‌آپ گزارش: حذف عرض ۱۰۷٪ قدیمی */
+    #leaveTable {
+        width: 100% !important;
+    }
+
+    /* --- ۲-۴) فرم‌ها و ورودی‌ها: تمام عرض و لمسی */
+    .morakhaci-sabt .modal-content input,
+    .morakhaci-sabt .modal-content select,
+    .morakhaci-sabt .modal-content textarea,
+    .date-input-shell input,
+    #dynamicFields input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        min-height: 48px;
+        font-size: 15px;
+    }
+
+    .date-input-shell {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* Request modals: full-screen feel on small screens */
+    .morakhaci-sabt .modal {
+        width: min(100% - 16px, 480px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 24px) !important;
+    }
+
+    /* Request modal form padding: reduce on mobile */
+    .morakhaci-sabt .modal .form-section-header {
+        padding: 18px 18px 10px;
+    }
+
+    .morakhaci-sabt .modal form {
+        padding-left: 18px !important;
+        padding-right: 18px !important;
+    }
+
+    .modal-buttons {
+        padding-left: 18px !important;
+        padding-right: 18px !important;
+    }
+
+    /* Request modal buttons: full width on mobile for better touch */
+    .modal-buttons .btn-confirm,
+    .modal-buttons .btn-cancel {
+        flex: 1;
+        min-height: 48px;
+    }
+
+    /* Dynamic fields for hourly pass: ensure touch-friendly */
+    #dynamicFields input {
+        min-height: 48px;
+    }
+
+    /* Substitute dropdown: adjust for mobile */
+    .dropdown-content {
+        width: calc(100% - 36px) !important;
+        max-width: none !important;
+    }
+
+    /* --- ۲-۵) عنوان‌ها در عرض کوچک */
+    .greet-text h1,
+    .modal-content h2,
+    .report-hour-box h2 {
+        overflow-wrap: anywhere;
+    }
+}
+
+
+/* ==========================================================================
+   ۳) موبایل پنل مدیریت — تا 768px
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+
+    /* --- ۳-۱) رفع باگ overlayهای مدال ادمین -------------------------------
+       overlay تمام‌صفحه (modal / modal-virayesh / modal-hazf) نباید خودش
+       translate مرکز‌چین بگیرد و کوچک شود؛ و محتوای static آن هم نباید
+       transform اضافه بگیرد. ---------------------------------------------- */
+
+    .page-shell .modal,
+    .page-shell .modal-virayesh,
+    .page-shell .modal-hazf,
+    .page-shell .MoshahedeOverlay {
+        left: 0 !important;
+        right: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: 100% !important;
+        max-height: none !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 16px 12px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+        z-index: 1200;
+    }
+
+    /* محتوای داخلی مدال‌های ادمین به جریان عادی برمی‌گردد */
+    .page-shell .modal .modal-content,
+    .page-shell .modal-hazf .modal-content-hazfPopup,
+    .page-shell .modaleSabteTicket .modal-content-sabtTicket {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: min(100%, 420px) !important;
+        margin: 24px auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box;
+    }
+
+    /* محتوای پاپ‌آپ ویرایش کاربر: relative می‌ماند تا دکمه «بستن» داخل کارت بماند */
+    .page-shell .modal-virayesh .popup-content-virayesh {
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: min(100%, 420px) !important;
+        margin: 24px auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box;
+    }
+
+    /* --- ۳-۲) خوانایی جدول کاربران (IDs با specificity بالا فونت ۷px را
+       تحمیل می‌کردند؛ در موبایل فونت خوانا و سلول‌های قابل لمس) */
+    #userTable th,
+    #userTable td {
+        font-size: 12px !important;
+        line-height: 1.8 !important;
+        padding: 8px 10px !important;
+    }
+
+    #userTable .edit-btn,
+    #userTable .trash-icon {
+        margin: 0 !important;
+    }
+
+    /* --- ۳-۳) باکس‌هایی که با inline-table باز می‌شوند --------------------
+       inline-table باعث می‌شد باکس به پهنای جدول (۶۸۰px) کش بیاید و عنوان
+       آن از صفحه خارج شود؛ با block شدن، باکس تمام عرض می‌ماند و جدول اسکرول
+       افقی کنترل‌شده می‌گیرد. ------------------------------------------------- */
+    #vacationBox {
+        display: flex !important;
+    }
+
+    /* --- ۳-۴) پیام موفقیت: محدوده امن در موبایل */
+    .success-message {
+        position: fixed !important;
+        left: 12px !important;
+        right: auto;
+        bottom: 12px !important;
+        width: min(420px, calc(100vw - 24px)) !important;
+        height: auto !important;
+        min-height: 0;
+        max-height: 30vh;
+        overflow-y: auto;
+        padding: 12px 40px 12px 14px;
+        font-size: 14px;
+        z-index: 1300;
+        transform: translateX(calc(-100% - 24px));
+    }
+
+    .success-message.show {
+        transform: translateX(0);
+    }
+
+    /* --- ۳-۵) کارت‌های داشبورد ادمین بدون کش‌آمدن غیرضروری */
+    .dashboard-grid,
+    .dashboard-grid--two-row,
+    .dashboard-chart-row {
+        align-items: start;
+    }
+}
+
+
+/* ==========================================================================
+   ۳-ج) صفحه گزارش نهایی (final report)
+   کلاس‌های این بخش (.onvanha / .hozoorBox / .paein / ...) مختص همان صفحه‌اند
+   و با پنل‌ها تداخلی ندارند.
+   ========================================================================== */
+
+/* رفع اورفلو باکس اصلی جدول حضور و غیاب در عرض‌های کوچک‌تر از ۱۵۸۰px
+   (عرض ثابت 96rem باعث اسکرول افقی کل صفحه می‌شد) */
+@media screen and (max-width: 1580px) {
+    .hozoorBox {
+        width: 96% !important;
+        max-width: 96rem;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        box-sizing: border-box;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* تا زمانی که دو ستون پایین صفحه کنار هم جا نمی‌شوند، زیر هم قرار بگیرند */
+@media screen and (max-width: 1579px) {
+    .paein {
+        flex-wrap: wrap;
+    }
+
+    .paein > .left-section,
+    .paein > .paeinrast {
+        flex: 0 1 auto;
+    }
+
+    .paein > .paeinrast {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .numberReport,
+    .dokmeha {
+        width: min(48rem, 93vw);
+    }
+
+    .ezafeBox,
+    .passBox,
+    .hourlyPassBox {
+        width: min(45rem, 93vw) !important;
+        box-sizing: border-box;
+    }
+}
+
+/* تبلت برای صفحه گزارش نهایی */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+    .paein {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .paein .left-section {
+        flex: 1 1 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px;
+    }
+
+    .paein .ezafeBox,
+    .paein .passBox,
+    .paein .hourlyPassBox {
+        width: min(100%, 30rem) !important;
+        flex: 1 1 20rem;
+        box-sizing: border-box;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* موبایل برای صفحه گزارش نهایی: چیدمان عمودی + خوانا + اسکرول کنترل‌شده */
+@media screen and (max-width: 768px) {
+    html, body {
+        overflow-x: clip;
+    }
+
+    .paein {
+        flex-direction: column !important;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+    }
+
+    .paein .left-section {
+        width: 100%;
+        align-items: center;
+        gap: 14px;
+        margin: 0;
+    }
+
+    .paein .ezafeBox,
+    .paein .passBox,
+    .paein .hourlyPassBox {
+        width: 93% !important;
+        box-sizing: border-box;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .paeinrast {
+        width: 93%;
+        margin: 0 auto;
+    }
+
+    /* جداول: اسکرول افقی داخل خود باکس، نه کل صفحه */
+    .hozoorUsersReport-table,
+    .ezafeKarUsersReport-table,
+    .morkhcUsersReport-table,
+    .hourlyPassUsersReport-table {
+        min-width: 640px;
+        table-layout: auto;
+    }
+
+    .hozoorUsersReport-table th, .hozoorUsersReport-table td,
+    .ezafeKarUsersReport-table th, .ezafeKarUsersReport-table td,
+    .morkhcUsersReport-table th, .morkhcUsersReport-table td,
+    .hourlyPassUsersReport-table th, .hourlyPassUsersReport-table td {
+        font-size: 11.5px !important;
+        padding: 6px 8px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .hozoorBox h2, .ezafeBox h2, .passBox h2, .hourlyPassBox h2 {
+        font-size: 13px !important;
+    }
+
+    /* باکس‌های آمار: خواناتر از حالت قبلی (فونت ۶–۱۰px) */
+    .numBox .title, .numBoxInput .title, .numBoxEzafeh .title,
+    .numBox .value, .numBoxInput .value, .numBoxEzafeh .value,
+    .numBox .jscode,
+    .attendanceSamanehValueInput, .attendanceSamanehTitle,
+    .attendanceSystemTitlemajmoo, .attendanceSystemTitlegozaresh,
+    .attendanceSamanehTitlemovazafi, .attendanceSystemValue,
+    .overtimeSamanehValue, .overtimeSystemValue,
+    .overtimeSamanehTitle, .overtimeSystemTitle {
+        font-size: 11px !important;
+    }
+
+    .numBox, .numBoxInput, .numBoxEzafeh {
+        width: auto !important;
+        min-width: 0;
+        height: auto !important;
+        min-height: 44px;
+        padding: 6px 8px !important;
+    }
+
+    .exportButtons {
+        width: 100% !important;
+        gap: 10px !important;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .exportButtons .btn {
+        min-height: 44px;
+        font-size: 12px;
+    }
+}
+
+
+/* ==========================================================================
+   ۴) موبایل کوچک — تا 480px
+   ========================================================================== */
+@media screen and (max-width: 480px) {
+
+    /* پنل کاربری: تیتر خوش‌آمد بهینه‌تر */
+    .app-shell .greet-text h1 {
+        font-size: 17px;
+    }
+
+    /* پاپ‌آپ حذف، کمی جمع‌وجورتر */
+    .modal-hazf .modal-content-hazfPopup {
+        width: min(100% - 32px, 320px) !important;
+        margin: 16px auto !important;
+    }
+
+    /* فونت پایه جدول‌ها در عرض خیلی کوچک کمی فشرده‌تر ولی خوانا */
+    .management-box th,
+    .management-box td {
+        font-size: 11.5px;
+    }
+
+    /* Request modals on very small screens */
+    .morakhaci-sabt .modal {
+        width: calc(100% - 12px) !important;
+        max-width: calc(100vw - 12px) !important;
+        border-radius: 16px !important;
+    }
+
+    .morakhaci-sabt .modal .form-section-header {
+        padding: 14px 14px 8px;
+    }
+
+    .morakhaci-sabt .modal form {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .modal-buttons {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+}

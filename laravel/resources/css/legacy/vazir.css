@@ -1,0 +1,28 @@
+/* Shared application typography. Keep this stylesheet last in each page head. */
+@font-face {
+    font-family: 'Vazir';
+    src: local('Vazir'),
+         url('/fonts/Vazir.woff2') format('woff2'),
+         url('/fonts/Vazir.woff') format('woff'),
+         url('/fonts/Vazir.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+:root {
+    --app-font-family: 'Vazir', Tahoma, Arial, sans-serif;
+}
+
+html,
+body,
+body *,
+button,
+input,
+select,
+textarea,
+option {
+    font-family: var(--app-font-family) !important;
+}
+
+

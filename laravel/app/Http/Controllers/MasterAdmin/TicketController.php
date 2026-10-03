@@ -7,7 +7,6 @@ use App\Support\Http\ClientAddress;
 use App\Support\Http\MasterAdminActor;
 use App\Support\Legacy\LegacyPath;
 use App\Support\Legacy\LegacyQuery;
-use App\Support\Legacy\LegacySerializer;
 use App\Support\Ticketing\TicketLookupException;
 use App\Support\Ticketing\TicketPermissionException;
 use App\Support\Ticketing\TicketService;
@@ -15,7 +14,6 @@ use App\Support\Ticketing\TicketValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -59,7 +57,7 @@ final class TicketController extends MasterAdminController
         ]);
 
         try {
-            $service = new TicketService();
+            $service = new TicketService;
 
             $result = $service->listTickets(
                 actor: '',
@@ -133,7 +131,7 @@ final class TicketController extends MasterAdminController
         $id = LegacyPath::int($ticketId, 'ticket_id');
 
         try {
-            $service = new TicketService();
+            $service = new TicketService;
             $ticket = $service->getTicket($id, '', true);
 
             if ($ticket === null) {
@@ -164,7 +162,7 @@ final class TicketController extends MasterAdminController
         }
 
         try {
-            $service = new TicketService();
+            $service = new TicketService;
 
             $result = $service->updateTicket(
                 $id,
@@ -179,7 +177,7 @@ final class TicketController extends MasterAdminController
             return $this->ok(['success' => true, 'data' => $result]);
         } catch (TicketLookupException) {
             return $this->notFound('تیکت پیدا نشد.');
-        } catch (TicketValidationException | TicketPermissionException $exception) {
+        } catch (TicketValidationException|TicketPermissionException $exception) {
             return $this->detail(400, $exception->getMessage());
         } catch (Throwable $exception) {
             return $this->internalError($exception, 'tickets.update');
@@ -217,7 +215,7 @@ final class TicketController extends MasterAdminController
         }
 
         try {
-            $service = new TicketService();
+            $service = new TicketService;
 
             $result = $service->addMessage(
                 $id,
@@ -230,7 +228,7 @@ final class TicketController extends MasterAdminController
             return $this->ok(['success' => true, 'data' => $result]);
         } catch (TicketLookupException) {
             return $this->notFound('تیکت پیدا نشد.');
-        } catch (TicketValidationException | TicketPermissionException $exception) {
+        } catch (TicketValidationException|TicketPermissionException $exception) {
             return $this->detail(400, $exception->getMessage());
         } catch (Throwable $exception) {
             return $this->internalError($exception, 'tickets.reply');
@@ -281,7 +279,7 @@ final class TicketController extends MasterAdminController
     public function categories(): JsonResponse
     {
         try {
-            $service = new TicketService();
+            $service = new TicketService;
 
             return $this->ok(['success' => true, 'data' => $service->categories()]);
         } catch (Throwable $exception) {

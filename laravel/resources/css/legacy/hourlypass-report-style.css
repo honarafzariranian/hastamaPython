@@ -1,0 +1,364 @@
+/* ==========================================================================\n   گزارش پاس ساعتی: پایه و چاپ → اطلاعات گزارش → جدول → امضا → واکنش‌گرا\n   ========================================================================== */\n\n/* استایل کلی */
+body {
+    font-family: 'Vazir', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* تنظیمات چاپ A4 */
+@page {
+    size: A4;
+    margin: 20mm;
+}
+
+.report-container {
+    width: 40%; /* عرض کاغذ A4 */
+    height: 100vh; /* ارتفاع کاغذ A4 */
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    position: relative; /* برای قرار دادن تصویر در زیر */
+    box-shadow: 0 4px 20px 20px rgba(0, 0, 0, 0.1); /* سایه ملیح */
+}
+
+.report-container img {
+    width: 100%;
+    height: 100%;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    z-index: -1; /* تصویر در پس‌زمینه قرار می‌گیرد */
+}
+
+/* ---------- اطلاعات گزارش ---------- */
+.report-box {
+    padding: 20px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    margin-top: 160px;
+    position: relative; /* برای قرارگیری در لایه بالاتر از تصویر */
+    z-index: 1; /* باکس اطلاعات فردی روی تصویر قرار می‌گیرد */
+}
+
+
+/* استایل برای دکمه چاپ */
+#printReportBtn {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: white;
+    font-size: 14px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+    font-family: 'Vazir';
+    margin-top: 20px;
+    margin-left: 5%;
+}
+
+#printReportBtn:hover {
+    background-color: #45a049;
+}
+
+.report-box h2 {
+    text-align: center;
+    margin-top: 1px;
+}
+
+.personal-info {
+    margin-top: 15px;
+    display: flex; /* استفاده از فلیکس برای نمایش در کنار هم */
+    justify-content: space-around; /* فاصله‌دهی بین هر کدام */
+}
+
+.info-item {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.info-item strong {
+    font-weight: bold;
+}
+
+.info-item span {
+    margin-left: 10px;
+    color: #555;
+}
+
+.info-item-month {
+    margin-bottom: 10px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    position: relative; /* موقعیت برای مدیریت z-index */
+}
+
+.custom-dropdown {
+    position: relative;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    background-color: white;
+    margin-right: 10px;
+    z-index: 1; /* برای جلوگیری از تداخل */
+}
+
+.dropdown-options {
+    position: absolute;
+    top: calc(100% + 5px); /* باز شدن درست زیر دکمه */
+    left: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    max-height: 130px; /* حداکثر ارتفاع برای ۴ ماه (۴ × 32px) */
+    overflow-y: auto; /* فعال کردن پیمایش عمودی */
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    z-index: 10;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-options.show {
+    max-height: 152px; /* در حالت نمایش همچنان حداکثر ارتفاع ۴ ماه */
+    opacity: 1;
+}
+
+.dropdown-option {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    z-index: 10; /* برای اطمینان از قرارگیری بالاتر */
+}
+
+.dropdown-options::-webkit-scrollbar {
+    display: none; /* برای مرورگرهای مبتنی بر WebKit (کروم، سافاری) */
+}
+
+.dropdown-option:hover {
+    background-color: #f9f9f9;
+}
+
+.info-item strong {
+    margin-left: 10px;
+    font-size: 18px;
+}
+
+/* استایل کلی برای container امضاء */
+.signature-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+/* استایل باکس امضاء */
+.signature-box {
+    width: 40%;
+    text-align: center;
+    border: 2px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: 'Vazir', sans-serif;
+    display: flex; /* فعال کردن flexbox برای وسط‌چین کردن محتوا */
+    justify-content: center; /* قرار دادن محتوا در وسط افقی */
+    align-items: center; /* قرار دادن محتوا در وسط عمودی */
+    height: 100px; /* تعیین ارتفاع باکس */
+}
+
+.signature-box-hamkar {
+    width: 40%;
+    text-align: center;
+    border: 2px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: 'Vazir', sans-serif;
+    justify-content: center; /* قرار دادن محتوا در وسط افقی */
+    align-items: center; /* قرار دادن محتوا در وسط عمودی */
+    height: 100px; /* تعیین ارتفاع باکس */
+}
+
+/* استایل فضای امضاء */
+.signature-space {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* عنوان هر بخش (امضاء مدیر آزمایشگاه و همکار) */
+.signature-box strong {
+    font-size: 16px;
+    display: block;
+    margin-bottom: 10px;
+    justify-content: center; /* قرار دادن محتوا در وسط افقی */
+    align-items: center; /* قرار دادن محتوا در وسط عمودی */
+}
+
+.signature-box-hamkar strong {
+    font-size: 16px;
+    display: block;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    justify-content: center; /* قرار دادن محتوا در وسط افقی */
+    align-items: center; /* قرار دادن محتوا در وسط عمودی */
+}
+
+/* متن داخل فضای امضاء */
+.signature-space span {
+    display: block;
+    margin-top: 10px;
+    color: #555;
+    font-size: 14px;
+}
+
+/* برای نمایش دکمه چاپ فقط در هنگام نمایش صفحه چاپ */
+@media print {
+
+    .individual-report-table thead tr {
+        background-color: #555 !important; /* پس‌زمینه عنوان در چاپ */
+        color: white !important; /* رنگ متن عنوان در چاپ */
+    }
+
+    /* اضافه کردن استایل برای سلول‌ها در چاپ */
+    .individual-report-table th, .individual-report-table td {
+        border: 1px solid #ddd !important; /* حفظ مرزها */
+        font-weight: bold !important;
+        font-size: 15px !important;
+    }
+
+    #printReportBtn {
+        display: none !important; /* مخفی کردن دکمه چاپ هنگام چاپ */
+    }
+
+    body {
+        visibility: hidden; /* مخفی کردن تمام محتوای صفحه */
+    }
+
+    .report-container {
+        visibility: visible; /* فقط باکس گزارش نمایش داده می‌شود */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    .report-box {
+        width: 80%;
+        margin: 0 auto;
+        margin-top: 160px;
+        margin-bottom: 20px;
+    }
+
+    /* حذف اطلاعات اضافی مانند نام تب و زمان */
+    @page {
+        margin: 0;
+    }
+
+    /* حذف بالای صفحه و اطلاعات مربوط به چاپ */
+    .header, .footer, .tab-title {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    
+    .report-container {
+        width: 100%;
+        padding: 0;
+        margin-top: 22%;
+        height: 76vh;
+    }
+
+    .report-box {
+        padding: 0;
+        width: 90%;
+        margin-left: 3%;
+        margin-top: 106px;
+    }
+
+    .report-box h2 {
+        font-size: 13px;
+        margin-bottom: 0;
+    }
+
+    .personal-info {
+        margin-top: 7px;
+    }
+
+    .info-item {
+        align-items: center;
+        width: auto;
+        font-size: 10px;
+    }
+
+    .info-item strong {
+        font-size: 10px;
+        margin-left: 4px;
+    }
+
+    .info-item-month {
+        font-size: 10px;
+        align-items: unset;
+    }
+
+    .custom-dropdown {
+        font-size: 8px;
+        padding: 0 5px 0 7px;
+        margin-right: 0;
+    }
+
+    .individual-report-table th, .individual-report-table td {
+        font-size: 11px;
+    }
+
+    .signature-container {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .signature-box {
+        width: 31%;
+        height: 64px;
+    }
+
+    .signature-box strong {
+        font-size: 11px;
+    }
+
+    .signature-box-hamkar {
+        width: 31%;
+        height: 64px;
+    }
+
+    .signature-box-hamkar strong {
+        font-size: 11px;
+        margin-top: 1px;
+        margin-bottom: 0;
+    }
+
+    .signature-space span {
+        font-size: 11px;
+    }
+
+    .signature-space {
+        margin: 0;
+    }
+
+    #printReportBtn {
+        font-size: 11px;
+        padding: 5px 15px;
+        margin-left: 10%;
+        margin-top: 44px;
+    }
+}
+
+/* ????? ???? ??????? ??? ???? */
+/* ????? ???? ??????? ??? ???? */
+
+/* ????: ??? ??? ??? ???? */
+

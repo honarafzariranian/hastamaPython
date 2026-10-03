@@ -7,6 +7,7 @@ use App\Support\Connectivity\OutageException;
 use App\Support\Connectivity\OutageService;
 use App\Support\Http\ClientAddress;
 use App\Support\Http\MasterAdminActor;
+use App\Support\SystemConfigStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -119,7 +120,7 @@ final class OutageController extends MasterAdminController
             return $this->detail(400, 'بدنه درخواست نامعتبر است.');
         }
 
-        $active = \App\Support\SystemConfigStore::truthy($decoded['active'] ?? false);
+        $active = SystemConfigStore::truthy($decoded['active'] ?? false);
 
         $status = OutageService::setManual($active, $this->adminUsername());
 

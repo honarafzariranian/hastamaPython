@@ -1,0 +1,2260 @@
+/* ═══════════════════════════════════════════════════════════════════
+   HASTAMA LOGIN — PREMIUM REDESIGN (2026)
+   Split-screen brand showcase + glass login card over a layered,
+   slowly animated background. Fully responsive, dark-mode aware,
+   reduced-motion friendly. Functionality untouched.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* Brand palette (Hastama: sky-blue → teal) */
+    --brand-1: #2f7cf6;
+    --brand-2: #44b4ff;
+    --brand-3: #14b8a6;
+    --brand-4: #0ea5e9;
+    --violet: #7c6cf6;
+
+    /* Surfaces & text */
+    --bg-1: #eef4fd;
+    --bg-2: #e3edfb;
+    --panel: rgba(255, 255, 255, 0.78);
+    --panel-solid: #ffffff;
+    --panel-strong: #f4f8ff;
+    --text: #12233d;
+    --muted: #5d6f8a;
+    --border: rgba(18, 35, 61, 0.1);
+    --border-strong: rgba(18, 35, 61, 0.16);
+
+    /* Accents */
+    --accent: var(--brand-1);
+    --accent-2: var(--brand-2);
+    --accent-soft: rgba(47, 124, 246, 0.12);
+    --error: #e11d48;
+    --error-soft: rgba(225, 29, 72, 0.1);
+    --success: #10b981;
+
+    /* Effects */
+    --shadow-card: 0 24px 60px -12px rgba(15, 40, 80, 0.18), 0 4px 16px rgba(15, 40, 80, 0.06);
+    --shadow-card-hover: 0 34px 80px -12px rgba(15, 40, 80, 0.24), 0 6px 22px rgba(15, 40, 80, 0.08);
+    --footer-bg: rgba(255, 255, 255, 0.72);
+    --footer-text: #5f6d83;
+    --chip-bg: rgba(255, 255, 255, 0.6);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body.dark-mode {
+    --bg-1: #060e1a;
+    --bg-2: #0a1626;
+    --panel: rgba(16, 30, 50, 0.72);
+    --panel-solid: #101e32;
+    --panel-strong: rgba(255, 255, 255, 0.05);
+    --text: #eef4ff;
+    --muted: #93a6c3;
+    --border: rgba(255, 255, 255, 0.1);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --accent: #5ea7ff;
+    --accent-2: #3fc7ff;
+    --accent-soft: rgba(94, 167, 255, 0.16);
+    --shadow-card: 0 30px 70px -12px rgba(0, 0, 0, 0.55), 0 4px 18px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 40px 90px -12px rgba(0, 0, 0, 0.6), 0 6px 24px rgba(0, 0, 0, 0.35);
+    --footer-bg: rgba(8, 16, 28, 0.78);
+    --footer-text: #b6c6de;
+    --chip-bg: rgba(255, 255, 255, 0.06);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    direction: rtl;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    background: var(--bg-1);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+::selection {
+    background: rgba(47, 124, 246, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   LAYER 1–4 — BACKGROUND SCENE
+   ───────────────────────────────────────────────────────────────── */
+.bg-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.bg-gradient {
+    position: absolute;
+    inset: -10%;
+    background:
+        radial-gradient(38% 44% at 18% 22%, rgba(68, 180, 255, 0.2), transparent 70%),
+        radial-gradient(34% 40% at 84% 16%, rgba(47, 124, 246, 0.16), transparent 70%),
+        radial-gradient(42% 46% at 78% 86%, rgba(20, 184, 166, 0.14), transparent 70%),
+        radial-gradient(30% 34% at 12% 88%, rgba(124, 108, 246, 0.1), transparent 70%),
+        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    animation: bgDrift 26s ease-in-out infinite alternate;
+}
+
+@keyframes bgDrift {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-1.4%, 1%, 0) scale(1.03); }
+    100% { transform: translate3d(1.2%, -0.8%, 0) scale(1.02); }
+}
+
+.bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.55;
+    will-change: transform;
+}
+
+.bg-orb--a {
+    top: -12%;
+    left: -6%;
+    width: 44vmax;
+    height: 44vmax;
+    background: radial-gradient(circle at 35% 35%, rgba(68, 180, 255, 0.5), rgba(68, 180, 255, 0) 65%);
+    animation: orbA 30s ease-in-out infinite alternate;
+}
+
+.bg-orb--b {
+    bottom: -18%;
+    right: -8%;
+    width: 40vmax;
+    height: 40vmax;
+    background: radial-gradient(circle at 60% 40%, rgba(20, 184, 166, 0.42), rgba(20, 184, 166, 0) 65%);
+    animation: orbB 34s ease-in-out infinite alternate;
+}
+
+.bg-orb--c {
+    top: 30%;
+    right: 24%;
+    width: 24vmax;
+    height: 24vmax;
+    background: radial-gradient(circle at 50% 50%, rgba(124, 108, 246, 0.32), rgba(124, 108, 246, 0) 65%);
+    animation: orbC 26s ease-in-out infinite alternate;
+}
+
+@keyframes orbA { to { transform: translate3d(6%, 8%, 0) scale(1.12); } }
+@keyframes orbB { to { transform: translate3d(-7%, -6%, 0) scale(1.08); } }
+@keyframes orbC { to { transform: translate3d(-10%, 10%, 0) scale(1.15); } }
+
+.bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(47, 124, 246, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(47, 124, 246, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 30%, transparent 75%);
+}
+
+.bg-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+.bg-beam {
+    position: absolute;
+    top: -20%;
+    left: 30%;
+    width: 34%;
+    height: 140%;
+    background: linear-gradient(105deg, transparent 30%, rgba(68, 180, 255, 0.07) 50%, transparent 70%);
+    transform: rotate(14deg);
+    animation: beamSweep 18s ease-in-out infinite alternate;
+}
+
+@keyframes beamSweep {
+    from { transform: rotate(10deg) translateX(-6%); opacity: 0.6; }
+    to   { transform: rotate(17deg) translateX(8%); opacity: 1; }
+}
+
+/* Particles */
+.bg-particles i {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(68, 180, 255, 0.75), rgba(68, 180, 255, 0) 70%);
+    opacity: 0;
+    animation: particleFloat linear infinite;
+    will-change: transform, opacity;
+}
+
+.bg-particles i:nth-child(1)  { left: 6%;  top: 78%; animation-duration: 19s; animation-delay: 0s;   --ps: 1;    }
+.bg-particles i:nth-child(2)  { left: 14%; top: 90%; animation-duration: 24s; animation-delay: 2.2s; --ps: 1.4;  }
+.bg-particles i:nth-child(3)  { left: 22%; top: 84%; animation-duration: 17s; animation-delay: 4.1s; --ps: 0.8;  }
+.bg-particles i:nth-child(4)  { left: 30%; top: 94%; animation-duration: 27s; animation-delay: 1.2s; --ps: 1.1;  }
+.bg-particles i:nth-child(5)  { left: 38%; top: 80%; animation-duration: 21s; animation-delay: 5.6s; --ps: 0.7;  }
+.bg-particles i:nth-child(6)  { left: 46%; top: 92%; animation-duration: 25s; animation-delay: 3.3s; --ps: 1.3;  }
+.bg-particles i:nth-child(7)  { left: 54%; top: 86%; animation-duration: 18s; animation-delay: 7s;   --ps: 0.9;  }
+.bg-particles i:nth-child(8)  { left: 62%; top: 95%; animation-duration: 29s; animation-delay: 0.8s; --ps: 1.2;  }
+.bg-particles i:nth-child(9)  { left: 70%; top: 82%; animation-duration: 22s; animation-delay: 6.1s; --ps: 0.8;  }
+.bg-particles i:nth-child(10) { left: 78%; top: 90%; animation-duration: 26s; animation-delay: 2.9s; --ps: 1.5;  }
+.bg-particles i:nth-child(11) { left: 86%; top: 84%; animation-duration: 20s; animation-delay: 4.8s; --ps: 1;    }
+.bg-particles i:nth-child(12) { left: 93%; top: 88%; animation-duration: 23s; animation-delay: 1.6s; --ps: 0.7;  }
+.bg-particles i:nth-child(13) { left: 10%; top: 30%; animation-duration: 31s; animation-delay: 8s;   --ps: 0.9;  }
+.bg-particles i:nth-child(14) { left: 50%; top: 18%; animation-duration: 33s; animation-delay: 9.4s; --ps: 0.8;  }
+.bg-particles i:nth-child(15) { left: 88%; top: 26%; animation-duration: 28s; animation-delay: 10.2s;--ps: 1.1;  }
+.bg-particles i:nth-child(16) { left: 33%; top: 12%; animation-duration: 30s; animation-delay: 6.7s; --ps: 0.6;  }
+.bg-particles i:nth-child(17) { left: 67%; top: 8%;  animation-duration: 32s; animation-delay: 3.9s; --ps: 0.9;  }
+.bg-particles i:nth-child(18) { left: 82%; top: 56%; animation-duration: 24s; animation-delay: 11s;  --ps: 0.7;  }
+
+@keyframes particleFloat {
+    0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(var(--ps, 1)); }
+    12%  { opacity: 0.85; }
+    85%  { opacity: 0.5; }
+    100% { opacity: 0; transform: translate3d(4vw, -58vh, 0) scale(calc(var(--ps, 1) * 0.5)); }
+}
+
+/* Concentric rings */
+.bg-rings span {
+    position: absolute;
+    border: 1px solid rgba(47, 124, 246, 0.09);
+    border-radius: 50%;
+}
+
+.bg-rings span:nth-child(1) {
+    top: -18%;
+    left: 58%;
+    width: 46vw;
+    height: 46vw;
+    animation: ringPulse 14s ease-in-out infinite;
+}
+
+.bg-rings span:nth-child(2) {
+    bottom: -24%;
+    left: -12%;
+    width: 40vw;
+    height: 40vw;
+    border-color: rgba(20, 184, 166, 0.08);
+    animation: ringPulse 17s ease-in-out infinite reverse;
+}
+
+.bg-rings span:nth-child(3) {
+    top: 34%;
+    left: 34%;
+    width: 18vw;
+    height: 18vw;
+    border-color: rgba(124, 108, 246, 0.07);
+    animation: ringPulse 11s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50%      { transform: scale(1.05); opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TOP ACTIONS (theme / support)
+   ───────────────────────────────────────────────────────────────── */
+.top-actions {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    animation: fadeSlideDown 0.7s var(--ease-out) 0.2s backwards;
+}
+
+.tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.theme-toggle,
+.support-toggle {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(15, 30, 60, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    text-decoration: none;
+    font-size: 1.05rem;
+    transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.theme-toggle:hover,
+.support-toggle:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 14px 30px rgba(15, 30, 60, 0.18);
+}
+
+.theme-toggle:active,
+.support-toggle:active {
+    transform: scale(0.96);
+}
+
+.tooltip {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 50%;
+    transform: translateX(50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(20, 35, 61, 0.9);
+    color: #fff;
+    font-size: 0.78rem;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 50;
+}
+
+.tooltip-wrap:hover .tooltip,
+.tooltip-wrap:focus-within .tooltip {
+    opacity: 1;
+    transform: translateX(50%) translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   LAYER 5 — SHELL (split screen)
+   ───────────────────────────────────────────────────────────────── */
+/* ``body`` is already a full-height flex column, so the shell takes the space
+   that is left *after* the footer.  It must NOT declare ``min-height: 100dvh``:
+   that made the shell exactly viewport-tall and pushed the sibling
+   ``.login-footer`` below the fold — the whole page was always
+   ``100dvh + footer`` tall, which is why a 42-44 px scrollbar appeared on every
+   screen size.  ``min-height: 0`` is what lets the shell shrink on short
+   viewports instead of forcing overflow; the vertical rhythm inside it is
+   height-aware (see “VIEWPORT FIT” at the end of this file). */
+.login-shell {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(1rem, 3vw, 2.5rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: clamp(2rem, 5vw, 5rem);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BRAND SIDE
+   ───────────────────────────────────────────────────────────────── */
+.brand-side {
+    position: relative;
+    padding: clamp(0.5rem, 2vw, 2rem);
+    max-width: 560px;
+    justify-self: end;
+    text-align: right;
+}
+
+.brand-side__glow {
+    position: absolute;
+    inset: -8% -14%;
+    background: radial-gradient(46% 42% at 62% 40%, rgba(68, 180, 255, 0.16), transparent 70%),
+                radial-gradient(40% 38% at 30% 70%, rgba(20, 184, 166, 0.12), transparent 70%);
+    filter: blur(14px);
+    z-index: -1;
+    border-radius: 50%;
+}
+
+.brand-side__logo {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: clamp(1.2rem, 2.6vw, 2rem);
+    animation: riseIn 0.8s var(--ease-out) 0.15s backwards;
+}
+
+.brand-logo-img {
+    height: clamp(4.6rem, 9vw, 6.4rem);
+    width: auto;
+    object-fit: contain;
+}
+
+.brand-side__title {
+    margin: 0 0 0.9rem;
+    font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+    font-weight: 900;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    background: linear-gradient(120deg, var(--text) 20%, var(--brand-1) 55%, var(--brand-3) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: riseIn 0.8s var(--ease-out) 0.28s backwards;
+}
+
+.brand-side__desc {
+    margin: 0 0 clamp(1.4rem, 3vw, 2.2rem);
+    color: var(--muted);
+    font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+    line-height: 1.9;
+    max-width: 46ch;
+    animation: riseIn 0.8s var(--ease-out) 0.4s backwards;
+}
+
+.brand-side__features {
+    list-style: none;
+    margin: 0 0 clamp(1.4rem, 3vw, 2rem);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.7rem, 1.6vw, 1.1rem);
+}
+
+.brand-side__features li {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.8rem 1rem;
+    border-radius: 18px;
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease, border-color 0.3s ease;
+    animation: riseIn 0.7s var(--ease-out) backwards;
+}
+
+.brand-side__features li:nth-child(1) { animation-delay: 0.52s; }
+.brand-side__features li:nth-child(2) { animation-delay: 0.64s; }
+.brand-side__features li:nth-child(3) { animation-delay: 0.76s; }
+
+.brand-side__features li:hover {
+    transform: translateX(-6px);
+    border-color: rgba(47, 124, 246, 0.3);
+    box-shadow: 0 10px 30px -8px rgba(47, 124, 246, 0.25);
+}
+
+.feature-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+    box-shadow: 0 8px 20px -6px rgba(47, 124, 246, 0.5);
+}
+
+.feature-icon--teal {
+    background: linear-gradient(135deg, #0ea5e9, var(--brand-3));
+    box-shadow: 0 8px 20px -6px rgba(20, 184, 166, 0.5);
+}
+
+.feature-icon--violet {
+    background: linear-gradient(135deg, #6d5df1, #9d7bfa);
+    box-shadow: 0 8px 20px -6px rgba(124, 108, 246, 0.5);
+}
+
+.feature-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.feature-text strong {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.feature-text small {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.brand-side__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    animation: riseIn 0.7s var(--ease-out) 0.88s backwards;
+}
+
+.chip {
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--chip-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.25s var(--ease-spring);
+}
+
+.chip:hover { transform: translateY(-3px); }
+
+.chip--sky    { color: var(--brand-1); border-color: rgba(47, 124, 246, 0.35); background: rgba(47, 124, 246, 0.08); }
+.chip--teal   { color: var(--brand-3); border-color: rgba(20, 184, 166, 0.35); background: rgba(20, 184, 166, 0.08); }
+.chip--violet { color: var(--violet);  border-color: rgba(124, 108, 246, 0.35); background: rgba(124, 108, 246, 0.08); }
+
+/* ─────────────────────────────────────────────────────────────────
+   FORM SIDE + GLASS LOGIN CARD
+   ───────────────────────────────────────────────────────────────── */
+.form-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    /* No ``riseIn`` here — see the note above ``.brand-row``: an animated
+       ancestor delays the paint of the login logo (the LCP element). */
+}
+
+/* ── Form Side Bottom Links — Redesigned ───────────────── */
+.form-side__note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+}
+
+.form-side__note a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-side__note a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--brand-3));
+    border-radius: 1px;
+    transition: width 0.3s ease;
+}
+
+.form-side__note a:hover::after {
+    width: 100%;
+}
+
+.form-side__note a:hover {
+    color: var(--brand-3);
+}
+
+/* Registration link — enhanced */
+.form-side__note--register {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    text-align: center;
+}
+
+.form-side__note--register a {
+    background: linear-gradient(135deg, var(--accent), var(--brand-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: all 0.3s ease;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.form-side__note--register a:hover {
+    background: linear-gradient(135deg, var(--brand-3), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    transform: scale(1.05);
+}
+
+.form-side__note--register a::after {
+    display: none;
+}
+
+/* ── Login Card Enhanced Animations ────────────────────── */
+.login-card {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 28px;
+    box-shadow: var(--shadow-card);
+    padding: clamp(1.4rem, 3vw, 2.2rem) clamp(1.2rem, 2.8vw, 2rem) clamp(1.4rem, 3vw, 2rem);
+    overflow: hidden;
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    transition: box-shadow 0.4s ease, border-color 0.3s ease, transform 0.3s ease;
+    animation: cardFloat 6s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.login-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(47, 124, 246, 0.3);
+    animation-play-state: paused;
+    transform: translateY(-2px);
+}
+
+/* Enhanced card sheen */
+.card-sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.16) 50%, transparent 58%);
+    transform: translateX(-120%);
+    animation: sheenSweep 5s ease-in-out infinite;
+}
+
+@keyframes sheenSweep {
+    0%, 62%  { transform: translateX(-120%); }
+    82%, 100% { transform: translateX(120%); }
+}
+
+/* Brand logo glow */
+/* NOTE (performance): ``.brand-row`` and ``.form-side`` deliberately carry no
+   entrance animation.  Both are ancestors of the largest above-the-fold element
+   (the login logo), and ``riseIn`` animates ``opacity`` with ``backwards`` fill,
+   so an animated ancestor keeps that element unpainted until the animation ends.
+   Measured on the production markup: LCP was 1.6 s while ``load`` finished at
+   0.46 s — i.e. ~1.1 s of the entry page's perceived load was animation delay.
+   Everything else on this page keeps its motion. */
+.brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: clamp(0.5rem, 1.6vw, 0.9rem);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.login-logo {
+    height: clamp(4.2rem, 8vw, 5.4rem);
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(47, 124, 246, 0.2));
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.login-logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 6px 20px rgba(47, 124, 246, 0.35));
+}
+
+body.dark-mode .login-logo {
+    content: url('/images/login-mobile-logo-dark.png');
+}
+
+/* Header enhanced */
+.login-header {
+    margin-bottom: clamp(0.9rem, 2vw, 1.3rem);
+    text-align: center;
+    animation: riseIn 0.7s var(--ease-out) 0.55s backwards;
+}
+
+.login-header h2 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.45rem, 2.4vw, 1.8rem);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--brand-3) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.login-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+/* Input focus animation */
+.input-wrapper {
+    position: relative;
+    border-radius: 14px;
+}
+
+.input-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(47, 124, 246, 0.05), rgba(20, 184, 166, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.input-wrapper:focus-within::before {
+    opacity: 1;
+}
+
+/* Button enhanced */
+.h-ux-btn {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent), var(--brand-3));
+    border: none;
+    border-radius: 14px;
+    padding: 14px 24px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Vazir', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.h-ux-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.h-ux-btn:hover::before {
+    left: 100%;
+}
+
+.h-ux-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(47, 124, 246, 0.35);
+}
+
+.h-ux-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Ripple effect */
+.ripple-ink {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to { transform: scale(4); opacity: 0; }
+}
+
+/* Checkbox enhanced */
+.remember-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text);
+    transition: color 0.2s;
+}
+
+.remember-wrapper:hover {
+    color: var(--accent);
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.remember-wrapper input:checked + .checkbox-label .checkmark {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.remember-wrapper input:checked + .checkbox-label .checkmark::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 5px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    animation: checkPop 0.2s ease;
+}
+
+@keyframes checkPop {
+    0% { transform: rotate(45deg) scale(0); }
+    50% { transform: rotate(45deg) scale(1.2); }
+    100% { transform: rotate(45deg) scale(1); }
+}
+
+/* Password toggle */
+.pw-toggle {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--muted);
+    transition: color 0.2s, transform 0.2s;
+    z-index: 2;
+}
+
+.pw-toggle:hover {
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.pw-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Login hint */
+.login-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    text-align: center;
+    min-height: 1.2em;
+    transition: all 0.3s ease;
+}
+
+/* ── CAPTCHA ─────────────────────────────────────────────── */
+.captcha-group {
+    margin-bottom: clamp(0.7rem, 1.5vw, 0.9rem);
+}
+.captcha-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.captcha-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.captcha-img {
+    flex: 1;
+    height: 52px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: #f8fafc;
+    object-fit: contain;
+    cursor: pointer;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    user-select: none;
+}
+.captcha-img:hover {
+    border-color: var(--brand-1, #0ea5e9);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+.captcha-refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: var(--surface, #fff);
+    color: var(--text, #334155);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+.captcha-refresh:hover {
+    border-color: var(--brand-1, #0ea5e9);
+    color: var(--brand-1, #0ea5e9);
+    background: rgba(14, 165, 233, 0.06);
+    transform: scale(1.05);
+}
+.captcha-refresh:active {
+    transform: scale(0.95);
+}
+.captcha-refresh.spinning svg {
+    animation: captchaSpin 0.5s ease;
+}
+@keyframes captchaSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.captcha-input-wrapper {
+    position: relative;
+}
+.captcha-input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #d1d5db);
+    background: var(--surface, #fff);
+    color: var(--text, #334155);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    box-sizing: border-box;
+}
+.captcha-input:focus {
+    border-color: var(--brand-1, #0ea5e9);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+.captcha-input::placeholder {
+    color: var(--muted, #94a3b8);
+    font-family: 'Vazir', 'Tahoma', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0;
+}
+#captchaError {
+    color: var(--error, #dc2626);
+    font-size: 0.78rem;
+    margin: 4px 0 0;
+    display: none;
+}
+
+/* Form footer */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: clamp(0.85rem, 1.9vw, 1.1rem);
+}
+
+/* Forgot password */
+.forgot-password {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: var(--accent);
+}
+
+/* Field error */
+.field-error {
+    margin: 4px 0 0;
+    font-size: 0.72rem;
+    color: #dc2626;
+    min-height: 1em;
+}
+
+/* Input icon */
+.input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    transition: color 0.2s;
+    z-index: 2;
+}
+
+.input-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--accent);
+}
+
+/* Input field */
+.input-wrapper input {
+    width: 100%;
+    padding: 14px 44px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.92rem;
+    font-family: 'Vazir', sans-serif;
+    background: var(--panel);
+    color: var(--text);
+    outline: none;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.input-wrapper input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.1);
+}
+
+.input-wrapper label {
+    position: absolute;
+    right: 44px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.88rem;
+    color: var(--muted);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    background: var(--panel);
+    padding: 0 4px;
+}
+
+/* label focus — consolidated below at line 1080 */
+
+/* Has error state */
+.has-error input {
+    border-color: #dc2626 !important;
+}
+
+.has-error .input-icon {
+    color: #dc2626 !important;
+}
+
+/* Shake animation for card */
+/* card-sheen is defined in the enhanced section above */
+
+@keyframes sheenSweep {
+    0%, 62%  { transform: translateX(-120%); }
+    82%, 100% { transform: translateX(120%); }
+}
+
+.login-card.shake {
+    animation: cardShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes cardShake {
+    10%, 90%      { transform: translateX(-1px); }
+    20%, 80%      { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60%      { transform: translateX(4px); }
+}
+
+/* brand inside card */
+/* Old brand-row, brand, login-logo, login-header, form rules removed */
+/* These are now defined in the enhanced section above */
+
+.form-group:nth-of-type(1) { animation-delay: 0.65s; }
+.form-group:nth-of-type(2) { animation-delay: 0.75s; }
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-icon {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--muted);
+    pointer-events: none;
+    transition: color 0.25s ease, transform 0.25s var(--ease-spring);
+    z-index: 1;
+}
+
+.input-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 1rem 3rem 0.9rem 1rem;
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-strong);
+    color: var(--text);
+    font-size: 0.98rem;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+}
+
+.input-wrapper input::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+    transition: opacity 0.25s ease;
+}
+.input-wrapper input:focus::placeholder,
+.input-wrapper input:not(:placeholder-shown)::placeholder {
+    opacity: 0;
+}
+
+.input-wrapper label {
+    position: absolute;
+    top: 17px;
+    right: 3rem;
+    color: var(--muted);
+    font-size: 0.94rem;
+    pointer-events: none;
+    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    padding: 0 4px;
+}
+
+.input-wrapper input:hover {
+    border-color: var(--border-strong);
+}
+
+.input-wrapper input:focus {
+    border-color: var(--accent);
+    background: var(--panel-solid);
+    box-shadow: 0 0 0 4px var(--accent-soft), 0 8px 24px -8px rgba(47, 124, 246, 0.35);
+}
+
+.input-wrapper input:focus + label,
+.input-wrapper input:not(:placeholder-shown) + label {
+    top: -9px;
+    right: 14px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--panel-solid);
+    border-radius: 6px;
+    padding: 0 8px;
+    letter-spacing: 0.01em;
+}
+
+.input-wrapper input:focus ~ .input-icon,
+.input-wrapper input:valid ~ .input-icon {
+    color: var(--accent);
+}
+
+.input-wrapper input:focus ~ .input-icon {
+    transform: translateY(-50%) scale(1.12);
+}
+
+/* focus underline sweep */
+.focus-border {
+    position: absolute;
+    bottom: 0;
+    right: 16px;
+    left: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--brand-3));
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.35s var(--ease-out);
+    pointer-events: none;
+}
+
+.input-wrapper input:focus ~ .focus-border {
+    transform: scaleX(1);
+}
+
+/* password visibility toggle */
+.pw-toggle {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s var(--ease-spring);
+    z-index: 1;
+}
+
+.pw-toggle:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.pw-toggle:active { transform: translateY(-50%) scale(0.9); }
+
+.pw-toggle svg {
+    width: 19px;
+    height: 19px;
+    position: absolute;
+}
+
+.pw-toggle .pw-eye { opacity: 1; transition: opacity 0.2s ease; }
+.pw-toggle .pw-eye-off { opacity: 0; transition: opacity 0.2s ease; }
+
+.pw-toggle.is-active .pw-eye { opacity: 0; }
+.pw-toggle.is-active .pw-eye-off { opacity: 1; }
+
+/* error state */
+.input-wrapper.has-error input {
+    border-color: var(--error);
+    background: var(--error-soft);
+    box-shadow: 0 0 0 4px var(--error-soft);
+}
+
+.input-wrapper.has-error input + label {
+    color: var(--error);
+}
+
+.input-wrapper.has-error .input-icon {
+    color: var(--error);
+}
+
+.field-error {
+    margin: 6px 4px 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--error);
+    min-height: 1em;
+    line-height: 1.5;
+}
+
+/* footer row: remember + forgot */
+.form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+    animation: riseIn 0.7s var(--ease-out) 0.85s backwards;
+}
+
+.remember-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.remember-wrapper input[type='checkbox'] {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    position: absolute;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 1.8px solid var(--border-strong);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s var(--ease-spring);
+    position: relative;
+    background: var(--panel-strong);
+}
+
+.remember-wrapper input[type='checkbox']:checked + .checkbox-label .checkmark {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--brand-3) 100%);
+    border-color: transparent;
+    transform: scale(1.08);
+}
+
+.remember-wrapper input[type='checkbox']:checked + .checkbox-label .checkmark::after {
+    content: '✓';
+    color: white;
+    font-size: 0.78rem;
+}
+
+.remember-wrapper input[type='checkbox']:focus-visible + .checkbox-label .checkmark {
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.forgot-password {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: color 0.2s ease;
+    position: relative;
+}
+
+.forgot-password::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    right: 0;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--brand-3));
+    transition: width 0.3s var(--ease-out);
+}
+
+.forgot-password:hover::after {
+    width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   LOGIN BUTTON
+   ───────────────────────────────────────────────────────────────── */
+.btn {
+    position: relative;
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    padding: 15px 18px;
+    background: linear-gradient(120deg, var(--brand-1) 0%, var(--brand-4) 45%, var(--brand-3) 100%);
+    background-size: 180% 180%;
+    background-position: 0% 50%;
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 800;
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    cursor: pointer;
+    overflow: hidden;
+    isolation: isolate;
+    transition: background-position 0.5s ease, transform 0.16s ease, box-shadow 0.3s ease, filter 0.3s ease;
+    box-shadow: 0 14px 32px -6px rgba(47, 124, 246, 0.45);
+    animation: riseIn 0.7s var(--ease-out) 0.95s backwards;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.25) 50%, transparent 70%);
+    transform: translateX(-130%);
+    transition: transform 0.7s var(--ease-out);
+    pointer-events: none;
+}
+
+.btn:hover {
+    background-position: 90% 50%;
+    box-shadow: 0 18px 40px -6px rgba(47, 124, 246, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.btn:hover::before {
+    transform: translateX(130%);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:focus-visible {
+    outline: 3px solid var(--accent-soft);
+    outline-offset: 2px;
+}
+
+/* ripple (added by JS) */
+.btn .ripple-ink {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out forwards;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes rippleAnim {
+    to { transform: scale(3.2); opacity: 0; }
+}
+
+/* inline hint (errors / empty-field messages) */
+.login-hint {
+    margin: 0.8rem 0 0;
+    min-height: 1.2em;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--error);
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* terms note under card */
+.form-side__note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.form-side__note a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.form-side__note a:hover {
+    text-decoration: none;
+    opacity: 0.8;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────────────────────────── */
+.login-footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--footer-text);
+    font-size: clamp(0.68rem, 1.6vw, 0.8rem);
+    letter-spacing: 0.02em;
+    padding: 0.55rem 1rem 0.9rem;
+    line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ENTRANCE ANIMATION
+   ───────────────────────────────────────────────────────────────── */
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(22px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DARK MODE REFINEMENTS
+   ───────────────────────────────────────────────────────────────── */
+body.dark-mode .bg-grid {
+    background-image:
+        linear-gradient(rgba(94, 167, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 167, 255, 0.06) 1px, transparent 1px);
+}
+
+body.dark-mode .bg-particles i {
+    background: radial-gradient(circle, rgba(94, 167, 255, 0.8), rgba(94, 167, 255, 0) 70%);
+}
+
+body.dark-mode .card-sheen {
+    background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.07) 50%, transparent 58%);
+}
+
+body.dark-mode .feature-icon {
+    box-shadow: none;
+}
+
+body.dark-mode .btn {
+    box-shadow: 0 14px 32px -8px rgba(47, 124, 246, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────────────────── */
+@media (max-width: 1080px) {
+    .login-shell {
+        grid-template-columns: 1fr;
+        gap: 0;
+        justify-items: center;
+        align-content: center;
+        padding-top: 4.5rem;
+        padding-bottom: 3.5rem;
+    }
+
+    .brand-side {
+        display: none;
+    }
+
+    .form-side {
+        width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    .top-actions {
+        top: 0.7rem;
+        left: 0.7rem;
+        gap: 0.5rem;
+    }
+
+    .theme-toggle,
+    .support-toggle {
+        width: 40px;
+        height: 40px;
+        background: var(--panel-solid);
+    }
+
+    .login-shell {
+        padding: 4.2rem 0.9rem 2.6rem;
+    }
+
+    .login-card {
+        border-radius: 22px;
+        padding: 1.2rem 1rem 1.3rem;
+        background: var(--panel-solid);
+    }
+
+    .login-header h2 {
+        font-size: 1.35rem;
+    }
+
+    .login-header p {
+        font-size: 0.86rem;
+    }
+
+    .form-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .forgot-password {
+        text-align: right;
+    }
+
+    .form-side__note {
+        max-width: 320px;
+        text-align: center;
+        line-height: 1.7;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-card {
+        padding: 1rem 0.8rem 1.1rem;
+    }
+
+    .login-logo {
+        height: 3.6rem;
+    }
+
+    .btn {
+        font-size: 0.95rem;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ACCESSIBILITY — reduced motion & transparency
+   ───────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .bg-particles i,
+    .card-sheen,
+    .bg-beam {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .login-card,
+    .brand-side__features li,
+    .chip {
+        background: var(--panel-solid);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   FORGOT PASSWORD MODAL
+   ───────────────────────────────────────────────────────────────── */
+.fp-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.fp-overlay.is-visible {
+    display: flex;
+    opacity: 1;
+}
+.fp-modal {
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transform: translateY(20px) scale(0.95);
+    animation: fpModalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes fpModalIn {
+    to { transform: translateY(0) scale(1); }
+}
+.fp-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: #f1f5f9;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.fp-close:hover { background: #e2e8f0; }
+.fp-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+.fp-title {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+.fp-desc {
+    margin: 0 0 20px;
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+.fp-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.fp-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-family: 'Vazir', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    direction: rtl;
+    text-align: right;
+}
+.fp-input:focus { border-color: #0ea5e9; }
+.fp-submit {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: 'Vazir', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.fp-submit:hover { opacity: 0.9; }
+.fp-submit:active { transform: scale(0.98); }
+.fp-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.fp-hint {
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    min-height: 1.2em;
+    transition: color 0.2s;
+}
+.fp-hint--success { color: #059669; }
+.fp-hint--error { color: #dc2626; }
+.fp-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 12px;
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+.fp-divider::before,
+.fp-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+.fp-link-btn {
+    background: none;
+    border: none;
+    color: #0ea5e9;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: 'Vazir', sans-serif;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+.fp-link-btn:hover { opacity: 0.7; }
+
+/* Password Strength in Reset Modal */
+.pw-strength { margin-top: 6px; }
+.pw-strength__bar {
+    height: 4px; border-radius: 2px; background: #e2e8f0;
+    overflow: hidden; margin-bottom: 4px;
+}
+.pw-strength__fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.3s, background 0.3s; width: 0;
+}
+.pw-strength__label { font-size: 0.72rem; font-weight: 600; }
+.pw-requirements { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pw-req {
+    font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;
+    background: #f1f5f9; color: #64748b; transition: all 0.2s;
+}
+.pw-req.met { background: #d1fae5; color: #065f46; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWPORT FIT — the login page must never scroll
+   ───────────────────────────────────────────────────────────────
+   ``body`` is a 100dvh flex column, ``.login-shell`` takes the space
+   that is left over and ``.login-footer`` closes the column, so the
+   three of them always add up to exactly one viewport.
+
+   Everything vertical inside the shell is now the smaller of its
+   width-driven value and a height-driven one (``min(clamp(…), Nvh)``).
+   On a tall screen that is identical to the previous design; on a short
+   one (small phone, split-screen window, laptop with browser chrome)
+   the whole stack — shell padding, card, logo, headings, inputs, CAPTCHA,
+   button and the brand column — compresses together instead of spilling
+   out of the viewport.  Keeping the values fluid avoids the abrupt
+   “fits / doesn’t fit” jumps of pure height media queries.
+
+   Only the login page is affected: register.html styles itself with its
+   own ``.register-*`` rules and shares none of these selectors.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Shell: takes the leftover height, never forces 100dvh itself. */
+.login-shell {
+    padding: min(clamp(0.85rem, 3vw, 2.5rem), 3.9vh) clamp(0.9rem, 3vw, 2.5rem);
+    gap: min(clamp(2rem, 5vw, 5rem), 4.4vh);
+}
+
+/* Footer: always last in the column, never pushed below the fold. */
+.login-footer {
+    flex: 0 0 auto;
+    font-size: min(clamp(0.68rem, 1.6vw, 0.8rem), 1.9vh);
+    line-height: 1.3;
+    padding: min(0.5rem, 0.7vh) 1rem min(0.8rem, 1vh);
+}
+
+/* Form column and card. */
+.form-side {
+    gap: min(1rem, 1.5vh);
+}
+
+.login-card {
+    padding: min(clamp(1.2rem, 3vw, 2.2rem), 3.6vh)
+             min(clamp(1rem, 2.8vw, 2rem), 3.4vw)
+             min(clamp(1.2rem, 3vw, 2rem), 3.2vh);
+}
+
+.brand-row {
+    margin-bottom: min(clamp(0.5rem, 1.6vw, 0.9rem), 1vh);
+}
+
+.login-logo {
+    height: min(clamp(3rem, 8vw, 5.4rem), 7vh);
+}
+
+.login-header {
+    margin-bottom: min(clamp(0.6rem, 2vw, 1.3rem), 1.6vh);
+}
+
+.login-header h2 {
+    font-size: min(clamp(1.2rem, 2.4vw, 1.8rem), 2.8vh);
+    margin-bottom: min(0.4rem, 0.8vh);
+}
+
+.login-header p {
+    font-size: min(clamp(0.8rem, 1.4vw, 0.95rem), 1.8vh);
+}
+
+/* Fields, CAPTCHA and the submit button. */
+.login-card .input-wrapper input {
+    padding-top: min(1rem, 1.5vh);
+    padding-bottom: min(0.9rem, 1.3vh);
+    font-size: min(0.98rem, 2vh);
+}
+
+.login-card .input-wrapper label {
+    font-size: min(0.88rem, 1.7vh);
+}
+
+.login-card .captcha-img {
+    height: min(3.25rem, 5.6vh);
+}
+
+.login-card .captcha-group {
+    margin-bottom: min(0.7rem, 1.1vh);
+}
+
+.login-card .form-footer {
+    margin-bottom: min(1.1rem, 1.6vh);
+}
+
+.login-card .btn {
+    padding-top: min(0.95rem, 1.5vh);
+    padding-bottom: min(0.95rem, 1.5vh);
+    font-size: min(1.02rem, 2vh);
+}
+
+.login-card .login-hint {
+    margin-top: min(0.8rem, 1.1vh);
+    font-size: min(0.85rem, 1.7vh);
+}
+
+.login-card .field-error {
+    font-size: min(0.75rem, 1.5vh);
+}
+
+.login-card .form-group + .form-group {
+    margin-top: 0;
+}
+
+/* The two lines under the card. */
+.form-side__note {
+    font-size: min(clamp(0.68rem, 1.6vw, 0.78rem), 1.5vh);
+    line-height: min(1.7, 2.1vh);
+}
+
+/* Brand column (desktop split layout only). */
+.brand-side {
+    padding: min(clamp(0.5rem, 2vw, 2rem), 2.2vh);
+}
+
+.brand-side__logo {
+    margin-bottom: min(clamp(0.7rem, 2.6vw, 2rem), 2vh);
+}
+
+.brand-logo-img {
+    height: min(clamp(3.2rem, 9vw, 6.4rem), 9vh);
+}
+
+.brand-side__title {
+    font-size: min(clamp(1.5rem, 3.6vw, 2.9rem), 3.5vh);
+    margin-bottom: min(0.9rem, 1.2vh);
+}
+
+.brand-side__desc {
+    font-size: min(clamp(0.85rem, 1.4vw, 1.08rem), 2.1vh);
+    line-height: min(1.9, 2.6vh);
+    margin-bottom: min(clamp(1.4rem, 3vw, 2.2rem), 2.4vh);
+}
+
+.brand-side__features {
+    gap: min(clamp(0.7rem, 1.6vw, 1.1rem), 1.6vh);
+    margin-bottom: min(clamp(1.4rem, 3vw, 2rem), 2.4vh);
+}
+
+.brand-side__chips {
+    margin-top: min(1rem, 1.4vh);
+}
+
+/* Keeping “مرا به خاطر بسپار” and “فراموشی رمز عبور؟” on one line: stacked
+   (which is what the ≤560 px width rule asks for) they cost ~25 px, and that
+   is the difference between fitting and scrolling on a small phone. */
+@media (max-height: 760px) {
+    .login-card .form-footer {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+    }
+
+    .login-card .form-footer .forgot-password {
+        text-align: left;
+    }
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────
+   Below ~760 px the card spans the full width, so the shell needs a
+   top padding that clears the floating action buttons pinned at
+   ``top: 1rem; left: 1rem``.  The floor keeps that clearance on tall
+   phones and gives it up only on short ones, where the buttons are
+   shrunk as well. */
+@media (max-width: 760px) {
+    .login-shell {
+        padding-top: max(3.05rem, min(4.5rem, 6.6vh));
+        padding-bottom: min(2.6rem, 2.6vh);
+    }
+}
+
+@media (max-width: 760px) and (max-height: 700px) {
+    .top-actions {
+        top: 0.4rem;
+        left: 0.6rem;
+        gap: 0.4rem;
+    }
+
+    .theme-toggle,
+    .support-toggle {
+        width: 34px;
+        height: 34px;
+    }
+
+    .login-shell {
+        padding-top: 2.75rem;
+    }
+
+    /* The welcome subtitle is the only row on the card that carries no
+       information the form itself does not already show; on a short phone
+       it is what stands between “fits” and “scrollbar”. */
+    .login-header p {
+        display: none;
+    }
+
+    .form-side__note--register {
+        line-height: 1.35;
+    }
+}
+
+/* ── Extreme short/lanscape ──────────────────────────────────────
+   A phone held sideways (≈390 px of height) cannot fit the stacked
+   card at readable sizes.  The logo and the two notes are the only
+   rows with no interaction, so they are the ones that step aside. */
+@media (max-height: 520px) {
+    .brand-row {
+        display: none;
+    }
+
+    .login-header p {
+        display: none;
+    }
+
+    .login-card {
+        padding-top: min(0.9rem, 2.4vh);
+        padding-bottom: min(0.9rem, 2.4vh);
+    }
+
+    .login-card .btn {
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
+    }
+
+    .login-card .captcha-img {
+        height: 36px;
+    }
+
+    .brand-side__desc,
+    .brand-side__chips {
+        display: none;
+    }
+}
+
+/* Under ~430 px of height the stacked card no longer fits at any width,
+   so the two lines beneath it step aside as well.  They are the last
+   thing on the page that is not interactive; the rules and register
+   links still live in the card's own copy of the page on every other
+   viewport, and on a phone-sized viewport a scrollbar is the only
+   alternative. */
+@media (max-height: 430px) {
+    .form-side__note,
+    .form-side__note--register {
+        display: none;
+    }
+}
+
+/* Same tier, but narrow: the floating toggles shrink with the padding
+   that has to clear them. */
+@media (max-width: 760px) and (max-height: 430px) {
+    .theme-toggle,
+    .support-toggle {
+        width: 30px;
+        height: 30px;
+    }
+
+    .login-shell {
+        padding-top: 2.4rem;
+        padding-bottom: min(1.4rem, 1.4vh);
+    }
+}
+
+/* Two-column card for short landscape widths where there is room to
+   sit the fields side by side instead of hiding more content. */
+@media (max-height: 520px) and (min-width: 620px) {
+    .form-side__note,
+    .form-side__note--register {
+        display: none;
+    }
+
+    .login-card {
+        max-width: min(760px, 100%);
+    }
+
+    .login-card form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 0.9rem;
+        align-items: start;
+    }
+
+    .login-card form > .captcha-group,
+    .login-card form > .form-footer,
+    .login-card form > .btn,
+    .login-card form > .login-hint {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Login experience — the full-screen loader and the CAPTCHA notice.
+   Both are configured in master-admin → system settings
+   and driven by js/script.js.
+   ══════════════════════════════════════════════════════════════ */
+
+.login-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(900px 500px at 75% -10%, rgba(99, 102, 241, .20) 0%, rgba(248, 250, 252, .96) 45%, rgba(241, 245, 249, .98) 100%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+    animation: loginLoaderIn .26s ease both;
+}
+
+.login-loader__card {
+    width: 100%;
+    max-width: 380px;
+    padding: 34px 26px 28px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 24px;
+    box-shadow: 0 30px 70px rgba(15, 23, 42, .20);
+    animation: loginLoaderCardIn .42s cubic-bezier(.2, .9, .25, 1.15) both;
+}
+
+.login-loader__ring {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 16px;
+}
+.login-loader__ring-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid rgba(99, 102, 241, .13);
+}
+.login-loader__ring-spin {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(99, 102, 241, 0) 0 52%, #6366f1 80%, #22d3ee 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    animation: loginLoaderSpin 1.05s linear infinite;
+}
+.login-loader__mark {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    background: url("/images/login-mobile-logo.png") center / contain no-repeat;
+}
+.login-loader--done .login-loader__ring-spin {
+    animation: none;
+    background: conic-gradient(#10b981 0 100%);
+}
+.login-loader--done .login-loader__mark { transform: scale(1.06); }
+
+.login-loader__title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+.login-loader__message {
+    font-size: .84rem;
+    line-height: 1.9;
+    color: #64748b;
+    min-height: 1.9em;
+}
+.login-loader__bar {
+    height: 6px;
+    margin: 18px 0 12px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, .13);
+    overflow: hidden;
+}
+.login-loader__bar > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1, #22d3ee);
+    animation-name: loginLoaderBar;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+}
+.login-loader__step {
+    font-size: .76rem;
+    color: #94a3b8;
+    min-height: 1.6em;
+}
+
+body.dark-mode .login-loader,
+body.dark-theme .login-loader {
+    background: radial-gradient(900px 500px at 75% -10%, rgba(99, 102, 241, .22) 0%, rgba(15, 23, 42, .96) 45%, rgba(2, 6, 23, .98) 100%);
+}
+body.dark-mode .login-loader__card,
+body.dark-theme .login-loader__card {
+    background: #0f172a;
+    border-color: rgba(51, 65, 85, .7);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
+}
+body.dark-mode .login-loader__title,
+body.dark-theme .login-loader__title { color: #f1f5f9; }
+body.dark-mode .login-loader__ring-track,
+body.dark-theme .login-loader__ring-track { border-color: rgba(148, 163, 184, .20); }
+
+@keyframes loginLoaderIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes loginLoaderCardIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes loginLoaderSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes loginLoaderBar {
+    from { width: 4%; }
+    to   { width: 100%; }
+}
+
+/* CAPTCHA lifetime: the countdown hint and the expired state. */
+.captcha-hint {
+    margin: 6px 0 0;
+    font-size: .74rem;
+    color: #64748b;
+    text-align: center;
+}
+.login-card .captcha-hint { font-size: min(0.76rem, 1.6vh); }
+
+.captcha-group.captcha-expired .captcha-input {
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, .12);
+}
+.captcha-group.captcha-expired .captcha-refresh {
+    animation: captchaRefreshPulse 1.4s ease-in-out infinite;
+    border-color: #f43f5e;
+    color: #e11d48;
+}
+.captcha-group.captcha-shake {
+    animation: captchaShake .45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+body.dark-mode .captcha-hint,
+body.dark-theme .captcha-hint { color: #94a3b8; }
+
+@keyframes captchaRefreshPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .30); }
+    50%      { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); }
+}
+@keyframes captchaShake {
+    10%, 90%      { transform: translateX(-2px); }
+    20%, 80%      { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60%      { transform: translateX(7px); }
+}
+
+/* Motion is decoration here: nobody should be forced to watch it. */
+@media (prefers-reduced-motion: reduce) {
+    .login-loader,
+    .login-loader__card,
+    .login-loader__ring-spin,
+    .captcha-group.captcha-expired .captcha-refresh,
+    .captcha-group.captcha-shake {
+        animation: none !important;
+    }
+    .login-loader__bar > i { width: 100%; }
+}
+

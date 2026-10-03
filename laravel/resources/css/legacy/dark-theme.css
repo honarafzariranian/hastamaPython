@@ -1,0 +1,3574 @@
+/* =============================================================================
+   dark-theme.css — لایهٔ مشترک حالت تاریک سامانهٔ هستما
+   -----------------------------------------------------------------------------
+   این فایل «آخرین» شیت هر صفحه است و فقط زمانی اثر می‌گذارد که کلاس
+   `dark-mode` (و معادل قدیمی آن `dark-theme`) روی <html>/<body> نشسته باشد؛
+   بنابراین چیدمان و ظاهر حالت روشن دست‌نخورده باقی می‌ماند.
+
+   پوشش: صفحهٔ ورود، پنل کاربری، پنل مدیریت، و هر چهار صفحهٔ گزارش
+   (نهایی، مرخصی، پاس ساعتی، اضافه‌کاری) به‌همراه جدول‌ها، مودال‌ها،
+   پاپ‌آپ‌ها، فرم‌ها، تقویم‌ها، ساید‌بارها و لایهٔ موبایل جدول‌ها.
+
+   قواعد نگهداری:
+     • همه‌چیز با `body.dark-mode` شروع می‌شود تا ویژگی (specificity) از
+       انتخابگرهای ID موجود بیشتر باشد و نیازی به !important نداشته باشیم؛
+       !important فقط جایی به‌کار رفته که قاعدهٔ اصلی خودش !important دارد.
+     • رنگ‌ها از توکن‌های زیر می‌آیند؛ برای تغییر پالت فقط همین بلوک را ویرایش کنید.
+     • چاپ همیشه روشن است (انتهای فایل) تا گزارش‌های کاغذی سالم بمانند.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   ۱) توکن‌های رنگی مشترک
+   -------------------------------------------------------------------------- */
+body.dark-mode {
+    --dk-bg: #0f1725;            /* پس‌زمینهٔ صفحه */
+    --dk-bg-2: #131c2d;          /* پس‌زمینهٔ فرعی */
+    --dk-surface: #182233;       /* کارت/باکس */
+    --dk-surface-2: #1e2a3d;     /* سطح برجسته‌تر (ردیف، ورودی) */
+    --dk-surface-3: #243349;     /* هاور */
+    --dk-line: #27334a;          /* خط جداکننده */
+    --dk-border: #2c3a52;        /* مرز کارت/ورودی */
+    --dk-text: #e8edf5;
+    --dk-text-2: #9fadc2;
+    --dk-text-3: #7c8aa0;
+    --dk-accent: #38bdf8;
+    --dk-accent-2: #22c55e;
+    --dk-danger: #f87171;
+    --dk-warn: #fbbf24;
+    --dk-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --dk-shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   ۲) پایهٔ سراسری
+   -------------------------------------------------------------------------- */
+html.dark-mode,
+body.dark-mode {
+    background-color: var(--dk-bg);
+    color: var(--dk-text);
+    color-scheme: dark;
+}
+
+body.dark-mode {
+    /* گرادیان‌های تزئینی روشن صفحات را خنثی می‌کند */
+    background-image:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.10), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.10), transparent 24%);
+}
+
+body.dark-mode ::selection {
+    background: rgba(56, 189, 248, 0.32);
+    color: #fff;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #33415c;
+    border-radius: 8px;
+}
+
+body.dark-mode ::placeholder {
+    color: var(--dk-text-3);
+    opacity: 1;
+}
+
+/* ورودی‌های عمومی در همهٔ صفحات */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    border-color: var(--dk-accent);
+    outline-color: var(--dk-accent);
+}
+
+body.dark-mode option {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text);
+}
+
+/* آیکون‌های PNG تیره روی سطح تیره دیده نمی‌شوند → روشن می‌شوند */
+body.dark-mode .sidebar-icon,
+body.dark-mode .icon-container img,
+body.dark-mode .dropdown-item img,
+body.dark-mode .edit-btn img,
+body.dark-mode .trash-icon img,
+body.dark-mode .trash-btn img,
+body.dark-mode .view-btn img,
+body.dark-mode .check-btn img,
+body.dark-mode .ersal-icon img,
+body.dark-mode .avatar-menu img,
+body.dark-mode .logout-btn img {
+    filter: invert(1) brightness(1.65) contrast(0.92);
+}
+
+/* آیکون‌های SVG اینلاین در حالت تیره → رنگ روشن */
+body.dark-mode .icon-container svg {
+    color: #c8d6e0;
+}
+
+/* آیکون‌های داخل عناصر فعال/گرادیانی همان سفید اصلی می‌مانند */
+body.dark-mode .icon-container.active img,
+body.dark-mode .icon-container.active svg,
+body.dark-mode .sidebar-nav-item.active img {
+    filter: brightness(0) invert(1);
+}
+
+body.dark-mode .icon-container.active svg {
+    filter: none;
+    color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   ۳) دکمهٔ شناور تغییر تم (صفحات گزارش که کلید تم نداشتند)
+   -------------------------------------------------------------------------- */
+.theme-toggle-floating {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 9000;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(20, 35, 61, 0.12);
+    background: #ffffff;
+    color: #14233d;
+    box-shadow: 0 10px 24px rgba(15, 30, 60, 0.14);
+    cursor: pointer;
+    padding: 0;
+    transition: transform .15s ease, background-color .2s ease, color .2s ease;
+}
+
+.theme-toggle-floating:hover { transform: translateY(-2px); }
+.theme-toggle-floating svg { width: 20px; height: 20px; }
+.theme-toggle-floating__sun { display: none; }
+
+body.dark-mode .theme-toggle-floating {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .theme-toggle-floating__moon { display: none; }
+body.dark-mode .theme-toggle-floating__sun { display: block; }
+
+@media print {
+    .theme-toggle-floating { display: none !important; }
+}
+
+/* =============================================================================
+   ۴) پنل مدیریت — admin.css
+   ========================================================================== */
+
+/* قاعدهٔ قدیمی و شکستهٔ «.dark-theme body» در admin.css اینجا جایگزین می‌شود */
+body.dark-mode .page-shell {
+    background: transparent;
+}
+
+/* نوار بالا و اجزای آن */
+body.dark-mode .admin-topbar-modern,
+body.dark-mode .topbar {
+    background: transparent;
+}
+
+body.dark-mode .topbar-user,
+body.dark-mode .topbar-clock-pill,
+body.dark-mode .topbar-icon-btn,
+body.dark-mode .mobile-menu-toggle {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .topbar-user-name,
+body.dark-mode .topbar-clock-time,
+body.dark-mode .sidebar-top-card-title,
+body.dark-mode .profile-panel-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .topbar-user-role,
+body.dark-mode .topbar-clock-date,
+body.dark-mode .chevron-icon,
+body.dark-mode .sidebar-top-card-sub,
+body.dark-mode .dropdown-section-title,
+body.dark-mode .profile-panel-subtitle {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .topbar-clock-time { color: var(--dk-accent); }
+
+body.dark-mode .topbar-avatar,
+body.dark-mode .profile-panel-avatar {
+    border-color: var(--dk-surface-2);
+    background-color: var(--dk-surface-2);
+}
+
+/* منوی پروفایل و اعلان‌ها */
+body.dark-mode .profile-dropdown,
+body.dark-mode .status-dropdown {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow);
+}
+
+body.dark-mode .pd-header {
+    background: linear-gradient(135deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-bottom-color: var(--dk-border);
+}
+body.dark-mode .pd-header__name { color: var(--dk-text); }
+body.dark-mode .pd-header__role { color: var(--dk-text-3); }
+body.dark-mode .pd-header__avatar img { border-color: var(--dk-surface); }
+body.dark-mode .pd-header__status { border-color: var(--dk-surface); }
+body.dark-mode .pd-section__label { color: var(--dk-text-3); }
+body.dark-mode .pd-item { color: var(--dk-text); }
+body.dark-mode .pd-item:hover { color: var(--dk-text); }
+body.dark-mode .pd-item--link { color: var(--dk-text); }
+body.dark-mode .pd-item__icon { background: var(--dk-surface-2); }
+body.dark-mode .pd-item__icon svg { color: var(--dk-text-2); }
+body.dark-mode .pd-item:hover .pd-item__icon { background: var(--dk-surface-3); }
+body.dark-mode .pd-item:hover .pd-item__icon svg { color: var(--dk-accent); }
+body.dark-mode .pd-item__icon--green { background: rgba(16,185,129,.15); }
+body.dark-mode .pd-item__icon--green svg { color: #34d399; }
+body.dark-mode .pd-item__icon--purple { background: rgba(139,92,246,.15); }
+body.dark-mode .pd-item__icon--purple svg { color: #a78bfa; }
+body.dark-mode .pd-item__icon--amber { background: rgba(245,158,11,.15); }
+body.dark-mode .pd-item__icon--amber svg { color: #fbbf24; }
+body.dark-mode .pd-item__icon--cyan { background: rgba(6,182,212,.15); }
+body.dark-mode .pd-item__icon--cyan svg { color: #22d3ee; }
+body.dark-mode .pd-item__icon--slate { background: var(--dk-surface-2); }
+body.dark-mode .pd-item__icon--slate svg { color: var(--dk-text-2); }
+body.dark-mode .pd-item__icon--blue { background: rgba(59,130,246,.15); }
+body.dark-mode .pd-item__icon--blue svg { color: #60a5fa; }
+body.dark-mode .pd-item__arrow svg { color: var(--dk-text-3); }
+body.dark-mode .pd-section + .pd-section { border-top-color: var(--dk-border); }
+
+body.dark-mode .dropdown-item {
+    background: transparent;
+    color: var(--dk-text);
+}
+
+body.dark-mode .dropdown-item:hover {
+    background: var(--dk-surface-3);
+}
+
+body.dark-mode .dropdown-divider {
+    background: var(--dk-line);
+}
+
+/* پنل پروفایل مدرن (ادمین) — دارک‌مد */
+body.dark-mode .profile-panel {
+    background: var(--dk-surface);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 4px 6px rgba(0, 0, 0, 0.15),
+        0 12px 24px rgba(0, 0, 0, 0.2),
+        0 32px 64px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .profile-panel-overlay {
+    background: rgba(3, 8, 16, 0.7);
+}
+
+body.dark-mode .profile-panel-header {
+    background:
+        radial-gradient(ellipse 120% 80% at 90% 10%, rgba(56, 189, 248, 0.10), transparent 60%),
+        radial-gradient(ellipse 80% 100% at 10% 90%, rgba(99, 102, 241, 0.08), transparent 60%),
+        linear-gradient(135deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-title { color: var(--dk-text); }
+body.dark-mode .profile-panel-subtitle { color: var(--dk-text-2); }
+
+body.dark-mode .profile-panel-close {
+    background: var(--dk-surface-2);
+    color: var(--dk-text-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-close:hover {
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.25);
+    color: #fca5a5;
+}
+
+body.dark-mode .profile-panel-avatar-wrap {
+    background:
+        radial-gradient(ellipse 60% 100% at 80% 20%, rgba(56, 189, 248, 0.06), transparent 60%),
+        linear-gradient(135deg, var(--dk-surface-2) 0%, var(--dk-surface) 100%);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-avatar {
+    border-color: var(--dk-surface-2);
+    box-shadow:
+        0 0 0 3px rgba(56, 189, 248, 0.15),
+        0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .profile-panel-avatar:hover {
+    box-shadow:
+        0 0 0 3px rgba(56, 189, 248, 0.25),
+        0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .profile-panel-user strong { color: var(--dk-text); }
+body.dark-mode .profile-panel-user span { color: var(--dk-text-2); }
+
+body.dark-mode .profile-panel-card {
+    background: linear-gradient(145deg, var(--dk-surface-2) 0%, var(--dk-surface) 100%);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-card:hover {
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.08);
+}
+
+body.dark-mode .profile-panel-card h4 {
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-card li {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-card li:hover {
+    background: rgba(56, 189, 248, 0.05);
+    border-color: rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .profile-panel-card li strong { color: var(--dk-text); }
+body.dark-mode .profile-panel-card li span { color: var(--dk-text-2); }
+
+body.dark-mode .profile-panel-badge {
+    background: linear-gradient(135deg, #0284c7, #4f46e5);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
+body.dark-mode .profile-panel-stat {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-panel-stat:hover {
+    border-color: rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .profile-panel-stat strong { color: var(--dk-text); }
+body.dark-mode .profile-panel-stat span { color: var(--dk-text-2); }
+
+body.dark-mode .profile-form input,
+body.dark-mode .profile-form textarea {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .profile-form input:focus,
+body.dark-mode .profile-form textarea:focus {
+    border-color: var(--dk-accent);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+}
+
+body.dark-mode .profile-setting-row {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .profile-setting-row:hover {
+    border-color: rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .profile-setting-row span { color: var(--dk-text-2); }
+body.dark-mode .profile-setting-row strong { color: var(--dk-text); }
+
+body.dark-mode .profile-invoice-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--dk-border);
+}
+body.dark-mode .profile-invoice-item strong { color: var(--dk-text); }
+body.dark-mode .profile-invoice-item span { color: var(--dk-text-2); }
+
+body.dark-mode .profile-form input,
+body.dark-mode .profile-form textarea {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* سایدبار مدیریت */
+body.dark-mode .sidebar-top-card,
+body.dark-mode .rightSidebar,
+body.dark-mode .sidebar-right {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .icon-container,
+body.dark-mode .icon-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .icon-container:hover {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+body.dark-mode .icon-container:hover .icon-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .icon-container.active,
+body.dark-mode .icon-container.active .icon-label {
+    color: #fff;
+}
+
+body.dark-mode .mobile-sidebar-overlay {
+    background: rgba(3, 8, 16, 0.62);
+}
+
+body.dark-mode .mobile-sidebar-close {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+}
+
+/* باکس‌های مدیریت (همهٔ کارت‌های محتوای ادمین) */
+body.dark-mode .management-box,
+body.dark-mode #dashboardBox,
+body.dark-mode #userInfoBox,
+body.dark-mode #newUserBox,
+body.dark-mode #shiftBox,
+body.dark-mode #vacationBox,
+body.dark-mode #overtimeBox,
+body.dark-mode #hourlyPassBox,
+body.dark-mode #ticketBox,
+body.dark-mode #hozoorbox {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .ticket-heading h2 {
+    color: var(--dk-text);
+}
+
+/* ─── پنل تیکتینگ مدرن — حالت تاریک ─── */
+body.dark-mode .ticketing-panel {
+    --tk-primary: #e2e8f0;
+    --tk-accent: #38bdf8;
+    --tk-accent-2: #818cf8;
+    --tk-green: #34d399;
+    --tk-surface: #182233;
+    --tk-surface-2: #1e2a3a;
+    --tk-surface-3: #253345;
+    --tk-border: rgba(255, 255, 255, 0.1);
+    --tk-border-hover: rgba(56, 189, 248, 0.4);
+    --tk-text: #e2e8f0;
+    --tk-text-2: #94a3b8;
+    --tk-muted: #64748b;
+    --tk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --tk-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --tk-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .helpdesk-view.is-active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.1));
+}
+
+body.dark-mode .helpdesk-view:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+
+body.dark-mode .helpdesk-view b {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+}
+
+body.dark-mode .helpdesk-ticket-item:hover,
+body.dark-mode .helpdesk-ticket-item:focus-visible {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.1);
+}
+
+body.dark-mode .ticket-inline-action:hover {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+body.dark-mode .ticket-workspace-badge--new,
+body.dark-mode .ticket-workspace-badge--open {
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+}
+
+body.dark-mode .ticket-workspace-badge--in_progress,
+body.dark-mode .ticket-workspace-badge--waiting_for_support {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+body.dark-mode .ticket-workspace-badge--waiting_for_user {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+}
+
+body.dark-mode .ticket-workspace-badge--resolved {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+}
+
+body.dark-mode .ticket-workspace-badge--closed {
+    background: rgba(100, 116, 139, 0.15);
+    color: #94a3b8;
+}
+
+body.dark-mode .ticket-workspace-badge--priority-urgent {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+
+body.dark-mode .ticket-workspace-badge--priority-high {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fcd34d;
+}
+
+body.dark-mode .ticket-workspace-message {
+    background: rgba(56, 189, 248, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .ticket-workspace-message--agent {
+    background: rgba(52, 211, 153, 0.08);
+}
+
+body.dark-mode .ticket-workspace-message--internal {
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.25);
+}
+
+body.dark-mode .ticket-reply-bar {
+    background: var(--tk-surface);
+    border-top-color: var(--tk-border);
+}
+
+body.dark-mode .ticket-conversation-close:hover {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+
+body.dark-mode .helpdesk-context-close:hover {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+
+body.dark-mode .ticket-loading-state {
+    background: linear-gradient(90deg, var(--tk-surface-2) 25%, var(--tk-surface-3) 50%, var(--tk-surface-2) 75%);
+    background-size: 200% 100%;
+}
+
+body.dark-mode .ticket-popup-box .mobile-box {
+    background: var(--tk-surface-2);
+}
+
+body.dark-mode .ticket-conversation-dialog .matn1 {
+    background: rgba(56, 189, 248, 0.1);
+}
+
+body.dark-mode .ticket-conversation-dialog .matn2 {
+    background: rgba(52, 211, 153, 0.1);
+}
+
+body.dark-mode .ticket-conversation-close {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .morakhaci-sabt .modaleSabteTicket,
+body.dark-mode .morakhaci-sabt #ticketModalContentmobile .modal-content {
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .ticket-context-empty span {
+    color: #38bdf8;
+}
+
+body.dark-mode .helpdesk-requester-card {
+    background: var(--tk-surface-2);
+    border-color: var(--tk-border);
+}
+
+body.dark-mode .ticket-attachment-link {
+    background: rgba(56, 189, 248, 0.12);
+    color: #7dd3fc;
+}
+
+/* ─── پنل حضور و غیاب — حالت تاریک ─── */
+body.dark-mode .attendance-panel {
+    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+body.dark-mode .attendance-panel__head {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, rgba(0, 184, 148, 0.04) 100%);
+    border-bottom-color: var(--dk-border);
+}
+body.dark-mode .attendance-panel__title { color: var(--dk-text); }
+body.dark-mode .attendance-panel__subtitle { color: var(--dk-text-2); }
+body.dark-mode .attendance-stat {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+body.dark-mode .attendance-stat__label { color: var(--dk-text-2); }
+body.dark-mode .attendance-stat__value { color: var(--dk-text); }
+body.dark-mode .attendance-panel__footer { border-top-color: var(--dk-border); }
+body.dark-mode .attendance-form-wrap { background: transparent; }
+body.dark-mode .attendance-form__label { color: var(--dk-text); }
+body.dark-mode .attendance-form__select,
+body.dark-mode .attendance-form__input {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .attendance-form__select:focus,
+body.dark-mode .attendance-form__input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+body.dark-mode .payroll-panel {
+    background: var(--dk-surface);
+}
+
+body.dark-mode .payroll-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .payroll-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .payroll-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .payroll-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .payroll-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .attendance-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .attendance-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .attendance-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .attendance-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .attendance-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .vacation-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .vacation-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .vacation-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .vacation-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-tab-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .vacation-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .vacation-config-item input,
+body.dark-mode .vacation-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .vacation-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .vacation-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .overtime-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .overtime-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .overtime-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .overtime-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .overtime-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .overtime-config-item input,
+body.dark-mode .overtime-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .overtime-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .overtime-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* ─── پنل پاس ساعتی — حالت تاریک ─── */
+body.dark-mode .hourlyPass-heading h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .attendance-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .hourlyPass-tabs {
+    background: var(--dk-bg);
+}
+
+body.dark-mode .hourlyPass-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .hourlyPass-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .hourlyPass-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-tab-content {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-tab-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .hourlyPass-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .hourlyPass-config-item input,
+body.dark-mode .hourlyPass-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hourlyPass-config-actions button {
+    background: linear-gradient(135deg, var(--dk-accent, #0ea5e9), var(--dk-accent-2, #6366f1));
+}
+
+body.dark-mode .hourlyPass-report-toolbar button {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-config {
+    background: var(--dk-bg);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-config-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .payroll-config-item input,
+body.dark-mode .payroll-config-item select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-period-actions {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-period-status {
+    color: #5eead4;
+}
+
+body.dark-mode .payroll-period-status.is-error {
+    color: #fda4af;
+}
+
+body.dark-mode .payroll-period-status.is-warning {
+    color: #fcd34d;
+}
+
+body.dark-mode .payroll-period-display-btn {
+    border-color: #0f9f86;
+    color: #fff;
+}
+
+body.dark-mode .payroll-copy-previous-btn {
+    border-color: #39748a;
+    background: #193746;
+    color: #b9ecfa;
+}
+
+body.dark-mode .payroll-copy-previous-btn:hover:not(:disabled) {
+    border-color: #56b8d4;
+    background: #214b5e;
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-table-scroll {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-table-hint {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--dk-accent, #38bdf8);
+}
+
+body.dark-mode .payroll-table thead th {
+    background: var(--dk-bg);
+    color: var(--dk-text-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-table tbody td {
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-table tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .payroll-person-name {
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-person-meta {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .payroll-input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-total-row td {
+    /* مات (opaque) تا هنگام اسکرول جدول، ردیف‌ها از زیرش دیده نشوند */
+    background: #172F45 !important;
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .payroll-card__head {
+    background: rgba(14, 165, 233, 0.08);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-card__name {
+    color: var(--dk-text);
+}
+
+body.dark-mode .payroll-card__meta,
+body.dark-mode .payroll-card__field-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .payroll-card__results {
+    background: var(--dk-bg);
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-card__result {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .payroll-card__result b {
+    color: var(--dk-accent, #38bdf8);
+}
+
+/* حقوق ساعتی پرسنل غیررسمی */
+body.dark-mode .hourly-payroll-hint {
+    background: rgba(56, 189, 248, .1);
+    border-color: var(--dk-border);
+    color: var(--dk-text-2);
+}
+body.dark-mode .hourly-payroll-table-scroll {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+body.dark-mode .hourly-payroll-input {
+    background: var(--dk-surface-2);
+    border-color: #60758e;
+    color: var(--dk-text);
+}
+body.dark-mode .hourly-payroll-input:focus {
+    border-color: var(--dk-accent);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, .2);
+}
+body.dark-mode .hourly-payroll-result,
+body.dark-mode .hourly-payroll-total-row td[data-hourly-total="netPay"] {
+    color: #5eead4;
+}
+body.dark-mode .hourly-payroll-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+body.dark-mode .hourly-payroll-card__head {
+    background: rgba(14, 165, 233, .08);
+    border-bottom-color: var(--dk-border);
+}
+body.dark-mode .hourly-payroll-card__name,
+body.dark-mode .hourly-payroll-card__result b {
+    color: var(--dk-text);
+}
+body.dark-mode .hourly-payroll-card__meta,
+body.dark-mode .hourly-payroll-card__field-label,
+body.dark-mode .hourly-payroll-card__result {
+    color: var(--dk-text-2);
+}
+body.dark-mode .hourly-payroll-card__results {
+    background: var(--dk-bg);
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .payroll-summary-intro {
+    background: var(--dk-bg-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-2);
+}
+body.dark-mode .payroll-summary-intro strong {
+    color: var(--dk-text);
+}
+body.dark-mode .payroll-summary-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+body.dark-mode .payroll-summary-card span,
+body.dark-mode .payroll-summary-card small {
+    color: var(--dk-text-2);
+}
+body.dark-mode .payroll-summary-card strong {
+    color: var(--dk-text);
+}
+body.dark-mode .payroll-summary-card--net {
+    background: linear-gradient(145deg, #173b39, var(--dk-surface));
+    border-color: #276e63;
+}
+body.dark-mode .payroll-summary-card--total {
+    background: linear-gradient(145deg, #1c3554, var(--dk-surface));
+    border-color: #355c8a;
+}
+body.dark-mode .payroll-summary-card--net strong { color: #5eead4; }
+body.dark-mode .payroll-summary-card--total strong { color: #7dd3fc; }
+
+body.dark-mode .management-box h2,
+body.dark-mode #userInfoBox h2,
+body.dark-mode .vacation-tab-content h2,
+body.dark-mode .table-title,
+body.dark-mode .shift-popup-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode #userInfoBox p {
+    color: var(--dk-text-2);
+}
+
+/* برچسب‌های فرم‌های ادمین */
+body.dark-mode .entekhab-form label,
+body.dark-mode .enferadiEzafeUsers label,
+body.dark-mode .hourlypassform label,
+body.dark-mode .formgozareshhozoor label,
+body.dark-mode .formsabtdast label,
+body.dark-mode .form-row label,
+body.dark-mode .form-row-krbrjadid label,
+body.dark-mode .shift-details-form .form-row-krbrjadid label,
+body.dark-mode .shift-schedule-grid .day-label {
+    color: var(--dk-text);
+}
+
+/* کارت‌های داشبورد */
+body.dark-mode .dashboard-card,
+body.dark-mode .dashboard-chart-card,
+body.dark-mode .dashboard-table-card,
+body.dark-mode .dashboard-quick-card {
+    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .dashboard-card .card-title,
+body.dark-mode .bar-label,
+body.dark-mode .quick-card-meta {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .dashboard-card .card-value,
+body.dark-mode .dashboard-chart-card .card-title,
+body.dark-mode .bar-number,
+body.dark-mode .quick-card-title,
+body.dark-mode .quick-card-value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .dashboard-card .card-meta {
+    color: var(--dk-text-3);
+}
+
+/* کارت‌های گرادیانی داشبورد متن سفید خودشان را نگه می‌دارند */
+body.dark-mode .dashboard-card--highlight .card-title,
+body.dark-mode .dashboard-card--highlight .card-value,
+body.dark-mode .dashboard-card--highlight .card-meta,
+body.dark-mode .dashboard-quick-card--accent .quick-card-title,
+body.dark-mode .dashboard-quick-card--accent .quick-card-value {
+    color: #fff;
+}
+
+body.dark-mode .bar-fill {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.14) 0%, rgba(34, 197, 94, 0.10) 100%);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .dashboard-table th,
+body.dark-mode .dashboard-table td {
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-line);
+}
+
+/* =============================================================================
+   ۵) جدول‌ها — مشترک بین پنل مدیریت، پنل کاربری و گزارش‌ها
+   سرستون‌ها گرادیان/رنگی‌اند و متن سفید دارند؛ فقط بدنه تیره می‌شود.
+   ========================================================================== */
+body.dark-mode #userTable,
+body.dark-mode .request-table,
+body.dark-mode .vacation-table,
+body.dark-mode .individual-report-table,
+body.dark-mode .overTime-table,
+body.dark-mode .overTime-allreport-table,
+body.dark-mode .overTimeindivisualReport-table,
+body.dark-mode .hourlyPassReport-table,
+body.dark-mode .hourlyPassTotaluserReport-table,
+body.dark-mode .hourlyPassIndivisualuserReport-table,
+body.dark-mode .ticketUsersReport-table,
+body.dark-mode .hozoorUsersReport-table,
+body.dark-mode .ezafeKarUsersReport-table,
+body.dark-mode .morkhcUsersReport-table,
+body.dark-mode .hourlyPassUsersReport-table,
+body.dark-mode .passsaatiReport-table,
+body.dark-mode .dashboard-table,
+body.dark-mode #OverTimeTable,
+body.dark-mode #leaveTable,
+body.dark-mode #ticket-status-table,
+body.dark-mode #ticket-status-table-popup,
+body.dark-mode #HozoorTableReport,
+body.dark-mode #hozoorUsersReportTable,
+body.dark-mode #ezafeKarUsersReportTable,
+body.dark-mode #morkhcUsersReportTable,
+body.dark-mode #hourlyPassUsersReportTable {
+    background-color: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode table tbody tr {
+    background-color: transparent;
+    color: var(--dk-text);
+}
+
+body.dark-mode table tbody td,
+body.dark-mode table tbody th {
+    color: var(--dk-text);
+    border-color: var(--dk-line);
+}
+
+/* حاشیه‌های سفید سلول‌ها که در تم روشن «شکاف» می‌ساختند */
+body.dark-mode #userTable td,
+body.dark-mode #userTable th,
+body.dark-mode .request-table th,
+body.dark-mode .request-table td,
+body.dark-mode .vacation-table th,
+body.dark-mode .vacation-table td,
+body.dark-mode .individual-report-table th,
+body.dark-mode .individual-report-table td,
+body.dark-mode .overTime-table th,
+body.dark-mode .overTime-table td,
+body.dark-mode .overTime-allreport-table th,
+body.dark-mode .overTime-allreport-table td,
+body.dark-mode .overTimeindivisualReport-table th,
+body.dark-mode .overTimeindivisualReport-table td,
+body.dark-mode .hourlyPassReport-table th,
+body.dark-mode .hourlyPassReport-table td,
+body.dark-mode .hourlyPassTotaluserReport-table th,
+body.dark-mode .hourlyPassTotaluserReport-table td,
+body.dark-mode .hourlyPassIndivisualuserReport-table th,
+body.dark-mode .hourlyPassIndivisualuserReport-table td,
+body.dark-mode .ticketUsersReport-table th,
+body.dark-mode .ticketUsersReport-table td,
+body.dark-mode .hozoorUsersReport-table th,
+body.dark-mode .hozoorUsersReport-table td,
+body.dark-mode .ezafeKarUsersReport-table th,
+body.dark-mode .ezafeKarUsersReport-table td,
+body.dark-mode .morkhcUsersReport-table th,
+body.dark-mode .morkhcUsersReport-table td,
+body.dark-mode .hourlyPassUsersReport-table th,
+body.dark-mode .hourlyPassUsersReport-table td,
+body.dark-mode .passsaatiReport-table th,
+body.dark-mode .passsaatiReport-table td,
+body.dark-mode #OverTimeTable th,
+body.dark-mode #OverTimeTable td,
+body.dark-mode #leaveTable th,
+body.dark-mode #leaveTable td,
+body.dark-mode #ticket-status-table th,
+body.dark-mode #ticket-status-table td,
+body.dark-mode #ticket-status-table-popup th,
+body.dark-mode #ticket-status-table-popup td,
+body.dark-mode #HozoorTableReport th,
+body.dark-mode #HozoorTableReport td {
+    border-color: var(--dk-line);
+}
+
+/* هاور ردیف‌ها */
+body.dark-mode #userTable tbody tr:hover,
+body.dark-mode .request-table tbody tr:hover,
+body.dark-mode .vacation-table tbody tr:hover,
+body.dark-mode .individual-report-table tbody tr:hover,
+body.dark-mode .overTime-table tbody tr:hover,
+body.dark-mode .overTime-allreport-table tbody tr:hover,
+body.dark-mode .overTimeindivisualReport-table tbody tr:hover,
+body.dark-mode .hourlyPassReport-table tbody tr:hover,
+body.dark-mode .hourlyPassTotaluserReport-table tbody tr:hover,
+body.dark-mode .hourlyPassIndivisualuserReport-table tbody tr:hover,
+body.dark-mode .ticketUsersReport-table tbody tr:hover,
+body.dark-mode .hozoorUsersReport-table tbody tr:hover,
+body.dark-mode .ezafeKarUsersReport-table tbody tr:hover,
+body.dark-mode .morkhcUsersReport-table tbody tr:hover,
+body.dark-mode .hourlyPassUsersReport-table tbody tr:hover,
+body.dark-mode .passsaatiReport-table tbody tr:hover,
+body.dark-mode #OverTimeTable tbody tr:hover,
+body.dark-mode #leaveTable tbody tr:hover,
+body.dark-mode #HozoorTableReport tbody tr:hover {
+    background-color: var(--dk-surface-3);
+}
+
+/* ردیف تعطیل/غیبت: در تم روشن قرمز کم‌رنگ بود و روی تیره ناخواناست */
+body.dark-mode .holiday-row,
+body.dark-mode .holiday-row td {
+    background-color: rgba(248, 113, 113, 0.14) !important;
+    color: #fca5a5 !important;
+}
+
+/* =============================================================================
+   ۵-ب) طراحی یکپارچهٔ جدید جداول (tables.css) — هماهنگ‌سازی حالت تاریک
+   هدر خنثی، زبرای ملایم، نشان‌های وضعیت نرم و هاور سلولی
+   ========================================================================== */
+
+/* هدر جدول: پس‌زمینهٔ خنثی + متن تیره → هماهنگ با تم تیره */
+body.dark-mode #userTable thead th,
+body.dark-mode .request-table thead th,
+body.dark-mode .vacation-table thead th,
+body.dark-mode .individual-report-table thead th,
+body.dark-mode .overTime-table thead th,
+body.dark-mode .overTime-allreport-table thead th,
+body.dark-mode .overTimeindivisualReport-table thead th,
+body.dark-mode .hourlyPassReport-table thead th,
+body.dark-mode .hourlyPassTotaluserReport-table thead th,
+body.dark-mode .hourlyPassIndivisualuserReport-table thead th,
+body.dark-mode .ticketUsersReport-table thead th,
+body.dark-mode .hozoorUsersReport-table thead th,
+body.dark-mode .ezafeKarUsersReport-table thead th,
+body.dark-mode .morkhcUsersReport-table thead th,
+body.dark-mode .hourlyPassUsersReport-table thead th,
+body.dark-mode .passsaatiReport-table thead th,
+body.dark-mode .dashboard-table thead th,
+body.dark-mode #OverTimeTable thead th,
+body.dark-mode #leaveTable thead th,
+body.dark-mode #ticket-status-table thead th,
+body.dark-mode #ticket-status-table-popup thead th,
+body.dark-mode #HozoorTableReport thead th,
+body.dark-mode #hozoorUsersReportTable thead th,
+body.dark-mode #ezafeKarUsersReportTable thead th,
+body.dark-mode #morkhcUsersReportTable thead th,
+body.dark-mode #hourlyPassUsersReportTable thead th {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-line);
+}
+
+/* خط تفکیک ردیف‌ها و آخرین ردیف */
+body.dark-mode #userTable tbody td,
+body.dark-mode .request-table tbody td,
+body.dark-mode .vacation-table tbody td,
+body.dark-mode .individual-report-table tbody td,
+body.dark-mode .overTime-table tbody td,
+body.dark-mode .overTime-allreport-table tbody td,
+body.dark-mode .overTimeindivisualReport-table tbody td,
+body.dark-mode .hourlyPassReport-table tbody td,
+body.dark-mode .hourlyPassTotaluserReport-table tbody td,
+body.dark-mode .hourlyPassIndivisualuserReport-table tbody td,
+body.dark-mode .ticketUsersReport-table tbody td,
+body.dark-mode .hozoorUsersReport-table tbody td,
+body.dark-mode .ezafeKarUsersReport-table tbody td,
+body.dark-mode .morkhcUsersReport-table tbody td,
+body.dark-mode .hourlyPassUsersReport-table tbody td,
+body.dark-mode .passsaatiReport-table tbody td,
+body.dark-mode .dashboard-table tbody td,
+body.dark-mode #OverTimeTable tbody td,
+body.dark-mode #leaveTable tbody td,
+body.dark-mode #ticket-status-table tbody td,
+body.dark-mode #ticket-status-table-popup tbody td,
+body.dark-mode #HozoorTableReport tbody td,
+body.dark-mode #hozoorUsersReportTable tbody td,
+body.dark-mode #ezafeKarUsersReportTable tbody td,
+body.dark-mode #morkhcUsersReportTable tbody td,
+body.dark-mode #hourlyPassUsersReportTable tbody td {
+    border-bottom-color: var(--dk-line);
+}
+
+body.dark-mode #userTable tbody tr:last-child td,
+body.dark-mode .request-table tbody tr:last-child td,
+body.dark-mode .vacation-table tbody tr:last-child td,
+body.dark-mode .individual-report-table tbody tr:last-child td,
+body.dark-mode .overTime-table tbody tr:last-child td,
+body.dark-mode .overTime-allreport-table tbody tr:last-child td,
+body.dark-mode .overTimeindivisualReport-table tbody tr:last-child td,
+body.dark-mode .hourlyPassReport-table tbody tr:last-child td,
+body.dark-mode .hourlyPassTotaluserReport-table tbody tr:last-child td,
+body.dark-mode .hourlyPassIndivisualuserReport-table tbody tr:last-child td,
+body.dark-mode .ticketUsersReport-table tbody tr:last-child td,
+body.dark-mode .hozoorUsersReport-table tbody tr:last-child td,
+body.dark-mode .ezafeKarUsersReport-table tbody tr:last-child td,
+body.dark-mode .morkhcUsersReport-table tbody tr:last-child td,
+body.dark-mode .hourlyPassUsersReport-table tbody tr:last-child td,
+body.dark-mode .passsaatiReport-table tbody tr:last-child td,
+body.dark-mode #OverTimeTable tbody tr:last-child td,
+body.dark-mode #leaveTable tbody tr:last-child td,
+body.dark-mode #ticket-status-table tbody tr:last-child td,
+body.dark-mode #ticket-status-table-popup tbody tr:last-child td,
+body.dark-mode #HozoorTableReport tbody tr:last-child td,
+body.dark-mode #hozoorUsersReportTable tbody tr:last-child td,
+body.dark-mode #ezafeKarUsersReportTable tbody tr:last-child td,
+body.dark-mode #morkhcUsersReportTable tbody tr:last-child td,
+body.dark-mode #hourlyPassUsersReportTable tbody tr:last-child td {
+    border-bottom-color: transparent;
+}
+
+/* زبرای ملایم تیره + هاور سلولی (رنگ روشن tables.css را خنثی می‌کند) */
+body.dark-mode #userTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .request-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .vacation-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .individual-report-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .overTime-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .overTime-allreport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .overTimeindivisualReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .hourlyPassReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .hourlyPassTotaluserReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .hourlyPassIndivisualuserReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .ticketUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .hozoorUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .ezafeKarUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .morkhcUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .hourlyPassUsersReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode .passsaatiReport-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #OverTimeTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #leaveTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #ticket-status-table tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #ticket-status-table-popup tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #HozoorTableReport tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #hozoorUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #ezafeKarUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #morkhcUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td,
+body.dark-mode #hourlyPassUsersReportTable tbody tr:not(.holiday-row):nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.025);
+}
+
+body.dark-mode #userTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode .request-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .vacation-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .individual-report-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .overTime-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .overTime-allreport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .overTimeindivisualReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .hourlyPassReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .hourlyPassTotaluserReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .hourlyPassIndivisualuserReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .ticketUsersReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .hozoorUsersReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .ezafeKarUsersReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .morkhcUsersReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .hourlyPassUsersReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode .passsaatiReport-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode #OverTimeTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode #leaveTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode #ticket-status-table tbody tr:not(.holiday-row):hover td,
+body.dark-mode #ticket-status-table-popup tbody tr:not(.holiday-row):hover td,
+body.dark-mode #HozoorTableReport tbody tr:not(.holiday-row):hover td,
+body.dark-mode #hozoorUsersReportTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode #ezafeKarUsersReportTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode #morkhcUsersReportTable tbody tr:not(.holiday-row):hover td,
+body.dark-mode #hourlyPassUsersReportTable tbody tr:not(.holiday-row):hover td {
+    background-color: var(--dk-surface-3);
+}
+
+/* نشان‌های وضعیت نرم در تم تیره */
+body.dark-mode .status-navbar {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode div.status-navbar.approved {
+    background-color: rgba(34, 197, 94, 0.16);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+body.dark-mode div.status-navbar.rejected {
+    background-color: rgba(248, 113, 113, 0.16);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.35);
+}
+
+body.dark-mode div.status-navbar.pending,
+body.dark-mode div.status-navbar.status-following {
+    background-color: rgba(251, 191, 36, 0.16);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.35);
+}
+
+body.dark-mode div.status-navbar.cancelled {
+    background-color: rgba(148, 163, 184, 0.16);
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.dark-mode div.status-navbar.status-sent {
+    background-color: rgba(56, 189, 248, 0.16);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+body.dark-mode div.status-navbar.status-read {
+    background-color: rgba(167, 139, 250, 0.16);
+    color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.35);
+}
+
+body.dark-mode div.status-navbar.status-answered {
+    background-color: rgba(45, 212, 191, 0.16);
+    color: #2dd4bf;
+    border-color: rgba(45, 212, 191, 0.35);
+}
+
+/* گزینه‌های منوی کشویی وضعیت در تم تیره */
+body.dark-mode .status-dropdown {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .status-dropdown .status-option:hover {
+    background-color: var(--dk-surface-3);
+}
+
+body.dark-mode .status-dropdown .status-option.approved {
+    background-color: rgba(34, 197, 94, 0.16);
+    color: #4ade80;
+}
+
+body.dark-mode .status-dropdown .status-option.rejected {
+    background-color: rgba(248, 113, 113, 0.16);
+    color: #f87171;
+}
+
+body.dark-mode .status-dropdown .status-option.pending {
+    background-color: rgba(251, 191, 36, 0.16);
+    color: #fbbf24;
+}
+
+body.dark-mode .status-dropdown .status-option.cancelled {
+    background-color: rgba(148, 163, 184, 0.16);
+    color: #94a3b8;
+}
+
+/* نشان‌های خنثی پنل کاربری در تم تیره */
+body.dark-mode #ticket-status-table .vazeiyat-ticket > span:first-child,
+body.dark-mode #ticket-status-table-popup .vazeiyat-ticket > span:first-child,
+body.dark-mode #leaveTable tbody td:first-child,
+body.dark-mode #OverTimeTable tbody .vazeiyat-ezafetime,
+body.dark-mode #passsaatiReportTable tbody td:first-child,
+body.dark-mode #HozoorTableReport tbody .vazeiyat-hozoorTime {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text-2);
+    border-color: var(--dk-border);
+}
+
+/* دکمه‌های آیکونی جدول — هاورهای رنگی روشن در تم تیره جایگزین می‌شوند */
+body.dark-mode button.edit-btn:hover {
+    background-color: rgba(56, 189, 248, 0.16);
+}
+
+body.dark-mode button.trash-btn:hover,
+body.dark-mode button.trash-icon:hover {
+    background-color: rgba(248, 113, 113, 0.16);
+}
+
+body.dark-mode button.view-btn:hover {
+    background-color: rgba(45, 212, 191, 0.16);
+}
+
+body.dark-mode button.check-btn:hover {
+    background-color: rgba(34, 197, 94, 0.16);
+}
+
+body.dark-mode .edit-btn:focus-visible,
+body.dark-mode .trash-btn:focus-visible,
+body.dark-mode .view-btn:focus-visible,
+body.dark-mode .check-btn:focus-visible,
+body.dark-mode .trash-icon:focus-visible {
+    outline-color: var(--dk-accent);
+}
+
+/* =============================================================================
+   ۶) مودال‌ها، پاپ‌آپ‌ها و پوشش‌ها (هر دو پنل)
+   ========================================================================== */
+body.dark-mode .modal,
+body.dark-mode .modal-virayesh,
+body.dark-mode .modal-hazf,
+body.dark-mode .modaleSabteTicket,
+body.dark-mode .morakhaci-sabt,
+body.dark-mode .overlaySaatHafteh,
+body.dark-mode .shift-popup-overlay,
+body.dark-mode .MoshahedeOverlay,
+body.dark-mode .popup-overlay,
+body.dark-mode #popupOverlayMorakhsi {
+    background-color: rgba(3, 8, 16, 0.66);
+}
+
+body.dark-mode .modal-content,
+body.dark-mode .modal-content-virayesh,
+body.dark-mode .modal-content-hazfPopup,
+body.dark-mode .modal-content-sabtTicket,
+body.dark-mode .popup-content,
+body.dark-mode .popup-content-virayesh,
+body.dark-mode .popupSaatHaftehgi,
+body.dark-mode .shift-popup,
+body.dark-mode .shift-popup-content,
+body.dark-mode .MoshahdePopup,
+body.dark-mode .tikcet-popup-Req,
+body.dark-mode .ticket-popup-Req,
+body.dark-mode .ticket-popup-box,
+body.dark-mode .border-vir,
+body.dark-mode .form-container,
+body.dark-mode .form-container-shift,
+body.dark-mode #calendar-box,
+body.dark-mode .time-picker,
+body.dark-mode .dropdown,
+body.dark-mode .dropdown-content,
+body.dark-mode .leave-date-picker,
+body.dark-mode .calendar-dropdown,
+body.dark-mode .settings-panel-dialog,
+body.dark-mode .profile-panel-dialog,
+body.dark-mode .confirm-delete-popup {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow);
+}body.dark-mode .leave-date-picker {
+    background: #1e293b;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .leave-date-picker-controls select,
+body.dark-mode .leave-date-picker-controls select option {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .leave-date-picker-nav {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .leave-date-picker-nav:hover {
+    background: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+}
+
+body.dark-mode .leave-date-picker-day {
+    background: transparent;
+    color: #e2e8f0;
+}
+
+body.dark-mode .leave-date-picker-day:hover {
+    background: #1e3a5f;
+    color: #38bdf8;
+}
+
+body.dark-mode .leave-date-picker-day.is-selected {
+    background: #0ea5e9;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+}
+
+body.dark-mode .leave-date-picker-day.is-selected:hover {
+    background: #0284c7;
+}
+
+body.dark-mode .leave-date-picker-weekday {
+    color: #64748b;
+}
+
+body.dark-mode .leave-date-picker-header + .leave-date-picker-weekdays {
+    border-top-color: #334155;
+}
+
+body.dark-mode .date-input-shell {
+    background: transparent;
+}
+
+body.dark-mode .modal-content h2,
+body.dark-mode .modal-content label,
+body.dark-mode .modal-content p,
+body.dark-mode .popup-content h2,
+body.dark-mode .popup-content label,
+body.dark-mode .confirm-delete-header h2,
+body.dark-mode .confirm-delete-body p {
+    color: var(--dk-text);
+}
+
+body.dark-mode .confirm-delete-header {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .confirm-delete-footer {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .confirm-delete-btn-cancel {
+    background: var(--dk-surface-3);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content textarea,
+body.dark-mode .modal-content select,
+body.dark-mode .modal-content-sabtTicket input,
+body.dark-mode .modal-content-sabtTicket textarea,
+body.dark-mode .popup-content input,
+body.dark-mode .form-row .inputKarbr,
+body.dark-mode .form-row select,
+body.dark-mode .form-row-krbrjadid input,
+body.dark-mode .form-row-krbrjadid select,
+body.dark-mode .shift-details-form .form-row-krbrjadid input,
+body.dark-mode .shift-schedule-grid .fields-column input,
+body.dark-mode .bishtar input,
+body.dark-mode #userSelect,
+body.dark-mode #usernameHozoor,
+body.dark-mode #usernameGozareshHozoor,
+body.dark-mode #usernameEzafeReport,
+body.dark-mode #usernamedast,
+body.dark-mode #substitute,
+body.dark-mode #substituteDropdown {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* Redesigned request modal — dark mode */
+body.dark-mode .modal {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content textarea,
+body.dark-mode .modal-content select,
+body.dark-mode #dynamicFields input {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .modal-content input:focus,
+body.dark-mode .modal-content textarea:focus,
+body.dark-mode .modal-content select:focus,
+body.dark-mode #dynamicFields input:focus {
+    border-color: var(--dk-accent);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    background-color: var(--dk-surface-2);
+}
+
+body.dark-mode .modal-content input::placeholder,
+body.dark-mode .modal-content textarea::placeholder,
+body.dark-mode #dynamicFields input::placeholder {
+    color: var(--dk-text-3);
+}
+
+body.dark-mode .form-section-header {
+    border-bottom-color: var(--dk-line);
+}
+
+body.dark-mode .close {
+    color: var(--dk-text-2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .close:hover {
+    background: rgba(248, 113, 113, 0.2);
+    color: var(--dk-danger);
+}
+
+body.dark-mode .btn-cancel {
+    background: rgba(248, 113, 113, 0.16);
+    color: var(--dk-danger);
+}
+
+body.dark-mode .btn-cancel:hover {
+    background: rgba(248, 113, 113, 0.28);
+}
+
+body.dark-mode .input-container {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .input-container input {
+    color: var(--dk-text);
+}
+
+body.dark-mode .days-hint {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .dropdown-content {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .dropdown-option {
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-line);
+}
+
+body.dark-mode .dropdown-option:hover {
+    background-color: var(--dk-surface-3);
+}
+
+body.dark-mode #passType {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #overtimeMessage {
+    color: var(--dk-danger);
+}
+
+body.dark-mode .close,
+body.dark-mode .closeSabtTicket,
+body.dark-mode .close-shift-popup {
+    color: var(--dk-text-2);
+    background-color: transparent;
+}
+
+body.dark-mode .close:hover,
+body.dark-mode .closeSabtTicket:hover,
+body.dark-mode .close-shift-popup:hover {
+    color: var(--dk-text);
+    background-color: var(--dk-surface-3);
+}
+
+body.dark-mode .shift-schedule-grid {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+/* ═══ بازطراحی مدیریت شیفت‌ها (۱۴۰۵) — حالت تیره ═══ */
+body.dark-mode #shiftBox {
+    --shf-ink: var(--dk-text);
+    --shf-muted: var(--dk-text-2);
+    --shf-line: var(--dk-border);
+    --shf-panel: rgba(24, 34, 51, 0.82);
+}
+
+body.dark-mode .shift-popup-head__text h2,
+body.dark-mode .shift-table-card__title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-popup-head__text p {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .section-hero {
+    background:
+        radial-gradient(120% 170% at 88% -30%, rgba(56, 189, 248, 0.12), transparent 55%),
+        radial-gradient(90% 150% at 8% 130%, rgba(45, 212, 191, 0.1), transparent 55%),
+        var(--dk-surface);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .section-hero__text h2 { color: var(--dk-text); }
+body.dark-mode .section-hero__text p  { color: var(--dk-text-2); }
+
+body.dark-mode #shiftBox .form-row-krbrjadid label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #shiftBox .form-row-krbrjadid select {
+    background:
+        url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239fadc2' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat left 12px center / 14px,
+        var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #shiftBox .form-row-krbrjadid select:hover { border-color: var(--dk-accent); }
+
+body.dark-mode #shiftBox .form-row-krbrjadid select:focus {
+    border-color: var(--dk-accent);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .shift-table-card,
+body.dark-mode .form-container-shift {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .shift-table-card__head {
+    border-bottom-color: var(--dk-border);
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.06), transparent);
+}
+
+body.dark-mode #shiftBox #shiftsTable thead th {
+    background: linear-gradient(180deg, var(--dk-surface-2), var(--dk-surface-3));
+    color: var(--dk-text-2);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode #shiftBox #shiftsTable tbody tr { border-bottom-color: var(--dk-border); }
+body.dark-mode #shiftBox #shiftsTable tbody tr:hover { background: rgba(56, 189, 248, 0.07); }
+body.dark-mode #shiftBox #shiftsTable tbody td { color: var(--dk-text); }
+body.dark-mode #shiftBox #shiftsTable td[colspan] { color: var(--dk-text-2); }
+
+body.dark-mode .shifts-empty-row td::before {
+    background:
+        url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='18' height='17' rx='3.5'/%3E%3Cpath d='M8 2.5v4M16 2.5v4M3.5 9.5h17'/%3E%3C/svg%3E") no-repeat center / contain,
+        linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(45, 212, 191, 0.1));
+}
+
+body.dark-mode #shiftBox .add-shift-krbrinmah {
+    background: rgba(129, 140, 248, 0.08);
+    border-color: rgba(129, 140, 248, 0.4);
+    color: #a5b4fc;
+}
+
+body.dark-mode #shiftBox .add-shift-krbrinmah:hover {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    border-color: #818cf8;
+    color: #fff;
+}
+
+body.dark-mode .shift-popup-content {
+    background:
+        linear-gradient(160deg, rgba(56, 189, 248, 0.07), transparent 38%),
+        var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .shift-popup-head { border-bottom-color: var(--dk-border); }
+
+body.dark-mode .shift-details-form .form-row-krbrjadid input,
+body.dark-mode .shift-schedule-grid .fields-column input {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-details-form .form-row-krbrjadid input:focus,
+body.dark-mode .shift-schedule-grid .fields-column input:focus {
+    background: var(--dk-surface-3);
+    border-color: var(--dk-accent);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .shift-days-range__dash { opacity: 0.75; }
+
+body.dark-mode #shiftBox .shift-schedule-grid .day-label {
+    background: rgba(56, 189, 248, 0.06);
+    border-color: rgba(56, 189, 248, 0.1);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-schedule-grid:has(.fields-column input:focus) {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.07);
+}
+
+body.dark-mode #shiftBox .close-shift-popup {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #shiftBox .close-shift-popup:hover {
+    background: rgba(248, 113, 113, 0.14);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: #fca5a5;
+}
+
+body.dark-mode #shiftBox .shift-cancel-btn {
+    background: var(--dk-surface-2) !important;
+    border-color: var(--dk-border) !important;
+    color: var(--dk-text-2) !important;
+}
+
+body.dark-mode #shiftBox .shift-cancel-btn:hover { background: var(--dk-surface-3) !important; }
+
+/* ── تب‌بندی شیفت (دark mode) ── */
+body.dark-mode .shift-frame {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .shift-tabs {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .shift-tab-btn {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-tab-btn:hover {
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-tab-btn.active {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .shift-tab-content {
+    background: transparent;
+}
+
+body.dark-mode .shift-active-header {
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .shift-active-header__info {
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-active-header__info svg {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .shift-active-card:hover,
+body.dark-mode .shift-active-card:focus-visible {
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.18);
+    border-color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card__edit-btn {
+    background: rgba(56, 189, 248, 0.14);
+    color: var(--dk-accent);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+body.dark-mode .shift-active-card__edit-btn:hover {
+    background: var(--dk-accent);
+    color: #0f172a;
+    border-color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card__user {
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-active-card__title {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card__range {
+    background: var(--dk-surface-3);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card__schedule-row {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .shift-active-card__day {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card__time {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-active-card__empty {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card__footer {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .shift-active-card__edit-hint {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .shift-active-card:hover .shift-active-card__edit-hint {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-popup-meta {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.25);
+}
+
+body.dark-mode .shift-popup-meta__label {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .shift-popup-meta__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .shift-popup-meta__icon svg {
+    color: var(--dk-accent);
+}
+
+body.dark-mode #shiftBox .shift-delete-btn {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+body.dark-mode #shiftBox .shift-delete-btn:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+body.dark-mode .time-btn {
+    background: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+body.dark-mode .time-btn:hover {
+    background: #2f405c;
+}
+
+body.dark-mode #calendar-days {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #calendar-dates button {
+    color: var(--dk-accent-2);
+    background: none;
+}
+
+body.dark-mode #calendar-dates button:hover {
+    background: var(--dk-surface-3);
+}
+
+body.dark-mode .bishtar,
+body.dark-mode .matn1,
+body.dark-mode .matn2 {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .vorodiha {
+    background-color: rgba(34, 197, 94, 0.18);
+}
+
+/* =============================================================================
+   ۷) پنل کاربری — user-panel-style.css (تکمیل موارد پوشش‌داده‌نشده)
+   ========================================================================== */
+body.dark-mode .Information-box,
+body.dark-mode .ticket-status-box,
+body.dark-mode #overtimeBox,
+body.dark-mode #text-hour-box,
+body.dark-mode .mrkhc,
+body.dark-mode .report-hour-box,
+body.dark-mode .table-container,
+body.dark-mode .mobile-box,
+body.dark-mode #calender,
+body.dark-mode .calendar-container,
+body.dark-mode .profileHa,
+body.dark-mode .top-notif-card,
+body.dark-mode .sidebar-submenu {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .Information-box h3,
+body.dark-mode .ticket-status-box h3,
+body.dark-mode .no-ticket-message {
+    color: var(--dk-text);
+}
+
+body.dark-mode .Information-box p,
+body.dark-mode .ticket-status-box p {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .Information-box a,
+body.dark-mode .ticket-status-box a {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .NumberNotif,
+body.dark-mode .tooltipIconHeader-leftSidebar {
+    color: #fff;
+}
+
+body.dark-mode .tooltipIconHeader {
+    background-color: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .icon-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .sidebar-submenu .sidebar-submenu-item {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .sidebar-submenu .sidebar-submenu-item:hover {
+    background: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+body.dark-mode .profileLogo {
+    border-color: var(--dk-border);
+}
+
+body.dark-mode #userInfoBox p {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .decrease,
+body.dark-mode .increase {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* تقویم پنل کاربری */
+body.dark-mode .calendar-header .prev-month,
+body.dark-mode .calendar-header .next-month {
+    border-color: var(--dk-border);
+}
+
+/* روزهای تعطیل/جمعه در تقویم پنل کاربری (کلاس‌محور، نه style اینلاین) */
+body.dark-mode .holiday {
+    background-color: rgba(248, 113, 113, 0.20);
+    color: #fca5a5;
+}
+
+body.dark-mode .holiday:hover {
+    background-color: rgba(248, 113, 113, 0.30);
+}
+
+body.dark-mode .red-day {
+    color: #f87171;
+}
+
+body.dark-mode .day {
+    color: var(--dk-text);
+}
+
+body.dark-mode .day-name,
+body.dark-mode .calendar-header {
+    color: #fff;
+}
+
+/* پنل تنظیمات و پروفایل پنل کاربری */
+body.dark-mode .settings-panel-backdrop,
+body.dark-mode .profile-panel-backdrop {
+    background: rgba(3, 8, 16, 0.66);
+}
+
+body.dark-mode .settings-panel-header,
+body.dark-mode .profile-panel-header {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(34, 197, 94, 0.12));
+}
+
+body.dark-mode .settings-panel-close,
+body.dark-mode .profile-panel-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--dk-text);
+}
+
+body.dark-mode .settings-section,
+body.dark-mode .profile-panel-card,
+body.dark-mode .profile-panel-avatar-block {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .settings-accordion-toggle {
+    color: var(--dk-text);
+}
+
+body.dark-mode .settings-accordion-icon {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .settings-section li,
+body.dark-mode .profile-panel-card li,
+body.dark-mode .profile-field-row {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .profile-field-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .profile-field-value {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .settings-panel-kicker,
+body.dark-mode .profile-panel-kicker {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .tl-dot {
+    background: var(--dk-surface);
+    border-color: var(--dk-line);
+}
+
+body.dark-mode .notif-icon {
+    background: var(--dk-surface);
+}
+
+body.dark-mode .dropdown .goz1:hover { background: #2f7a35; }
+body.dark-mode .dropdown .goz2:hover { background: #8a8f26; }
+body.dark-mode .dropdown .goz3:hover { background: #2b6d8f; }
+
+/* =============================================================================
+   ۸) صفحات گزارش — final / leave / hourlypass / overtime
+   این صفحات هیچ تم تیره‌ای نداشتند.
+   ========================================================================== */
+
+/* گزارش نهایی */
+body.dark-mode .titleBox,
+body.dark-mode .userInfoBox {
+    background-color: var(--dk-surface);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .hozoorBox,
+body.dark-mode .ezafeBox,
+body.dark-mode .passBox,
+body.dark-mode .hourlyPassBox,
+body.dark-mode .numberReport,
+body.dark-mode .exportButtons,
+body.dark-mode .dokmeha {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.65));
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        0 12px 28px rgba(0, 0, 0, 0.25);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoorBox h2,
+body.dark-mode .ezafeBox h2,
+body.dark-mode .passBox h2,
+body.dark-mode .hourlyPassBox h2 {
+    color: var(--dk-text);
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.06), rgba(99, 102, 241, 0.04));
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table thead th {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(99, 102, 241, 0.05));
+    color: var(--dk-text);
+    border-bottom-color: rgba(56, 189, 248, 0.15);
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table tbody td {
+    color: var(--dk-text-2);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table tbody tr:hover td {
+    background: rgba(56, 189, 248, 0.06);
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table tbody tr.holiday-row td {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+}
+
+body.dark-mode .hozoorBox .hozoorUsersReport-table .rt-sticky--s1,
+body.dark-mode .hozoorBox .hozoorUsersReport-table .rt-sticky--s2 {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+body.dark-mode .numBox,
+body.dark-mode .numBoxInput,
+body.dark-mode .numBoxEzafeh {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .numBox .title,
+body.dark-mode .numBoxInput .title,
+body.dark-mode .numBoxEzafeh .title {
+    background: var(--dk-surface);
+    color: var(--dk-text-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .overtimeSamanehTitle,
+body.dark-mode .overtimeSystemTitle,
+body.dark-mode .attendanceSystemTitlegozaresh,
+body.dark-mode .attendanceSystemTitlemajmoo,
+body.dark-mode .attendanceSamanehTitle,
+body.dark-mode .attendanceSamanehTitlemovazafi {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .attendanceSamanehValueInput,
+body.dark-mode .attendanceSamanehInput,
+body.dark-mode .numBoxInput input,
+body.dark-mode .input-container input {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .input-container label {
+    background: var(--dk-surface);
+    color: var(--dk-text-3);
+}
+
+body.dark-mode .input-container input:focus + label,
+body.dark-mode .input-container input:not(:placeholder-shown) + label {
+    color: var(--dk-accent);
+}
+
+body.dark-mode .signature-box,
+body.dark-mode .signature-box-hamkar,
+body.dark-mode .emzaha .signature-box {
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .signature-space span {
+    color: var(--dk-text-2);
+}
+
+/* سه صفحهٔ گزارش فردی (مرخصی / پاس ساعتی / اضافه‌کاری) */
+body.dark-mode .report-container {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: 0 4px 20px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* تصویر پس‌زمینهٔ کاغذی روشن، ملایم و کم‌نور می‌شود */
+body.dark-mode .report-container > img,
+body.dark-mode .background-image {
+    filter: invert(0.92) hue-rotate(180deg) brightness(0.9) contrast(0.95);
+    opacity: 0.5;
+}
+
+body.dark-mode .report-box {
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .report-box h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .info-item,
+body.dark-mode .info-item-month,
+body.dark-mode .info-item strong {
+    color: var(--dk-text);
+}
+
+body.dark-mode .info-item span {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .custom-dropdown {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text);
+    border: 1px solid var(--dk-border);
+}
+
+body.dark-mode .dropdown-options {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow);
+}
+
+body.dark-mode .dropdown-option {
+    color: var(--dk-text);
+}
+
+body.dark-mode .dropdown-option:hover {
+    background-color: var(--dk-surface-3);
+}
+
+/* سر جدول خاکستری صفحات گزارش فردی */
+body.dark-mode .individual-report-table thead tr {
+    background-color: #33415c !important;
+    color: #fff !important;
+}
+
+/* سر جدول‌های گزارش نهایی — در طراحی یکپارچهٔ جدید (tables.css) همهٔ هدرها
+   خنثی هستند؛ این قواعد قدیمی (سرستون بنفش) حذف شدند تا یکدست بمانند. */
+
+/* عملیات ذخیره و محاسبه حقوق در حالت تاریک */
+body.dark-mode .payroll-save-actions,
+body.dark-mode .overtime-payroll-actions {
+    border-top-color: var(--dk-line);
+}
+
+body.dark-mode .payroll-save-recalculate,
+body.dark-mode .overtime-payroll-refresh {
+    border-color: #486079;
+    background: #243349;
+    color: #e8edf5;
+}
+
+body.dark-mode .payroll-save-recalculate:hover,
+body.dark-mode .overtime-payroll-refresh:hover {
+    background: #30425b;
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-save-btn,
+body.dark-mode .overtime-payroll-save {
+    border-color: #18b99a;
+    background: linear-gradient(135deg, #079b80, #087fc0);
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-print-btn {
+    border-color: #4b8dcc;
+    background: #203c5b;
+    color: #bfe2ff;
+}
+
+body.dark-mode .payroll-print-btn:hover {
+    background: #2a4d72;
+    color: #ffffff;
+}
+
+body.dark-mode .payroll-save-status,
+body.dark-mode .overtime-payroll-save-status {
+    color: #5eead4;
+}
+
+body.dark-mode .payroll-save-status.is-error,
+body.dark-mode .overtime-payroll-save-status.is-error {
+    color: #fca5a5;
+}
+
+/* محاسبه کارانه */
+body.dark-mode .karaneh-summary-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .karaneh-summary-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .karaneh-summary-value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .karaneh-summary-card--valid {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, .1);
+}
+
+body.dark-mode .karaneh-summary-card--valid .karaneh-summary-value {
+    color: #4ade80;
+}
+
+body.dark-mode .karaneh-summary-card--invalid {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, .1);
+}
+
+body.dark-mode .karaneh-summary-card--invalid .karaneh-summary-value {
+    color: #f87171;
+}
+
+body.dark-mode .karaneh-valid {
+    color: #4ade80;
+}
+
+body.dark-mode .karaneh-invalid {
+    color: #f87171;
+}
+
+/* =============================================================================
+   ۹) لایهٔ موبایل جدول‌ها — responsive-tables.css
+   توکن‌های آن به `.dark-theme` وابسته‌اند؛ برای اطمینان `.dark-mode` هم اضافه شد.
+   ========================================================================== */
+body.dark-mode .rt-view,
+body.dark-mode .rt-scroll-wrap,
+body.dark-mode .rt-sheet {
+    --rt-card-bg: #1c2637;
+    --rt-card-border: #2c3a52;
+    --rt-line: #27334a;
+    --rt-text: #e8edf5;
+    --rt-text-2: #9fadc2;
+    --rt-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .6);
+    --rt-th-bg: #0f1725;
+    --rt-td-bg: #182233;
+}
+
+body.dark-mode .rt-badge--approved { color: #4ade80; }
+body.dark-mode .rt-badge--rejected { color: #f87171; }
+body.dark-mode .rt-badge--pending { color: #fbbf24; }
+body.dark-mode .rt-badge--sent { color: #38bdf8; }
+body.dark-mode .rt-badge--read { color: #a78bfa; }
+body.dark-mode .rt-badge--answered { color: #2dd4bf; }
+body.dark-mode .rt-badge--leave { color: #fb923c; }
+body.dark-mode .rt-badge--overtime { color: #2dd4bf; }
+body.dark-mode .rt-badge--neutral,
+body.dark-mode .rt-badge--cancelled,
+body.dark-mode .rt-badge--holiday { color: #cbd5e1; }
+
+body.dark-mode .rt-scroll-wrap.has-overflow:not(.at-end)::after {
+    background: linear-gradient(to right, var(--rt-td-bg, #182233), transparent);
+}
+
+/* =============================================================================
+   ۱۰) صفحهٔ ورود — تکمیل جزئیات باقی‌مانده
+   ========================================================================== */
+body.dark-mode .tooltip {
+    background: rgba(232, 237, 245, 0.92);
+    color: #0f1725;
+}
+
+/* دکمهٔ تم صفحهٔ ورود: ماه در حالت روشن، خورشید در حالت تاریک */
+.theme-toggle .theme-toggle-sun { display: none; }
+body.dark-mode .theme-toggle .theme-toggle-moon { display: none; }
+body.dark-mode .theme-toggle .theme-toggle-sun { display: inline; }
+
+body.dark-mode .waves .wave path {
+    opacity: 0.75;
+}
+
+/* =============================================================================
+   ۱۱) پیام‌ها و وضعیت‌ها
+   ========================================================================== */
+body.dark-mode .success-message {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: rgba(74, 222, 128, .35);
+    box-shadow: var(--dk-shadow);
+}
+body.dark-mode .success-message::after { background: rgba(74, 222, 128, .18); }
+
+body.dark-mode .empty-row,
+body.dark-mode .no-ticket-message {
+    color: var(--dk-text-2);
+}
+
+/* =============================================================================
+   ۱۲) تکمیل پوشش — سطوح جامانده از صفحات (بدون هیچ تغییری در حالت روشن)
+   ========================================================================== */
+
+/* متغیرهای بازطراحی v2 پنل کاربری که برای تم تیره بازنویسی نشده بودند؛
+   چیپ‌های رنگی آیکون‌ها (stat/leave/notif) و سایهٔ کارت‌ها */
+body.dark-mode {
+    --shadow-card: var(--dk-shadow-sm);
+    --tint-blue-bg: rgba(56, 189, 248, 0.16);
+    --tint-blue-ink: #7dd3fc;
+    --tint-purple-bg: rgba(167, 139, 250, 0.16);
+    --tint-purple-ink: #c4b5fd;
+    --tint-orange-bg: rgba(251, 146, 60, 0.16);
+    --tint-orange-ink: #fdba74;
+    --tint-green-bg: rgba(74, 222, 128, 0.14);
+    --tint-green-ink: #86efac;
+}
+
+/* --- پنل کاربری: لوگو، تقویم، پاپ‌آپ ساعت‌زن و جداکننده‌ها --- */
+body.dark-mode .logo-top {
+    background-color: var(--dk-surface);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .calendar-grid {
+    background-color: var(--dk-surface-2);
+}
+
+body.dark-mode .day:hover {
+    background-color: var(--dk-surface-3);
+}
+
+body.dark-mode .decrease:hover,
+body.dark-mode .increase:hover {
+    background-color: var(--dk-surface-3);
+}
+
+body.dark-mode .popupHozoor-content {
+    background-color: var(--dk-surface);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow);
+}
+
+body.dark-mode .popupHozoor-content h2 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .line-separator {
+    border-top-color: var(--dk-line);
+}
+
+body.dark-mode .onvaneticket,
+body.dark-mode .tatikhticket {
+    border-bottom-color: var(--dk-line);
+}
+
+/* هاور دکمه‌های آیکونی جدول‌ها در هر دو پنل (در روشن #f1f1f1 بود) */
+body.dark-mode .edit-btn:hover,
+body.dark-mode .trash-btn:hover,
+body.dark-mode .view-btn:hover,
+body.dark-mode .check-btn:hover,
+body.dark-mode .trash-icon:hover {
+    background-color: var(--dk-surface-3);
+}
+
+/* پس‌زمینهٔ روشن تراشهٔ آیکون‌های ساید‌بار (فقط پنل کاربری؛ ساید‌بار ادمین
+   در حالت روشن تراشه ندارد و در تیره هم نباید اضافه شود) */
+body.dark-mode .sidebar-right .icon-container img,
+body.dark-mode .sidebar-right .icon-container svg,
+body.dark-mode .icon-container-leftSidebar img,
+body.dark-mode .icon-container-leftSidebar svg {
+    background-color: var(--dk-surface-2);
+}
+
+/* دکمهٔ حذف پروفایل: قرمز تیره روی سطح روشن، در تیره باید روشن‌تر شود */
+body.dark-mode .profile-delete-btn {
+    background: rgba(248, 113, 113, 0.16);
+    color: var(--dk-danger);
+}
+
+/* هاور ردیف‌های جدول وضعیت تیکت‌ها */
+body.dark-mode #ticket-status-table tbody tr:hover,
+body.dark-mode #ticket-status-table-popup tbody tr:hover {
+    background-color: var(--dk-surface-3);
+}
+
+/* گزینه‌های رنگی تغییر وضعیت تیکت: خود تراشه روشن است، متن تیره می‌ماند
+   تا در هر دو تم خوانا باشد؛ هاورها که پس‌زمینهٔ تیره دارند متن سفید می‌گیرند */
+body.dark-mode .goz1,
+body.dark-mode .goz2,
+body.dark-mode .goz3 {
+    color: #14233d;
+}
+
+body.dark-mode .dropdown .goz1:hover,
+body.dark-mode .dropdown .goz2:hover,
+body.dark-mode .dropdown .goz3:hover {
+    color: #fff;
+}
+
+/* --- پنل مدیریت: قرص وضعیت، دکمه‌های خنثی و باکس‌های نتیجه --- */
+/* قرص پایهٔ وضعیت؛ واریانت‌های رنگی (approved/rejected/... و وضعیت تیکت) مستثنا شده‌اند */
+body.dark-mode .status-navbar:not(.approved):not(.rejected):not(.pending):not(.cancelled):not(.status-sent):not(.status-following):not(.status-read):not(.status-answered) {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+/* هاور گزینه‌های داخل dropdown وضعیت، بدون پوشاندن گزینه‌های رنگی */
+body.dark-mode .status-option:not(.pending):not(.approved):not(.rejected):not(.cancelled):hover {
+    background-color: var(--dk-surface-3);
+}
+
+/* نشان «خوانده شده» در تیره به جای خاکستری روشن، رنگ slate می‌گیرد */
+body.dark-mode .status-read {
+    background-color: #64748b;
+    color: #fff;
+}
+
+/* باکس‌های کوچک نتیجهٔ حضور — replaced by .attendance-stat dark styles above */
+
+/* دکمه‌های خنثی (در روشن خاکستری با متن مشکی بودند) */
+body.dark-mode .confirm-changes-btn {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+body.dark-mode .confirm-changes-btn:hover {
+    background-color: #2f405c;
+}
+
+body.dark-mode .confirm-changes-btn:active {
+    background-color: #243349;
+}
+
+body.dark-mode #cancelShiftEditBtn {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text);
+}
+
+body.dark-mode #cancelShiftEditBtn:hover {
+    background-color: #2f405c;
+}
+
+/* سرستون‌های بنفش کم‌رنگ جدول‌های پنل کاربری با همان رنگ سرستون گزارش‌ها
+   هماهنگ می‌شوند (متن سفید از قبل با !important در شیت صفحه تضمین شده) */
+body.dark-mode #OverTimeTable thead,
+body.dark-mode #leaveTable thead tr,
+body.dark-mode #ticket-status-table thead tr,
+body.dark-mode #ticket-status-table-popup thead tr,
+body.dark-mode .passsaatiReport-table thead tr,
+body.dark-mode #HozoorTableReport thead {
+    background-color: #4c5bd4;
+}
+
+/* --- صفحات گزارش --- */
+/* باکس‌های امضا در برخی بریک‌پوینت‌ها پس‌زمینهٔ سفید می‌گیرند */
+body.dark-mode .signature-box,
+body.dark-mode .signature-box-hamkar {
+    background-color: var(--dk-surface);
+}
+
+/* --- دسترس‌پذیری و جزئیات سراسری --- */
+body.dark-mode ::-webkit-scrollbar-track {
+    background: var(--dk-bg-2);
+}
+
+/* نمای بودن فوکوس کیبوردی در تم تیره */
+body.dark-mode button:focus-visible,
+body.dark-mode a:focus-visible,
+body.dark-mode [role="button"]:focus-visible,
+body.dark-mode [tabindex]:focus-visible,
+body.dark-mode .theme-toggle-floating:focus-visible {
+    outline: 2px solid var(--dk-accent);
+    outline-offset: 2px;
+}
+
+/* =============================================================================
+   ۱۲-ب) ثبت ورود / خروج از صفحهٔ کاربران (Check-In / Check-Out)
+   ========================================================================== */
+
+body.dark-mode .attendance-status[data-state="not_checked_in"] {
+    background-color: rgba(248, 113, 113, 0.16);
+    color: var(--dk-danger);
+}
+
+body.dark-mode .attendance-status[data-state="checked_in"] {
+    background-color: rgba(34, 197, 94, 0.16);
+    color: var(--dk-accent-2);
+}
+
+body.dark-mode .attendance-status[data-state="checked_out"],
+body.dark-mode .attendance-status[data-state="loading"] {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .attendance-action-btn--checkin {
+    background-color: rgba(34, 197, 94, 0.18);
+    color: var(--dk-accent-2);
+}
+body.dark-mode .attendance-action-btn--checkin:hover:not(:disabled) {
+    background-color: rgba(34, 197, 94, 0.28);
+}
+
+body.dark-mode .attendance-action-btn--checkout,
+body.dark-mode .checkout-confirm-submit,
+body.dark-mode .manual-checkout-btn {
+    background-color: rgba(251, 191, 36, 0.18);
+    color: var(--dk-warn);
+}
+body.dark-mode .attendance-action-btn--checkout:hover:not(:disabled),
+body.dark-mode .checkout-confirm-submit:hover,
+body.dark-mode .manual-checkout-btn:hover:not(:disabled) {
+    background-color: rgba(251, 191, 36, 0.28);
+}
+
+body.dark-mode .attendance-action-btn--done {
+    background-color: var(--dk-surface-3);
+    color: var(--dk-text-3);
+}
+
+body.dark-mode .checkout-confirm-row {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .checkout-confirm-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .checkout-confirm-value {
+    color: var(--dk-text);
+}
+
+/* =============================================================================
+   ۱۳) چاپ: همیشه روشن
+   ========================================================================== */
+@media print {
+    html.dark-mode,
+    body.dark-mode,
+    body.dark-mode * {
+        background-image: none !important;
+        color: #000 !important;
+    }
+
+    body.dark-mode,
+    body.dark-mode .report-container,
+    body.dark-mode .report-box,
+    body.dark-mode .management-box,
+    body.dark-mode table,
+    body.dark-mode table tbody tr,
+    body.dark-mode table tbody td {
+        background-color: #fff !important;
+        border-color: #ddd !important;
+    }
+
+    body.dark-mode .report-container > img,
+    body.dark-mode .background-image {
+        filter: none !important;
+        opacity: 1 !important;
+    }
+
+    body.dark-mode table thead tr,
+    body.dark-mode table thead tr th {
+        color: #fff !important;
+    }
+
+    body.dark-mode .individual-report-table thead tr {
+        background-color: #555 !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Notification system
+   -------------------------------------------------------------------------- */
+body.dark-mode .notification-admin,
+body.dark-mode .notification-center-panel { background-color: var(--dk-bg-2) !important; }
+body.dark-mode .notification-stats article,
+body.dark-mode .notification-toolbar,
+body.dark-mode .notification-center-toolbar,
+body.dark-mode .notification-table-wrap,
+body.dark-mode .notification-dialog-card,
+body.dark-mode .notification-dropdown,
+body.dark-mode .notification-center-head,
+body.dark-mode .notification-user-item,
+body.dark-mode .notification-detail article {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .notification-admin-table th,
+body.dark-mode .notification-view-all,
+body.dark-mode .notification-filter-tabs,
+body.dark-mode .notification-detail dl,
+body.dark-mode .notification-dialog-card header button,
+body.dark-mode .notification-center-head > button,
+body.dark-mode .notification-detail-close {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+}
+body.dark-mode .notification-admin-table td,
+body.dark-mode .notification-admin-table th,
+body.dark-mode .notification-dialog-card > header,
+body.dark-mode .notification-center-head,
+body.dark-mode .notification-dropdown > header,
+body.dark-mode .notification-view-all { border-color: var(--dk-border); color: var(--dk-text); }
+body.dark-mode .notification-page-head h1,
+body.dark-mode .notification-center-head h2,
+body.dark-mode .notification-stats strong,
+body.dark-mode .notification-title-cell strong,
+body.dark-mode .notification-user-heading,
+body.dark-mode .notification-dialog-card h2,
+body.dark-mode .notification-form-grid label,
+body.dark-mode .notification-detail h2 { color: var(--dk-text); }
+body.dark-mode .notification-page-head p,
+body.dark-mode .notification-center-head p,
+body.dark-mode .notification-stats span,
+body.dark-mode .notification-title-cell span,
+body.dark-mode .notification-user-content p,
+body.dark-mode .notification-user-content time,
+body.dark-mode .notification-detail-message { color: var(--dk-text-2); }
+body.dark-mode .notification-user-item.is-unread { background: linear-gradient(90deg, var(--dk-surface), var(--dk-surface-2)); }
+body.dark-mode .notification-action-btn,
+body.dark-mode .notification-pagination button,
+body.dark-mode .notification-secondary-btn { background: var(--dk-surface-2); color: var(--dk-text); border-color: var(--dk-border); }
+body.dark-mode .notification-filter-tabs button.active { background: var(--dk-surface-3); color: var(--dk-text); }
+body.dark-mode .notification-badge--critical,
+body.dark-mode .notification-badge--warning { background: rgba(248,113,113,.14); color: #fca5a5; }
+body.dark-mode .notification-badge--published,
+body.dark-mode .notification-badge--success { background: rgba(34,197,94,.14); color: #86efac; }
+body.dark-mode .notification-badge--scheduled,
+body.dark-mode .notification-badge--information,
+body.dark-mode .notification-unread-label { background: rgba(56,189,248,.14); color: #7dd3fc; }
+
+body.dark-mode .notification-toast {
+    background: var(--dk-surface);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow);
+}
+body.dark-mode .notification-toast__message { color: var(--dk-text); }
+body.dark-mode .notification-toast__close { color: var(--dk-text-2); }
+body.dark-mode .notification-toast--success { --notification-tint: rgba(34, 197, 94, .16); }
+body.dark-mode .notification-toast--warning { --notification-tint: rgba(234, 179, 8, .16); }
+body.dark-mode .notification-toast--error { --notification-tint: rgba(248, 113, 113, .16); }
+
+/* ثبت تیکت (پنل مدیریت) — حالت تاریک */
+body.dark-mode .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap {
+    background-color: #182233 !important;
+    border-color: #2c3a52;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, .5);
+}
+body.dark-mode .morakhaci-sabt .modal-content-sabtTicket.sabt-ticket-dialog {
+    background: #182233 !important;
+    background-color: #182233 !important;
+    border-color: rgba(56, 182, 255, .22);
+    box-shadow: none;
+}
+body.dark-mode .morakhaci-sabt .sabt-ticket-head {
+    background: #182233;
+    border-bottom-color: #2c3a52;
+}
+body.dark-mode .morakhaci-sabt .sabt-ticket-head h2 { color: #e8edf5; }
+body.dark-mode .morakhaci-sabt .sabt-ticket-head p { color: #9fadc2; }
+body.dark-mode .sabt-ticket-close {
+    background: rgba(255, 255, 255, .08);
+    color: #e8edf5;
+}
+body.dark-mode .sabt-ticket-close:hover { background: rgba(255, 255, 255, .14); }
+body.dark-mode .sabt-ticket-grid label { color: #9fadc2; }
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid input,
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid select,
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid textarea {
+    background: #1e2a3d !important;
+    color: #e8edf5;
+    border: 1.5px solid #60758e !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .22);
+}
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid input:focus,
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid select:focus,
+body.dark-mode .morakhaci-sabt .sabt-ticket-grid textarea:focus {
+    background: #24324a !important;
+    border-color: #62c9f2 !important;
+    box-shadow: 0 0 0 3px rgba(98, 201, 242, .2), inset 0 1px 2px rgba(0, 0, 0, .22);
+}
+body.dark-mode .sabt-ticket-grid small { color: #6f7f96; }
+body.dark-mode .morakhaci-sabt .sabt-ticket-attach input[type="file"] {
+    background: #1e2a3d !important;
+    color: #e8edf5;
+    border: 1.5px dashed #6b849c !important;
+}
+body.dark-mode .morakhaci-sabt .sabt-ticket-attach input[type="file"]:focus {
+    border-style: solid !important;
+    border-color: #62c9f2 !important;
+}
+body.dark-mode .sabt-ticket-actions { border-top-color: #2c3a52; }
+body.dark-mode .morakhaci-sabt .sabt-ticket-actions button.btn-confirm {
+    background: #079b80 !important;
+    background-image: linear-gradient(135deg, #079b80 0%, #087fc0 100%) !important;
+    border-color: #36c7ae !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+body.dark-mode .morakhaci-sabt .sabt-ticket-actions button.btn-confirm:hover {
+    background: #068d76 !important;
+    background-image: linear-gradient(135deg, #068d76 0%, #0674af 100%) !important;
+}
+body.dark-mode .sabt-ticket-actions .btn-cancel {
+    background: #1e2a3d;
+    color: #e8edf5;
+    border-color: #2c3a52;
+}
+body.dark-mode .sabt-ticket-actions .btn-cancel:hover { background: #24324a; }
+
+body.dark-mode .employment-status-label {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .employment-status-label[data-status="official"] {
+    border-color: rgba(52, 211, 153, .38);
+    background: rgba(16, 185, 129, .14);
+    color: #6ee7b7;
+}
+
+body.dark-mode .employment-status-label[data-status="unofficial"] {
+    border-color: rgba(56, 189, 248, .38);
+    background: rgba(14, 165, 233, .14);
+    color: #7dd3fc;
+}
+
+/* =====================================================================
+   Attendance workspace — final dark-theme layer
+   ===================================================================== */
+body.dark-mode #natigehHozoor.attendance-panel,
+body.dark-mode #sabtdst.attendance-panel {
+    background: linear-gradient(145deg, var(--dk-surface) 0%, var(--dk-surface-2) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .attendance-panel__head {
+    background: linear-gradient(135deg, rgba(56, 189, 248, .1), rgba(20, 184, 166, .06));
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .attendance-panel__title,
+body.dark-mode .attendance-form__label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .attendance-panel__subtitle,
+body.dark-mode .attendance-stat__label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #natigehHozoor .attendance-stat {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode #natigehHozoor .attendance-stat__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst .attendance-form__select,
+body.dark-mode #sabtdst .attendance-form__input {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst .attendance-form__select:focus,
+body.dark-mode #sabtdst .attendance-form__input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, .18);
+}
+
+body.dark-mode #sabtdst .time-picker,
+body.dark-mode #sabtdst #calendar-box {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+    box-shadow: var(--dk-shadow);
+}
+
+body.dark-mode #sabtdst #calendar-header select {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode #sabtdst #calendar-days > div,
+body.dark-mode #sabtdst #calendar-dates button {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode #sabtdst #calendar-dates button:hover,
+body.dark-mode #sabtdst .time-btn:hover {
+    background: var(--dk-surface-3);
+}
+
+body.dark-mode #sabtdst .time-section span {
+    color: var(--dk-text);
+}
+
+/* ─── جزئیات اعلان ادمین — حالت تاریک ─── */
+body.dark-mode .admin-detail-title { color: var(--dk-text); }
+body.dark-mode .admin-detail-message {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .admin-detail-meta {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .admin-detail-meta dt { color: var(--dk-text-2); }
+body.dark-mode .admin-detail-meta dd { color: var(--dk-text); }
+body.dark-mode .admin-detail-read-badge {
+    background: rgba(56, 189, 248, .14);
+    color: #7dd3fc;
+}
+body.dark-mode .admin-detail-read-badge.is-read {
+    background: rgba(34, 197, 94, .14);
+    color: #86efac;
+}
+body.dark-mode .admin-detail-actions .notification-secondary-btn {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .notification-danger-btn {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+body.dark-mode .notification-admin-table tbody tr[data-id]:hover {
+    background: rgba(56, 189, 248, .08);
+    box-shadow: inset 0 0 0 2px rgba(56, 189, 248, .15);
+}
+
+/* ── CAPTCHA (login page) ───────────────────────────────── */
+body.dark-mode .captcha-img {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+body.dark-mode .captcha-refresh {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+body.dark-mode .captcha-refresh:hover {
+    border-color: var(--dk-accent);
+    color: var(--dk-accent);
+    background: rgba(56, 189, 248, .08);
+}
+body.dark-mode .captcha-input {
+    background: var(--dk-surface-2);
+    color: var(--dk-text);
+    border-color: var(--dk-border);
+}
+body.dark-mode .captcha-input::placeholder {
+    color: var(--dk-muted);
+}
+
+/* ==========================================================================
+   Sidebar Premium 2026 — حالت تیره
+   تایل‌های گرادیانی روی سطح تیره حفظ می‌شوند؛ فقط ردیف‌ها و لیبل‌ها تیره می‌شوند.
+   ========================================================================== */
+body.dark-mode .rightSidebar {
+    background: linear-gradient(180deg, rgba(30,41,59,.96) 0%, rgba(15,23,42,.94) 100%);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+body.dark-mode .rightSidebar .icon-container {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .rightSidebar .icon-container:hover {
+    background: var(--tint);
+    background-color: var(--tint);
+}
+
+body.dark-mode .rightSidebar .icon-container:hover .icon-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .rightSidebar .icon-container.active {
+    background: var(--tint);
+    background-color: var(--tint);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 18px -12px var(--glow);
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .icon-container.active .icon-label {
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .icon-label {
+    color: var(--dk-text-2);
+}
+
+body.dark-mode .rightSidebar .sidebar-icon-tile svg {
+    background: transparent !important;
+    background-color: transparent !important;
+    filter: none !important;
+    color: #fff;
+}
+
+body.dark-mode .rightSidebar .sidebar-divider span {
+    background: linear-gradient(90deg, transparent, rgba(148,163,184,.28), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ثبت‌نام کاربران جدید — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .reg-stat-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .reg-stat-card__body strong {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-stat-card--total .reg-stat-card__icon { background: rgba(99,102,241,0.15); }
+body.dark-mode .reg-stat-card--pending .reg-stat-card__icon { background: rgba(251,191,36,0.15); }
+body.dark-mode .reg-stat-card--approved .reg-stat-card__icon { background: rgba(16,185,129,0.15); }
+body.dark-mode .reg-stat-card--rejected .reg-stat-card__icon { background: rgba(239,68,68,0.15); }
+
+body.dark-mode .reg-search input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-select {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-table-wrap {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .reg-table thead {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-table th {
+    color: var(--dk-muted);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .reg-table td {
+    border-bottom-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-row:hover {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-row__username {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-row__date {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-modal__card {
+    background: var(--dk-surface);
+}
+
+body.dark-mode .reg-detail-modal__head {
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .reg-detail-modal__head h3 {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-detail-modal__close {
+    background: var(--dk-surface-2);
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-modal__foot {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .reg-detail-field {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode .reg-detail-field:hover {
+    background: var(--dk-surface-3, #334155);
+}
+
+body.dark-mode .reg-detail-field--danger {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.2);
+}
+
+body.dark-mode .reg-detail-field__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .reg-detail-field__value {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-reject-label {
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-reject-textarea {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-page-btn {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .reg-empty-state {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .new-user-form .form-row-krbrjadid.schedule-row {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .new-user-footer {
+    background: transparent;
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .apply-all-group .apply-all-input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   گزارش ورود و خروج — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .hozoor-report-card {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .hozoor-config-title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-config-item span {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .hozoor-config-item input,
+body.dark-mode .hozoor-config-item select {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .hozoor-table-wrap {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable thead {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode #hozoorUsersReportTable th {
+    color: var(--dk-muted);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable td {
+    color: var(--dk-text);
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode #hozoorUsersReportTable tbody tr:hover td {
+    background: var(--dk-surface-2);
+}
+
+body.dark-mode #hozoorUsersReportTable tbody tr.holiday-row td {
+    background: rgba(239,68,68,0.08);
+}
+
+body.dark-mode .hozoor-table-empty__state {
+    color: var(--dk-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   فرم تعریف کاربر جدید — حالت تاریک
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode .nu-section {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: var(--dk-shadow-sm);
+}
+
+body.dark-mode .nu-section__head {
+    border-bottom-color: var(--dk-border);
+}
+
+body.dark-mode .nu-section__title {
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-section__sub {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-field__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-field__input,
+body.dark-mode .nu-field__select {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-field__input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-apply-all__label {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-apply-all__input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-apply-all__input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-col {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .nu-schedule-col:hover {
+    border-color: var(--dk-border);
+}
+
+body.dark-mode .nu-schedule-day {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-input {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text);
+}
+
+body.dark-mode .nu-schedule-input::placeholder {
+    color: var(--dk-muted);
+}
+
+body.dark-mode .nu-schedule-col--friday {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.2);
+}
+
+body.dark-mode .nu-schedule-col--friday .nu-schedule-day {
+    color: #f87171;
+}
+
+body.dark-mode .nu-schedule-col--friday .nu-schedule-input {
+    background: rgba(239,68,68,0.06);
+    color: #f87171;
+}
+
+body.dark-mode .nu-footer {
+    border-top-color: var(--dk-border);
+}
+
+body.dark-mode .nu-footer__hint {
+    color: var(--dk-muted);
+}

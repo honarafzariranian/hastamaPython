@@ -31,8 +31,8 @@ final class PasswordHashBinding
 {
     /**
      * @return array{0: string, 1: mixed} `[expression, parameter]`, ready to be
-     *                                     spliced into an `INSERT` and passed to
-     *                                     `DB::insert`.
+     *                                    spliced into an `INSERT` and passed to
+     *                                    `DB::insert`.
      */
     public static function for(string $passwordHash): array
     {

@@ -1,0 +1,795 @@
+/* ==========================================================================
+   responsive-tables.css — استایل لایهٔ ارائهٔ ریسپانسیو جداول سامانهٔ هستما
+   --------------------------------------------------------------------------
+   این فایل «فقط» اجزای لایهٔ موبایل را استایل می‌دهد:
+     • .rt-view        → نمای کارت/فهرست (جایگزین جدول در موبایل)
+     • .rt-badge       → نشان وضعیت (متن + آیکون + رنگ)
+     • .rt-card        → کارت رکورد مستقل (Pattern A)
+     • .rt-list        → فهرست فشرده + جزئیات (Pattern C)
+     • .rt-scroll-wrap → جدول با اسکرول افقی کنترل‌شده (Pattern B)
+     • .rt-sheet       → Bottom Sheet مشترک (جزئیات / منوی اقدامات)
+     • .rt-skeleton / .rt-empty / .rt-more
+
+   قواعد کلیدی:
+     ۱) دسکتاپ (>860px) هیچ تغییری نمی‌بیند؛ کلاس‌های فشرده‌سازی فقط داخل
+        Media Query اعمال می‌شوند.
+     ۲) کل صفحه هرگز اسکرول افقی نمی‌گیرد؛ اسکرول فقط داخل .rt-scroll است.
+     ۳) همهٔ اهداف لمسی دست‌کم ۴۴px ارتفاع دارند.
+     ۴) چیدمان راست‌به‌چپ (RTL) به‌صورت پیش‌فرض برای اجزای جدید در نظر گرفته
+        شده است؛ جهت فیزیکی ستون‌های چسبان با data-dir کنترل می‌شود.
+   ==========================================================================*/
+
+/* --------------------------------------------------------------------------
+   ۱) توکن‌ها (با پشتیبانی از تم تیرهٔ موجود در admin.css)
+   -------------------------------------------------------------------------- */
+.rt-view,
+.rt-scroll-wrap,
+.rt-sheet {
+  --rt-radius: 14px;
+  --rt-radius-sm: 10px;
+  --rt-font: 'Vazir', 'Vazirmatn', Tahoma, sans-serif;
+  --rt-card-bg: #ffffff;
+  --rt-card-border: #e2e8f0;
+  --rt-line: #eef2f7;
+  --rt-text: #1e293b;
+  --rt-text-2: #64748b;
+  --rt-primary: #0ea5e9;
+  --rt-primary-2: #14b8a6;
+  --rt-primary-ink: #ffffff;
+  --rt-danger: #dc2626;
+  --rt-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 24px -12px rgba(15, 23, 42, .18);
+  --rt-th-bg: #f8fafc;
+  --rt-td-bg: #ffffff;
+}
+
+.dark-theme .rt-view,
+.dark-theme .rt-scroll-wrap,
+.dark-theme .rt-sheet {
+  --rt-card-bg: #1e293b;
+  --rt-card-border: #334155;
+  --rt-line: #273449;
+  --rt-text: #e2e8f0;
+  --rt-text-2: #94a3b8;
+  --rt-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .6);
+  --rt-th-bg: #0f172a;
+  --rt-td-bg: #16213a;
+}
+
+/* --------------------------------------------------------------------------
+   ۲) پایه: نمای مشتق‌شده از جدول (فقط با JS ساخته می‌شود؛ بدون JS = جدول)
+   -------------------------------------------------------------------------- */
+.rt-view[hidden] { display: none; }
+
+.rt-view {
+  direction: rtl;
+  font-family: var(--rt-font);
+  color: var(--rt-text);
+  width: 100%;
+  max-width: 100%;
+  margin: 12px 0;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* جدول منبع فقط در حالت موبایل پنهان می‌شود (ساختار معنایی حفظ می‌شود) */
+table.rt-source-hidden { display: none !important; }
+
+/* --------------------------------------------------------------------------
+   ۳) نشان وضعیت (StatusBadge) — هرگز فقط رنگ نیست: متن + آیکون
+   -------------------------------------------------------------------------- */
+.rt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.rt-badge__icon { width: 14px; height: 14px; flex: 0 0 auto; }
+.rt-badge__text { overflow: hidden; text-overflow: ellipsis; }
+
+.rt-badge--approved { color: #15803d; background: rgba(34, 197, 94, .14); border-color: rgba(34, 197, 94, .35); }
+.rt-badge--rejected { color: #b91c1c; background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .35); }
+.rt-badge--pending  { color: #b45309; background: rgba(245, 158, 11, .16); border-color: rgba(245, 158, 11, .4); }
+.rt-badge--cancelled,
+.rt-badge--holiday  { color: #475569; background: rgba(100, 116, 139, .14); border-color: rgba(100, 116, 139, .32); }
+.rt-badge--sent     { color: #0369a1; background: rgba(14, 165, 233, .13); border-color: rgba(14, 165, 233, .35); }
+.rt-badge--read     { color: #6d28d9; background: rgba(139, 92, 246, .13); border-color: rgba(139, 92, 246, .35); }
+.rt-badge--answered { color: #0f766e; background: rgba(20, 184, 166, .14); border-color: rgba(20, 184, 166, .38); }
+.rt-badge--leave    { color: #7c2d12; background: rgba(249, 115, 22, .13); border-color: rgba(249, 115, 22, .35); }
+.rt-badge--overtime { color: #0f766e; background: rgba(20, 184, 166, .14); border-color: rgba(20, 184, 166, .38); }
+.rt-badge--neutral  { color: #475569; background: rgba(148, 163, 184, .16); border-color: rgba(148, 163, 184, .35); }
+
+.dark-theme .rt-badge--approved { color: #4ade80; }
+.dark-theme .rt-badge--rejected { color: #f87171; }
+.dark-theme .rt-badge--pending { color: #fbbf24; }
+.dark-theme .rt-badge--sent { color: #38bdf8; }
+.dark-theme .rt-badge--read { color: #a78bfa; }
+
+/* --------------------------------------------------------------------------
+   ۴) کارت رکورد (Pattern A)
+   -------------------------------------------------------------------------- */
+.rt-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rt-card {
+  background: var(--rt-card-bg);
+  border: 1px solid var(--rt-card-border);
+  border-radius: var(--rt-radius);
+  box-shadow: var(--rt-shadow);
+  overflow: hidden;
+}
+
+.rt-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--rt-line);
+}
+
+.rt-card__titlewrap { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+
+.rt-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--rt-text);
+  overflow-wrap: anywhere;
+}
+
+.rt-card__rowno {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--rt-text-2);
+  background: rgba(148, 163, 184, .15);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+/* جایگاه وضعیت در سربرگ (نشان ایستا یا کنترل تعاملی منتقل‌شده) */
+.rt-card__head .rt-badge { flex: 0 0 auto; }
+
+.rt-card__status.rt-adopted { position: relative; min-width: 0; }
+
+.rt-card__body { padding: 10px 14px 6px; }
+
+.rt-card__fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 0;
+}
+
+/* فیلد «برچسب ← مقدار» */
+.rt-field {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+}
+
+.rt-field__label {
+  flex: 0 0 auto;
+  max-width: 46%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rt-text-2);
+  line-height: 1.9;
+}
+
+.rt-field__value {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rt-text);
+  text-align: left;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  unicode-bidi: plaintext;
+}
+
+/* متن بلند: محدود به دو خط + باز کردن با لمس (جزئیات کامل در شیت) */
+.rt-field__value.rt-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.rt-field__value.rt-clamp.is-open {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+/* پابرگ: اقدامات + مشاهده جزئیات */
+.rt-card__foot {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px 12px;
+}
+
+.rt-card__foot:empty { display: none; }
+
+/* --------------------------------------------------------------------------
+   ۵) دکمه‌های لمسی مشترک
+   -------------------------------------------------------------------------- */
+.rt-view .rt-btn,
+.rt-sheet .rt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--rt-radius-sm);
+  font-family: var(--rt-font);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, filter .15s ease, background-color .15s ease;
+}
+
+.rt-btn--primary {
+  color: var(--rt-primary-ink);
+  background-image: linear-gradient(90deg, var(--rt-primary-2), var(--rt-primary));
+  box-shadow: 0 6px 16px -8px rgba(14, 165, 233, .65);
+}
+
+.rt-btn--primary:active { transform: scale(.97); }
+
+/* دکمهٔ اقدام اصلیِ منتقل‌شده از جدول (مثلاً «تایید تغییرات») */
+.rt-view .rt-btn--primary img { width: 18px; height: 18px; }
+
+.rt-btn--ghost {
+  color: var(--rt-primary);
+  background: rgba(14, 165, 233, .09);
+}
+
+.rt-card__details { flex: 1 1 auto; justify-content: space-between; }
+
+.rt-chevron { font-size: 18px; line-height: 1; transform: scaleX(-1); }
+
+/* بزرگ‌سازی دکمه‌های آیکونی موجود داخل کارت (هدف لمسی ≥ ۴۴px) */
+.rt-view .rt-card__foot button,
+.rt-view .rt-list button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* منوی «⋯» اقدامات بیشتر */
+.rt-actions { display: inline-flex; align-items: center; gap: 8px; }
+
+.rt-actions-pool { display: none; }
+
+.rt-actions-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--rt-card-border);
+  border-radius: var(--rt-radius-sm);
+  background: var(--rt-card-bg);
+  color: var(--rt-text-2);
+  cursor: pointer;
+}
+
+.rt-actions-menu-btn svg { width: 20px; height: 20px; }
+
+.rt-actions-menu-btn:active { transform: scale(.95); }
+
+/* آیتم‌های داخل منوی شیت: هر اقدام یک ردیف لمسی بزرگ */
+.rt-menu { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 8px; }
+
+.rt-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--rt-card-border);
+  border-radius: var(--rt-radius-sm);
+  background: var(--rt-card-bg);
+}
+
+.rt-menu__label { flex: 1 1 auto; font-size: 13.5px; font-weight: 700; color: var(--rt-text); }
+
+.rt-menu__control { flex: 0 0 auto; display: flex; align-items: center; }
+
+.rt-menu__control button { min-height: 44px !important; min-width: 44px; }
+
+/* دکمه‌های حذف داخل منو با رنگ هشدار */
+.rt-menu__control .trash-icon,
+.rt-menu__control .trash-btn { border: 1px solid rgba(239, 68, 68, .35); border-radius: 10px; }
+
+/* --------------------------------------------------------------------------
+   ۶) فهرست فشرده (Pattern C) — مثل فهرست کاربران
+   -------------------------------------------------------------------------- */
+.rt-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; }
+
+.rt-list__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--rt-card-bg);
+  border: 1px solid var(--rt-card-border);
+  border-radius: var(--rt-radius);
+  box-shadow: var(--rt-shadow);
+  cursor: pointer;
+}
+
+.rt-list__row:active { background: rgba(14, 165, 233, .06); }
+
+.rt-list__row:focus-visible { outline: 2px solid var(--rt-primary); outline-offset: 2px; }
+
+.rt-list__avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  background-image: linear-gradient(135deg, var(--rt-primary-2), var(--rt-primary));
+}
+
+.rt-list__main { flex: 1 1 auto; min-width: 0; }
+
+.rt-list__title {
+  margin: 0 0 2px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--rt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rt-list__meta {
+  font-size: 12px;
+  color: var(--rt-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rt-list__side { flex: 0 0 auto; display: flex; align-items: center; }
+
+.rt-actions--compact .rt-btn--primary { min-height: 38px; padding: 8px 12px; font-size: 12.5px; }
+
+/* --------------------------------------------------------------------------
+   ۷) Bottom Sheet (جزئیات / منوی اقدامات) — RTL، از پایین صفحه
+   -------------------------------------------------------------------------- */
+.rt-sheet { position: fixed; inset: 0; z-index: 1400; font-family: var(--rt-font); }
+.rt-sheet[hidden] { display: none; }
+
+.rt-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.rt-sheet__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  background: var(--rt-card-bg);
+  color: var(--rt-text);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px -12px rgba(15, 23, 42, .45);
+  transform: translateY(100%);
+  transition: transform .18s ease;
+}
+
+.rt-sheet.is-open .rt-sheet__backdrop { opacity: 1; }
+.rt-sheet.is-open .rt-sheet__panel { transform: translateY(0); }
+
+.rt-sheet__grab {
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .45);
+  margin: 10px auto 4px;
+  flex: 0 0 auto;
+}
+
+.rt-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 16px 10px;
+  border-bottom: 1px solid var(--rt-line);
+  flex: 0 0 auto;
+}
+
+.rt-sheet__title { margin: 0; font-size: 15.5px; font-weight: 800; color: var(--rt-text); }
+
+.rt-sheet__close {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, .15);
+  color: var(--rt-text-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.rt-sheet__body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* هنگام باز بودن شیت، اسکرول پس‌زمینه قفل می‌شود */
+html.rt-sheet-open, html.rt-sheet-open body { overflow: hidden !important; }
+
+/* نمای جزئیات داخل شیت */
+.rt-details__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed var(--rt-card-border);
+}
+
+.rt-details__title { margin: 0; font-size: 15px; font-weight: 800; color: var(--rt-text); overflow-wrap: anywhere; }
+
+.rt-details__fields { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; }
+
+.rt-field--detail {
+  padding: 8px 10px;
+  background: rgba(148, 163, 184, .07);
+  border-radius: var(--rt-radius-sm);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.rt-field--detail .rt-field__label { max-width: none; }
+.rt-field--detail .rt-field__value { text-align: right; font-weight: 700; }
+
+/* --------------------------------------------------------------------------
+   ۸) حالت خالی
+   -------------------------------------------------------------------------- */
+.rt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 36px 16px;
+  border: 1.5px dashed var(--rt-card-border);
+  border-radius: var(--rt-radius);
+  background: rgba(148, 163, 184, .05);
+  text-align: center;
+}
+
+.rt-empty__icon { width: 44px; height: 44px; color: var(--rt-text-2); opacity: .6; }
+
+.rt-empty__title { margin: 0; font-size: 14.5px; font-weight: 800; color: var(--rt-text); }
+
+.rt-empty__text { margin: 0; font-size: 12.5px; color: var(--rt-text-2); line-height: 1.8; }
+
+/* --------------------------------------------------------------------------
+   ۹) Skeleton بارگذاری — جلوگیری از پرش چیدمان
+   -------------------------------------------------------------------------- */
+.rt-skeletons { display: flex; flex-direction: column; gap: 12px; }
+
+.rt-skeleton-card {
+  border: 1px solid var(--rt-card-border);
+  border-radius: var(--rt-radius);
+  padding: 14px;
+  background: var(--rt-card-bg);
+}
+
+.rt-sk {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, .14) 25%, rgba(148, 163, 184, .3) 50%, rgba(148, 163, 184, .14) 75%);
+  background-size: 200% 100%;
+  animation: rt-shimmer 1.3s ease-in-out infinite;
+}
+
+.rt-sk--head { width: 55%; height: 18px; margin-bottom: 12px; }
+.rt-sk--line { width: 92%; margin-bottom: 9px; }
+.rt-sk--short { width: 45%; margin-bottom: 0; }
+
+@keyframes rt-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-sk { animation: none; }
+  .rt-sheet__panel, .rt-sheet__backdrop { transition: none; }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۰) «نمایش موارد بیشتر» (رندر تدریجی فهرست‌های طولانی)
+   -------------------------------------------------------------------------- */
+.rt-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  border: 1.5px dashed rgba(14, 165, 233, .5);
+  border-radius: var(--rt-radius);
+  background: rgba(14, 165, 233, .06);
+  color: var(--rt-primary);
+  font-family: var(--rt-font);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۱) Pattern B — کانتینر اسکرول افقی (فقط خود جدول، نه کل صفحه)
+   -------------------------------------------------------------------------- */
+.rt-scroll-wrap { position: relative; width: 100%; max-width: 100%; }
+
+.rt-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.rt-scroll:focus-visible { outline: 2px solid var(--rt-primary); outline-offset: -2px; }
+
+/* جدول حضور و غیاب گزارش نهایی: نوار اسکرول نمایش داده نمی‌شود
+   (اسکرول با چرخ ماوس/لمس فعال می‌ماند؛ اشاره‌گر «بیشتر» سرریز را اعلام می‌کند) */
+.hozoorBox .rt-scroll {
+  scrollbar-width: none;
+}
+.hozoorBox .rt-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* اشاره‌گر اسکرول: فقط وقتی محتوا سرریز دارد و هنوز به انتها نرسیده‌ایم */
+.rt-scroll-hint {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .72);
+  color: #fff;
+  font-family: var(--rt-font);
+  font-size: 11px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+  z-index: 5;
+}
+
+.rt-scroll-hint svg { width: 16px; height: 16px; animation: rt-nudge 1.2s ease-in-out infinite; }
+
+@keyframes rt-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-scroll-hint svg { animation: none; }
+}
+
+.rt-scroll-wrap.has-overflow.at-start .rt-scroll-hint { display: flex; opacity: 1; }
+.rt-scroll-wrap.at-end .rt-scroll-hint { opacity: 0; }
+
+/* لبهٔ محو برای اعلام ادامهٔ محتوا (سمت چپ = جهت ادامهٔ جدول) */
+.rt-scroll-wrap.has-overflow:not(.at-end)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 26px;
+  background: linear-gradient(to right, var(--rt-td-bg, #fff), transparent);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* --------------------------------------------------------------------------
+   ۱۲) ستون‌های چسبان (فارغ از جهت صفحه؛ data-dir توسط JS تنظیم می‌شود)
+       جدول‌های این پروژه با ترتیب ستون LTR رندر می‌شوند؛ «پایان» = سمت راست
+   -------------------------------------------------------------------------- */
+.rt-scroll .rt-sticky { position: sticky; z-index: 6; background: var(--rt-td-bg); }
+
+.rt-scroll[data-dir='ltr'] .rt-sticky--e1 { right: 0; }
+.rt-scroll[data-dir='ltr'] .rt-sticky--e2 { right: var(--rt-e1w, 52px); }
+.rt-scroll[data-dir='ltr'] .rt-sticky--e3 { right: var(--rt-e2w, 104px); }
+.rt-scroll[data-dir='ltr'] .rt-sticky--s1 { left: 0; }
+.rt-scroll[data-dir='ltr'] .rt-sticky--s2 { left: var(--rt-s2w, 90px); }
+
+.rt-scroll[data-dir='rtl'] .rt-sticky--e1 { left: 0; }
+.rt-scroll[data-dir='rtl'] .rt-sticky--e2 { left: var(--rt-e1w, 52px); }
+.rt-scroll[data-dir='rtl'] .rt-sticky--e3 { left: var(--rt-e2w, 104px); }
+.rt-scroll[data-dir='rtl'] .rt-sticky--s1 { right: 0; }
+.rt-scroll[data-dir='rtl'] .rt-sticky--s2 { right: var(--rt-s2w, 90px); }
+
+/* سایهٔ لبه برای ستون چسبانِ سمت «پایان» (سمت راست در LTR) */
+.rt-scroll-wrap.has-overflow .rt-sticky--e1,
+.rt-scroll-wrap.has-overflow .rt-sticky--e2,
+.rt-scroll-wrap.has-overflow .rt-sticky--e3 {
+  box-shadow: -6px 0 10px -6px rgba(15, 23, 42, .28);
+}
+
+.rt-scroll-wrap.has-overflow .rt-sticky--s1,
+.rt-scroll-wrap.has-overflow .rt-sticky--s2 {
+  box-shadow: 6px 0 10px -6px rgba(15, 23, 42, .28);
+}
+
+/* سرصفحهٔ چسبان (دسکتاپ + موبایل) */
+.rt-scroll-wrap[data-sticky-head] thead th {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background-color: var(--rt-th-bg, #f8fafc);
+  background-image: var(--rt-th-img, none);
+}
+
+/* گوشهٔ تقاطع سرصفحه و ستون چسبان */
+.rt-scroll-wrap[data-sticky-head] thead th.rt-sticky { z-index: 9; }
+
+@media screen and (max-width: 768px) {
+  /* موبایل: اضافه کردن کلاس rt-on برای sticky head */
+  .rt-scroll-wrap.rt-on[data-sticky-head] .rt-scroll {
+    max-height: var(--rt-mh, 62vh);
+    overflow-y: auto;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۳) جداول «keep» و «scroll» در موبایل: تایپوگرافی فشرده + لمسی
+        (فقط ≤768px؛ دسکتاپ دست‌نخورده می‌ماند)
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+  .rt-scroll table {
+    min-width: var(--rt-minw, 100%);
+  }
+
+  .rt-scroll table th,
+  .rt-scroll table td {
+    font-size: 12px !important;
+    line-height: 1.7 !important;
+    padding: 9px 10px !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* سلول‌های عددی/زمانی بهتر است نمی‌شکنند */
+  .rt-scroll table td:not(:has(> *)) { unicode-bidi: plaintext; }
+
+  .rt-scroll table td button,
+  .rt-scroll table td a { min-height: 44px; min-width: 44px; }
+}
+
+/* عرض‌های خیلی کوچک (۳۲۰–۳۶۰px) */
+@media screen and (max-width: 360px) {
+  .rt-card__head { flex-direction: column; align-items: stretch; }
+  .rt-card__head .rt-badge { align-self: flex-start; }
+  .rt-field { flex-direction: column; gap: 0; }
+  .rt-field__label { max-width: 100%; }
+  .rt-field__value { text-align: right; }
+  .rt-card__foot { flex-direction: column; align-items: stretch; }
+  .rt-card__foot .rt-btn { width: 100%; }
+  .rt-actions { width: 100%; justify-content: space-between; }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۳-ب) فرم‌های فیلتر/گزارش موجود در موبایل: فقط بزرگ‌سازی لمسی
+        (بدون تغییر چیدمان دسکتاپ)
+   -------------------------------------------------------------------------- */
+@media screen and (max-width: 768px) {
+  .management-box form input[type='text'],
+  .management-box form input[type='date'],
+  .management-box form select,
+  .entekhab-form input,
+  .entekhab-form select,
+  .formgozareshhozoor input,
+  .formgozareshhozoor select,
+  #individualOvertimeReportForm input,
+  #individualOvertimeReportForm select {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .management-box form button,
+  .entekhab-form button,
+  .formgozareshhozoor button,
+  #individualOvertimeReportForm button {
+    min-height: 48px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۴) تبلت: جدول فشرده ولی معنایی (۷۶۹–۱۰۲۴px)
+   -------------------------------------------------------------------------- */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .rt-scroll table th,
+  .rt-scroll table td {
+    font-size: 12.5px !important;
+    padding: 8px 9px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۵) چاپ: نمای موبایل حذف و جدول اصلی بازیابی می‌شود (JS هم عناصر را
+        برمی‌گرداند) — گزارش‌های چاپی سالم می‌مانند
+   -------------------------------------------------------------------------- */
+@media print {
+  .rt-view,
+  .rt-sheet,
+  .rt-scroll-hint { display: none !important; }
+
+  table.rt-source-hidden { display: table !important; }
+
+  .rt-scroll { overflow: visible !important; }
+
+  .rt-scroll .rt-sticky { position: static !important; box-shadow: none !important; }
+
+  .rt-scroll-wrap::after { display: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   ۱۶) فوکوس قابل مشاهده برای پیمایش با کیبورد
+   -------------------------------------------------------------------------- */
+.rt-view button:focus-visible,
+.rt-view .rt-field__value.rt-clamp:focus-visible,
+.rt-actions-menu-btn:focus-visible,
+.rt-more:focus-visible {
+  outline: 2px solid var(--rt-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}

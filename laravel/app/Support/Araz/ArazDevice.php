@@ -27,8 +27,11 @@ final class ArazDevice
 {
     /** The verbs the protocol defines, as the Python's `Verb` class. */
     public const GET_CURRENT_TIME = 'get_current_time';
+
     public const SET_CURRENT_TIME = 'set_current_time';
+
     public const GET_RECORDS = 'get_records';
+
     public const TEST_CONNECTION = 'test_connection';
 
     /** The Python reads at most this much per response. */

@@ -14,6 +14,4 @@ use RuntimeException;
  * ValueError` block around the six `clean_display_text` calls in
  * `submit_registration`.
  */
-final class DisplayTextError extends RuntimeException
-{
-}
+final class DisplayTextError extends RuntimeException {}

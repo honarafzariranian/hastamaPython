@@ -149,8 +149,8 @@ final class ConversationCreate
      * @param  array<int, array<string, mixed>>  $errors  Appended to, in place, so the
      *                                                    field keeps its position between
      *                                                    `subject` and `body`.
-     * @return array<int, string>  The accepted elements; empty whenever an error was
-     *                             recorded, because the caller throws on any error.
+     * @return array<int, string> The accepted elements; empty whenever an error was
+     *                            recorded, because the caller throws on any error.
      */
     private static function participants(object $decoded, array &$errors): array
     {

@@ -22,16 +22,23 @@ final class ArazProtocol
     public const HEADER_SIZE = 24;
 
     public const FILE_SEPARATOR = 0x1C;
+
     public const GROUP_SEPARATOR = 0x1D;
+
     public const RECORD_SEPARATOR = 0x1E;
+
     public const UNIT_SEPARATOR = 0x1F;
 
     private const REQUEST_HEADER = 'ARAZREQPROTO0002';
+
     private const RESPONSE_HEADER = 'ARAZRESPROTO0002';
 
     private const FS = "\x1C";
+
     private const GS = "\x1D";
+
     private const RS = "\x1E";
+
     private const US = "\x1F";
 
     private int $requestId = 0;
