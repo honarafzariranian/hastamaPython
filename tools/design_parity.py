@@ -78,7 +78,6 @@ PAIRS: dict[str, list[str]] = {
             "SecurityPage.vue",
             "ActionsPage.vue",
             "ErrorsPage.vue",
-            "HealthPage.vue",
             "PasswordResetsPage.vue",
             "SettingsPage.vue",
             "SubscriptionsPage.vue",
@@ -87,7 +86,10 @@ PAIRS: dict[str, list[str]] = {
     "call-management.html": ["pages/call/CallManagementPage.vue"],
     "call-display.html": ["pages/call/CallDisplayPage.vue"],
     "ticket-kiosk.html": ["pages/call/TicketKioskPage.vue"],
-    "label_print_document.html": ["pages/call/TicketPrintPage.vue"],
+    # `label_print_document.html` is a server-generated print response, not a
+    # Vue page. `TicketPrintPage.vue` is a form/editor that calls the missing
+    # Laravel label endpoints, so comparing those class names would imply a
+    # false page mapping; the route is documented separately in the parity audit.
 }
 
 # Cases where the class really is reproduced, and how — each one verified by

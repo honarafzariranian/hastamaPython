@@ -5,11 +5,10 @@
  * Directory (GET /admin/coworkers/users, paginated + searchable), the
  * new-user form (POST /add_user — the port validates FastAPI-style form
  * fields, so the payload is sent as application/x-www-form-urlencoded),
- * the edit popup (POST /update_user) and the two per-row actions
- * (toggle-status / change-role on the master-admin user endpoints).
- *
- * The directory also keeps the legacy attendance actions and delete
- * confirmation, using the admin-scoped Laravel endpoints.
+ * the edit popup (POST /update_user), delete confirmation and manual
+ * attendance actions, using the admin-scoped Laravel endpoints. Activity
+ * status is edited in the source-equivalent edit modal; role changes are not
+ * a per-row action on the Python admin page.
  */
 import { computed, onMounted, reactive, ref } from 'vue';
 import api from '@/services/api';
@@ -189,10 +188,6 @@ async function rejectRegistration() {
     } finally {
         registrationActionId.value = '';
     }
-}
-
-function roleLabel(role) {
-    return role === 'admin' ? 'مدیر' : 'کاربر';
 }
 
 function statusLabel(isActive) {
@@ -383,61 +378,6 @@ async function submitEdit() {
         error.value = failure.apiFailure?.message || failure.message || 'خطا در ثبت اطلاعات.';
     } finally {
         editSaving.value = false;
-    }
-}
-
-async function toggleStatus(user) {
-    busyUsername.value = user.username;
-    error.value = '';
-    notice.value = '';
-
-    try {
-        const response = await api.post(
-            `/master-admin/api/users/${encodeURIComponent(user.username)}/toggle-status`,
-            {},
-            { baseURL: '' },
-        );
-        const newStatus = response.new_status === 'inactive' ? 'inactive' : 'active';
-
-        const row = users.value.find((item) => item.username === user.username);
-        if (row) {
-            row.is_active = newStatus;
-        }
-
-        notice.value = newStatus === 'active' ? 'کاربر فعال شد.' : 'کاربر غیرفعال شد.';
-    } catch (failure) {
-        error.value = failure.apiFailure?.message || failure.message || 'خطا در تغییر وضعیت کاربر.';
-    } finally {
-        busyUsername.value = '';
-    }
-}
-
-async function changeRole(user) {
-    const nextRole = user.role === 'admin' ? 'user' : 'admin';
-
-    busyUsername.value = user.username;
-    error.value = '';
-    notice.value = '';
-
-    try {
-        await api.post(
-            `/master-admin/api/users/${encodeURIComponent(user.username)}/change-role`,
-            {
-                role: nextRole,
-            },
-            { baseURL: '' },
-        );
-
-        const row = users.value.find((item) => item.username === user.username);
-        if (row) {
-            row.role = nextRole;
-        }
-
-        notice.value = nextRole === 'admin' ? 'نقش کاربر به مدیر تغییر کرد.' : 'نقش کاربر به کاربر عادی تغییر کرد.';
-    } catch (failure) {
-        error.value = failure.apiFailure?.message || failure.message || 'خطا در تغییر نقش کاربر.';
-    } finally {
-        busyUsername.value = '';
     }
 }
 
