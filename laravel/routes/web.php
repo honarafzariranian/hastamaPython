@@ -236,6 +236,8 @@ Route::prefix('api')->group(function (): void {
         ->middleware('kiosk.write:calls-test')->name('api.calls.test-display');
     Route::post('/calls/test-voice', [CallController::class, 'testVoice'])
         ->middleware('kiosk.write:calls-test')->name('api.calls.test-voice');
+    Route::post('/calls/audio-activated', [CallController::class, 'audioActivated'])
+        ->middleware('kiosk.write:calls-test')->name('api.calls.audio-activated');
     Route::post('/calls/test-audio', [CallController::class, 'testAudio'])
         ->middleware('kiosk.write:calls-test')->name('api.calls.test-audio');
 

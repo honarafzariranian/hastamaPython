@@ -24,14 +24,15 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 | Two shapes live here, and the difference is the whole point:
 |
 | * **Machine / static endpoints** answer bytes — the favicon, the service
-|   worker, robots.txt, sitemap.xml, the two rendered guide documents and the
-|   two JSON probes.  Their content types, bodies and headers are the
-|   Python's, byte for byte.
-| * **Page routes** are the Vue SPA.  Laravel serves the one mount document
-|   (`resources/views/app.blade.php`) and Vue Router renders the page, exactly
-|   as `routes/web.php` does for `/login`.  No per-route Blade template is
-|   created; the per-route data the Python templates carried is fetched by
-|   the client from the ported API endpoints.
+|   worker, robots.txt, sitemap.xml, the legacy `/static/...` tree, the two
+|   rendered guide documents and the two JSON probes.  Their content types,
+|   bodies and headers are the Python's, byte for byte.
+| * **Page routes** are mostly the Vue SPA.  Laravel serves the one mount
+|   document (`resources/views/app.blade.php`) and Vue Router renders the page,
+|   exactly as `routes/web.php` does for `/login`; the exception is the
+|   call-display/call-management pair, which now stream the original Python
+|   HTML so the browser sees the exact legacy shell while still talking to the
+|   Laravel APIs.
 |
 | **The render-time redirects are the contract.**  The Python checked the
 | session inside the handler and answered 303 before rendering, and a browser
@@ -57,6 +58,10 @@ Route::get('/sw.js', [StaticAssetsController::class, 'serviceWorker'])->name('pu
 Route::get('/robots.txt', [StaticAssetsController::class, 'robotsTxt'])->name('public.robots');
 
 Route::get('/sitemap.xml', [StaticAssetsController::class, 'sitemapXml'])->name('public.sitemap');
+
+Route::get('/static/{path}', [StaticAssetsController::class, 'legacyStatic'])
+    ->where('path', '.*')
+    ->name('public.static');
 
 Route::get('/offline', [OfflineController::class, 'offline'])->name('public.offline');
 

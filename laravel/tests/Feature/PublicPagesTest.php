@@ -161,6 +161,31 @@ final class PublicPagesTest extends TestCase
     }
 
     /**
+     * `/static/...` exposes the original Python asset tree for the call pages,
+     * including their JavaScript, fonts and bundled MP3 audio.
+     */
+    public function test_legacy_static_assets_are_served_from_the_python_tree(): void
+    {
+        $response = $this->get('/static/js/call-system-standalone.js');
+
+        $response->assertStatus(200);
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+        $this->assertSame(
+            realpath(base_path('../app/static/js/call-system-standalone.js')),
+            realpath($response->baseResponse->getFile()->getPathname())
+        );
+    }
+
+    /**
+     * The `/static` bridge is read-only: a traversal outside `app/static`
+     * must not escape to neighbouring files.
+     */
+    public function test_legacy_static_assets_reject_path_traversal(): void
+    {
+        $this->get('/static/../templates/call-management.html')->assertStatus(404);
+    }
+
+    /**
      * The service worker, with the two headers that make it updatable.
      *
      * `Service-Worker-Allowed: /` states the root scope explicitly (a worker
@@ -526,7 +551,7 @@ final class PublicPagesTest extends TestCase
         $response->assertStatus($status);
 
         if ($status === 200) {
-            $this->assertStringContainsString('<div id="app"></div>', (string) $response->getContent());
+            $this->assertStringContainsString('<body class="call-display-page">', (string) $response->getContent());
 
             return;
         }
@@ -553,7 +578,8 @@ final class PublicPagesTest extends TestCase
         $this->asSession(['username' => 'ali', 'is_master_admin' => true])
             ->withHeaders(['Referer' => $this->refererUrl('/master-admin/dashboard')])
             ->get('/call-management')
-            ->assertStatus(200);
+            ->assertStatus(200)
+            ->assertSee('سامانه فراخوان نمونه‌گیری — پنل مدیریت', false);
     }
 
     // ── The training search ──────────────────────────────────────────────────

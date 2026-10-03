@@ -177,6 +177,24 @@ final class CallController extends CallSystemController
         ]);
     }
 
+    /**
+     * `POST /api/calls/audio-activated`
+     *
+     * The legacy raw WebSocket let the TV send one client event back upstream:
+     * `{"type":"audio_activated"}`. Laravel's display transport is Reverb,
+     * so the browser reports the activation through a same-site kiosk write and
+     * the server rebroadcasts the original event object to both channels.
+     */
+    public function audioActivated(Request $request): JsonResponse
+    {
+        CallActor::resolve($request, admin: true, required: false);
+
+        return $this->ok([
+            'message' => 'فعال‌سازی صدا ثبت شد.',
+            'display_count' => $this->display->send(['type' => 'audio_activated', 'data' => []]),
+        ]);
+    }
+
     /** `POST /api/calls/test-audio?number=…` */
     public function testAudio(Request $request): JsonResponse
     {

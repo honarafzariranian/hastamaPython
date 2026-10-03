@@ -63,6 +63,33 @@ final class StaticAssetsController extends Controller
     }
 
     /**
+     * `GET /static/{path}` — the exact legacy asset tree.
+     *
+     * The Python templates for the call pages still reference `/static/...`.
+     * Serving the original files keeps the HTML, CSS, JavaScript, fonts and
+     * bundled audio byte-for-byte aligned without duplicating them into
+     * Laravel's `public/` tree.
+     */
+    public function legacyStatic(string $path): BinaryFileResponse
+    {
+        $base = realpath(base_path('../app/static'));
+
+        abort_if(! is_string($base) || $base === '', 404);
+
+        $candidate = realpath($base . DIRECTORY_SEPARATOR . ltrim($path, '/'));
+
+        abort_if(
+            ! is_string($candidate)
+            || $candidate === ''
+            || is_dir($candidate)
+            || ! str_starts_with($candidate, $base . DIRECTORY_SEPARATOR),
+            404
+        );
+
+        return response()->file($candidate);
+    }
+
+    /**
      * `GET /sitemap.xml` — one URL, the login page, as a single-line document.
      */
     public function sitemapXml(): Response

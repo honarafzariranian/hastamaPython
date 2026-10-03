@@ -48,7 +48,122 @@
     var autoResumedRemote = false;   /* true when page reloaded by a remote refresh command */
 
     var AUDIO_BASE = '/static/audio/sample_call/fa-IR-DilaraNeural/';
+    var realtimeConfig = window.HastamaRealtime || {};
+    var realtimeMode = realtimeConfig.mode || 'legacy';
+    var audioActivationAnnounced = false;
 
+    function isRealtimeReverb() {
+        return realtimeMode === 'reverb' && !!realtimeConfig.appKey;
+    }
+
+    function realtimeWsUrl() {
+        if (!isRealtimeReverb()) {
+            var legacyProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return legacyProto + '//' + location.host + '/api/ws/call-display';
+        }
+
+        var scheme = realtimeConfig.scheme || (location.protocol === 'https:' ? 'https' : 'http');
+        var wsProto = scheme === 'https' ? 'wss:' : 'ws:';
+        var host = realtimeConfig.host || location.hostname || location.host;
+        var port = realtimeConfig.port;
+        var path = realtimeConfig.path || '';
+
+        if (port === null || typeof port === 'undefined' || port === '') {
+            port = location.port || (wsProto === 'wss:' ? 443 : 80);
+        }
+        if (path && path.charAt(0) !== '/') path = '/' + path;
+        path = path.replace(/\/$/, '');
+
+        var authority = host;
+        var hasPort = String(host).indexOf(':') !== -1;
+        var isDefaultPort = (wsProto === 'wss:' && Number(port) === 443) || (wsProto === 'ws:' && Number(port) === 80);
+        if (!hasPort && port && !isDefaultPort) authority += ':' + port;
+
+        return wsProto + '//' + authority + path + '/app/' + encodeURIComponent(realtimeConfig.appKey) + '?protocol=7&client=hastama-legacy&version=1.0&flash=false';
+    }
+
+    function realtimeChannel(isPreview) {
+        return isPreview
+            ? (realtimeConfig.previewChannel || 'call-display.preview')
+            : (realtimeConfig.displayChannel || 'call-display');
+    }
+
+    function realtimeEventName() {
+        return realtimeConfig.eventName || 'display.message';
+    }
+
+    function notifyAudioActivated() {
+        if (audioActivationAnnounced) return true;
+
+        if (isRealtimeReverb() && realtimeConfig.audioActivatedUrl) {
+            audioActivationAnnounced = true;
+            fetch(realtimeConfig.audioActivatedUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            }).catch(function () { audioActivationAnnounced = false; });
+            return true;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+                ws.send(JSON.stringify({ type: 'audio_activated' }));
+                audioActivationAnnounced = true;
+                return true;
+            } catch (e) { /* ignore */ }
+        }
+
+        return false;
+    }
+
+    function handleRealtimePayload(msg) {
+        if (!msg || msg.type === 'pong') return;
+        if (msg.type === 'reception_call' && msg.data) displayCall(msg.data);
+        if (msg.type === 'remove_call' && msg.data) removeCall(msg.data.number);
+        if (msg.type === 'reset_display') resetDisplay();
+        if (msg.type === 'refresh_display') { handleRemoteRefresh(); return; }
+        if (msg.type === 'audio_activated') {
+            if (activateOverlay) activateOverlay.hidden = true;
+            audioReady = true;
+        }
+    }
+
+    function handleRealtimeFrame(rawFrame, isPreview) {
+        try {
+            var msg = JSON.parse(rawFrame);
+
+            if (!isRealtimeReverb()) {
+                handleRealtimePayload(msg);
+                return;
+            }
+
+            if (msg.event === 'pusher:connection_established') {
+                reconnectDelay = 1000;
+                setStatus('connected');
+                try {
+                    ws.send(JSON.stringify({
+                        event: 'pusher:subscribe',
+                        data: { channel: realtimeChannel(isPreview) }
+                    }));
+                } catch (e) { /* ignore */ }
+                if (autoResumedRemote) notifyAudioActivated();
+                return;
+            }
+
+            if (msg.event === 'pusher:ping') {
+                try { ws.send(JSON.stringify({ event: 'pusher:pong', data: {} })); } catch (e) { /* ignore */ }
+                return;
+            }
+
+            if (msg.event !== realtimeEventName()) return;
+
+            var payload = msg.data;
+            if (typeof payload === 'string') {
+                payload = JSON.parse(payload);
+            }
+            handleRealtimePayload(payload);
+        } catch (e) { /* ignore */ }
+    }
 
     /* ── Status ── */
     function setStatus(state) {
@@ -106,9 +221,7 @@
         setAudioStatus('active');
         if (activateOverlay) activateOverlay.hidden = true;
         /* اطلاع‌رسانی فعال‌سازی صدا به سرور (برای پیش‌نمایش) */
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            try { ws.send(JSON.stringify({ type: 'audio_activated' })); } catch (e) { /* ignore */ }
-        }
+        notifyAudioActivated();
     }
 
     /* ── Audio URL ── */
@@ -271,52 +384,41 @@
         }
     }
 
-    /* ── WebSocket ── */
+    /* ── WebSocket / Reverb ── */
     function connect() {
-        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var url = proto + '//' + location.host + '/api/ws/call-display';
+        var url = realtimeWsUrl();
+        var isPreview = (window.location !== window.parent.location);
+
         try { ws = new WebSocket(url); } catch (e) { scheduleReconnect(); return; }
 
         setStatus('connecting');
 
         ws.onopen = function () {
             reconnectDelay = 1000;
-            setStatus('connected');
-            /* Identify as preview (iframe) or real display */
-            var isPreview = (window.location !== window.parent.location);
-            try {
-                ws.send(JSON.stringify({ tag: isPreview ? 'preview' : 'display' }));
-            } catch (e) { /* ignore */ }
-            /* بعد از رفرش از راه دور، فعال بودن صدا رو دوباره اعلام می‌کنیم
-               تا پیش‌نمایش‌ها همگام بمانند */
-            if (autoResumedRemote) {
-                try { ws.send(JSON.stringify({ type: 'audio_activated' })); } catch (e) { /* ignore */ }
+
+            if (!isRealtimeReverb()) {
+                setStatus('connected');
+                try {
+                    ws.send(JSON.stringify({ tag: isPreview ? 'preview' : 'display' }));
+                } catch (e) { /* ignore */ }
+                if (autoResumedRemote) notifyAudioActivated();
+                ws._pingInterval = setInterval(function () {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        try { ws.send('ping'); } catch (e) { /* ignore */ }
+                    }
+                }, 25000);
+                return;
             }
-            ws._pingInterval = setInterval(function () {
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    try { ws.send('ping'); } catch (e) { /* ignore */ }
-                }
-            }, 25000);
+
+            ws._pingInterval = null;
         };
 
         ws.onmessage = function (evt) {
-            try {
-                var msg = JSON.parse(evt.data);
-                if (msg.type === 'pong') return;
-                if (msg.type === 'reception_call' && msg.data) displayCall(msg.data);
-                if (msg.type === 'remove_call' && msg.data) removeCall(msg.data.number);
-                if (msg.type === 'reset_display') resetDisplay();
-                if (msg.type === 'refresh_display') { handleRemoteRefresh(); return; }
-                /* تلویزیون صدا رو فعال کرد → overlay رو در پیش‌نمایش ببند */
-                if (msg.type === 'audio_activated') {
-                    if (activateOverlay) activateOverlay.hidden = true;
-                    audioReady = true;
-                }
-            } catch (e) { /* ignore */ }
+            handleRealtimeFrame(evt.data, isPreview);
         };
 
         ws.onclose = function () {
-            clearInterval(ws._pingInterval);
+            clearInterval(ws && ws._pingInterval);
             setStatus('disconnected');
             scheduleReconnect();
         };
