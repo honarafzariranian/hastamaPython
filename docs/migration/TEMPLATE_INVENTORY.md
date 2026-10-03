@@ -12,7 +12,7 @@ every page carries its own document head, which is why CSS is duplicated per pag
 | `app/templates/master-admin.html` | 686 | Master-admin control-centre shell; every section is built client-side. | Master admin | ControlCentre layout + pages | 0 | 69 | 1 | 0 | 14 |
 | `app/templates/login.html` | 645 | Public login page: credentials + optional CAPTCHA, loader, offline notice. | Public | LoginPage.vue | 4 | 45 | 1 | 0 | 1 |
 | `app/templates/rules.html` | 502 | Laboratory rules content page. | Public | RulesPage.vue | 0 | 14 | 1 | 0 | 1 |
-| `app/templates/call-management.html` | 501 | Reception call management desk. | Public page, guarded APIs | CallManagement.vue | 0 | 57 | 5 | 3 | 0 |
+| `app/templates/call-management.html` | 500 | Reception call-management desk. | Master-admin page guard + guarded APIs | `CallPageController` streams the Python document; Vue route redirects | 0 | 57 | 5 | 3 | 0 |
 | `app/templates/final_report_page.html` | 267 | Final attendance/report page with print support. | Admin | FinalReport.vue | 0 | 22 | 1 | 0 | 0 |
 | `app/templates/offline.html` | 202 | Offline fallback served by `sw.js` when the workstation has no network. | Public | OfflineView.vue | 0 | 6 | 0 | 0 | 0 |
 | `app/templates/training.html` | 195 | Training hub: categories and lessons index. | Public | TrainingHub.vue | 0 | 3 | 1 | 0 | 1 |
@@ -80,7 +80,7 @@ every page carries its own document head, which is why CSS is duplicated per pag
 * **API paths referenced in markup:** `/login`
 * **Jinja expressions:** `url_for`
 
-### `app/templates/call-management.html` (501 lines)
+### `app/templates/call-management.html` (500 lines)
 
 * **Scripts:** `/static/js/call-system-standalone.js`, `/static/js/csrf-bootstrap.js`, `/static/js/hastama-ux.js`, `/static/js/number-format.js`, `/static/js/toast.js`
 * **Stylesheets:** `/static/css/call-system-standalone.css`, `/static/css/hastama-ux.css`, `/static/css/toast.css`

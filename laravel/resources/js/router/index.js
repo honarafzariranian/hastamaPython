@@ -101,9 +101,20 @@ const routes = [
         path: '/call-management',
         name: 'call-management',
         component: () => import('@/pages/call/CallManagementPage.vue'),
-        /* The Python call-management template is a standalone full-screen page. */
-        meta: { title: 'مدیریت فراخوان', role: 'master_admin', ownChrome: true },
+        /*
+         * This is a canonical standalone Python document, not a second Vue
+         * implementation. If an in-app navigation reaches it, the guard below
+         * performs a full request so the browser gets the exact source HTML,
+         * CSS and legacy interaction script from CallPageController.
+         */
+        meta: {
+            title: 'مدیریت فراخوان',
+            role: 'master_admin',
+            ownChrome: true,
+            legacyDocument: true,
+        },
     },
+
 
     /* The three panels. */
     {
@@ -213,6 +224,20 @@ router.beforeEach(async (to) => {
          * admin guard to `/login` on the next navigation.
          */
         return auth.isAuthenticated ? { path: '/admin' } : { name: 'login' };
+    }
+
+    if (to.meta.legacyDocument) {
+        /*
+         * `/call-management` has its own guarded Laravel handler that streams
+         * the Python template and runs its original standalone script. A Vue
+         * render here would be a visually and behaviorally divergent copy.
+         * Keep this navigation on the full-document path, just like the Python
+         * app's ordinary link navigation.
+         */
+        if (typeof window !== 'undefined') {
+            window.location.assign(to.fullPath);
+        }
+        return false;
     }
 
     return true;

@@ -575,11 +575,35 @@ final class PublicPagesTest extends TestCase
             ->assertStatus(303)
             ->assertRedirect('/master-admin/dashboard');
 
-        $this->asSession(['username' => 'ali', 'is_master_admin' => true])
+        $response = $this->asSession(['username' => 'ali', 'is_master_admin' => true])
             ->withHeaders(['Referer' => $this->refererUrl('/master-admin/dashboard')])
-            ->get('/call-management')
-            ->assertStatus(200)
-            ->assertSee('سامانه فراخوان نمونه‌گیری — پنل مدیریت', false);
+            ->get('/call-management');
+
+        $response->assertStatus(200)
+            ->assertSee('سامانه فراخوان نمونه‌گیری — پنل مدیریت', false)
+            ->assertSee('<body class="cs-page">', false)
+            ->assertSee('/static/css/call-system-standalone.css', false)
+            ->assertSee('/static/js/call-system-standalone.js', false)
+            ->assertDontSee('id="app"', false);
+
+        /*
+         * The only Laravel addition to this page is the runtime Reverb config
+         * needed by the original standalone script. After removing that one
+         * injected script, the response must be the Python template byte for
+         * byte — markup, tabs, stylesheets, and behavior entry points included.
+         */
+        $source = file_get_contents(base_path('../app/templates/call-management.html'));
+        $this->assertIsString($source);
+
+        $withoutRuntimeConfig = preg_replace(
+            '~<script>window\\.HastamaRealtime = .*?;</script>\\R(?=</head>)~s',
+            '',
+            (string) $response->getContent(),
+            1
+        );
+
+        $this->assertIsString($withoutRuntimeConfig);
+        $this->assertSame($source, $withoutRuntimeConfig);
     }
 
     // ── The training search ──────────────────────────────────────────────────

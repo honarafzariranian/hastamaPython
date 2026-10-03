@@ -53,13 +53,12 @@ a Jinja loop variable caught by the scanner).
 | `training-lesson.html` | `public/TrainingLessonPage.vue` | 37 | **0** | 0 | 1 | identical |
 | `vpn-warning.html` | `public/IranOnlyPage.vue` | 10 | **0** | 0 | 0 | identical |
 | `offline.html` | *(document — see 2.3)* | 11 | **0** | 0 | 3 | identical |
-| `call-management.html` | `call/CallManagementPage.vue` | 116 | **0** | 0 | 0 | identical |
 | `call-display.html` | `call/CallDisplayPage.vue` | 64 | **0** | 1 | 0 | identical |
 | `ticket-kiosk.html` | `call/TicketKioskPage.vue` | 138 | **0** | 0 | 1 | identical |
 | `label_print_document.html` | `call/TicketPrintPage.vue` | 2 | **0** | 0 | 0 | identical |
 | `master-admin.html` | `layouts/ControlCentreLayout.vue` + 10 control pages | 152 | **69** | 0 | 0 | **gap** — §4.3 |
 | `user-panel.html` | `layouts/UserPanelLayout.vue` + 8 user pages | 327 | **83** | 0 | 0 | **gap** — §4.2 |
-| `admin.html` | `layouts/AdminLayout.vue` + 8 admin pages | 654 | **587** | 0 | 0 | **gap** — §4.1 (shell done, bodies pending) |
+| `admin.html` | `layouts/AdminLayout.vue` + 7 admin pages | 654 | **189** | 7 | 0 | **gap** — §4.1 (shell done, bodies pending) |
 
 `extra` classes on the Vue side (`h-card`, `admin-shell`, `report-field`, …) are
 **not** parity successes: they are the migrated design talking to Tailwind,
@@ -68,12 +67,18 @@ which is precisely what those three gaps are made of.
 ### 2.2 Document pages — byte/text parity
 
 These URLs are standalone documents in the running application (their own
-inline stylesheet, their own script, their own `<title>`).  Laravel serves them
-from `App\Support\Legacy\LegacyReportPage` and `App\Support\Connectivity\*`, so
-the comparison is against the running server's own response:
+inline stylesheet, their own script, their own `<title>`). Laravel serves them
+from source-backed document handlers, so the comparison is against the running
+server's own response. `/call-management` is deliberately not a Vue page:
+`CallPageController` streams `app/templates/call-management.html` and injects
+only the runtime Reverb configuration required by its original script. The SPA
+route also forces a full-document navigation to that handler. A Laravel feature
+test strips the injected bootstrap and asserts byte-for-byte equality with the
+Python template.
 
 | Route | Result |
 |---|---|
+| `/call-management` | **identical source template** after removing the runtime Reverb bootstrap; original CSS/JS assets are served from the Python tree |
 | `/leave_report_page` | **identical** to the Python rendering |
 | `/hourlypass_Report_page` | **identical** |
 | `/overtime_report_page` | **identical** |

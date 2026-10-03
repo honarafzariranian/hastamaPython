@@ -35,7 +35,8 @@ PAIRS = {
     "user-panel.html": ["layouts/UserPanelLayout.vue"],
     "admin.html": ["layouts/AdminLayout.vue"],
     "master-admin.html": ["layouts/ControlCentreLayout.vue"],
-    "call-management.html": ["pages/call/CallManagementPage.vue"],
+    # This URL streams the Python document and linked assets directly.
+    "call-management.html": [],
     "call-display.html": ["pages/call/CallDisplayPage.vue"],
     "ticket-kiosk.html": ["pages/call/TicketKioskPage.vue"],
     "leave_report_page.html": ["pages/admin/LeavePage.vue"],
@@ -44,6 +45,10 @@ PAIRS = {
     "payroll_report_page.html": ["pages/admin/PayrollPage.vue"],
     "final_report_page.html": ["pages/user/FinalReportPage.vue"],
     "label_print_document.html": ["pages/call/TicketPrintPage.vue"],
+}
+
+SERVER_RENDERED = {
+    "call-management.html": "CallPageController streams the Python template and its /static assets directly.",
 }
 
 LINK = re.compile(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]*>", re.I)
@@ -105,6 +110,14 @@ def main(names: list[str]) -> int:
             continue
         with open(os.path.join(TPL, template), encoding="utf-8") as handle:
             source = handle.read()
+
+        if template in SERVER_RENDERED:
+            linked = [name for name in (stylesheet_name(tag) for tag in LINK.findall(source)) if name]
+            print(
+                f"\n{template}: server-rendered; {SERVER_RENDERED[template]} "
+                f"Linked source assets: {', '.join(linked)}"
+            )
+            continue
 
         linked = [name for name in (stylesheet_name(tag) for tag in LINK.findall(source)) if name]
 

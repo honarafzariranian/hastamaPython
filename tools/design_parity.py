@@ -83,13 +83,26 @@ PAIRS: dict[str, list[str]] = {
             "SubscriptionsPage.vue",
         )
     ],
-    "call-management.html": ["pages/call/CallManagementPage.vue"],
+    # Call management is served by CallPageController as the original Python
+    # document; the SPA route performs a full-document navigation to it.
+    "call-management.html": [],
     "call-display.html": ["pages/call/CallDisplayPage.vue"],
     "ticket-kiosk.html": ["pages/call/TicketKioskPage.vue"],
     # `label_print_document.html` is a server-generated print response, not a
     # Vue page. `TicketPrintPage.vue` is a form/editor that calls the missing
     # Laravel label endpoints, so comparing those class names would imply a
     # false page mapping; the route is documented separately in the parity audit.
+}
+
+# These routes do not render their Vue duplicate. Laravel streams the Python
+# document and its original assets directly, so a Vue class scan would report
+# a false gap. The controller response is covered by the PublicPagesTest
+# byte-for-byte source-template assertion (after removing the runtime config).
+SERVER_RENDERED: dict[str, str] = {
+    "call-management.html": (
+        "CallPageController streams the canonical Python template; the SPA route "
+        "hands navigation back to that full document."
+    ),
 }
 
 # Cases where the class really is reproduced, and how — each one verified by
@@ -205,6 +218,15 @@ def report(pairs: list[str], verbose: bool, summary: bool, show_all: bool) -> in
     for template, vues in PAIRS.items():
         if pairs and template not in pairs:
             continue
+
+        if template in SERVER_RENDERED:
+            if summary:
+                print(f"{template:30s} server-rendered; canonical Python document")
+            else:
+                print(f"\n{'=' * 78}\n{template}  ->  canonical server-rendered document\n{'=' * 78}")
+                print(f"  {SERVER_RENDERED[template]}")
+            continue
+
         with open(os.path.join(TPL, template), encoding="utf-8") as handle:
             legacy = legacy_markup(handle.read())
 

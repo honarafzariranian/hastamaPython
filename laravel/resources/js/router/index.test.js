@@ -55,6 +55,15 @@ describe('legacy page routes', () => {
         expect(router.currentRoute.value.name).toBe('login');
     });
 
+    it('keeps the call-management screen on its canonical server-rendered document', () => {
+        const route = router.resolve('/call-management');
+
+        expect(route.name).toBe('call-management');
+        expect(route.meta.legacyDocument).toBe(true);
+        expect(route.meta.role).toBe('master_admin');
+        expect(route.meta.ownChrome).toBe(true);
+    });
+
     it('does not wrap full-document panels in the application shell', () => {
         for (const path of ['/user_panel', '/master-admin/dashboard', '/call-management', '/admin/dashboard']) {
             expect(router.resolve(path).meta.ownChrome).toBe(true);
