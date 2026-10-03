@@ -151,7 +151,7 @@ body.settings-panel-open {
 /* تنظیمات نوار سمت راست *//* تنظیمات نوار سمت راست *//* تنظیمات نوار سمت راست *//* تنظیمات نوار سمت راست *//* تنظیمات نوار سمت راست */
 
 /* سایدبار کناری سمت راست */
-.sidebar-right {
+:where(.app-shell) .sidebar-right {
     width: 70px;
     background-color: var(--surface-strong);
     position: fixed;
@@ -224,21 +224,21 @@ body.settings-panel-open {
     margin-top: 3px;
 }
 
-.sidebar-right:not(.open) .icon-container,
-.sidebar-right:not(.open) .icon-container-leftSidebar {
+:where(.app-shell) .sidebar-right:not(.open) .icon-container,
+:where(.app-shell) .sidebar-right:not(.open) .icon-container-leftSidebar {
     justify-content: center;
 }
 
-.sidebar-right.open {
+:where(.app-shell) .sidebar-right.open {
     width: 250px;
 }
 
-.sidebar-right.open .icon-label {
+:where(.app-shell) .sidebar-right.open .icon-label {
     display: inline-block;
 }
 
-.sidebar-right.open .tooltipIconHeader,
-.sidebar-right.open .tooltipIconHeader-leftSidebar {
+:where(.app-shell) .sidebar-right.open .tooltipIconHeader,
+:where(.app-shell) .sidebar-right.open .tooltipIconHeader-leftSidebar {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -293,7 +293,7 @@ body.settings-panel-open {
     margin: 0;
 }
 
-.icon-container,
+:where(.app-shell) .icon-container,
 .icon-container-leftSidebar {
     position: relative;
     display: flex;
@@ -308,13 +308,13 @@ body.settings-panel-open {
     transition: background-color 0.2s ease-in-out;
 }
 
-.icon-container:hover,
+:where(.app-shell) .icon-container:hover,
 .icon-container-leftSidebar:hover {
     background-color: rgba(56, 182, 255, 0.14);
     border-radius: 12px;
 }
 
-.icon-container img,
+:where(.app-shell) .icon-container img,
 .icon-container-leftSidebar img {
     width: 40px;
     height: 40px;
@@ -326,12 +326,12 @@ body.settings-panel-open {
     flex-shrink: 0;
 }
 
-.icon-container img:hover,
+:where(.app-shell) .icon-container img:hover,
 .icon-container-leftSidebar img:hover {
     transform: scale(1.1);
 }
 
-.icon-label {
+:where(.app-shell) .icon-label {
     display: none;
     color: #000;
     font-family: 'Vazir';
@@ -2508,7 +2508,7 @@ html[lang="fa"] #ticket-status-table-popup tbody tr:last-child td:last-child {
         width: 26rem;
     }
 
-    .sidebar-right {
+    :where(.app-shell) .sidebar-right {
         padding-top: 3rem;
         height: 33.35rem;
     }
@@ -2567,11 +2567,11 @@ html[lang="fa"] #ticket-status-table-popup tbody tr:last-child td:last-child {
         margin-top: 3rem;
     }
 
-    .icon-container {
+    :where(.app-shell) .icon-container {
         margin-top: 3rem;
     }
 
-    .sidebar-right {
+    :where(.app-shell) .sidebar-right {
         padding-top: 1rem;
         height: 32rem;
     }
@@ -2720,7 +2720,7 @@ html[lang="fa"] #ticket-status-table-popup tbody tr:last-child td:last-child {
         height: 3.8rem;
     }
 
-    .sidebar-right {
+    :where(.app-shell) .sidebar-right {
         position: fixed;
         top: 13rem;
         right: 0.6rem;
@@ -2740,14 +2740,14 @@ html[lang="fa"] #ticket-status-table-popup tbody tr:last-child td:last-child {
         overflow: hidden;
     }
 
-    .icon-container,
+    :where(.app-shell) .icon-container,
     .icon-container-leftSidebar {
         margin-top: 0;
         width: 100%;
         text-align: center;
     }
 
-    .icon-container img,
+    :where(.app-shell) .icon-container img,
     .icon-container-leftSidebar img {
         width: 34px;
         height: 34px;
@@ -3408,7 +3408,7 @@ body:has(.app-shell) {
    عرض برچسب متن (sidebar-label) بین ۰ تا مقدار نهایی انیمیشن می‌گیرد؛
    بنابراین باز و بسته شدن باعث پرش آیکون‌ها نمی‌شود.
 */
-.sidebar-right {
+:where(.app-shell) .sidebar-right {
     width: clamp(64px, 6vw, 78px);
     flex-shrink: 0;
     background: #fff;
@@ -3427,7 +3427,7 @@ body:has(.app-shell) {
     transition: width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: width;
 }
-.sidebar-right:hover {
+:where(.app-shell) .sidebar-right:hover {
     width: clamp(180px, 18vw, 230px);
 }
 .sidebar-logo {
@@ -4218,7 +4218,7 @@ body.dark-mode .pass-more {
 
 /* حالت شب ساده */
 body:has(.app-shell).dark-mode { --bg-page: #101722; --card-bg: #182233; --ink: #eef1f6; --ink-muted: #8b96a8; --line-soft: #26324a; }
-body.dark-mode .sidebar-right,
+body.dark-mode :where(.app-shell) .sidebar-right,
 body.dark-mode .panel-card,
 body.dark-mode .greet-card,
 body.dark-mode .stat-card,
@@ -4232,7 +4232,7 @@ body.dark-mode .modal,
 body.dark-mode .leave-date-picker,
 body.dark-mode .clock-card,
 body.dark-mode .sidebar-top-card,
-body.dark-mode .sidebar-right.open,
+body.dark-mode :where(.app-shell) .sidebar-right.open,
 body.dark-mode .settings-panel-dialog {
     background: var(--card-bg);
 }
@@ -4258,7 +4258,7 @@ body.dark-mode .clock-card,
 body.dark-mode .calendar-dropdown,
 body.dark-mode .modal,
 body.dark-mode .leave-date-picker,
-body.dark-mode .sidebar-right,
+body.dark-mode :where(.app-shell) .sidebar-right,
 body.dark-mode .sidebar-top-card {
     border-color: var(--line-soft);
 }
@@ -4372,7 +4372,7 @@ body.dark-mode .profile-dropdown.open {
     .topbar-user:focus-within .profile-dropdown.open {
         width: 10rem;
     }
-    .sidebar-right {
+    :where(.app-shell) .sidebar-right {
         --mobile-sidebar-collapsed-width: 18%;
         position: fixed;
         top: 4.5rem;
@@ -4410,13 +4410,13 @@ body.dark-mode .profile-dropdown.open {
         flex-direction: row-reverse;
     }
 
-    .sidebar-right:hover {
+    :where(.app-shell) .sidebar-right:hover {
         width: var(--mobile-sidebar-collapsed-width);
         display: flex;
         justify-content: flex-start;
     }
 
-    .sidebar-right.open {
+    :where(.app-shell) .sidebar-right.open {
         width: min(230px, 76vw);
         max-width: min(230px, 76vw);
         min-width: 0;
@@ -4735,8 +4735,8 @@ body.dark-mode .profile-dropdown.open {
         flex: 0 0 auto;
     }
 
-    .sidebar-right,
-    .sidebar-right:hover {
+    :where(.app-shell) .sidebar-right,
+    :where(.app-shell) .sidebar-right:hover {
         top: 0;
         right: 0;
         bottom: 0;
@@ -4754,8 +4754,8 @@ body.dark-mode .profile-dropdown.open {
         box-shadow: -18px 0 45px rgba(15, 23, 42, 0.18);
     }
 
-    .sidebar-right.open,
-    .sidebar-right.open:hover {
+    :where(.app-shell) .sidebar-right.open,
+    :where(.app-shell) .sidebar-right.open:hover {
         width: min(82vw, 320px);
         max-width: min(82vw, 320px);
         transform: translateX(0);
@@ -4983,9 +4983,9 @@ body.dark-mode .profile-dropdown.open {
         height: 42px;
     }
 
-    .sidebar-right,
-    .sidebar-right.open,
-    .sidebar-right:hover {
+    :where(.app-shell) .sidebar-right,
+    :where(.app-shell) .sidebar-right.open,
+    :where(.app-shell) .sidebar-right:hover {
         width: min(88vw, 310px);
         max-width: min(88vw, 310px);
     }

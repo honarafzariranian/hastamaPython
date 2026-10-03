@@ -964,11 +964,13 @@ html, body {
 .rightSidebar {
     width: clamp(64px, 6vw, 78px);
     height: auto;
+    min-height: 0;
+    margin: 0;
     background-color: #ffffff;
     position: fixed;
-    top: var(--admin-sidebar-top);
+    top: var(--admin-sidebar-top, 8rem);
     right: 0;
-    bottom: var(--admin-sidebar-bottom);
+    bottom: var(--admin-sidebar-bottom, 12px);
     border-radius: 22px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
