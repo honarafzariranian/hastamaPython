@@ -253,4 +253,21 @@ describe('control-centre rail parity with app/templates/master-admin.html', () =
         expect(rendered.length).toBeGreaterThan(0);
         expect(rendered).toEqual(legacyEntries);
     });
+
+    it('preserves the Python right-sidebar fixed spatial coordinates (top: 8rem, right: 0, bottom: 12px) on .ma-page-shell', () => {
+        const legacyAdminCss = readFileSync(resolve(REPO_ROOT, 'app/static/css/admin.css'), 'utf8');
+        const portedAdminCss = readFileSync(resolve(REPO_ROOT, 'laravel/resources/css/legacy/admin.css'), 'utf8');
+        const portedMasterAdminCss = readFileSync(resolve(REPO_ROOT, 'laravel/resources/css/legacy/master-admin.css'), 'utf8');
+        const portedUserPanelCss = readFileSync(resolve(REPO_ROOT, 'laravel/resources/css/legacy/user-panel-style.css'), 'utf8');
+
+        /* Python's admin.css anchors `.rightSidebar` to `top: 8rem; right: 0; bottom: 12px;`. */
+        expect(legacyAdminCss).toMatch(/\.rightSidebar\s*\{[^}]*position:\s*fixed;[^}]*top:\s*8rem;[^}]*right:\s*0;[^}]*bottom:\s*12px;/s);
+
+        /* Ported admin.css and master-admin.css must resolve to the exact same `8rem` / `12px` offsets on `.ma-page-shell`. */
+        expect(portedAdminCss).toMatch(/\.rightSidebar\s*\{[^}]*position:\s*fixed;[^}]*top:\s*var\(--admin-sidebar-top,\s*8rem\);[^}]*right:\s*0;[^}]*bottom:\s*var\(--admin-sidebar-bottom,\s*12px\);/s);
+        expect(portedMasterAdminCss).toMatch(/\.ma-page-shell\s*\{[^}]*--admin-sidebar-top:\s*8rem;[^}]*--admin-sidebar-bottom:\s*12px;/s);
+
+        /* `user-panel-style.css` is never loaded by `master-admin.html` in Python; its `.sidebar-right` rules must be scoped to `.app-shell`. */
+        expect(portedUserPanelCss).not.toMatch(/(?:^|\n)\s*\.sidebar-right\s*\{/);
+    });
 });

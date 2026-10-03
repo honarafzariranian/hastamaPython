@@ -135,7 +135,7 @@
     .management-box .btn:active,
     .management-box .attendance-panel__btn:active,
     .adm-tab:active,
-    .rightSidebar .icon-container:active {
+    :where(.page-shell) .rightSidebar .icon-container:active {
         transform: scale(.965);
     }
 
@@ -614,7 +614,7 @@
        ۴) کشوی سایدبار (Drawer) — نسخهٔ موبایلی همان سایدبار دسکتاپ
        ══════════════════════════════════════════════════════════════════ */
 
-    .navarha {
+    :where(.page-shell) .navarha {
         position: static;
         min-height: 0;
         width: 0;
@@ -622,7 +622,7 @@
         overflow: visible;
     }
 
-    .rightSidebar {
+    :where(.page-shell) .rightSidebar {
         position: fixed !important;
         top: 0;
         right: 0;
@@ -660,7 +660,7 @@
         overscroll-behavior: contain;
     }
 
-    .rightSidebar.open {
+    :where(.page-shell) .rightSidebar.open {
         width: min(88vw, 344px) !important;
         transform: translateX(0) scale(1);
         opacity: 1;
@@ -670,7 +670,7 @@
        مرورگر بعد از هر تپ :hover را نگه می‌دارد و کشو روی صفحه باقی می‌ماند
        (کل صفحهٔ ثابت با overscroll-behavior: contain جلوی اسکرول را می‌گیرد). */
     @media (hover: hover) and (pointer: fine) {
-        .rightSidebar:hover {
+        :where(.page-shell) .rightSidebar:hover {
             width: min(88vw, 344px) !important;
             transform: translateX(0) scale(1);
             opacity: 1;
@@ -679,9 +679,9 @@
         /* هاور باید مثل حالت «باز» اجزای کشو را هم نشان بدهد؛ در غیر این صورت
            کشو با هاور باز می‌شد ولی آیتم‌ها در حالت محوِ بسته (opacity: 0)
            باقی می‌ماندند و فقط یک کشوی خالی دیده می‌شد. */
-        .rightSidebar:hover > .adm-drawer-head,
-        .rightSidebar:hover > .icon-container,
-        .rightSidebar:hover > .sidebar-divider {
+        :where(.page-shell) .rightSidebar:hover > .adm-drawer-head,
+        :where(.page-shell) .rightSidebar:hover > .icon-container,
+        :where(.page-shell) .rightSidebar:hover > .sidebar-divider {
             opacity: 1;
             transform: none;
         }
@@ -694,7 +694,7 @@
        بدون هاور است، چون روی دسکتاپِ باریک با ماوس، کشو باید با :hover باز
        شود و برای هاور شدن باید رویداد بگیرد. */
     @media (hover: none) {
-        .rightSidebar:not(.open) {
+        :where(.page-shell) .rightSidebar:not(.open) {
             pointer-events: none;
         }
     }
@@ -703,23 +703,23 @@
        هر آیتم با --adm-i که در JS بر اساس ترتیب DOM ست می‌شود، با تأخیر
        کوچکی ظاهر و محو می‌شود؛ در حالت بسته هم همان چیدمان محو می‌گردد
        تا بستن، «خشک و ناگهانی» نباشد. */
-    .rightSidebar > .adm-drawer-head,
-    .rightSidebar > .icon-container,
-    .rightSidebar > .sidebar-divider {
+    :where(.page-shell) .rightSidebar > .adm-drawer-head,
+    :where(.page-shell) .rightSidebar > .icon-container,
+    :where(.page-shell) .rightSidebar > .sidebar-divider {
         opacity: 0;
         transform: translateX(22px);
     }
 
-    .rightSidebar.open > .adm-drawer-head,
-    .rightSidebar.open > .icon-container,
-    .rightSidebar.open > .sidebar-divider {
+    :where(.page-shell) .rightSidebar.open > .adm-drawer-head,
+    :where(.page-shell) .rightSidebar.open > .icon-container,
+    :where(.page-shell) .rightSidebar.open > .sidebar-divider {
         opacity: 1;
         transform: none;
     }
 
 
 
-    .rightSidebar .mobile-sidebar-close {
+    :where(.page-shell) .rightSidebar .mobile-sidebar-close {
         position: absolute;
         top: calc(var(--adm-safe-t) + 12px);
         inset-inline-start: 14px;
@@ -768,9 +768,9 @@
     .adm-drawer-head__title { font-size: .84rem; font-weight: 900; color: var(--adm-ink); }
     .adm-drawer-head__sub   { font-size: .66rem; font-weight: 700; color: var(--adm-muted); }
 
-    .rightSidebar .icon-container,
-    .rightSidebar.open .icon-container,
-    .rightSidebar:hover .icon-container {
+    :where(.page-shell) .rightSidebar .icon-container,
+    :where(.page-shell) .rightSidebar.open .icon-container,
+    :where(.page-shell) .rightSidebar:hover .icon-container {
         position: relative;
         display: flex;
         width: 100% !important;
@@ -787,7 +787,7 @@
             transform .35s var(--adm-ease-spring), box-shadow .35s var(--adm-ease-soft);
     }
 
-    .rightSidebar .icon-container::before {
+    :where(.page-shell) .rightSidebar .icon-container::before {
         content: '';
         position: absolute;
         inset-inline-start: 0;
@@ -800,27 +800,27 @@
         transition: height .4s var(--adm-ease-spring);
     }
 
-    .rightSidebar .icon-container.active {
+    :where(.page-shell) .rightSidebar .icon-container.active {
         border-color: var(--adm-line);
         background: linear-gradient(120deg, var(--tint, rgba(13, 148, 136, .10)), var(--adm-tile-wash));
         box-shadow: var(--adm-shadow-1), 0 12px 24px -20px var(--glow, var(--adm-accent-glow));
     }
 
-    .rightSidebar .icon-container.active::before {
+    :where(.page-shell) .rightSidebar .icon-container.active::before {
         height: 56%;
     }
 
-    .rightSidebar .sidebar-icon-tile,
-    .rightSidebar.open .sidebar-icon-tile {
+    :where(.page-shell) .rightSidebar .sidebar-icon-tile,
+    :where(.page-shell) .rightSidebar.open .sidebar-icon-tile {
         flex: 0 0 38px;
         width: 38px;
         height: 38px;
         border-radius: 13px !important;
     }
 
-    .rightSidebar .icon-label,
-    .rightSidebar.open .icon-label,
-    .rightSidebar:hover .icon-label {
+    :where(.page-shell) .rightSidebar .icon-label,
+    :where(.page-shell) .rightSidebar.open .icon-label,
+    :where(.page-shell) .rightSidebar:hover .icon-label {
         display: block;
         width: auto;
         max-width: none;
@@ -835,13 +835,13 @@
         text-overflow: ellipsis;
     }
 
-    .rightSidebar .icon-container.active .icon-label {
+    :where(.page-shell) .rightSidebar .icon-container.active .icon-label {
         color: var(--adm-ink);
         font-weight: 900;
     }
 
     /* جداکنندهٔ «خروج» — با margin-top: auto به پاورقی کشو می‌چسبد */
-    .rightSidebar .sidebar-divider {
+    :where(.page-shell) .rightSidebar .sidebar-divider {
         margin: auto 4px 6px !important;
         height: 1px;
         background: linear-gradient(90deg, transparent, var(--adm-line-strong), transparent);
@@ -854,7 +854,7 @@
        محتوا می‌افتاد.  اینجا خروج یک ردیف تمام‌عرضِ ساده است: پس‌زمینهٔ
        ماتِ ملایم (تا آیتم‌های در حال اسکرول از پشتش دیده نشوند)، بدون blur و
        بدون سایه؛ به‌خاطر sticky بودن هم همیشه در دسترس می‌ماند. */
-    .rightSidebar .icon-container[data-accent="exit"] {
+    :where(.page-shell) .rightSidebar .icon-container[data-accent="exit"] {
         position: sticky;
         bottom: calc(var(--adm-safe-b) + 2px);
         z-index: 3;
@@ -867,22 +867,22 @@
         box-shadow: none !important;
     }
 
-    .rightSidebar .icon-container[data-accent="exit"] .icon-label {
+    :where(.page-shell) .rightSidebar .icon-container[data-accent="exit"] .icon-label {
         color: #e11d48;
         font-weight: 900;
     }
 
     /* بازخورد لمسی روی آیتم‌ها و دکمهٔ بستن */
-    .rightSidebar .icon-container:active {
+    :where(.page-shell) .rightSidebar .icon-container:active {
         transform: scale(.978);
     }
 
-    .rightSidebar .mobile-sidebar-close {
+    :where(.page-shell) .rightSidebar .mobile-sidebar-close {
         transition: transform .28s var(--adm-ease-spring), background .28s var(--adm-ease-soft),
             color .28s var(--adm-ease-soft);
     }
 
-    .rightSidebar .mobile-sidebar-close:active {
+    :where(.page-shell) .rightSidebar .mobile-sidebar-close:active {
         transform: scale(.9) rotate(-6deg);
         background: rgba(244, 63, 94, .12);
         color: #e11d48;
@@ -891,22 +891,22 @@
     /* ── ترتیب ورود پله‌ای (باید پس از قواعد پایه بیاید تا بازنویسی نشود) ──
        ترتیب transition-delay مطابق ترتیب خصوصیت‌ها در shorthand زیر است:
        background، border-color، box-shadow، opacity، transform */
-    .rightSidebar > .adm-drawer-head,
-    .rightSidebar > .icon-container,
-    .rightSidebar > .sidebar-divider {
+    :where(.page-shell) .rightSidebar > .adm-drawer-head,
+    :where(.page-shell) .rightSidebar > .icon-container,
+    :where(.page-shell) .rightSidebar > .sidebar-divider {
         transition: background .35s var(--adm-ease-soft), border-color .35s var(--adm-ease-soft),
             box-shadow .35s var(--adm-ease-soft), opacity .28s var(--adm-ease-soft),
             transform .45s var(--adm-ease-spring);
     }
 
-    .rightSidebar.open > .adm-drawer-head,
-    .rightSidebar.open > .icon-container,
-    .rightSidebar.open > .sidebar-divider {
+    :where(.page-shell) .rightSidebar.open > .adm-drawer-head,
+    :where(.page-shell) .rightSidebar.open > .icon-container,
+    :where(.page-shell) .rightSidebar.open > .sidebar-divider {
         transition-delay: 0s, 0s, 0s, calc(var(--adm-i, 0) * 20ms), calc(var(--adm-i, 0) * 20ms);
     }
 
     /* لمسهٔ طراحی: هالهٔ برند در بالای کشو (تزئینی و بی‌اثر روی چیدمان) */
-    .rightSidebar::after {
+    :where(.page-shell) .rightSidebar::after {
         content: '';
         position: absolute;
         top: -80px;
@@ -920,7 +920,7 @@
     }
 
     /* پنهان‌سازی اسکرول‌بار کشو */
-    .rightSidebar::-webkit-scrollbar { width: 0; height: 0; }
+    :where(.page-shell) .rightSidebar::-webkit-scrollbar { width: 0; height: 0; }
 
     /* ── پردهٔ پشت کشو (Scrim) — فقط تزئینی، هرگز گیرندهٔ ورودی نیست ───────
        این لایه تمام‌صفحه است و z-index آن (790) از کشو (800) کمتر است، اما
@@ -2781,10 +2781,10 @@
             linear-gradient(180deg, #0d1a26 0%, var(--adm-bg) 50%, #091320 100%);
     }
 
-    body.dark-mode .admin-topbar-modern,
-    body.dark-theme .admin-topbar-modern,
-    body.dark-mode .rightSidebar,
-    body.dark-theme .rightSidebar,
+    body.dark-mode :where(.page-shell) .admin-topbar-modern,
+    body.dark-theme :where(.page-shell) .admin-topbar-modern,
+    body.dark-mode :where(.page-shell) .rightSidebar,
+    body.dark-theme :where(.page-shell) .rightSidebar,
     body.dark-mode .adm-tabbar__inner,
     body.dark-theme .adm-tabbar__inner {
         background: linear-gradient(180deg, rgba(18, 32, 47, .95), rgba(14, 26, 39, .88)) !important;

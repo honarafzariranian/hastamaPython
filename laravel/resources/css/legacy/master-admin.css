@@ -114,6 +114,11 @@ body:has(.ma-page-shell) {
     line-height: 1.6;
 }
 
+.ma-page-shell {
+    --admin-sidebar-top: 8rem;
+    --admin-sidebar-bottom: 12px;
+}
+
 /* ── Header Box (باکس هدر) — یک باکس منسجم با زیر‌باکس‌های مرتب ── */
 .ma-header-box {
     position: sticky;
@@ -244,7 +249,7 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
    استودیو به اندازهٔ محتوایش می‌ماند (height:auto) تا داخل کارت فضای خالی
    نماند؛ در آن حالت بقیهٔ صفحه پس‌زمینه است، نه حفرهٔ داخل کارت. */
 @media (min-width: 1025px) {
-    body[data-section="label-printer"] .ma-dashboard-main {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-dashboard-main {
         position: fixed;
         top: 8rem;
         bottom: 12px;
@@ -257,12 +262,12 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
         padding: 0;
         overflow-y: auto;
     }
-    body[data-section="label-printer"] .ma-dashboard-inner {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-dashboard-inner {
         height: 100%;
         min-height: 0;
         max-width: none;
     }
-    body[data-section="label-printer"] .ma-label-studio {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-label-studio {
         display: flex;
         flex-direction: column;
         flex: 0 0 auto;
@@ -271,19 +276,19 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
     /* دو ستون هم‌ارتفاع و از بالا هم‌تراز: پنل پیش‌نمایش با ستون کنترل‌ها کشیده
        می‌شود و جعبهٔ پیش‌نمایش (stage) بقیهٔ فضا را پر می‌کند تا زیر کارت
        پیش‌نمایش یا کنار جعبه‌ها فضای خالی نماند. */
-    body[data-section="label-printer"] .ma-label-studio__grid {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-label-studio__grid {
         flex: 0 0 auto;
         align-items: stretch;
         align-content: start;
     }
 }
 @media (max-width: 1024px) {
-    body[data-section="label-printer"] .ma-label-studio {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-label-studio {
         display: flex;
         flex-direction: column;
         width: 100%;
     }
-    body[data-section="label-printer"] .ma-label-studio__grid {
+    :where(body, .ma-page-shell)[data-section="label-printer"] .ma-label-studio__grid {
         align-items: start;
         align-content: start;
     }
@@ -438,36 +443,36 @@ body.dark-theme .ma-label-studio { background:linear-gradient(135deg,rgba(15,23,
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
-body[data-section="dashboard"] .ma-grid-2 {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card {
     display: flex;
     flex-direction: column;
     min-height: 0;
     height: 100%;
     overflow: visible;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__header {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__header {
     flex-shrink: 0;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body {
     flex: 1 1 0;
     overflow-y: auto;
     min-height: 0;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar {
     width: 5px;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar-thumb {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 10px;
 }
-body[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar-track {
+:where(body, .ma-page-shell)[data-section="dashboard"] .ma-grid-2 > .ma-panel-card > .ma-panel-card__body::-webkit-scrollbar-track {
     background: transparent;
 }
 .ma-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
