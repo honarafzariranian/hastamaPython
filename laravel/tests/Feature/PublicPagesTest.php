@@ -41,6 +41,7 @@ final class PublicPagesTest extends TestCase
         return [
             'favicon' => ['/favicon.ico', 'App\Http\Controllers\PublicPages\StaticAssetsController@favicon'],
             'sw.js' => ['/sw.js', 'App\Http\Controllers\PublicPages\StaticAssetsController@serviceWorker'],
+            'static tree' => ['/static/sw.js', 'App\Http\Controllers\PublicPages\StaticAssetsController@legacyAsset'],
             'robots.txt' => ['/robots.txt', 'App\Http\Controllers\PublicPages\StaticAssetsController@robotsTxt'],
             'sitemap.xml' => ['/sitemap.xml', 'App\Http\Controllers\PublicPages\StaticAssetsController@sitemapXml'],
             'offline' => ['/offline', 'App\Http\Controllers\PublicPages\OfflineController@offline'],
@@ -190,6 +191,56 @@ final class PublicPagesTest extends TestCase
             realpath(base_path('../app/static/sw.js')),
             realpath($response->baseResponse->getFile()->getPathname())
         );
+    }
+
+    /**
+     * `/static/…` answers from the Python's own tree, because the call system
+     * hands out exactly those URLs: `/api/calls/slides/active` publishes
+     * `/static/slides/<file>` for every wall screen, and the display plays
+     * `/static/audio/sample_call/fa-IR-DilaraNeural/<0001..2000>.mp3` for a
+     * called number.  A missing handler here means a silent screen and a broken
+     * slideshow, so the reader is asserted with the file it resolves to.
+     */
+    public function test_static_serves_the_legacy_asset_tree(): void
+    {
+        $response = $this->get('/static/favicon.ico');
+
+        $response->assertStatus(200);
+        $this->assertSame('image/x-icon', $response->headers->get('Content-Type'));
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+        $this->assertSame(
+            realpath(base_path('../app/static/favicon.ico')),
+            realpath($response->baseResponse->getFile()->getPathname())
+        );
+
+        $audio = base_path('../app/static/audio/sample_call/fa-IR-DilaraNeural/0001.mp3');
+
+        if (! is_file($audio)) {
+            $this->markTestSkipped('the generated call audio is not part of this checkout');
+        }
+
+        $mp3 = $this->get('/static/audio/sample_call/fa-IR-DilaraNeural/0001.mp3');
+
+        $mp3->assertStatus(200);
+        $this->assertSame('audio/mpeg', $mp3->headers->get('Content-Type'));
+        // the header that lets an <audio> element seek without reading the whole file
+        $this->assertSame('bytes', $mp3->headers->get('Accept-Ranges'));
+    }
+
+    /**
+     * The route is a file reader, not a directory browser.
+     *
+     * A `..` segment, a path naming a directory and a missing file are all `404`:
+     * `StaticFiles` offered no listing and no fallback either, and anything else
+     * would publish the tree above `app/static` (which is where `.env` lives).
+     */
+    public function test_static_refuses_traversal_directories_and_missing_files(): void
+    {
+        $this->get('/static/audio/../../../.env')->assertStatus(404);
+        $this->get('/static/%2e%2e/%2e%2e/.env')->assertStatus(404);
+        // a directory is not a file: StaticFiles had no listing and no index here
+        $this->get('/static/audio/sample_call/fa-IR-DilaraNeural')->assertStatus(404);
+        $this->get('/static/audio/sample_call/fa-IR-DilaraNeural/9999.mp3')->assertStatus(404);
     }
 
     /**
