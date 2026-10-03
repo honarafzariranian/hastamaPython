@@ -3887,6 +3887,8 @@ body.dark-theme #dashboardBox .bar-fill {
     background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
     border-radius: 18px;
     padding: 16px 24px 20px;
+    gap: 0;
+    justify-content: flex-start;
     direction: rtl;
     text-align: right;
     border: 1px solid #ddd;
