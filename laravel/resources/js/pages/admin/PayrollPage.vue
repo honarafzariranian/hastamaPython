@@ -318,7 +318,7 @@ async function loadUsers() {
     loadingUsers.value = true;
 
     try {
-        const response = await api.get('/get_users');
+        const response = await api.get('/get_users', { baseURL: '' });
         users.value = response.users ?? [];
         comprehensive.value = users.value.map(makeComprehensiveRow);
         hourly.value = users.value.map(makeHourlyRow);

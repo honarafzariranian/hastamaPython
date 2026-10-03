@@ -51,7 +51,7 @@ const backUrl = computed(() => {
     }
 
     if (auth.isAdmin) {
-        return '/admin';
+        return '/admin/dashboard';
     }
 
     return '/user_panel';

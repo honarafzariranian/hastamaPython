@@ -70,7 +70,7 @@ const reportPages = [
 
 async function loadUsers() {
     try {
-        const response = await api.get('/get_users');
+        const response = await api.get('/get_users', { baseURL: '' });
         users.value = response.users ?? [];
     } catch {
         users.value = [];
@@ -94,6 +94,7 @@ async function loadReportUser() {
     try {
         const response = await api.get('/fetch_user_data', {
             params: { username: reportForm.user },
+            baseURL: '',
         });
 
         reportUser.value = response;
@@ -113,11 +114,15 @@ async function generateReport() {
     reportGenerated.value = false;
 
     try {
-        const response = await api.post('/generate_individual_report', {
-            user: reportForm.user,
-            fromDate: toLatinDigits(reportForm.fromDate),
-            toDate: toLatinDigits(reportForm.toDate),
-        });
+        const response = await api.post(
+            '/generate_individual_report',
+            {
+                user: reportForm.user,
+                fromDate: toLatinDigits(reportForm.fromDate),
+                toDate: toLatinDigits(reportForm.toDate),
+            },
+            { baseURL: '' },
+        );
 
         if (!response.success) {
             reportError.value = response.message || 'خطا در دریافت گزارش';
@@ -149,10 +154,14 @@ async function submitDecision(row) {
     reportError.value = '';
 
     try {
-        const response = await api.post('/update_leave_status', {
-            requestId: row.id,
-            status: row.decision,
-        });
+        const response = await api.post(
+            '/update_leave_status',
+            {
+                requestId: row.id,
+                status: row.decision,
+            },
+            { baseURL: '' },
+        );
 
         if (response.success === false) {
             reportError.value = response.message || 'خطا در به‌روزرسانی وضعیت!';
@@ -192,7 +201,7 @@ async function downloadPdf() {
     pdfError.value = '';
 
     try {
-        await api.get('/download_pdf');
+        await api.get('/download_pdf', { baseURL: '' });
     } catch (failure) {
         pdfError.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت گزارش PDF.';
     } finally {

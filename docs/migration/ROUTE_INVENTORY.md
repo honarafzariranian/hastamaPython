@@ -25,6 +25,13 @@ middleware group has no session at all.
 | `POST /reset_password` | `reset_password` | verifies the code, sets bcrypt, revokes every session of that account |
 | **added** `GET /api/me` | `api.me` | **not a port** — one call for "is this session good, and what is my role", behind `legacy.session` |
 
+**Client convention.** The Vue client's shared axios instance (`resources/js/services/api.js`)
+prefixes `/api`, so every call to one of these root-level paths has to pass `{ baseURL: '' }`.
+Forgetting it does not fail loudly — the request lands on the SPA shell or on a same-named route
+that rejects the verb, which is how `POST /api/login_user` came back **405** and login stopped
+working. `python tools/api_paths.py` resolves every `api.*` call in the Vue source against
+`php artisan route:list --json` and reports the calls whose route exists one prefix over.
+
 Twenty-seven of the 249 routes are now answered by the Laravel application (the ten authentication
 endpoints above, plus seventeen read endpoints in Phase 5), plus one deliberate addition. Added by
 Phase 5 - the user-panel and control-centre **read** surface, every one of them a port of a specific

@@ -1,21 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
-import StatusPage from '@/pages/StatusPage.vue';
-import LoginPage from '@/pages/auth/LoginPage.vue';
-import UserPanelLayout from '@/layouts/UserPanelLayout.vue';
-import AdminLayout from '@/layouts/AdminLayout.vue';
-import ControlCentreLayout from '@/layouts/ControlCentreLayout.vue';
-import CallManagementPage from '@/pages/call/CallManagementPage.vue';
-import CallDisplayPage from '@/pages/call/CallDisplayPage.vue';
-import TicketKioskPage from '@/pages/call/TicketKioskPage.vue';
-import TicketPrintPage from '@/pages/call/TicketPrintPage.vue';
-import RegisterPage from '@/pages/public/RegisterPage.vue';
-import RulesPage from '@/pages/public/RulesPage.vue';
-import TrainingPage from '@/pages/public/TrainingPage.vue';
-import TrainingLessonPage from '@/pages/public/TrainingLessonPage.vue';
-import IranOnlyPage from '@/pages/public/IranOnlyPage.vue';
-
 /**
  * Application routes.
  *
@@ -33,19 +18,19 @@ const routes = [
     {
         path: '/login',
         name: 'login',
-        component: LoginPage,
+        component: () => import('@/pages/auth/LoginPage.vue'),
         meta: { title: 'ورود به سامانه', public: true },
     },
     {
         path: '/',
         name: 'home',
-        component: StatusPage,
+        component: () => import('@/pages/StatusPage.vue'),
         meta: { title: 'وضعیت سامانه', public: true },
     },
     {
         path: '/status',
         name: 'status',
-        component: StatusPage,
+        component: () => import('@/pages/StatusPage.vue'),
         meta: { title: 'وضعیت سامانه', public: true },
     },
 
@@ -53,31 +38,31 @@ const routes = [
     {
         path: '/register',
         name: 'register',
-        component: RegisterPage,
+        component: () => import('@/pages/public/RegisterPage.vue'),
         meta: { title: 'ثبت‌نام', public: true },
     },
     {
         path: '/rules',
         name: 'rules',
-        component: RulesPage,
+        component: () => import('@/pages/public/RulesPage.vue'),
         meta: { title: 'قوانین', public: true },
     },
     {
         path: '/training',
         name: 'training',
-        component: TrainingPage,
+        component: () => import('@/pages/public/TrainingPage.vue'),
         meta: { title: 'آموزش', public: true },
     },
     {
         path: '/training/:category',
         name: 'training-category',
-        component: TrainingPage,
+        component: () => import('@/pages/public/TrainingPage.vue'),
         meta: { title: 'آموزش', public: true },
     },
     {
         path: '/training/lesson/:lessonId',
         name: 'training-lesson',
-        component: TrainingLessonPage,
+        component: () => import('@/pages/public/TrainingLessonPage.vue'),
         meta: { title: 'آموزش', public: true },
     },
     /*
@@ -95,7 +80,7 @@ const routes = [
     {
         path: '/iran-only',
         name: 'iran-only',
-        component: IranOnlyPage,
+        component: () => import('@/pages/public/IranOnlyPage.vue'),
         meta: { title: 'دسترسی فقط از داخل کشور', public: true },
     },
 
@@ -104,25 +89,25 @@ const routes = [
     {
         path: '/call-display',
         name: 'call-display',
-        component: CallDisplayPage,
+        component: () => import('@/pages/call/CallDisplayPage.vue'),
         meta: { title: 'نمایش فراخوان', public: true },
     },
     {
         path: '/ticket-kiosk',
         name: 'ticket-kiosk',
-        component: TicketKioskPage,
+        component: () => import('@/pages/call/TicketKioskPage.vue'),
         meta: { title: 'کیوسک نوبت‌دهی', public: true },
     },
     {
         path: '/ticket-print',
         name: 'ticket-print',
-        component: TicketPrintPage,
+        component: () => import('@/pages/call/TicketPrintPage.vue'),
         meta: { title: 'چاپ برچسب', public: true },
     },
     {
         path: '/call-management',
         name: 'call-management',
-        component: CallManagementPage,
+        component: () => import('@/pages/call/CallManagementPage.vue'),
         meta: { title: 'مدیریت فراخوان', role: 'master_admin' },
     },
 
@@ -130,19 +115,38 @@ const routes = [
     {
         path: '/user_panel',
         name: 'user-panel',
-        component: UserPanelLayout,
+        component: () => import('@/layouts/UserPanelLayout.vue'),
         meta: { title: 'پنل کاربری', requiresAuth: true },
     },
+    /*
+     * The admin panel is an SPA whose path names the section — the same
+     * `/admin/<section>` space the running application serves (`/admin` is a
+     * 303 to `/admin/dashboard` there as well, see routes/web.php).  The layout
+     * reads `route.params.section`, so a reload, a bookmark and the back button
+     * all land on the section the address names.
+     *
+     * `:section` is deliberately not constrained to a whitelist: the legacy
+     * handler answered every `/admin/{section}` with the same document and let
+     * its own map decide, and an unknown value falls back to the dashboard
+     * inside the layout rather than 404-ing a panel that exists.
+     */
     {
         path: '/admin',
-        name: 'admin',
-        component: AdminLayout,
-        meta: { title: 'پنل مدیریت', role: 'admin' },
+        redirect: { name: 'admin-section', params: { section: 'dashboard' } },
+    },
+    {
+        path: '/admin/:section',
+        name: 'admin-section',
+        component: () => import('@/layouts/AdminLayout.vue'),
+        /* `ownChrome`: `admin.html` is a complete document — its own topbar,
+           sidebar rail, background wash and full-width section boxes.  The
+           application shell would add a second header and narrow the layout. */
+        meta: { title: 'پنل مدیریت', role: 'admin', ownChrome: true },
     },
     {
         path: '/master-admin',
         name: 'master-admin',
-        component: ControlCentreLayout,
+        component: () => import('@/layouts/ControlCentreLayout.vue'),
         meta: { title: 'مرکز کنترل', role: 'master_admin' },
     },
 

@@ -2,16 +2,6 @@
    TICKET KIOSK — فونت و پالت هماهنگ با سامانه + دو تم روشن/تاریک
    ══════════════════════════════════════════════════════════════════════ */
 
-@font-face {
-    font-family: 'Vazir';
-    src: url('/fonts/Vazir.woff2') format('woff2'),
-         url('/fonts/Vazir.woff') format('woff'),
-         url('/fonts/Vazir.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* دکمه‌ها به‌صورت پیش‌فرض فونت مرورگر می‌گیرن — باید inherit بشن */

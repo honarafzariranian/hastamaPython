@@ -59,7 +59,7 @@ a Jinja loop variable caught by the scanner).
 | `label_print_document.html` | `call/TicketPrintPage.vue` | 2 | **0** | 0 | 0 | identical |
 | `master-admin.html` | `layouts/ControlCentreLayout.vue` + 10 control pages | 152 | **69** | 0 | 0 | **gap** — §4.3 |
 | `user-panel.html` | `layouts/UserPanelLayout.vue` + 8 user pages | 327 | **83** | 0 | 0 | **gap** — §4.2 |
-| `admin.html` | `layouts/AdminLayout.vue` + 8 admin pages | 654 | **650** | 0 | 0 | **gap** — §4.1 |
+| `admin.html` | `layouts/AdminLayout.vue` + 8 admin pages | 654 | **587** | 0 | 0 | **gap** — §4.1 (shell done, bodies pending) |
 
 `extra` classes on the Vue side (`h-card`, `admin-shell`, `report-field`, …) are
 **not** parity successes: they are the migrated design talking to Tailwind,
@@ -332,7 +332,7 @@ These three are the same defect class — the panel was rebuilt as a Vue design
 instead of being ported — and each needs its own pass.  Nothing below is
 guessed: the inventories come from `tools/design_parity.py`.
 
-### 4.1 Admin panel — 650 of 654 legacy classes missing
+### 4.1 Admin panel — 587 of 654 legacy classes missing
 
 `AdminLayout.vue` carries its own `admin-*` vocabulary (`admin-shell`,
 `admin-header`, `admin-nav__item`, …) which appears in **no** ported stylesheet;
@@ -351,6 +351,31 @@ modal 8 · form 8 · confirm 7 · coworker 6 · checkout 6 · …
 This is a rebuild of the panel body against the legacy markup, with the data the
 eight existing `pages/admin/*.vue` components already fetch.  **It is the
 largest remaining item in the migration.**
+
+#### 4.1.1 Shell and URL space — **done** (2026-10-03)
+
+The frame and the addresses now match the running application; the section
+*bodies* above are what remains.
+
+| What the Python serves | Before | Now |
+|---|---|---|
+| `/admin` → `303 /admin/dashboard`, anonymous → `303 /login` | ported route existed (`PublicPages\AdminController`) but the Vue router also owned `/admin` as a page | server route is the only handler; a duplicated `Route::redirect` was removed from `web.php` |
+| `/admin/dashboard`, `/admin/{section}` | one `/admin` route with internal tab state; the URL never changed | `/admin/:section` in the router, section taken from `route.params.section`, rail pushes the legacy URLs (`SECTION_URLS` in `admin.js`) |
+| `admin.html` chrome: `.page-shell`, `.topbar admin-topbar-modern ma-header-box`, `.navarha`, `.sidebar-right`, `.icon-container[data-accent]` tiles, `.management-box` per section | Vue redesign (`admin-shell`, `admin-header`, `admin-nav__item`) matching no stylesheet | legacy markup with the legacy classes and the ten rail tiles, id'd `dashboardBox`, `coworkerBox`, … so the `#id` rules (including the hover compression) apply |
+| Full-screen document with its own background wash | wrapped in the Vue application shell (`h-header` bar + max-width `h-main`) | `meta.ownChrome` on the route skips that shell |
+
+Deliberate differences, recorded rather than hidden:
+
+* `reports` is an **extra** rail tile (`/admin/reports`, `ReportsPage.vue`) — the
+  legacy panel linked its five report documents from inside the sections, so the
+  port needs a surface for them until those sections carry their own buttons.
+* `tickets`, `attendance` and `internal-automation` have **no Vue page**: the
+  tiles render the legacy ids and the panel's own message saying so, instead of
+  an empty box.  Their endpoints are already ported (ticketing, internal
+  automation), so only the pages are missing.
+* The skip link is added chrome (the legacy document has none) and is clipped
+  off-canvas: an `inset-inline-start: -9999px` version widened the RTL document
+  by 10,000px and left the panel scrolled sideways.
 
 ### 4.2 User panel — 83 of 327 legacy classes missing
 
@@ -425,9 +450,18 @@ remainder and removes the class of defect that produced it.
 3. **The user panel's modal surfaces** (83 classes: support centre, internal
    automation, notification centre, profile panel).
 4. **The admin panel** (650 classes) — a rebuild of the panel body against the
-   legacy markup, wired to the API calls the eight existing `pages/admin/*.vue`
-   components already make.  The report pages' `localStorage` dependency (§5)
-   should be resolved in the same pass.
+   legacy markup.  The shell and the URL space are done (§4.1.1); the bodies are
+   not, and one of them needs a server addition first:
+
+   | Section | Legacy markup | Blocker |
+   |---|---|---|
+   | `dashboard` | `dashboardBox` (330 lines: `dash-head`, `dash-bento`, `dash-row--podium`, `--insight`, `--charts`, `--tables`) | the numbers it prints (total overtime/pass time, per-user averages, top user and top department, the two percentages, the two five-row charts) were **template context** in `_render_admin_page`, not an endpoint — the port needs one, computed from `ezafe_total_table`, `totalpass_table`, `leave_report` and `user_table` exactly as the Python summed them |
+   | `coworkers` | `coworkerBox` + `newUserBox` + `regRequestsBox` | `regRequestsBox` has no ported endpoint |
+   | `vacation`, `overtime`, `hourly-pass`, `shifts`, `payroll` | the corresponding boxes | none — the endpoints are ported and the Vue bodies already call them |
+   | `tickets`, `attendance`, `internal-automation` | `ticketBox`, `hozoorbox`, `internalAutomationAdminBox` | no Vue page at all |
+
+   The report pages' `localStorage` dependency (§5) should be resolved in the
+   same pass.
 
 Each step is verifiable with the two tools plus a served-document diff, so
 progress is measurable rather than asserted.

@@ -12,6 +12,16 @@
     <link rel="icon" href="/images/newlogo.png" type="image/png">
     <link rel="preload" href="/fonts/Vazir.woff2" as="font" type="font/woff2" crossorigin>
 
+    <style>
+        @font-face {
+            font-family: 'Vazir';
+            src: url('/fonts/Vazir.woff2') format('woff2');
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+    </style>
+
     {{--
         Apply the persisted theme before the first paint.  This runs inline and
         synchronously in <head> because doing it from the bundle would show a

@@ -315,6 +315,17 @@ Route::prefix('api')->group(function (): void {
     Route::put('/queue/ticket/{ticketNumber}', [QueueController::class, 'editTicket'])->name('api.queue.ticket.edit');
 });
 
+/*
+ * `/admin`, `/admin/dashboard` and `/admin/{section}` are NOT declared here:
+ * they are ported page routes in `routes/public-pages.php`
+ * (`PublicPages\AdminController`), which reproduce the Python guard — an
+ * anonymous caller or a signed-in non-admin is answered `303 /login`, an admin
+ * is answered `303 /admin/dashboard` for `/admin` and the SPA shell for the
+ * section paths.  Declaring a second `/admin` here would shadow nothing (that
+ * file is loaded first) while making the route table claim two handlers for
+ * one path.
+ */
+
 Route::fallback(function (Request $request) {
     if ($request->is('api/*')) {
         return ApiResponse::error('نقطه پایانی مورد نظر یافت نشد.', 404);

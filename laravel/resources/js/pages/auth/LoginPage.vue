@@ -312,7 +312,7 @@ async function submit() {
         if (user?.is_master_admin) {
             router.push('/master-admin');
         } else if (user?.is_admin) {
-            router.push('/admin');
+            router.push('/admin/dashboard');
         } else {
             router.push('/user_panel');
         }

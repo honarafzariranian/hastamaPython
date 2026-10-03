@@ -19,6 +19,16 @@ import axios from 'axios';
  * back in the `X-XSRF-TOKEN` header.  axios does this automatically for
  * same-origin requests, which is why no manual token plumbing appears here —
  * it replaces the `csrf-bootstrap.js` fetch patch in the old client.
+ *
+ * Note on `baseURL`: only `/api/*` is prefixed.  Most of the ported handlers
+ * keep the Python application's root-level paths — `POST /login_user`,
+ * `/get_users`, `/change_hourly_pass_status`, `/master-admin/api/users` —
+ * because the running front-end is still a client of those URLs during the
+ * side-by-side period.  Any call to one of them must pass `{ baseURL: '' }`;
+ * without it the request goes to `/api/…`, which either 404s, is answered by the
+ * SPA shell, or hits a same-named route that rejects the verb.  The check is
+ * `python tools/api_paths.py`, which resolves every call in the app against the
+ * live route table.
  */
 const client = axios.create({
     baseURL: '/api',

@@ -115,6 +115,7 @@ async function loadUsers() {
                 per_page: perPage,
                 search: search.value,
             },
+            baseURL: '',
         });
 
         users.value = response.data ?? [];
@@ -171,16 +172,20 @@ async function submitEdit() {
     notice.value = '';
 
     try {
-        await api.post('/update_user', {
-            current_username: editForm.currentUsername,
-            username: editForm.username.trim(),
-            password: editForm.password,
-            substitute: editForm.substitute,
-            work_hours: editForm.workHours,
-            department: editForm.department,
-            employment_status: editForm.employmentStatus,
-            is_active: editForm.isActive,
-        });
+        await api.post(
+            '/update_user',
+            {
+                current_username: editForm.currentUsername,
+                username: editForm.username.trim(),
+                password: editForm.password,
+                substitute: editForm.substitute,
+                work_hours: editForm.workHours,
+                department: editForm.department,
+                employment_status: editForm.employmentStatus,
+                is_active: editForm.isActive,
+            },
+            { baseURL: '' },
+        );
 
         notice.value = 'اطلاعات با موفقیت ثبت شد.';
         editOpen.value = false;
@@ -198,7 +203,11 @@ async function toggleStatus(user) {
     notice.value = '';
 
     try {
-        const response = await api.post(`/master-admin/api/users/${encodeURIComponent(user.username)}/toggle-status`);
+        const response = await api.post(
+            `/master-admin/api/users/${encodeURIComponent(user.username)}/toggle-status`,
+            {},
+            { baseURL: '' },
+        );
         const newStatus = response.new_status === 'inactive' ? 'inactive' : 'active';
 
         const row = users.value.find((item) => item.username === user.username);
@@ -222,9 +231,13 @@ async function changeRole(user) {
     notice.value = '';
 
     try {
-        await api.post(`/master-admin/api/users/${encodeURIComponent(user.username)}/change-role`, {
-            role: nextRole,
-        });
+        await api.post(
+            `/master-admin/api/users/${encodeURIComponent(user.username)}/change-role`,
+            {
+                role: nextRole,
+            },
+            { baseURL: '' },
+        );
 
         const row = users.value.find((item) => item.username === user.username);
         if (row) {
@@ -303,7 +316,7 @@ async function submitAdd() {
         payload.set('chrshanbeh', addForm.chrshanbeh);
         payload.set('panjshanbeh', addForm.panjshanbeh);
 
-        await api.post('/add_user', payload);
+        await api.post('/add_user', payload, { baseURL: '' });
 
         notice.value = 'کاربر جدید با موفقیت ثبت شد.';
         resetAddForm();

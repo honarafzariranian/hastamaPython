@@ -56,7 +56,7 @@ async function loadRequests() {
     error.value = '';
 
     try {
-        const response = await api.get('/get_overtime_requests');
+        const response = await api.get('/get_overtime_requests', { baseURL: '' });
         const rows = Array.isArray(response) ? response : [];
 
         requests.value = rows
@@ -72,7 +72,7 @@ async function loadRequests() {
 
 async function loadUsers() {
     try {
-        const response = await api.get('/get_users');
+        const response = await api.get('/get_users', { baseURL: '' });
         users.value = response.users ?? [];
     } catch {
         users.value = [];
@@ -99,10 +99,14 @@ async function submitDecision(row) {
     notice.value = '';
 
     try {
-        const response = await api.post('/update_overtime_status', {
-            requestId: row.id,
-            status: row.decision,
-        });
+        const response = await api.post(
+            '/update_overtime_status',
+            {
+                requestId: row.id,
+                status: row.decision,
+            },
+            { baseURL: '' },
+        );
 
         if (response.success === false) {
             error.value = response.message || 'خطا در به‌روزرسانی وضعیت!';
@@ -124,7 +128,7 @@ async function loadAllReport() {
     allReport.value = [];
 
     try {
-        const response = await api.get('/overtime_report');
+        const response = await api.get('/overtime_report', { baseURL: '' });
         allReport.value = Array.isArray(response) ? response : [];
     } catch (failure) {
         allReportError.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت گزارش کلی.';
@@ -144,11 +148,15 @@ async function generateReport() {
     reportGenerated.value = false;
 
     try {
-        const response = await api.post('/get_overtime_report', {
-            username: reportForm.username,
-            start_date: toLatinDigits(reportForm.startDate),
-            end_date: toLatinDigits(reportForm.endDate),
-        });
+        const response = await api.post(
+            '/get_overtime_report',
+            {
+                username: reportForm.username,
+                start_date: toLatinDigits(reportForm.startDate),
+                end_date: toLatinDigits(reportForm.endDate),
+            },
+            { baseURL: '' },
+        );
 
         const rows = Array.isArray(response) ? response : [];
         reportRows.value = rows
@@ -172,10 +180,14 @@ async function submitReportDecision(row) {
     reportError.value = '';
 
     try {
-        const response = await api.post('/update_overtime_Indivisual_status', {
-            id: row.id,
-            status: row.decision,
-        });
+        const response = await api.post(
+            '/update_overtime_Indivisual_status',
+            {
+                id: row.id,
+                status: row.decision,
+            },
+            { baseURL: '' },
+        );
 
         if (response.success === false) {
             reportError.value = response.message || 'خطا در تغییر وضعیت.';

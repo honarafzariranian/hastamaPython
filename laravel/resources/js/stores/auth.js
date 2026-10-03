@@ -56,13 +56,23 @@ export const useAuthStore = defineStore('auth', () => {
      * `{"success": false, "message": …}` on failure.  The CAPTCHA is sent only
      * when the operator enabled it — the backend validates it before any
      * credential lookup, so an empty string is simply "not supplied".
+     *
+     * `baseURL: ''` because this endpoint lives at the application root, like
+     * every other ported handler route.  `/login_user` is the path the Python
+     * front-end called (`static/js/script.js`) and the one `routes/web.php`
+     * registers; without the override the shared client's `/api` prefix turned
+     * the request into `POST /api/login_user`, which does not exist.
      */
     async function login({ username: usernameValue, password, captcha = '' }) {
-        const response = await api.post('/login_user', {
-            username: usernameValue,
-            password,
-            captcha,
-        });
+        const response = await api.post(
+            '/login_user',
+            {
+                username: usernameValue,
+                password,
+                captcha,
+            },
+            { baseURL: '' },
+        );
 
         if (response.success === false) {
             const error = new Error(response.message || 'ورود ناموفق بود.');
@@ -86,11 +96,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     /**
      * Sign out through `GET /logout` (the verb every existing logout link uses),
-     * then clear the local state.
+     * then clear the local state.  Root path, so it needs the same `baseURL`
+     * override as the login call.
      */
     async function logout() {
         try {
-            await api.get('/logout');
+            await api.get('/logout', { baseURL: '' });
         } finally {
             user.value = null;
         }

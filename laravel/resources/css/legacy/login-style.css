@@ -690,7 +690,7 @@ body {
 }
 
 body.dark-mode .login-logo {
-    content: url('/images/login-mobile-logo-dark.png');
+    content: url('../../assets/images/login-mobile-logo-dark.png');
 }
 
 /* Header enhanced */
@@ -2136,7 +2136,7 @@ body.dark-mode .btn {
     position: absolute;
     inset: 14px;
     border-radius: 50%;
-    background: url("/images/login-mobile-logo.png") center / contain no-repeat;
+    background: url("../../assets/images/login-mobile-logo.png") center / contain no-repeat;
 }
 .login-loader--done .login-loader__ring-spin {
     animation: none;

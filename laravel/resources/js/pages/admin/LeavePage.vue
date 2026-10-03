@@ -35,7 +35,7 @@ async function loadRequests() {
     error.value = '';
 
     try {
-        const response = await api.get('/get_leave_requests');
+        const response = await api.get('/get_leave_requests', { baseURL: '' });
         const rows = Array.isArray(response) ? response : [];
 
         requests.value = rows
@@ -69,10 +69,14 @@ async function submitDecision(row) {
     notice.value = '';
 
     try {
-        const response = await api.post('/update_leave_status', {
-            requestId: row.id,
-            status: row.decision,
-        });
+        const response = await api.post(
+            '/update_leave_status',
+            {
+                requestId: row.id,
+                status: row.decision,
+            },
+            { baseURL: '' },
+        );
 
         if (response.success === false) {
             error.value = response.message || 'خطا در به‌روزرسانی وضعیت!';

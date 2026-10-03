@@ -1,523 +1,578 @@
 <script setup>
 /**
- * Admin dashboard — counts and recent activity.
+ * Admin dashboard — the legacy `#dashboardBox` (`app/templates/admin.html`).
  *
- * The legacy dashboard was server-rendered by the Python admin route.  The
- * Vue port cannot call the master-admin dashboard endpoints (they are
- * guarded by the master-admin flag, which an ordinary admin does not hold),
- * so every figure here is derived from the admin-specific reads the panel
- * already owns:
+ * **Why the markup is copied and not redesigned.**  The running application
+ * loads `admin.css`, whose dashboard rules are all scoped to `#dashboardBox`
+ * and select the bento vocabulary: `.dash-head`, `.dash-bento`,
+ * `.dashboard-card`, `.dash-row`, `.dashboard-chart`, `.dashboard-table`.  The
+ * stylesheet is ported byte-for-byte, so the page is identical only when the
+ * markup is the same — a `.dash__cards` grid of `.h-card` (what this file used
+ * to render) has no rule in common with it and paints a different page.
+ * The root is therefore a fragment: every section is a **direct** child of the
+ * `<main id="dashboardBox">` the layout renders, because `#dashboardBox > *`
+ * is itself a rule (it lifts each section above the `::before` backdrop).
  *
- *   GET /get_users               → total staff
- *   GET /get_leave_requests      → leave request counts
- *   GET /get_overtime_requests   → overtime counts and per-user totals
- *   GET /get_hourly_pass_requests→ pending hourly-pass count
- *   GET /get_active_shifts       → today's active shifts
+ * **Where the numbers come from.**  In the Python page they were template
+ * context built by `_render_admin_page` — sums over `user_table`,
+ * `totalpass_table`, `ezafe_total_table` and `leave_report`, formatted before
+ * rendering.  There was no URL for them, so `DashboardStatsController` serves
+ * the same sums (and the same Persian formatting) as JSON, and this page binds
+ * what the template bound: `H:MM` for the aggregate pass time, `HH:MM` for
+ * every per-user time, English digits for `data-percent` (the bar heights are
+ * `parseInt`ed) and Persian digits everywhere a person reads a number.
  *
- * "Recent activity" merges the newest leave / overtime / pass requests into
- * one feed, newest first — the same rows the approval queues show.
+ * **Motion.**  `admin.js` runs `initDashboardMotion()` once per document:
+ * bar heights (`--p`), the counter roll-up (`data-count-to`), the percentage
+ * rings (`data-ring`) and the pointer spotlight on `.dashboard-card`.  The
+ * same four run here — once when the markup mounts (with the empty state the
+ * legacy page starts from: bars at 0, rings drawn to 0) and again once the
+ * figures land, which is the port's equivalent of the legacy page arriving
+ * already filled in.  Everything is wrapped in `try`/`catch` exactly as the
+ * legacy is: a motion failure must never take the dashboard down.
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import api from '@/services/api';
 import { toPersianDigits } from '@/utils/numbers';
 
-const loading = ref(true);
+/**
+ * The empty state — the numbers the markup carries before the request lands.
+ *
+ * The legacy page never had one (the figures were server-rendered), so this
+ * has to read as the *start* of the legacy animation rather than as a different
+ * page: `۰` where a counter rolls up, `۰:۰۰` where a duration is printed and
+ * `-` where a name is looked up.
+ */
+const EMPTY = {
+    total_users: '۰',
+    unique_departments: '۰',
+    overtime_user_count: '۰',
+    no_overtime_users: '۰',
+    total_pass_time: '۰:۰۰',
+    total_overtime_time: '۰:۰۰',
+    average_pass_per_user: '۰:۰۰',
+    average_overtime_per_user: '۰:۰۰',
+    top_pass_user: null,
+    top_overtime_user: null,
+    top_department_name: '-',
+    top_department_count: '۰',
+    total_leave_taken: '۰',
+    total_leave_requests: '۰',
+    pass_percent: '۰',
+    overtime_percent: '۰',
+    pass_chart_data: [],
+    overtime_chart_data: [],
+};
+
+const stats = reactive({ ...EMPTY });
 const error = ref('');
 
-const totalUsers = ref(0);
-const pendingLeave = ref(0);
-const pendingOvertime = ref(0);
-const pendingPass = ref(0);
-const activeShifts = ref(0);
-const overtimeUserCount = ref(0);
-const totalOvertimeTime = ref('۰');
+const topOvertimeUser = computed(() => stats.top_overtime_user ?? { username: '-', total_ezafe_time: '-' });
+const topPassUser = computed(() => stats.top_pass_user ?? { username: '-', total_pass_time: '-' });
 
-const topOvertime = ref([]);
-const activity = ref([]);
-
-const PENDING = 'انتظار تایید';
-
-function toMinutes(value) {
-    const text = String(value ?? '').trim();
-    if (!text) {
-        return 0;
-    }
-
-    const parts = text.split(':').map((part) => Number(part) || 0);
-    if (parts.length >= 2) {
-        return parts[0] * 60 + parts[1];
-    }
-
-    return parts[0] || 0;
-}
-
-function formatMinutes(totalMinutes) {
-    const minutes = Math.max(0, Math.round(totalMinutes));
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return toPersianDigits(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
-}
-
-function sortByDateDesc(rows) {
-    return [...rows].sort((a, b) => {
-        const dateA = String(a.date ?? '').replace(/\//g, '');
-        const dateB = String(b.date ?? '').replace(/\//g, '');
-
-        return dateB.localeCompare(dateA);
-    });
-}
-
-async function loadDashboard() {
-    loading.value = true;
+async function loadStats() {
     error.value = '';
 
     try {
-        const [usersRes, leaveRes, overtimeRes, passRes, shiftsRes] = await Promise.all([
-            api.get('/get_users'),
-            api.get('/get_leave_requests'),
-            api.get('/get_overtime_requests'),
-            api.get('/get_hourly_pass_requests'),
-            api.get('/get_active_shifts'),
-        ]);
+        const payload = await api.get('/admin/dashboard/stats', { baseURL: '' });
 
-        const users = usersRes.users ?? [];
-        const leaveRequests = Array.isArray(leaveRes) ? leaveRes : [];
-        const overtimeRequests = Array.isArray(overtimeRes) ? overtimeRes : [];
-        const passRequests = Array.isArray(passRes) ? passRes : [];
-        const shifts = shiftsRes.shifts ?? [];
-
-        totalUsers.value = users.length;
-        pendingLeave.value = leaveRequests.filter((row) => row.status === PENDING).length;
-        pendingOvertime.value = overtimeRequests.filter((row) => row.status === PENDING).length;
-        pendingPass.value = passRequests.filter((row) => row.status === PENDING).length;
-        activeShifts.value = shifts.length;
-
-        /* Per-user overtime totals, summed from the request rows (the
-         * org-wide ezafe_total_table read is the master-admin /overtime_report
-         * endpoint, which an ordinary admin cannot call). */
-        const totalsByUser = new Map();
-
-        for (const row of overtimeRequests) {
-            const minutes = toMinutes(row.daily_overtime);
-            totalsByUser.set(row.username, (totalsByUser.get(row.username) ?? 0) + minutes);
-        }
-
-        const totals = [...totalsByUser.entries()]
-            .map(([username, total]) => ({ username, total }))
-            .filter((row) => row.total > 0)
-            .sort((a, b) => b.total - a.total);
-
-        overtimeUserCount.value = totals.length;
-        totalOvertimeTime.value = formatMinutes(totals.reduce((sum, row) => sum + row.total, 0));
-        topOvertime.value = totals.slice(0, 5).map((row) => ({
-            username: row.username,
-            total: formatMinutes(row.total),
-        }));
-
-        const feed = [
-            ...leaveRequests
-                .filter((row) => row.status === PENDING)
-                .map((row) => ({ type: 'مرخصی', username: row.username, date: row.start_date, status: row.status })),
-            ...overtimeRequests
-                .filter((row) => row.status === PENDING)
-                .map((row) => ({ type: 'اضافه‌کاری', username: row.username, date: row.overtime_date, status: row.status })),
-            ...passRequests
-                .filter((row) => row.status === PENDING)
-                .map((row) => ({ type: 'پاس ساعتی', username: row.username, date: row.request_date, status: row.status })),
-        ];
-
-        activity.value = sortByDateDesc(feed).slice(0, 8);
+        Object.assign(stats, EMPTY, payload ?? {});
+        await nextTick();
+        runMotion(true);
     } catch (failure) {
         error.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت اطلاعات داشبورد.';
-        totalUsers.value = 0;
-        pendingLeave.value = 0;
-        pendingOvertime.value = 0;
-        pendingPass.value = 0;
-        activeShifts.value = 0;
-        overtimeUserCount.value = 0;
-        totalOvertimeTime.value = '۰';
-        topOvertime.value = [];
-        activity.value = [];
-    } finally {
-        loading.value = false;
     }
 }
 
-onMounted(loadDashboard);
+/* ── Motion — `initDashboardMotion` / `replayDashboardMotion` (admin.js) ── */
 
-const cards = computed(() => [
-    { label: 'کل پرسنل', value: toPersianDigits(totalUsers.value), hint: 'کاربران سامانه' },
-    { label: 'مرخصی در انتظار', value: toPersianDigits(pendingLeave.value), hint: 'درخواست تأیید نشده' },
-    { label: 'اضافه‌کاری در انتظار', value: toPersianDigits(pendingOvertime.value), hint: 'درخواست تأیید نشده' },
-    { label: 'پاس ساعتی در انتظار', value: toPersianDigits(pendingPass.value), hint: 'درخواست تأیید نشده' },
-    { label: 'شیفت فعال امروز', value: toPersianDigits(activeShifts.value), hint: 'پرسنل در شیفت' },
-    { label: 'کاربران با اضافه‌کاری', value: toPersianDigits(overtimeUserCount.value), hint: 'دارای ثبت اضافه‌کاری' },
-]);
+const BOX_ID = 'dashboardBox';
+const spotlightCards = [];
+
+function dashboardBox() {
+    return document.getElementById(BOX_ID);
+}
+
+/** `persianDigitsToEnglish()` — `data-count-to` and `data-ring` arrive in Persian. */
+function toLatinDigits(value) {
+    const digits = '۰۱۲۳۴۵۶۷۸۹';
+
+    return String(value ?? '').replace(/[۰-۹]/g, (character) => digits.indexOf(character));
+}
+
+function prefersReducedMotion() {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+function hoverCapable() {
+    return typeof window !== 'undefined' && !!window.matchMedia?.('(hover: hover)').matches;
+}
+
+/** `animateDashboardCounter()` — the Persian roll-up on `[data-count-to]`. */
+function animateCounter(element) {
+    const target = Number.parseInt(toLatinDigits(element.dataset.countTo), 10);
+
+    if (Number.isNaN(target)) {
+        return;
+    }
+
+    if (target === 0 || prefersReducedMotion() || typeof window.requestAnimationFrame !== 'function') {
+        element.textContent = toPersianDigits(target);
+        return;
+    }
+
+    const duration = 850;
+    let startedAt = null;
+    element.textContent = toPersianDigits(0);
+
+    const step = (timestamp) => {
+        if (startedAt === null) {
+            startedAt = timestamp;
+        }
+
+        const progress = Math.min(1, (timestamp - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        element.textContent = toPersianDigits(Math.round(target * eased));
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+
+    window.requestAnimationFrame(step);
+}
+
+/** `paintDashboardRing()` — the radius is read from the SVG, not assumed. */
+function paintRing(circle, replay) {
+    const percent = Number.parseFloat(toLatinDigits(circle.dataset.ring));
+
+    if (Number.isNaN(percent)) {
+        return;
+    }
+
+    const clamped = Math.max(0, Math.min(100, percent));
+    const radius = Number.parseFloat(circle.getAttribute('r')) || 0;
+
+    if (!radius) {
+        return;
+    }
+
+    const circumference = 2 * Math.PI * radius;
+    const target = circumference * (1 - clamped / 100);
+
+    circle.style.transition = 'none';
+    circle.style.strokeDasharray = circumference.toFixed(2);
+    circle.style.strokeDashoffset = circumference.toFixed(2);
+
+    if (!replay || prefersReducedMotion()) {
+        circle.style.transition = '';
+        circle.style.strokeDashoffset = target.toFixed(2);
+        return;
+    }
+
+    void circle.getBoundingClientRect();
+    circle.style.transition = '';
+    window.requestAnimationFrame(() => {
+        circle.style.strokeDashoffset = target.toFixed(2);
+    });
+}
+
+/** `renderDashboardBarHeights()` — `--p` drives the `translateY` on `.bar-value`. */
+function renderBars(replay) {
+    dashboardBox()?.querySelectorAll('.dashboard-chart .bar-value').forEach((bar) => {
+        const percent = Number.parseInt(bar.dataset.percent ?? '', 10);
+
+        if (Number.isNaN(percent)) {
+            return;
+        }
+
+        const ratio = Math.max(0, Math.min(100, percent)) / 100;
+
+        if (replay && !prefersReducedMotion()) {
+            bar.style.setProperty('--p', '0');
+            void bar.offsetHeight;
+        }
+
+        bar.style.setProperty('--p', String(ratio));
+    });
+}
+
+/** `attachDashboardSpotlight()` — `--mx` / `--my` follow the pointer on a card. */
+function spotlight(event) {
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+
+    if (!rect.width || !rect.height) {
+        return;
+    }
+
+    card.style.setProperty('--mx', `${(((event.clientX - rect.left) / rect.width) * 100).toFixed(1)}%`);
+    card.style.setProperty('--my', `${(((event.clientY - rect.top) / rect.height) * 100).toFixed(1)}%`);
+}
+
+function attachSpotlight(card) {
+    if (spotlightCards.includes(card)) {
+        return;
+    }
+
+    card.addEventListener('pointermove', spotlight);
+    spotlightCards.push(card);
+}
+
+/** `initDashboardMotion()` / `replayDashboardMotion()` — one pass over the box. */
+function runMotion(replay) {
+    const box = dashboardBox();
+
+    if (!box) {
+        return;
+    }
+
+    try {
+        renderBars(replay);
+        box.querySelectorAll('[data-count-to]').forEach(animateCounter);
+        box.querySelectorAll('[data-ring]').forEach((circle) => paintRing(circle, replay));
+
+        if (hoverCapable() && !prefersReducedMotion()) {
+            box.querySelectorAll('.dashboard-card').forEach(attachSpotlight);
+        }
+    } catch (failure) {
+        console.warn('dashboard motion skipped', failure);
+    }
+}
+
+onMounted(async () => {
+    runMotion(true);
+    await loadStats();
+});
+
+onBeforeUnmount(() => {
+    spotlightCards.forEach((card) => card.removeEventListener('pointermove', spotlight));
+    spotlightCards.length = 0;
+});
 </script>
 
 <template>
-    <section class="dash">
-        <header class="dash__head">
-            <div>
-                <span class="dash__badge">نمای کلی سازمان</span>
-                <h1 class="dash__title">داشبورد مدیریت</h1>
-                <p class="dash__sub">تصویر زندهٔ کارکرد، اضافه‌کاری و درخواست‌های در انتظار</p>
+    <header class="dash-head dash-anim" style="--i: 0">
+        <div class="dash-head__main">
+            <span class="dash-head__badge">نمای کلی سازمان</span>
+            <h2 class="dash-head__title">داشبورد مدیریت</h2>
+            <p class="dash-head__sub">تصویر زندهٔ کارکرد، پاس ساعتی، اضافه‌کاری و مرخصی کارکنان</p>
+        </div>
+        <div class="dash-head__stats">
+            <span class="dash-chip dash-chip--live"><i aria-hidden="true"></i>دادهٔ زنده</span>
+            <span class="dash-chip">{{ stats.total_users }} پرسنل فعال</span>
+            <span class="dash-chip">{{ stats.unique_departments }} دپارتمان</span>
+        </div>
+    </header>
+
+    <p v-if="error" class="h-alert" role="alert">{{ error }}</p>
+
+    <section class="dash-bento">
+        <article class="dashboard-quick-card dash-anim" style="--i: 1">
+            <span class="dash-orb dash-orb--a" aria-hidden="true"></span>
+            <span class="dash-orb dash-orb--b" aria-hidden="true"></span>
+            <div class="quick-card-head">
+                <span class="quick-card-title">اشتراک حرفه‌ای</span>
+                <span class="dash-pill">فعال</span>
             </div>
-            <button type="button" class="h-btn h-btn-ghost dash__refresh" :disabled="loading" @click="loadDashboard">
-                {{ loading ? 'در حال دریافت…' : 'بروزرسانی' }}
+            <div class="quick-card-ring">
+                <svg viewBox="0 0 120 120" role="img" aria-label="اشتراک حرفه‌ای فعال است">
+                    <defs>
+                        <linearGradient id="dashHeroRing" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#5eead4"></stop>
+                            <stop offset="1" stop-color="#7dd3fc"></stop>
+                        </linearGradient>
+                    </defs>
+                    <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+                    <circle class="ring-value" cx="60" cy="60" r="52" data-ring="63"></circle>
+                </svg>
+                <div class="quick-card-ring-text">
+                    <strong>۲۳۱</strong>
+                    <span>روز باقی‌مانده</span>
+                </div>
+            </div>
+            <span class="quick-card-meta">اعتبار تا ۱۴۰۵/۱۲/۲۹</span>
+            <button class="quick-card-btn" type="button">
+                <span>تمدید اشتراک</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
             </button>
-        </header>
+        </article>
 
-        <p v-if="error" class="h-alert dash__alert" role="alert">{{ error }}</p>
+        <article class="dashboard-card dashboard-card--blue dash-anim" style="--i: 2">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.4 19c.2-3.1 2.6-5.2 5.6-5.2s5.4 2.1 5.6 5.2"></path><path d="M16.4 5.6a3 3 0 0 1 0 5.8"></path><path d="M17.8 19c-.1-2.1-.8-3.8-1.9-4.9"></path></svg>
+            </span>
+            <span class="card-title">کل پرسنل فعال</span>
+            <span class="card-value" :data-count-to="stats.total_users">{{ stats.total_users }}</span>
+            <span class="card-meta">کارکنان فعال سامانه</span>
+        </article>
 
-        <div v-if="loading" class="dash__loading">در حال دریافت اطلاعات…</div>
+        <article class="dashboard-card dashboard-card--indigo dash-anim" style="--i: 3">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4.5 20V6.6c0-.8.7-1.5 1.5-1.5h5.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M13 10.5h4.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M2.8 20h18.4"></path><path d="M7.5 9h3M7.5 12.5h3M7.5 16h3M16 14h.8M16 17h.8"></path></svg>
+            </span>
+            <span class="card-title">دپارتمان‌های فعال</span>
+            <span class="card-value" :data-count-to="stats.unique_departments">{{ stats.unique_departments }}</span>
+            <span class="card-meta">واحد سازمانی فعال</span>
+        </article>
 
-        <template v-else>
-            <div class="dash__cards">
-                <article v-for="card in cards" :key="card.label" class="h-card dash-card">
-                    <span class="dash-card__label">{{ card.label }}</span>
-                    <span class="dash-card__value">{{ card.value }}</span>
-                    <span class="dash-card__hint">{{ card.hint }}</span>
-                </article>
+        <article class="dashboard-card dashboard-card--teal dash-anim" style="--i: 4">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.4"></circle><path d="M12 9.6V13l2.4 1.9"></path><path d="M9.6 3.2h4.8"></path></svg>
+            </span>
+            <span class="card-title">کارکنان با اضافه‌کاری</span>
+            <span class="card-value" :data-count-to="stats.overtime_user_count">{{ stats.overtime_user_count }}</span>
+            <span class="card-meta">دارای ثبت اضافه‌کاری</span>
+        </article>
 
-                <article class="h-card dash-card dash-card--wide">
-                    <span class="dash-card__label">کل اضافه‌کاری ثبت‌شده</span>
-                    <span class="dash-card__value">{{ totalOvertimeTime }}</span>
-                    <span class="dash-card__hint">مجموع ساعت اضافه‌کاری پرسنل</span>
-                </article>
+        <article class="dashboard-card dashboard-card--green dash-anim" style="--i: 5">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.6 10.7z"></path></svg>
+            </span>
+            <span class="card-title">بدون اضافه‌کاری</span>
+            <span class="card-value" :data-count-to="stats.no_overtime_users">{{ stats.no_overtime_users }}</span>
+            <span class="card-meta">بدون ثبت اضافه‌کاری</span>
+        </article>
+
+        <article class="dashboard-card dashboard-card--amber dash-anim" style="--i: 6">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3.5 16.8l5.2-5.2 3.4 3.4 6.4-6.6"></path><path d="M14.2 8.4h5.1v5.1"></path></svg>
+            </span>
+            <span class="card-title">کل اضافه‌کاری ماه</span>
+            <span class="card-value">{{ stats.total_overtime_time }}</span>
+            <span class="card-meta">مجموع ثبت‌شدهٔ ماه</span>
+        </article>
+
+        <article class="dashboard-card dashboard-card--sky dash-anim" style="--i: 7">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7.5 3.6h9M7.5 20.4h9"></path><path d="M8.6 3.6v3.1c0 2 3.4 3.5 3.4 5.3s-3.4 3.3-3.4 5.3v3.1"></path><path d="M15.4 3.6v3.1c0 2-3.4 3.5-3.4 5.3s3.4 3.3 3.4 5.3v3.1"></path></svg>
+            </span>
+            <span class="card-title">پاس ساعتی کل</span>
+            <span class="card-value">{{ stats.total_pass_time }}</span>
+            <span class="card-meta">مجموع پاس تأییدشده</span>
+        </article>
+
+        <article class="dashboard-card dashboard-card--violet dash-anim" style="--i: 8">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M17.5 5.4H7l5.2 6.6L7 18.6h10.5"></path></svg>
+            </span>
+            <span class="card-title">میانگین اضافه‌کاری</span>
+            <span class="card-value">{{ stats.average_overtime_per_user }}</span>
+            <span class="card-meta">برای هر کاربر</span>
+        </article>
+
+        <article class="dashboard-card dashboard-card--rose dash-anim" style="--i: 9">
+            <span class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3.6 12.6h4L10 6.2l3.4 11.6 2.4-5.2h4.6"></path></svg>
+            </span>
+            <span class="card-title">میانگین پاس</span>
+            <span class="card-value">{{ stats.average_pass_per_user }}</span>
+            <span class="card-meta">برای هر کاربر</span>
+        </article>
+    </section>
+
+    <section class="dash-row dash-row--podium">
+        <article
+            class="dashboard-card dashboard-card--highlight dash-anim"
+            style="--i: 10; --tint: var(--dash-amber); --tint-soft: rgba(217, 119, 6, .18); --tint-glow: rgba(217, 119, 6, .16)"
+        >
+            <span class="dash-medal" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3.5s4.5 4 4.5 8.2a4.5 4.5 0 0 1-9 0c0-1.6.8-3.1 1.7-4.1.3 1.2 1 2 1.9 2.3.5-2 .9-3.9.9-6.4z"></path></svg>
+            </span>
+            <span class="card-title">بیشترین اضافه‌کاری</span>
+            <span class="card-value">{{ topOvertimeUser.username }}</span>
+            <span class="card-meta">{{ topOvertimeUser.total_ezafe_time }}</span>
+        </article>
+
+        <article
+            class="dashboard-card dashboard-card--highlight dash-anim"
+            style="--i: 11; --tint: var(--dash-violet); --tint-soft: rgba(124, 58, 237, .16); --tint-glow: rgba(124, 58, 237, .16)"
+        >
+            <span class="dash-medal" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3.7l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6L3.3 10.1l6-.9z"></path></svg>
+            </span>
+            <span class="card-title">پاس ساعتی برتر</span>
+            <span class="card-value">{{ topPassUser.username }}</span>
+            <span class="card-meta">{{ topPassUser.total_pass_time }}</span>
+        </article>
+
+        <article
+            class="dashboard-card dashboard-card--highlight dash-anim"
+            style="--i: 12; --tint: var(--dash-teal); --tint-soft: rgba(13, 148, 136, .18); --tint-glow: rgba(13, 148, 136, .16)"
+        >
+            <span class="dash-medal" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4.5 20V6.6c0-.8.7-1.5 1.5-1.5h5.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M13 10.5h4.5c.8 0 1.5.7 1.5 1.5V20"></path><path d="M2.8 20h18.4"></path><path d="M7.5 9h3M7.5 12.5h3M7.5 16h3M16 14h.8M16 17h.8"></path></svg>
+            </span>
+            <span class="card-title">دپارتمان برتر</span>
+            <span class="card-value">{{ stats.top_department_name }}</span>
+            <span class="card-meta">{{ stats.top_department_count }} نفر</span>
+        </article>
+    </section>
+
+    <section class="dash-row dash-row--insight">
+        <article class="dashboard-card dashboard-card--panel dashboard-card--teal dash-anim" style="--i: 13">
+            <div class="dash-panel-head">
+                <span class="dash-panel-title">شاخص‌های بهره‌وری</span>
+                <span class="dash-tag">ظرفیت ساعتی ماه</span>
             </div>
-
-            <div class="dash__panels">
-                <article class="h-card dash-panel">
-                    <header class="dash-panel__head">
-                        <h2>کاربران برتر اضافه‌کاری</h2>
-                        <span class="dash-panel__tag">۵ نفر برتر</span>
-                    </header>
-
-                    <div class="dash-table-scroll">
-                        <table class="dash-table">
-                            <thead>
-                                <tr>
-                                    <th>ردیف</th>
-                                    <th>کاربر</th>
-                                    <th>کل اضافه‌کاری</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(row, index) in topOvertime" :key="row.username">
-                                    <td>{{ toPersianDigits(index + 1) }}</td>
-                                    <td>{{ row.username }}</td>
-                                    <td>{{ row.total }}</td>
-                                </tr>
-                                <tr v-if="topOvertime.length === 0">
-                                    <td colspan="3" class="dash-empty">هنوز اضافه‌کاری‌ای ثبت نشده است.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <div class="dash-rings">
+                <div class="dash-ring">
+                    <div class="dash-ring__visual">
+                        <svg viewBox="0 0 100 100" role="img" aria-label="نسبت پاس ساعتی">
+                            <circle class="dash-ring__track" cx="50" cy="50" r="44"></circle>
+                            <circle class="dash-ring__value" cx="50" cy="50" r="44" :data-ring="stats.pass_percent"></circle>
+                        </svg>
+                        <div class="dash-ring__text">
+                            <strong><span :data-count-to="stats.pass_percent">{{ stats.pass_percent }}</span>%</strong>
+                        </div>
                     </div>
-                </article>
-
-                <article class="h-card dash-panel">
-                    <header class="dash-panel__head">
-                        <h2>فعالیت‌های اخیر</h2>
-                        <span class="dash-panel__tag">درخواست‌های در انتظار</span>
-                    </header>
-
-                    <ul v-if="activity.length" class="dash-activity">
-                        <li v-for="(item, index) in activity" :key="`${item.type}-${item.username}-${index}`" class="dash-activity__item">
-                            <span class="dash-activity__type" :class="`dash-activity__type--${item.type === 'مرخصی' ? 'leave' : item.type === 'اضافه‌کاری' ? 'overtime' : 'pass'}`">
-                                {{ item.type }}
-                            </span>
-                            <span class="dash-activity__user">{{ item.username }}</span>
-                            <span class="dash-activity__date">{{ toPersianDigits(item.date) }}</span>
-                        </li>
-                    </ul>
-                    <p v-else class="dash-empty">درخواست در انتظاری وجود ندارد.</p>
-                </article>
+                    <span class="dash-ring__label">نسبت پاس</span>
+                </div>
+                <div
+                    class="dash-ring"
+                    style="--tint: var(--dash-amber); --tint-soft: rgba(217, 119, 6, .14); --tint-glow: rgba(217, 119, 6, .3)"
+                >
+                    <div class="dash-ring__visual">
+                        <svg viewBox="0 0 100 100" role="img" aria-label="نسبت اضافه‌کاری">
+                            <circle class="dash-ring__track" cx="50" cy="50" r="44"></circle>
+                            <circle
+                                class="dash-ring__value"
+                                cx="50"
+                                cy="50"
+                                r="44"
+                                :data-ring="stats.overtime_percent"
+                            ></circle>
+                        </svg>
+                        <div class="dash-ring__text">
+                            <strong><span :data-count-to="stats.overtime_percent">{{ stats.overtime_percent }}</span>%</strong>
+                        </div>
+                    </div>
+                    <span class="dash-ring__label">نسبت اضافه‌کاری</span>
+                </div>
             </div>
-        </template>
+        </article>
+
+        <article class="dashboard-card dashboard-card--panel dashboard-card--rose dash-anim" style="--i: 14">
+            <div class="dash-panel-head">
+                <span class="dash-panel-title">مرخصی کارکنان</span>
+                <span class="dash-tag">جمع کل</span>
+            </div>
+            <div class="dash-stat-list">
+                <div class="dash-stat">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6.2 5.2h11.6c.9 0 1.6.7 1.6 1.6v11.6c0 .9-.7 1.6-1.6 1.6H6.2c-.9 0-1.6-.7-1.6-1.6V6.8c0-.9.7-1.6 1.6-1.6z"></path><path d="M4.6 9.8h14.8"></path><path d="M8.4 3.2v3.6M15.6 3.2v3.6"></path></svg>
+                    </span>
+                    <span>
+                        <span class="card-title">کل مرخصی استفاده‌شده</span>
+                        <span class="card-value" :data-count-to="stats.total_leave_taken">{{ stats.total_leave_taken }}</span>
+                    </span>
+                    <span class="dash-stat__unit">روز</span>
+                </div>
+                <div class="dash-stat">
+                    <span class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"></circle><path d="M12 7.6V12l3 1.9"></path></svg>
+                    </span>
+                    <span>
+                        <span class="card-title">درخواست‌های مرخصی</span>
+                        <span class="card-value" :data-count-to="stats.total_leave_requests">{{ stats.total_leave_requests }}</span>
+                    </span>
+                    <span class="dash-stat__unit">درخواست</span>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dash-row dash-row--charts">
+        <article class="dashboard-chart-card dash-anim" style="--i: 15">
+            <div class="dash-card-head">
+                <span class="card-title">نمودار پاس ساعتی — کاربران برتر</span>
+                <span class="dash-tag">۵ نفر برتر</span>
+            </div>
+            <div class="dashboard-chart">
+                <div
+                    v-for="row in stats.pass_chart_data"
+                    :key="`pass-${row.username}`"
+                    class="chart-bar"
+                >
+                    <span class="bar-number">{{ row.display }}</span>
+                    <div class="bar-fill">
+                        <div class="bar-value" :data-percent="row.percent"></div>
+                    </div>
+                    <span class="bar-label" :title="row.username">{{ row.username }}</span>
+                </div>
+                <p v-if="!stats.pass_chart_data.length" class="dash-empty">هنوز پاس ساعتی تأییدشده‌ای ثبت نشده است.</p>
+            </div>
+        </article>
+
+        <article class="dashboard-chart-card dashboard-chart-card--overtime dash-anim" style="--i: 16">
+            <div class="dash-card-head">
+                <span class="card-title">نمودار اضافه‌کاری — کاربران برتر</span>
+                <span class="dash-tag">۵ نفر برتر</span>
+            </div>
+            <div class="dashboard-chart">
+                <div
+                    v-for="row in stats.overtime_chart_data"
+                    :key="`overtime-${row.username}`"
+                    class="chart-bar"
+                >
+                    <span class="bar-number">{{ row.display }}</span>
+                    <div class="bar-fill">
+                        <div class="bar-value overtime" :data-percent="row.percent"></div>
+                    </div>
+                    <span class="bar-label" :title="row.username">{{ row.username }}</span>
+                </div>
+                <p v-if="!stats.overtime_chart_data.length" class="dash-empty">هنوز اضافه‌کاری‌ای برای این ماه ثبت نشده است.</p>
+            </div>
+        </article>
+    </section>
+
+    <section class="dash-row dash-row--tables">
+        <article class="dashboard-table-card dash-anim" style="--i: 17">
+            <div class="dash-card-head">
+                <span class="table-title">جدول پاس‌های برتر</span>
+                <span class="dash-tag">پاس کل</span>
+            </div>
+            <table v-if="stats.pass_chart_data.length" class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>ردیف</th>
+                        <th>کاربر</th>
+                        <th>پاس کل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, index) in stats.pass_chart_data" :key="`pass-row-${row.username}`">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ row.username }}</td>
+                        <td>{{ row.display }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p v-else class="dash-empty">داده‌ای برای نمایش نیست.</p>
+        </article>
+
+        <article class="dashboard-table-card dashboard-table-card--overtime dash-anim" style="--i: 18">
+            <div class="dash-card-head">
+                <span class="table-title">جدول اضافه‌کاری برتر</span>
+                <span class="dash-tag">اضافه‌کاری کل</span>
+            </div>
+            <table v-if="stats.overtime_chart_data.length" class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>ردیف</th>
+                        <th>کاربر</th>
+                        <th>اضافه‌کاری کل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, index) in stats.overtime_chart_data" :key="`overtime-row-${row.username}`">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ row.username }}</td>
+                        <td>{{ row.display }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p v-else class="dash-empty">داده‌ای برای نمایش نیست.</p>
+        </article>
     </section>
 </template>
-
-<style scoped>
-.dash {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-}
-
-.dash__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-.dash__badge {
-    display: inline-block;
-    margin-bottom: 0.35rem;
-    padding: 0.2rem 0.7rem;
-    border-radius: 999px;
-    background: var(--c-primary-ghost);
-    color: var(--c-primary-dark);
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-
-[data-theme='dark'] .dash__badge {
-    background: var(--dk-surface-2);
-    color: var(--dk-accent);
-}
-
-.dash__title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
-.dash__sub {
-    margin: 0.3rem 0 0;
-    color: #64748b;
-    font-size: 0.85rem;
-}
-
-[data-theme='dark'] .dash__sub {
-    color: var(--dk-text-2);
-}
-
-.dash__refresh {
-    flex-shrink: 0;
-}
-
-.dash__alert {
-    margin: 0;
-}
-
-.dash__loading {
-    padding: 3rem 1rem;
-    text-align: center;
-    color: #64748b;
-}
-
-[data-theme='dark'] .dash__loading {
-    color: var(--dk-text-2);
-}
-
-.dash__cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.9rem;
-}
-
-.dash-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 1.1rem 1.2rem;
-    overflow: hidden;
-}
-
-.dash-card::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--c-primary);
-}
-
-.dash-card--wide::before {
-    background: var(--c-gold);
-}
-
-.dash-card__label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #64748b;
-}
-
-[data-theme='dark'] .dash-card__label {
-    color: var(--dk-text-2);
-}
-
-.dash-card__value {
-    font-size: 1.9rem;
-    font-weight: 800;
-    line-height: 1.2;
-    font-variant-numeric: tabular-nums;
-}
-
-.dash-card__hint {
-    font-size: 0.72rem;
-    color: #94a3b8;
-}
-
-[data-theme='dark'] .dash-card__hint {
-    color: var(--dk-text-3);
-}
-
-.dash__panels {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 0.9rem;
-}
-
-.dash-panel {
-    padding: 1.1rem 1.2rem;
-}
-
-.dash-panel__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-    margin-bottom: 0.8rem;
-}
-
-.dash-panel__head h2 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 800;
-}
-
-.dash-panel__tag {
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    background: rgb(15 23 42 / 0.05);
-    color: #64748b;
-    font-size: 0.7rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-[data-theme='dark'] .dash-panel__tag {
-    background: var(--dk-surface-2);
-    color: var(--dk-text-2);
-}
-
-.dash-table-scroll {
-    overflow-x: auto;
-}
-
-.dash-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-
-.dash-table th,
-.dash-table td {
-    padding: 0.55rem 0.6rem;
-    border-bottom: 1px solid rgb(15 23 42 / 0.07);
-    text-align: start;
-    white-space: nowrap;
-}
-
-[data-theme='dark'] .dash-table th,
-[data-theme='dark'] .dash-table td {
-    border-bottom-color: var(--dk-line);
-}
-
-.dash-table th {
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
-[data-theme='dark'] .dash-table th {
-    color: var(--dk-text-2);
-}
-
-.dash-table tbody tr:hover {
-    background: rgb(14 165 233 / 0.05);
-}
-
-[data-theme='dark'] .dash-table tbody tr:hover {
-    background: var(--dk-surface-2);
-}
-
-.dash-empty {
-    padding: 1.4rem 0.6rem !important;
-    color: #94a3b8;
-    text-align: center !important;
-}
-
-[data-theme='dark'] .dash-empty {
-    color: var(--dk-text-3);
-}
-
-.dash-activity {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.dash-activity__item {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 0.6rem;
-    border-radius: var(--radius-token-sm);
-    background: rgb(15 23 42 / 0.03);
-    font-size: 0.82rem;
-}
-
-[data-theme='dark'] .dash-activity__item {
-    background: var(--dk-surface-2);
-}
-
-.dash-activity__type {
-    flex-shrink: 0;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-.dash-activity__type--leave {
-    background: rgb(249 115 22 / 0.14);
-    color: #c2410c;
-}
-
-[data-theme='dark'] .dash-activity__type--leave {
-    color: #fdba74;
-}
-
-.dash-activity__type--overtime {
-    background: rgb(168 85 247 / 0.14);
-    color: #7e22ce;
-}
-
-[data-theme='dark'] .dash-activity__type--overtime {
-    color: #d8b4fe;
-}
-
-.dash-activity__type--pass {
-    background: rgb(14 165 233 / 0.14);
-    color: #0369a1;
-}
-
-[data-theme='dark'] .dash-activity__type--pass {
-    color: #7dd3fc;
-}
-
-.dash-activity__user {
-    font-weight: 700;
-}
-
-.dash-activity__date {
-    margin-inline-start: auto;
-    color: #94a3b8;
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
-}
-
-[data-theme='dark'] .dash-activity__date {
-    color: var(--dk-text-3);
-}
-</style>

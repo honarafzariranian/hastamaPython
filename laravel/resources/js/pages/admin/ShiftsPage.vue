@@ -69,7 +69,7 @@ const yearOptions = computed(() => {
 
 async function loadUsers() {
     try {
-        const response = await api.get('/get_users');
+        const response = await api.get('/get_users', { baseURL: '' });
         users.value = response.users ?? [];
     } catch {
         users.value = [];
@@ -89,7 +89,8 @@ async function loadShifts() {
 
     try {
         const response = await api.get(
-            `/get_shifts/${encodeURIComponent(username.value)}/${year.value}/${month.value}`
+            `/get_shifts/${encodeURIComponent(username.value)}/${year.value}/${month.value}`,
+            { baseURL: '' },
         );
 
         if (!response.success) {
@@ -216,7 +217,7 @@ async function confirmDelete() {
     notice.value = '';
 
     try {
-        const response = await api.post(`/delete_shift/${deleteId.value}`);
+        const response = await api.post(`/delete_shift/${deleteId.value}`, {}, { baseURL: '' });
 
         if (!response.success) {
             error.value = response.message || 'خطا در حذف شیفت';

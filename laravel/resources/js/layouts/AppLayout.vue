@@ -20,13 +20,21 @@ import { useTheme } from '@/composables/useTheme';
 const { isDark, toggleTheme } = useTheme();
 
 /*
- * Public pages (the login page above all) are full-screen and have their own
- * chrome — the Python `/login` renders edge to edge with no application header,
- * so the shell's white bar must not appear on them.  The route's `meta.public`
- * flag is what decides that; every panel route keeps the shell.
+ * Two kinds of route render without this shell:
+ *
+ *   * `meta.public` — the login page and the other full-screen documents.  The
+ *     Python `/login` renders edge to edge with no application header, so the
+ *     shell's bar must not appear on it.
+ *   * `meta.ownChrome` — a panel that was ported with the running
+ *     application's own header, sidebar and background (`admin.html`'s
+ *     `.page-shell` + `.topbar` + `.navarha`).  Wrapping those in `h-header`
+ *     and a max-width `h-main` put a second, invented bar above the ported one
+ *     and narrowed a layout the legacy stylesheet sizes itself.
+ *
+ * Every other route keeps the shell.
  */
 const route = useRoute();
-const isPublic = computed(() => route.meta?.public === true);
+const isBare = computed(() => route.meta?.public === true || route.meta?.ownChrome === true);
 
 /*
  * The logo lives in public/ because it is a same-origin local asset, not a
@@ -39,12 +47,13 @@ const logoUrl = '/images/lab-logo.png';
 
 <template>
     <!--
-        A public page renders bare: no shell, no header, no constrained main.
-        The login page owns the whole viewport (the Python `/login` is a
-        full-screen document with its own background scene), so wrapping it in
-        the shell would put a white bar and a max-width column above it.
+        A full-screen document renders bare: no shell, no header, no constrained
+        main.  The login page owns the whole viewport (the Python `/login` is a
+        full-screen document with its own background scene) and the ported
+        panels bring their own chrome, so wrapping either in the shell would put
+        a bar and a max-width column above a layout that already has both.
     -->
-    <RouterView v-if="isPublic" />
+    <RouterView v-if="isBare" />
 
     <div v-else class="h-shell">
         <a class="h-skip" href="#main">پرش به محتوای اصلی</a>

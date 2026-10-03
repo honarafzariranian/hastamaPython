@@ -9,27 +9,23 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
-            /*
-             * No `fonts:` option here, on purpose. The Laravel scaffold shipped
-             * `bunny('Instrument Sans')`, which pulls a webfont from
-             * fonts.bunny.net. Hastama ships its own local Vazir files in
-             * public/fonts and must not depend on an external CDN, so that
-             * plugin is removed rather than configured.
-             */
         }),
         vue(),
         tailwindcss(),
     ],
+
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
         },
     },
+
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
     },
+
     test: {
         environment: 'jsdom',
         globals: true,

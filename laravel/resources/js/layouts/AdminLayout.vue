@@ -1,20 +1,31 @@
 <script setup>
 /**
- * The admin panel shell — the Vue equivalent of `app/templates/admin.html`.
+ * The admin panel shell — a port of `app/templates/admin.html`.
  *
- * The router mounts this layout at `/admin` with no child routes, so the
- * layout owns the section navigation itself: the sidebar picks a page
- * component and the main area renders it.  This reproduces the legacy
- * `toggleBox` behaviour (one section visible at a time, sidebar icon active)
- * without the legacy `display: none` box-swapping.
+ * Why the markup is copied rather than restyled: the running application loads
+ * `admin.css` (12,442 lines) and twelve other sheets for this page, and every
+ * one of them selects the legacy vocabulary — `.page-shell`, `.topbar`,
+ * `.navarha`, `.sidebar-right`, `.icon-container`, `.management-box`.  A Vue
+ * redesign cannot match it, so the shell keeps the legacy structure and the
+ * ported sheets style it exactly as they style the running application.
  *
- * The header carries the brand, a live Persian clock (the legacy
- * `updateTopbarClock`), the theme toggle, the signed-in admin's name and the
- * logout action — the brief's "sidebar + header shell with the admin's name,
- * logout, and navigation".
+ * **URL contract.**  The legacy document is an SPA whose path names the
+ * section (`SECTION_URLS` in `admin.js`): `/admin/dashboard`,
+ * `/admin/coworkers`, `/admin/vacation`, `/admin/overtime`, `/admin/hourly-pass`,
+ * `/admin/tickets`, `/admin/internal-automation`, `/admin/shifts`,
+ * `/admin/attendance`, `/admin/payroll`.  `navTo()` pushed that path with
+ * `history.pushState`, and the page read it back on load and on `popstate`.
+ * Here the router owns it: the section comes from `route.params.section`, the
+ * sidebar pushes the same URLs, and `/admin` itself is a 303 redirect to
+ * `/admin/dashboard` on the server, exactly as the Python handler answered.
+ *
+ * Each section renders inside the `.management-box` wrapper carrying the id the
+ * legacy document used (`dashboardBox`, `coworkerBox`, …) so the stylesheet's
+ * `#id` rules — including the sidebar-hover compression in
+ * `.page-shell.sidebar-expanded` — keep working.
  */
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/composables/useTheme';
 import { toPersianDigits } from '@/utils/numbers';
@@ -28,84 +39,176 @@ import ShiftsPage from '@/pages/admin/ShiftsPage.vue';
 import ReportsPage from '@/pages/admin/ReportsPage.vue';
 import PayrollPage from '@/pages/admin/PayrollPage.vue';
 
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const { isDark, toggleTheme } = useTheme();
 
-const logoUrl = '/images/newlogo.png';
-
-const navItems = [
+/*
+ * One entry per legacy `icon-container`.  `box` is the id the legacy document
+ * carried, `id` is the path segment `navTo()` pushed, and `accent` is the
+ * `data-accent` the stylesheet keys the gradient tile off.
+ *
+ * `reports` is the one deliberate addition: the legacy panel linked the five
+ * report documents from inside the sections, so the ported panel needs a
+ * surface for them until those sections carry their own buttons.  It is marked
+ * `extra` so the difference from the running application stays visible in the
+ * source rather than looking like a ported tile.
+ */
+const sections = [
+    { id: 'dashboard', box: 'dashboardBox', label: 'داشبورد', accent: 'dashboard', component: DashboardPage },
+    { id: 'coworkers', box: 'coworkerBox', label: 'مدیریت کارکنان', accent: 'staff', component: UsersPage },
+    { id: 'vacation', box: 'vacationBox', label: 'مدیریت مرخصی ها', accent: 'leave', component: LeavePage },
+    { id: 'overtime', box: 'overtimeBox', label: 'مدیریت اضافه کاری ها', accent: 'overtime', component: OvertimePage },
+    { id: 'hourly-pass', box: 'hourlyPassBox', label: 'مدیریت پاس های ساعتی', accent: 'pass', component: HourlyPassPage },
+    { id: 'tickets', box: 'ticketBox', label: 'مدیریت تیکت ها', accent: 'ticket', component: null },
     {
-        id: 'dashboard',
-        label: 'داشبورد',
-        icon: 'M5 3h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm8 0h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6zM13 13h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6z',
+        id: 'internal-automation',
+        box: 'internalAutomationAdminBox',
+        label: 'اتوماسیون داخلی',
+        accent: 'automation',
+        component: null,
     },
-    {
-        id: 'users',
-        label: 'مدیریت کارکنان',
-        icon: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0zm14-8a3 3 0 1 0-2.83-4M22 20a6 6 0 0 0-5-5.92',
-    },
-    {
-        id: 'leave',
-        label: 'مدیریت مرخصی ها',
-        icon: 'M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 5h14M8 3v4M16 3v4m-6 8 2 2 4-4',
-    },
-    {
-        id: 'overtime',
-        label: 'مدیریت اضافه کاری ها',
-        icon: 'M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0zM19 3v4h-4',
-    },
-    {
-        id: 'hourly-pass',
-        label: 'مدیریت پاس های ساعتی',
-        icon: 'M12 8v4l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0zM17 4v3h-3',
-    },
-    {
-        id: 'shifts',
-        label: 'مدیریت شیفت‌ها',
-        icon: 'M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm0 4h14M8 3v4M16 3v4m-4 8v4m-2-2h4',
-    },
-    {
-        id: 'reports',
-        label: 'گزارش‌ها',
-        icon: 'M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm7 0v6h6M9 13h6M9 17h6',
-    },
-    {
-        id: 'payroll',
-        label: 'حقوق و دستمزد',
-        icon: 'M4 7h16a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1zm1-2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2M8 12h5m2 4a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-1v2m0-1h.01',
-    },
+    { id: 'shifts', box: 'shiftBox', label: 'مدیریت شیفت‌ها', accent: 'shift', component: ShiftsPage },
+    { id: 'attendance', box: 'hozoorbox', label: 'مدیریت ساعت زن', accent: 'attendance', component: null },
+    { id: 'payroll', box: 'payrollBox', label: 'حقوق و دستمزد', accent: 'payroll', component: PayrollPage },
+    { id: 'reports', box: 'reportsBox', label: 'گزارش‌ها', accent: 'reports', component: ReportsPage, extra: true },
 ];
 
-const pages = {
-    dashboard: DashboardPage,
-    users: UsersPage,
-    leave: LeavePage,
-    overtime: OvertimePage,
-    'hourly-pass': HourlyPassPage,
-    shifts: ShiftsPage,
-    reports: ReportsPage,
-    payroll: PayrollPage,
-};
+const DEFAULT_SECTION = 'dashboard';
 
-const activePage = ref('dashboard');
-const activeComponent = computed(() => pages[activePage.value] ?? DashboardPage);
+/*
+ * `toggleBox()` in `admin.js` does two things to the box it shows, and both are
+ * stylesheet-visible rather than cosmetic:
+ *
+ *   * it adds `.is-visible` — the selector the mobile sheet keys
+ *     `display: block !important` and the section's entrance animation off, and
+ *     the `body:has(#x.is-visible)` rules the desktop sheet keys the other
+ *     sections' fixed-position handling off;
+ *   * it sets an inline `display` — `flex` for every box, except `payrollBox`
+ *     and `hozoorbox`, which the legacy sets to `block`.
+ *
+ * The port renders exactly one box (the router owns the section), so this is
+ * the same two writes applied to the active box on every navigation.
+ */
+const BLOCK_BOXES = new Set(['payrollBox', 'hozoorbox']);
 
+function boxDisplay(boxId) {
+    return BLOCK_BOXES.has(boxId) ? 'block' : 'flex';
+}
+
+/* Bound rather than literal: a static `src="/images/…"` is treated as a build
+ * import by Vite and fails the bundle when the file lives in `public/`. */
+const logoUrl = '/images/newlogo.png?v=20260928';
+const avatarUrl = '/images/user.png';
+
+const activeSection = computed(
+    () => sections.find((item) => item.id === route.params.section) ?? sections.find((item) => item.id === DEFAULT_SECTION),
+);
+
+/* The rail tile the legacy `toggleBox` marked `.active`. */
+function isActive(item) {
+    return activeSection.value?.id === item.id;
+}
+
+/* `navTo(boxId, el, url)` — same path, same push, sidebar closes on mobile. */
+function openSection(item) {
+    closeSidebar();
+
+    if (route.params.section === item.id) {
+        return;
+    }
+
+    router.push(`/admin/${item.id}`);
+}
+
+/*
+ * Legacy sidebar behaviour, ported from `toggleSidebar` / `closeMobileSidebar`:
+ * `.open` on the rail, `mobile-sidebar-open` on <body> below 768px, and
+ * `.sidebar-expanded` on `.page-shell` above it (which is what compresses the
+ * management boxes).
+ */
 const sidebarOpen = ref(false);
+const pageShell = ref(null);
 
-function navigate(id) {
-    activePage.value = id;
+function toggleSidebar() {
+    sidebarOpen.value = !sidebarOpen.value;
+    syncSidebarClasses();
+}
+
+function closeSidebar() {
+    if (!sidebarOpen.value) {
+        return;
+    }
+
     sidebarOpen.value = false;
+    syncSidebarClasses();
 }
 
-async function logout() {
-    await auth.logout();
-    router.push({ name: 'login' });
+function syncSidebarClasses() {
+    const shell = pageShell.value;
+    const narrow = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+    document.body.classList.toggle('mobile-sidebar-open', sidebarOpen.value && narrow);
+    shell?.classList.toggle('sidebar-expanded', sidebarOpen.value && !narrow);
+
+    if (sidebarOpen.value) {
+        document.addEventListener('click', closeSidebarOnOutsideClick);
+    } else {
+        document.removeEventListener('click', closeSidebarOnOutsideClick);
+    }
 }
 
-/* Live Persian clock — the legacy `updateTopbarClock`. The interval is one
- * second so the displayed seconds stay true; the DOM is only touched when the
- * formatted text actually changed, exactly as the legacy guard did. */
+/* Desktop hover-expand (`admin.js` binds mouseenter/mouseleave on the rail). */
+function expandSidebar() {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) {
+        pageShell.value?.classList.add('sidebar-expanded');
+    }
+}
+
+function collapseSidebar() {
+    if (!sidebarOpen.value) {
+        pageShell.value?.classList.remove('sidebar-expanded');
+    }
+}
+
+function closeSidebarOnOutsideClick(event) {
+    const rail = sidebarOpen.value ? document.getElementById('mainSidebar') : null;
+
+    if (rail && !rail.contains(event.target) && !event.target.closest('.mobile-menu-toggle')) {
+        closeSidebar();
+    }
+}
+
+/* ── Profile dropdown (`toggleProfileDropdown`, `.profile-dropdown.open`) ── */
+
+const profileOpen = ref(false);
+
+function toggleProfile() {
+    profileOpen.value = !profileOpen.value;
+}
+
+function closeProfileOnOutsideClick(event) {
+    if (profileOpen.value && !event.target.closest('#profileButton')) {
+        profileOpen.value = false;
+    }
+}
+
+/*
+ * The dropdown's panels (profile, security, subscription, billing, support,
+ * settings) are built by `openProfilePanel()` inside the legacy `admin.js` and
+ * have no ported counterpart yet.  Rather than leaving silent dead buttons, the
+ * click reports the gap in the panel's own message strip.
+ */
+const notice = ref('');
+
+function pendingPanel(label) {
+    profileOpen.value = false;
+    notice.value = `«${label}» هنوز به نسخهٔ Vue منتقل نشده است.`;
+}
+
+/* ── Clock — the legacy `updateTopbarClock` (Jalali date + 24h clock) ── */
+
 const now = ref(new Date());
 let clockTimer = null;
 
@@ -113,118 +216,399 @@ onMounted(() => {
     clockTimer = setInterval(() => {
         now.value = new Date();
     }, 1000);
+
+    document.addEventListener('click', closeProfileOnOutsideClick);
+
+    /* `admin.html` put the notification identity on <body>; the ported
+       notification system (when it lands) reads it from there. */
+    document.body.dataset.notificationRole = 'admin';
+    document.body.dataset.notificationActor = auth.username || 'admin';
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
     if (clockTimer) {
         clearInterval(clockTimer);
     }
+
+    document.removeEventListener('click', closeProfileOnOutsideClick);
+    document.removeEventListener('click', closeSidebarOnOutsideClick);
+    document.body.classList.remove('mobile-sidebar-open');
+    delete document.body.dataset.notificationRole;
+    delete document.body.dataset.notificationActor;
 });
 
 const clockDate = computed(() =>
-    toPersianDigits(new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now.value))
+    toPersianDigits(
+        new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(now.value),
+    ),
 );
 const clockTime = computed(() =>
-    toPersianDigits(new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now.value))
+    toPersianDigits(
+        new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(
+            now.value,
+        ),
+    ),
 );
+
+/* ── Identity ── */
 
 const adminName = computed(() => auth.user?.name || auth.username || 'مدیر سیستم');
 const adminInitial = computed(() => String(adminName.value).trim().charAt(0) || 'م');
+
+async function logout() {
+    await auth.logout();
+    router.push({ name: 'login' });
+}
+
+/*
+ * The rail tiles, verbatim from `admin.html` (each SVG is the legacy artwork,
+ * including the tinted check/cross badges that colour the tile).
+ */
+const tileIcons = {
+    dashboard:
+        '<rect x="3.5" y="3.5" width="10" height="8" rx="2.6" fill="#fff"/><rect x="15.5" y="3.5" width="5" height="8" rx="2.5" fill="#fff" opacity=".55"/><rect x="3.5" y="13.5" width="5" height="7" rx="2.5" fill="#fff" opacity=".55"/><rect x="10.5" y="13.5" width="10" height="7" rx="2.6" fill="#fff" opacity=".85"/>',
+    staff:
+        '<circle cx="9" cy="7.6" r="3.4" fill="#fff"/><path d="M3.2 20c.6-3.4 2.9-5.2 5.8-5.2s5.2 1.8 5.8 5.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="16.8" cy="9.2" r="2.5" fill="#fff" opacity=".6"/><path d="M16.2 14.7c2.3.5 4 2.1 4.4 4.3" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>',
+    leave:
+        '<rect x="3" y="5" width="14.5" height="16" rx="3.5" stroke="#fff" stroke-width="1.9"/><path d="M3 10h14.5" stroke="#fff" stroke-width="1.9"/><path d="M7 2.8V6M13.5 2.8V6" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><path d="M6.8 14.3h3.6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" opacity=".7"/><circle cx="17" cy="17" r="5.2" fill="#fff"/><path d="M14.7 17.1l1.6 1.6 3.1-3.4" stroke="#EA580C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+    overtime:
+        '<circle cx="12" cy="13" r="8" fill="#fff" opacity=".14"/><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.9"/><path d="M12 8.5V13l3 1.9" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18.8" cy="5.5" r="3.8" fill="#fff"/><path d="M18.8 3.7v3.6M17 5.5h3.6" stroke="#A855F7" stroke-width="1.7" stroke-linecap="round"/>',
+    pass:
+        '<circle cx="11" cy="13" r="8" fill="#fff" opacity=".14"/><circle cx="11" cy="13" r="8" stroke="#fff" stroke-width="1.9"/><path d="M11 8.5V13l3 1.9" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19.2" cy="6" r="3.5" fill="#fff"/><path d="M17.8 6H20.6M19.2 4.6V7.4" stroke="#0EA5E9" stroke-width="1.5" stroke-linecap="round"/>',
+    ticket:
+        '<path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" fill="#fff" opacity=".14"/><path d="M4 7.8A2.8 2.8 0 016.8 5h10.4A2.8 2.8 0 0120 7.8v1.5a2.9 2.9 0 000 5.4v1.5a2.8 2.8 0 01-2.8 2.8H6.8A2.8 2.8 0 014 16.2v-1.5a2.9 2.9 0 000-5.4V7.8z" stroke="#fff" stroke-width="1.9"/><path d="M14.2 7.5v9" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 2.4"/><path d="M7.2 10.2h3.4M7.2 13.8h3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>',
+    automation:
+        '<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" fill="#fff" opacity=".14"/><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h8M8 11.5h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="17.4" cy="17.4" r="3.2" fill="#fff"/><path d="M17.4 15.8v3.2M15.8 17.4h3.2" stroke="#087F72" stroke-width="1.4" stroke-linecap="round"/>',
+    shift:
+        '<rect x="3" y="4.5" width="18" height="16" rx="3.5" stroke="#fff" stroke-width="1.9"/><path d="M3 9.5h18" stroke="#fff" stroke-width="1.9"/><path d="M7.5 2.8v3.4M16.5 2.8v3.4" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="15" r="4.6" fill="#fff"/><path d="M12 12.7v2.5l1.8 1.1" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+    attendance:
+        '<path d="M4 8.5V6.5A2.5 2.5 0 016.5 4h2M15.5 4h2A2.5 2.5 0 0120 6.5v2M20 15.5v2a2.5 2.5 0 01-2.5 2.5h-2M8.5 20h-2A2.5 2.5 0 014 17.5v-2" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><circle cx="9.3" cy="10.8" r="1.25" fill="#fff"/><circle cx="14.7" cy="10.8" r="1.25" fill="#fff"/><path d="M9 14.8c.9.9 1.9 1.3 3 1.3s2.1-.4 3-1.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
+    payroll:
+        '<rect x="3" y="7" width="18" height="13" rx="3.2" fill="#fff" opacity=".14"/><rect x="3" y="7" width="18" height="13" rx="3.2" stroke="#fff" stroke-width="1.9"/><path d="M6.5 7V6a2 2 0 012-2h8" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><path d="M6.5 11h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><circle cx="16.5" cy="14.5" r="4" fill="#fff"/><circle cx="16.5" cy="14.5" r="2.1" stroke="#D97706" stroke-width="1.4"/><path d="M16.5 13.4v2.2" stroke="#D97706" stroke-width="1.3" stroke-linecap="round"/>',
+    reports:
+        '<path d="M5 4.5A2.5 2.5 0 017.5 2h9A2.5 2.5 0 0119 4.5v15A2.5 2.5 0 0116.5 22h-9A2.5 2.5 0 015 19.5v-15z" fill="#fff" opacity=".14"/><path d="M5 4.5A2.5 2.5 0 017.5 2h9A2.5 2.5 0 0119 4.5v15A2.5 2.5 0 0116.5 22h-9A2.5 2.5 0 015 19.5v-15z" stroke="#fff" stroke-width="1.9"/><path d="M8.4 17.4v-4.2M12 17.4v-7M15.6 17.4v-2.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="17.6" cy="5.6" r="3.2" fill="#fff"/><path d="M16.3 5.6h2.6M17.6 4.3v2.6" stroke="#0EA5E9" stroke-width="1.3" stroke-linecap="round"/>',
+    exit:
+        '<path d="M13.5 4.5H8a4 4 0 00-4 4v7a4 4 0 004 4h5.5" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><circle cx="9" cy="12" r="1.3" fill="#fff"/><path d="M11 12h9" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><path d="M16.8 8.8L20 12l-3.2 3.2" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+
+/** The `sidebar-icon-tile` artwork, wrapped in the SVG element the legacy tile carried. */
+function tileIcon(accent) {
+    return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">${tileIcons[accent] ?? ''}</svg>`;
+}
 </script>
 
 <template>
-    <div class="admin-shell">
-        <a class="h-skip" href="#admin-main">پرش به محتوای اصلی</a>
+    <div ref="pageShell" class="page-shell">
+        <a class="h-skip" :href="`#${activeSection?.box ?? 'admin-main'}`">پرش به محتوای اصلی</a>
 
-        <header class="admin-header">
-            <div class="admin-header__inner">
-                <div class="admin-header__side">
-                    <button
-                        type="button"
-                        class="admin-burger"
-                        aria-label="باز کردن منو"
-                        :aria-expanded="sidebarOpen"
-                        @click="sidebarOpen = true"
-                    >
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
+        <header class="topbar admin-topbar-modern ma-header-box">
+            <div class="ma-header-left">
+                <button
+                    type="button"
+                    class="mobile-menu-toggle"
+                    aria-label="باز کردن منو"
+                    aria-controls="mainSidebar"
+                    :aria-expanded="sidebarOpen"
+                    @click.stop="toggleSidebar"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
 
-                    <div class="admin-brand">
-                        <img class="admin-brand__logo" :src="logoUrl" alt="لوگوی هستما" width="44" height="44">
-                        <span class="admin-brand__text">
-                            <span class="admin-brand__name">سامانه هستما</span>
-                            <span class="admin-brand__sub">پنل مدیریت | سامانه هوشمند حضور و غیاب</span>
-                        </span>
+                <div class="sidebar-top-card ma-header-brand">
+                    <div class="sidebar-top-card-content">
+                        <div class="sidebar-top-card-mark">
+                            <img
+                                :src="logoUrl"
+                                alt="لوگوی هستما"
+                                class="sidebar-top-card-image"
+                            >
+                        </div>
+                        <div class="sidebar-top-card-text">
+                            <span class="sidebar-top-card-title">سامانه هستما</span>
+                            <span class="sidebar-top-card-sub">پنل مدیریت | سامانه هوشمند حضور و غیاب</span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="admin-header__actions">
-                    <div class="admin-clock" aria-live="polite">
-                        <span class="admin-clock__date">{{ clockDate }}</span>
-                        <span class="admin-clock__time">{{ clockTime }}</span>
-                    </div>
+            <div class="topbar-actions">
+                <div class="topbar-clock-pill" aria-live="polite">
+                    <span class="topbar-clock-date">{{ clockDate }}</span>
+                    <span class="topbar-clock-time">{{ clockTime }}</span>
+                </div>
 
-                    <button
-                        type="button"
-                        class="h-btn h-btn-ghost admin-theme-toggle"
-                        :aria-pressed="isDark"
-                        :aria-label="isDark ? 'روشن کردن تم' : 'تاریک کردن تم'"
-                        :title="isDark ? 'روشن کردن تم' : 'تاریک کردن تم'"
-                        @click="toggleTheme"
+                <button
+                    type="button"
+                    class="topbar-icon-btn notification-bell"
+                    aria-label="مدیریت اعلان‌ها"
+                    @click="pendingPanel('مدیریت اعلان‌ها')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C13.1046 22 14 21.1046 14 20H10C10 21.1046 10.8954 22 12 22Z" fill="currentColor" />
+                        <path
+                            d="M18 16V11C18 7.68629 16.2091 4.86798 13.25 4.21834V3.5C13.25 3.08579 12.9142 2.75 12.5 2.75C12.0858 2.75 11.75 3.08579 11.75 3.5V4.21834C8.79095 4.86798 7 7.68629 7 11V16L5 18V19H19V18L18 16Z"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                    <span class="topbar-badge notification-unread-badge" hidden>۰</span>
+                </button>
+
+                <div
+                    class="topbar-icon-btn theme-toggle"
+                    role="button"
+                    tabindex="0"
+                    data-action="toggle-theme"
+                    :aria-label="isDark ? 'روشن کردن تم' : 'تاریک کردن تم'"
+                    @click="toggleTheme"
+                    @keydown.enter.prevent="toggleTheme"
+                    @keydown.space.prevent="toggleTheme"
+                >
+                    <svg
+                        class="theme-toggle-moon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                     >
-                        <span aria-hidden="true">{{ isDark ? '☀' : '☾' }}</span>
-                    </button>
+                        <path
+                            d="M21 12.79C20.55 12.93 20.08 13 19.59 13C15.59 13 12.29 9.7 12.29 5.7C12.29 5.21 12.36 4.74 12.5 4.29C9.21 4.84 6.82 7.83 6.82 11.32C6.82 15.14 10.17 18.49 14 18.49C17.49 18.49 20.48 16.1 21.03 12.81C21.02 12.81 21.01 12.79 21 12.79Z"
+                            fill="currentColor"
+                        />
+                    </svg>
+                    <svg
+                        class="theme-toggle-sun"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8" />
+                        <path
+                            d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </div>
 
-                    <div class="admin-user">
-                        <span class="admin-user__avatar" aria-hidden="true">{{ adminInitial }}</span>
-                        <span class="admin-user__name">{{ adminName }}</span>
-                        <span class="admin-user__role">ادمین</span>
+                <div id="profileButton" class="topbar-user" @click.stop="toggleProfile">
+                    <div class="topbar-avatar-wrap">
+                        <img class="topbar-avatar" :src="avatarUrl" alt="پروفایل مدیریت">
                     </div>
+                    <div class="topbar-user-info">
+                        <span class="topbar-user-name">{{ adminName }}</span>
+                        <span class="topbar-user-role">ادمین</span>
+                    </div>
+                    <svg class="chevron-icon" viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="m6 9 6 6 6-6"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
 
-                    <button type="button" class="h-btn h-btn-primary admin-logout" @click="logout">
-                        <span aria-hidden="true">⏻</span>
-                        <span>خروج</span>
-                    </button>
+                    <div id="profileDropdown" class="profile-dropdown" :class="{ open: profileOpen }">
+                        <div class="pd-header">
+                            <div class="pd-header__avatar">
+                                <img :src="avatarUrl" alt="پروفایل">
+                                <span class="pd-header__status"></span>
+                            </div>
+                            <div class="pd-header__info">
+                                <div class="pd-header__name">{{ adminName }}</div>
+                                <div class="pd-header__role">{{ auth.username || 'admin' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">حساب کاربری</div>
+                            <button type="button" class="pd-item" @click="pendingPanel('پروفایل من')">
+                                <span class="pd-item__icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                </span>
+                                <span class="pd-item__text">پروفایل من</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                            <button type="button" class="pd-item" @click="pendingPanel('امنیت و رمز عبور')">
+                                <span class="pd-item__icon pd-item__icon--green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                                </span>
+                                <span class="pd-item__text">امنیت و رمز عبور</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">مالی و اشتراک</div>
+                            <button type="button" class="pd-item" @click="pendingPanel('اشتراک من')">
+                                <span class="pd-item__icon pd-item__icon--purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
+                                </span>
+                                <span class="pd-item__text">اشتراک من</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                            <button type="button" class="pd-item" @click="pendingPanel('فاکتورها و پرداخت')">
+                                <span class="pd-item__icon pd-item__icon--amber">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
+                                </span>
+                                <span class="pd-item__text">فاکتورها و پرداخت</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <div class="pd-section__label">پشتیبانی و تنظیمات</div>
+                            <button type="button" class="pd-item" @click="pendingPanel('پشتیبانی فنی')">
+                                <span class="pd-item__icon pd-item__icon--cyan">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                </span>
+                                <span class="pd-item__text">پشتیبانی فنی</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                            <button type="button" class="pd-item" @click="pendingPanel('تنظیمات سامانه')">
+                                <span class="pd-item__icon pd-item__icon--slate">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                                </span>
+                                <span class="pd-item__text">تنظیمات سامانه</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="pd-section">
+                            <a
+                                href="/training/lesson/admin-dashboard"
+                                class="pd-item pd-item--link"
+                                target="_blank"
+                                rel="noopener"
+                                @click="profileOpen = false"
+                            >
+                                <span class="pd-item__icon pd-item__icon--blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+                                </span>
+                                <span class="pd-item__text">آموزش این صفحه</span>
+                                <span class="pd-item__arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6" /></svg>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <div class="admin-body">
-            <div v-if="sidebarOpen" class="admin-sidebar-overlay" aria-hidden="true" @click="sidebarOpen = false"></div>
+        <div class="mobile-sidebar-overlay" aria-hidden="true" @click="closeSidebar"></div>
 
-            <aside class="admin-sidebar" :class="{ 'is-open': sidebarOpen }" aria-label="منوی مدیریت">
-                <button type="button" class="admin-sidebar__close" aria-label="بستن منو" @click="sidebarOpen = false">×</button>
+        <div class="navarha">
+            <aside
+                id="mainSidebar"
+                class="sidebar-right rightSidebar"
+                :class="{ open: sidebarOpen }"
+                @mouseenter="expandSidebar"
+                @mouseleave="collapseSidebar"
+            >
+                <button type="button" class="mobile-sidebar-close" aria-label="بستن منو" @click="closeSidebar">×</button>
 
-                <nav class="admin-nav">
-                    <button
-                        v-for="item in navItems"
-                        :key="item.id"
-                        type="button"
-                        class="admin-nav__item"
-                        :class="{ 'is-active': activePage === item.id }"
-                        :aria-current="activePage === item.id ? 'page' : undefined"
-                        @click="navigate(item.id)"
-                    >
-                        <span class="admin-nav__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path :d="item.icon" />
-                            </svg>
-                        </span>
-                        <span class="admin-nav__label">{{ item.label }}</span>
-                    </button>
-                </nav>
+                <div
+                    v-for="item in sections"
+                    :key="item.id"
+                    class="icon-container"
+                    :class="{ active: isActive(item) }"
+                    :data-accent="item.accent"
+                    role="button"
+                    tabindex="0"
+                    :aria-current="isActive(item) ? 'page' : undefined"
+                    @click="openSection(item)"
+                    @keydown.enter.prevent="openSection(item)"
+                >
+                    <!-- eslint-disable-next-line vue/no-v-html -- static legacy artwork, no user input -->
+                    <span class="sidebar-icon-tile" aria-hidden="true" v-html="tileIcon(item.accent)"></span>
+                    <span class="icon-label">{{ item.label }}</span>
+                </div>
+
+                <div class="sidebar-divider" aria-hidden="true"><span></span></div>
+
+                <div class="icon-container" data-accent="exit" role="button" tabindex="0" @click="logout" @keydown.enter.prevent="logout">
+                    <span class="sidebar-icon-tile" aria-hidden="true" v-html="tileIcon('exit')"></span>
+                    <span class="icon-label">خروج</span>
+                </div>
             </aside>
-
-            <main id="admin-main" class="admin-main">
-                <component :is="activeComponent" />
-            </main>
         </div>
+
+        <p v-if="notice" class="h-alert admin-pending-notice" role="status">
+            {{ notice }}
+            <button type="button" class="admin-pending-notice__close" aria-label="بستن پیام" @click="notice = ''">×</button>
+        </p>
+
+        <main
+            v-if="activeSection"
+            :id="activeSection.box"
+            class="management-box is-visible"
+            :style="{ display: boxDisplay(activeSection.box) }"
+            aria-label="محتوای بخش"
+        >
+            <component :is="activeSection.component" v-if="activeSection.component" />
+
+            <div v-else class="admin-section-pending">
+                <h3 class="admin-section-pending__title">این بخش هنوز به Vue منتقل نشده است</h3>
+                <p class="admin-section-pending__text">
+                    صفحهٔ «{{ activeSection.label }}» در نسخهٔ فعلی Laravel ساخته نشده؛ در برنامهٔ در حال اجرا
+                    (پایتون) این بخش کامل است و اندپوینت‌های آن هم پورت شده‌اند. انتقال این صفحه یک کار جداگانه است.
+                </p>
+            </div>
+        </main>
     </div>
 </template>
 
 <style>
+/*
+ * The skip link is the one piece of chrome added to the legacy markup (the
+ * legacy document has none), and it is clipped rather than pushed off-canvas:
+ * in RTL an `inset-inline-start: -9999px` moves it off the **right** edge,
+ * which widens the document by 10,000px and leaves the whole panel scrolled
+ * sideways — visible immediately in a screenshot, invisible to a value check.
+ */
+.page-shell > .h-skip {
+    position: absolute;
+    top: 0;
+    z-index: 60;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.page-shell > .h-skip:focus {
+    width: auto;
+    height: auto;
+    clip-path: none;
+    inset-inline: 0;
+    margin-inline: auto;
+    padding: 0.75rem 1rem;
+    background: var(--c-primary, #2563eb);
+    color: #fff;
+    border-radius: 0 0 12px 12px;
+}
+
 /*
  * Success alert variant used by the admin pages.  The design system in
  * app.css defines `.h-alert` (error styling) but no success counterpart, so
@@ -238,366 +622,45 @@ const adminInitial = computed(() => String(adminName.value).trim().charAt(0) || 
 [data-theme='dark'] .h-alert--ok {
     color: #86efac;
 }
-</style>
 
-<style scoped>
-.admin-shell {
-    display: flex;
-    min-height: 100dvh;
-    flex-direction: column;
+/* The three surfaces this port cannot render yet report themselves instead of
+   pretending to be empty sections. */
+.admin-section-pending {
+    padding: 2rem 1.4rem;
+    border: 1px dashed var(--border, rgb(148 163 184 / 0.45));
+    border-radius: 18px;
+    text-align: center;
 }
 
-.admin-header {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    border-bottom: 1px solid rgb(15 23 42 / 0.08);
-    background: rgb(255 255 255 / 0.88);
-    backdrop-filter: blur(10px);
-}
-
-[data-theme='dark'] .admin-header {
-    border-bottom-color: var(--dk-border);
-    background: rgb(24 34 51 / 0.88);
-}
-
-.admin-header__inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.6rem 1.1rem;
-}
-
-.admin-header__side {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    min-width: 0;
-}
-
-.admin-burger {
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    border: 1px solid rgb(15 23 42 / 0.12);
-    border-radius: var(--radius-token-md);
-    background: transparent;
-}
-
-[data-theme='dark'] .admin-burger {
-    border-color: var(--dk-border);
-}
-
-.admin-burger span {
-    display: block;
-    height: 2px;
-    border-radius: 2px;
-    background: currentColor;
-}
-
-.admin-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7rem;
-    min-width: 0;
-}
-
-.admin-brand__logo {
-    width: 42px;
-    height: 42px;
-    object-fit: contain;
-}
-
-.admin-brand__text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.35;
-}
-
-.admin-brand__name {
-    font-size: 1.02rem;
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.admin-brand__sub {
-    font-size: 0.72rem;
-    color: #64748b;
-    white-space: nowrap;
-}
-
-[data-theme='dark'] .admin-brand__sub {
-    color: var(--dk-text-2);
-}
-
-.admin-header__actions {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-}
-
-.admin-clock {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.35rem 0.8rem;
-    border: 1px solid rgb(15 23 42 / 0.1);
-    border-radius: 999px;
-    background: rgb(15 23 42 / 0.03);
-    font-size: 0.8rem;
-    white-space: nowrap;
-}
-
-[data-theme='dark'] .admin-clock {
-    border-color: var(--dk-border);
-    background: var(--dk-surface-2);
-}
-
-.admin-clock__date {
-    font-weight: 700;
-}
-
-.admin-clock__time {
-    color: #64748b;
-    font-variant-numeric: tabular-nums;
-}
-
-[data-theme='dark'] .admin-clock__time {
-    color: var(--dk-text-2);
-}
-
-.admin-theme-toggle {
-    padding: 0.5rem 0.7rem;
-    font-size: 1rem;
-}
-
-.admin-user {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-}
-
-.admin-user__avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid rgb(15 23 42 / 0.12);
-    background: var(--c-primary);
-    color: #fff;
-    font-size: 1rem;
+.admin-section-pending__title {
+    margin: 0 0 0.6rem;
+    font-size: 1.05rem;
     font-weight: 800;
 }
 
-[data-theme='dark'] .admin-user__avatar {
-    border-color: var(--dk-border);
-    background: var(--dk-accent);
-    color: #082f49;
+.admin-section-pending__text {
+    margin: 0 auto;
+    max-width: 46rem;
+    font-size: 0.86rem;
+    line-height: 1.9;
+    color: var(--muted, #64748b);
 }
 
-.admin-user__name {
-    font-size: 0.85rem;
-    font-weight: 700;
-    white-space: nowrap;
+.admin-pending-notice {
+    position: relative;
+    width: min(88%, 100%);
+    margin: 0 auto 0.5rem;
+    text-align: center;
 }
 
-.admin-user__role {
-    font-size: 0.7rem;
-    color: #64748b;
-}
-
-[data-theme='dark'] .admin-user__role {
-    color: var(--dk-text-2);
-}
-
-.admin-logout {
-    white-space: nowrap;
-}
-
-.admin-body {
-    display: flex;
-    flex: 1;
-    align-items: stretch;
-}
-
-.admin-sidebar-overlay {
-    display: none;
-}
-
-.admin-sidebar {
-    position: sticky;
-    top: 65px;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    width: 232px;
-    flex-shrink: 0;
-    align-self: flex-start;
-    height: calc(100dvh - 65px);
-    padding: 1rem 0.75rem;
-    border-inline-start: 1px solid rgb(15 23 42 / 0.08);
-    background: #fff;
-    overflow-y: auto;
-}
-
-[data-theme='dark'] .admin-sidebar {
-    border-inline-start-color: var(--dk-border);
-    background: var(--dk-bg-2);
-}
-
-.admin-sidebar__close {
-    display: none;
-}
-
-.admin-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.admin-nav__item {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    width: 100%;
-    padding: 0.65rem 0.8rem;
+.admin-pending-notice__close {
+    position: absolute;
+    inset-inline-start: 0.6rem;
+    inset-block-start: 0.35rem;
     border: 0;
-    border-radius: var(--radius-token-md);
-    background: transparent;
-    color: #475569;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    text-align: start;
+    background: none;
+    color: inherit;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: background-color 150ms ease, color 150ms ease;
-}
-
-[data-theme='dark'] .admin-nav__item {
-    color: var(--dk-text-2);
-}
-
-.admin-nav__item:hover {
-    background: rgb(14 165 233 / 0.08);
-    color: var(--c-primary-dark);
-}
-
-[data-theme='dark'] .admin-nav__item:hover {
-    background: var(--dk-surface-2);
-    color: var(--dk-accent);
-}
-
-.admin-nav__item.is-active {
-    background: var(--c-primary);
-    color: #fff;
-}
-
-[data-theme='dark'] .admin-nav__item.is-active {
-    background: var(--dk-accent);
-    color: #082f49;
-}
-
-.admin-nav__icon {
-    display: inline-flex;
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-}
-
-.admin-nav__icon svg {
-    width: 100%;
-    height: 100%;
-}
-
-.admin-main {
-    flex: 1;
-    min-width: 0;
-    padding: 1.4rem 1.2rem 2.4rem;
-}
-
-@media (max-width: 900px) {
-    .admin-brand__sub {
-        display: none;
-    }
-
-    .admin-user__role {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-burger {
-        display: flex;
-    }
-
-    .admin-sidebar-overlay {
-        display: block;
-        position: fixed;
-        inset: 0;
-        z-index: 35;
-        background: rgb(15 23 42 / 0.45);
-    }
-
-    .admin-sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        z-index: 40;
-        height: 100dvh;
-        width: 260px;
-        padding-top: 1rem;
-        transform: translateX(100%);
-        transition: transform 220ms ease;
-        box-shadow: var(--dk-shadow);
-    }
-
-    [dir='rtl'] .admin-sidebar {
-        transform: translateX(100%);
-    }
-
-    .admin-sidebar.is-open {
-        transform: translateX(0);
-    }
-
-    .admin-sidebar__close {
-        display: block;
-        align-self: flex-end;
-        margin: 0 0.6rem 0.4rem;
-        border: 0;
-        background: transparent;
-        color: inherit;
-        font-size: 1.6rem;
-        line-height: 1;
-        cursor: pointer;
-    }
-
-    .admin-clock {
-        display: none;
-    }
-
-    .admin-user__name {
-        display: none;
-    }
-
-    .admin-logout {
-        padding: 0.5rem 0.7rem;
-    }
-
-    .admin-logout span:last-child {
-        display: none;
-    }
-
-    .admin-main {
-        padding: 1rem 0.8rem 2rem;
-    }
 }
 </style>

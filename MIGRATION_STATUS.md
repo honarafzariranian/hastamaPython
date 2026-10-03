@@ -7,7 +7,8 @@ Cloudflare Tunnel, `hastama.ir`.
 `Verified` requires the behaviour to have been run against the Laravel application and recorded in
 the regression table. Row counts below are honest: nothing is migrated yet.
 
-Last updated: **2026-10-02** (design-parity pass — see
+Last updated: **2026-10-03** (client-routing fix — see the note below; design-parity pass on
+2026-10-02 is in
 `docs/migration/DESIGN_PARITY.md`.  The backend and the API surface stand; the **frontend is a
 redesign on three surfaces**, and the kiosk was rendering with no stylesheet at all until this
 pass.  Nothing in the “Verified” column below is claimed for a page it was not tested on.)
@@ -46,6 +47,67 @@ pass.  Nothing in the “Verified” column below is claimed for a page it was n
 >   `dark-theme.css` in the legacy build, so in the running application they stay light in dark
 >   mode while the SPA themes them.  Closing it needs per-route stylesheets — see
 >   `DESIGN_PARITY.md` §7.
+
+> **Client routing to the ported handlers (2026-10-03).**  Logging in as `admin` failed against
+> the Laravel app: the browser posted to `/api/login_user`, which is not a route, and the login
+> page rendered Laravel's own `The POST method is not supported for route api/login_user` in
+> `#loginHint`.
+>
+> * **Cause.**  `resources/js/services/api.js` sets the shared client's `baseURL` to `/api`, and
+>   only `/api/*` is prefixed.  Nearly every ported handler keeps the path the Python
+>   application served — `POST /login_user`, `/logout`, `/get_users`, `/update_leave_status`,
+>   `/master-admin/api/users` — so a call to one of them has to pass `{ baseURL: '' }`.
+>   `stores/auth.js` did not, for `login` **or** `logout`; the four layouts that call
+>   `/logout` by hand did, which is what hid the mistake.
+> * **Fix.**  The override is passed in `stores/auth.js` and the convention is documented in
+>   `services/api.js`.  The same defect existed at **32 further call sites** in
+>   `resources/js/pages/admin/*` (Dashboard, HourlyPass, Leave, Overtime, Payroll, Reports,
+>   Shifts, Users): every read and every approval POST went to `/api/…`, where it was answered
+>   by the SPA shell (an HTML body the page then found no data in) instead of the handler.  All
+>   32 now carry the override.
+> * **Verified live** after `npm run build`: `admin` logs in → `POST /login_user` **200** →
+>   `GET /api/me` **200** → redirect to `/admin`, whose five reads (`/get_users`,
+>   `/get_leave_requests`, `/get_overtime_requests`, `/get_hourly_pass_requests`,
+>   `/get_active_shifts`) all answer **200**; the leave and overtime tabs answer 200 as well; the
+>   console is clean.
+> * **New check.**  `python tools/api_paths.py` resolves every `api.*` call in the Vue source
+>   against `php artisan route:list --json` and separates “the route exists one prefix over”
+>   (a defect in the call) from “nothing answers either path” (still on the backlog).  It now
+>   reports **0 wrong-base calls**.  The 10 remaining are reads/writes of the call-centre kiosk
+>   and label endpoints (`/api/queue/*`, `/api/calls/*`, `/api/label/*`) — unported, not
+>   misrouted.
+> **Admin panel: addresses and chrome (2026-10-03).**  The panel is at
+> `/admin/dashboard` … `/admin/payroll` now, like the running application, and it
+> renders inside the legacy chrome instead of the Vue redesign.
+>
+> * `/admin` is served **only** by the ported `PublicPages\AdminController` — a
+>   duplicate `Route::redirect` added in the same pass was removed once
+>   `php artisan route:list` showed two handlers for one path.  Anonymous and
+>   non-admin callers still get `303 /login`, an admin gets `303 /admin/dashboard`.
+> * The router owns `/admin/:section`; the rail pushes the same URLs `admin.js`
+>   pushed (`SECTION_URLS`), so reload, bookmark and back button all name the
+>   section.  Login, the training pages and the global header were updated to send
+>   admins to `/admin/dashboard`.
+> * `AdminLayout.vue` is now `admin.html`'s own shell — `.page-shell`, `.topbar
+>   admin-topbar-modern ma-header-box`, `.navarha`, `.sidebar-right` with the ten
+>   `icon-container[data-accent]` tiles, and one `.management-box` per section
+>   carrying the legacy id — so the 12,442-line `admin.css` styles it as it styles
+>   the running application.  `meta.ownChrome` stops the Vue application shell
+>   from putting a second header above it.
+> * **Still the Vue redesign inside the boxes**: the eight section bodies.  The
+>   dashboard needs a server endpoint first (its numbers were template context in
+>   `_render_admin_page`), and `tickets`, `attendance` and
+>   `internal-automation` have no Vue page at all.  See `DESIGN_PARITY.md`
+>   §4.1.1 (done) and §7 step 4 (remaining).
+>
+> * **Functional gap found while verifying, not fixed.**  The admin panel's *مدیریت کارکنان* tab
+>   takes its list from **`/master-admin/api/users`** and its row actions from
+>   `/master-admin/api/users/{u}/toggle-status` and `/…/change-role`.  Those are control-centre
+>   endpoints: an ordinary admin is answered **403** (`شما به این بخش دسترسی ندارید.`), so the tab
+>   is empty for the role that owns it.  The legacy panel server-rendered that table from the
+>   `users` context and had no status/role controls at all (they live in `master_admin.py`), so
+>   the port needs either `GET /get_users` for the list or the actions dropped — a decision, not a
+>   silent patch.
 
 ---
 

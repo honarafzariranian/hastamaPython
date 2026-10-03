@@ -71,9 +71,12 @@
  */
 @import './legacy/dark-theme.css';
 
-@source '../../resources/views/**/*.blade.php';
-@source '../../resources/js/**/*.vue';
-@source '../../resources/js/**/*.js';
+/* Tailwind v4 source directives are valid but not recognized by the CSS
+   validator used by some editors, so the lint rule is disabled only here. */
+/* stylelint-disable at-rule-no-unknown */
+@source '../views';
+@source '../js';
+/* stylelint-enable at-rule-no-unknown */
 
 /*
  * Dark mode is driven by the theme contract that the existing application
@@ -86,6 +89,7 @@
  * `data-theme` on <html> is the signal Tailwind reads here; the legacy classes
  * are still applied for any ported stylesheet that selects on them.
  */
+/* stylelint-disable-next-line at-rule-no-unknown */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /*
@@ -93,6 +97,7 @@
  * (app/static/css/call-tokens.css) so the migrated UI keeps the same colours
  * instead of importing a generic theme.
  */
+/* stylelint-disable-next-line at-rule-no-unknown */
 @theme {
     --font-sans: 'Vazir', Tahoma, Arial, sans-serif;
 
@@ -113,24 +118,6 @@
     --radius-token-md: 12px;
     --radius-token-lg: 16px;
     --radius-token-xl: 20px;
-}
-
-/*
- * ---------------------------------------------------------------------------
- * Typography — local Vazir only
- * ---------------------------------------------------------------------------
- * No external font host is used anywhere.  public/fonts holds the same three
- * files the current application serves from app/static/fonts.
- */
-@font-face {
-    font-family: 'Vazir';
-    src: local('Vazir'),
-        url('/fonts/Vazir.woff2') format('woff2'),
-        url('/fonts/Vazir.woff') format('woff'),
-        url('/fonts/Vazir.ttf') format('truetype');
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
 }
 
 /*

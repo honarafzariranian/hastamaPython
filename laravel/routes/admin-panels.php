@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardStatsController;
 use App\Http\Controllers\Admin\HourlyPassController;
 use App\Http\Controllers\Admin\LeaveAdminController;
 use App\Http\Controllers\Admin\OvertimeController;
@@ -56,6 +57,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void {
+
+    /*
+     * The dashboard's figures.  The Python page built them as template context
+     * (there was no URL), so this path is the port's own — it is registered
+     * here rather than beside `/admin/dashboard` because `routes/public-pages.php`
+     * owns the page shells and this answers a `fetch()`, not a document.
+     */
+    Route::get('/admin/dashboard/stats', [DashboardStatsController::class, 'stats'])
+        ->name('admin-panel.dashboard-stats');
 
     Route::post('/update_user', [UserAdminController::class, 'update'])
         ->name('admin-panel.update-user');
