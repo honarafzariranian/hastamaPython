@@ -22,16 +22,9 @@ const routes = [
         meta: { title: 'ورود به سامانه', public: true },
     },
     {
+        /* Python permanently redirects the root portal URL to `/login`. */
         path: '/',
-        name: 'home',
-        component: () => import('@/pages/StatusPage.vue'),
-        meta: { title: 'وضعیت سامانه', public: true },
-    },
-    {
-        path: '/status',
-        name: 'status',
-        component: () => import('@/pages/StatusPage.vue'),
-        meta: { title: 'وضعیت سامانه', public: true },
+        redirect: { name: 'login' },
     },
 
     /* Public content pages. */
@@ -108,7 +101,8 @@ const routes = [
         path: '/call-management',
         name: 'call-management',
         component: () => import('@/pages/call/CallManagementPage.vue'),
-        meta: { title: 'مدیریت فراخوان', role: 'master_admin' },
+        /* The Python call-management template is a standalone full-screen page. */
+        meta: { title: 'مدیریت فراخوان', role: 'master_admin', ownChrome: true },
     },
 
     /* The three panels. */
@@ -116,7 +110,8 @@ const routes = [
         path: '/user_panel',
         name: 'user-panel',
         component: () => import('@/layouts/UserPanelLayout.vue'),
-        meta: { title: 'پنل کاربری', requiresAuth: true },
+        /* `user-panel.html` owns its complete header, sidebar and page width. */
+        meta: { title: 'پنل کاربری', requiresAuth: true, ownChrome: true },
     },
     /*
      * The admin panel is an SPA whose path names the section — the same
@@ -145,9 +140,15 @@ const routes = [
     },
     {
         path: '/master-admin',
-        name: 'master-admin',
+        redirect: { name: 'master-admin-section', params: { section: 'dashboard' } },
+    },
+    {
+        /* FastAPI serves this same shell at `/master-admin/{section}`. */
+        path: '/master-admin/:section',
+        name: 'master-admin-section',
         component: () => import('@/layouts/ControlCentreLayout.vue'),
-        meta: { title: 'مرکز کنترل', role: 'master_admin' },
+        /* `master-admin.html` supplies its own header, rails and full-width layout. */
+        meta: { title: 'مرکز کنترل', role: 'master_admin', ownChrome: true },
     },
 
     {
@@ -204,7 +205,14 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.role === 'master_admin' && !auth.isMasterAdmin) {
-        return { name: 'login' };
+        /*
+         * The Python page guard redirects a signed-in non-master-admin to
+         * `/admin` (an anonymous visitor goes to `/login`).  Preserve that
+         * route for an administrator: `/admin` then resolves to its dashboard.
+         * A regular user follows the same source redirect and is sent from the
+         * admin guard to `/login` on the next navigation.
+         */
+        return auth.isAuthenticated ? { path: '/admin' } : { name: 'login' };
     }
 
     return true;

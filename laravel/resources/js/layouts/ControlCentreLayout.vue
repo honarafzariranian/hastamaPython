@@ -5,9 +5,10 @@
  *
  * The legacy page was a server-rendered shell (topbar + right sidebar + left
  * quick rail) whose sections were built client-side by `master-admin.js`.
- * This layout keeps that shape — sidebar + header + content — but each section
- * is now a real page component with its own data, and the sidebar switches the
- * active page locally, exactly as `AdminLayout` does for the admin panel.
+ * This layout keeps that shape — sidebar + header + content — and renders a
+ * Vue page component for each section currently ported. Section changes use
+ * the same `/master-admin/{section}` path the Python links use, so reloads,
+ * direct links and browser history keep the selected section.
  *
  * The header carries the brand («مرکز کنترل اصلی»), a live Persian clock (the
  * legacy `updateTopbarClock`), the theme toggle from the shared composable, the
@@ -15,7 +16,7 @@
  * `/logout` endpoint (the legacy verb) before clearing local state.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from '@/composables/useTheme';
@@ -30,8 +31,8 @@ import ErrorsPage from '@/pages/control/ErrorsPage.vue';
 import ActionsPage from '@/pages/control/ActionsPage.vue';
 import SubscriptionsPage from '@/pages/control/SubscriptionsPage.vue';
 import SettingsPage from '@/pages/control/SettingsPage.vue';
-import HealthPage from '@/pages/control/HealthPage.vue';
 
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const { isDark, toggleTheme } = useTheme();
@@ -40,9 +41,9 @@ const logoUrl = '/images/newlogo.png';
 const userAvatarUrl = '/images/user.png';
 
 /**
- * The ten control-centre sections.  Order matches the legacy right sidebar:
- * dashboard first, then the operational feeds, then subscriptions, settings
- * and the health panel.
+ * The right-rail entries with a Vue section body. Legacy `audit-logs` and
+ * `tickets` still have no Vue page and remain parity gaps; subscriptions lives
+ * on the Python template's separate left rail.
  */
 const navItems = [
     {
@@ -81,19 +82,9 @@ const navItems = [
         icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 0v6h6M9 13h6m-6 4h4',
     },
     {
-        id: 'subscriptions',
-        label: 'اشتراک مشتریان',
-        icon: 'M4 7h16a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1zm1-2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2M8 12h3m4 1h2',
-    },
-    {
-        id: 'settings',
+        id: 'system-settings',
         label: 'تنظیمات سامانه',
         icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm7.4-3a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
-    },
-    {
-        id: 'health',
-        label: 'سلامت سیستم',
-        icon: 'M22 12h-4l-3 9L9 3l-3 9H2',
     },
 ];
 
@@ -106,34 +97,35 @@ const pages = {
     errors: ErrorsPage,
     'admin-actions': ActionsPage,
     subscriptions: SubscriptionsPage,
-    settings: SettingsPage,
-    health: HealthPage,
+    'system-settings': SettingsPage,
 };
 
-const activePage = ref('dashboard');
-const activeComponent = computed(() => pages[activePage.value] ?? DashboardPage);
+const activeSection = computed(() => {
+    const section = route.params.section;
+
+    return typeof section === 'string' ? section : 'dashboard';
+});
+const activeComponent = computed(() => pages[activeSection.value] ?? null);
 
 const sidebarOpen = ref(false);
 const logoutLoading = ref(false);
 
 /**
- * Switch section.  Unknown ids fall back to the dashboard so a hand-edited
- * `?page=` never renders a blank shell.  The choice is mirrored into the query
- * string so a refresh lands back on the same section.
+ * The Python page routes use `/master-admin/{section}` and the sidebar links
+ * navigate to those exact paths. Keep the section in the path so direct links,
+ * reloads and browser history select the same page without a migration-only
+ * `?page=` query parameter.
  */
 function navigate(id) {
-    const exists = navItems.some((item) => item.id === id);
-    activePage.value = exists ? id : 'dashboard';
+    const nextSection = pages[id] ? id : 'dashboard';
     sidebarOpen.value = false;
-    router.replace({ query: { page: activePage.value } }).catch(() => {});
-}
 
-onMounted(() => {
-    const requested = router.currentRoute.value.query.page;
-    if (typeof requested === 'string' && navItems.some((item) => item.id === requested)) {
-        activePage.value = requested;
+    if (route.params.section === nextSection) {
+        return;
     }
-});
+
+    router.push({ name: 'master-admin-section', params: { section: nextSection } }).catch(() => {});
+}
 
 /**
  * Sign out through the real root `/logout` (the verb the legacy sidebar link
@@ -254,7 +246,7 @@ const adminName = computed(() => auth.user?.name || auth.user?.username || 'مد
                     :key="item.id"
                     href="#"
                     class="icon-container"
-                    :class="{ active: activePage === item.id }"
+                    :class="{ active: activeSection === item.id }"
                     :data-accent="`ma-${item.id}`"
                     style="text-decoration:none;color:inherit;"
                     @click.prevent="navigate(item.id)"
@@ -288,7 +280,7 @@ const adminName = computed(() => auth.user?.name || auth.user?.username || 'مد
                 <a
                     href="#"
                     class="icon-container"
-                    :class="{ active: activePage === 'subscriptions' }"
+                    :class="{ active: activeSection === 'subscriptions' }"
                     data-accent="ma-subscriptions"
                     title="مدیریت اشتراک مشتریان"
                     aria-label="مدیریت اشتراک مشتریان"
@@ -381,7 +373,7 @@ const adminName = computed(() => auth.user?.name || auth.user?.username || 'مد
 
         <main class="ma-dashboard-main" id="top">
             <div class="ma-dashboard-inner">
-                <component :is="activeComponent" @navigate="navigate" />
+                <component v-if="activeComponent" :is="activeComponent" @navigate="navigate" />
             </div>
         </main>
     </div>
