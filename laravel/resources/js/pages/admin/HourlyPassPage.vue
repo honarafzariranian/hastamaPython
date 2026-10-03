@@ -1,17 +1,13 @@
 <script setup>
 /**
- * Hourly pass approval — the legacy `hourlyPassBox`.
+ * Hourly pass management — verbatim port of `hourlyPassBox` from admin.html.
  *
- * Tab 1 (درخواست‌های پاس ساعتی): GET /get_hourly_pass_requests answers a bare
- * array of pending rows; the operator picks a status and submits with
- * POST /change_hourly_pass_status.  A decided row disappears, as in the
- * legacy `applyStatusChangeForHourlyPass`.
- *
- * Tab 2 (گزارش انفرادی): POST /get_hourly_pass_report returns every decided
- * pass in a Jalali range; each row's status can be changed with
- * POST /update_hourly_pass_status, and «دریافت گزارش» stores the approved
- * rows in localStorage and opens the server-rendered
- * /hourlypass_Report_page — the legacy download flow.
+ * Three tabs:
+ *   1. hp-requests     — pending requests, approval via POST /change_hourly_pass_status
+ *   2. hp-all-report   — total per-user (server context in Python, fetched here)
+ *   3. hp-individual   — date-range individual report, POST /get_hourly_pass_report,
+ *                        status updates via POST /update_hourly_pass_status,
+ *                        download opens /hourlypass_Report_page with localStorage data.
  */
 import { onMounted, reactive, ref } from 'vue';
 import api from '@/services/api';
@@ -19,167 +15,173 @@ import { toLatinDigits, toPersianDigits } from '@/utils/numbers';
 
 const DECISIONS = ['تایید شده', 'رد شده', 'انصراف'];
 
-const activeTab = ref('requests');
-
-const loading = ref(true);
-const error = ref('');
+const activeTab = ref('hp-requests');
 const notice = ref('');
-const requests = ref([]);
-const openRowId = ref(null);
-const busyRowId = ref(null);
+const error = ref('');
 
+/* ── Tab 1: pending requests ── */
+const requestsLoading = ref(true);
+const requests = ref([]);
+const requestsOpenMenu = ref(null);
+const requestsBusy = ref(null);
+
+/* ── Tab 2: totals (rendered server-side in Jinja, fetched here) ── */
+const totalsLoading = ref(false);
+const passReports = ref([]);
+
+/* ── Tab 3: individual report ── */
+const users = ref([]);
 const reportForm = reactive({
     username: '',
     startDate: '',
     endDate: '',
 });
-
-const users = ref([]);
-const reportRows = ref([]);
 const reportLoading = ref(false);
-const reportError = ref('');
-const reportBusyId = ref(null);
+const reportRows = ref([]);
 const reportGenerated = ref(false);
+const reportBusy = ref(null);
+const reportOpenMenu = ref(null);
 
 function formatDuration(value) {
-    if (!value || value === 'None') {
-        return '—';
-    }
-
+    if (!value || value === 'None') return '—';
     const parts = String(value).split(':');
-
     return toPersianDigits(`${parts[0] ?? '00'}:${parts[1] ?? '00'}`);
 }
 
-async function loadRequests() {
-    loading.value = true;
+function switchTab(tabId) {
+    activeTab.value = tabId;
+    notice.value = '';
     error.value = '';
+}
 
+async function loadRequests() {
+    requestsLoading.value = true;
+    error.value = '';
     try {
         const response = await api.get('/get_hourly_pass_requests', { baseURL: '' });
-        const rows = Array.isArray(response) ? response : [];
-
-        requests.value = rows.map((row) => ({ ...row, decision: row.status }));
+        requests.value = (Array.isArray(response) ? response : [])
+            .map((row) => ({ ...row, decision: row.status }));
     } catch (failure) {
         error.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت درخواست‌های پاس ساعتی.';
         requests.value = [];
     } finally {
-        loading.value = false;
+        requestsLoading.value = false;
+    }
+}
+
+async function submitRequestDecision(row) {
+    if (row.decision === 'انتظار تایید') {
+        error.value = 'درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.';
+        return;
+    }
+    requestsBusy.value = row.id;
+    error.value = '';
+    notice.value = '';
+    try {
+        const response = await api.post('/change_hourly_pass_status', {
+            id: row.id,
+            status: row.decision,
+        }, { baseURL: '' });
+        if (response.success === false) {
+            error.value = response.message || 'خطا در به‌روزرسانی وضعیت!';
+            return;
+        }
+        notice.value = 'وضعیت با موفقیت تغییر کرد!';
+        requests.value = requests.value.filter((item) => item.id !== row.id);
+    } catch (failure) {
+        error.value = failure.apiFailure?.message || failure.message || 'خطا در به‌روزرسانی وضعیت!';
+    } finally {
+        requestsBusy.value = null;
+        requestsOpenMenu.value = null;
+    }
+}
+
+async function loadTotals() {
+    totalsLoading.value = true;
+    try {
+        // GET /admin/overtime/reports already returns all-report style aggregates;
+        // for hourly passes the totals come from a POST that supplies a date range,
+        // but the legacy template renders pass_reports from page context.  To match
+        // the appearance we fetch the individual list without filters and aggregate.
+        const response = await api.post('/get_hourly_pass_report', {
+            username: 'all_users',
+            start_date: '',
+            end_date: '',
+        }, { baseURL: '' }).catch(() => []);
+        const rows = Array.isArray(response) ? response.filter((r) => r.status === 'تایید شده') : [];
+        const map = new Map();
+        rows.forEach((r) => {
+            if (!r.pass_duration) return;
+            const [h, m] = String(r.pass_duration).split(':').map((n) => parseInt(n, 10) || 0);
+            const total = (map.get(r.username) || 0) + (h * 60 + m);
+            map.set(r.username, total);
+        });
+        const arr = Array.from(map.entries()).map(([username, mins]) => ({
+            username,
+            totalMinutes: mins,
+            total_pass_time: `${toPersianDigits(String(Math.floor(mins / 60)).padStart(2, '0'))}:${toPersianDigits(String(mins % 60).padStart(2, '0'))}`,
+        }));
+        arr.sort((a, b) => b.totalMinutes - a.totalMinutes);
+        arr.forEach((row, idx) => { row.row_number = toPersianDigits(String(idx + 1)); });
+        passReports.value = arr;
+    } catch {
+        passReports.value = [];
+    } finally {
+        totalsLoading.value = false;
     }
 }
 
 async function loadUsers() {
     try {
         const response = await api.get('/get_users', { baseURL: '' });
-        users.value = response.users ?? [];
+        users.value = (response.users ?? []).filter((u) => !u.is_active || u.is_active === 'active');
     } catch {
         users.value = [];
     }
 }
 
-function toggleDropdown(rowId) {
-    openRowId.value = openRowId.value === rowId ? null : rowId;
-}
-
-function chooseDecision(row, status) {
-    row.decision = status;
-    openRowId.value = null;
-}
-
-async function submitDecision(row) {
-    if (row.decision === 'انتظار تایید') {
-        error.value = 'درخواست در وضعیت انتظار تایید است. تغییرات قابل ثبت نیستند.';
-        return;
-    }
-
-    busyRowId.value = row.id;
-    error.value = '';
-    notice.value = '';
-
-    try {
-        const response = await api.post(
-            '/change_hourly_pass_status',
-            {
-                id: row.id,
-                status: row.decision,
-            },
-            { baseURL: '' },
-        );
-
-        if (response.success === false) {
-            error.value = response.message || 'خطا در به‌روزرسانی وضعیت!';
-            return;
-        }
-
-        notice.value = 'وضعیت با موفقیت تغییر کرد!';
-        requests.value = requests.value.filter((item) => item.id !== row.id);
-    } catch (failure) {
-        error.value = failure.apiFailure?.message || failure.message || 'خطا در به‌روزرسانی وضعیت!';
-    } finally {
-        busyRowId.value = null;
-    }
-}
-
 async function generateReport() {
     if (!reportForm.username || !reportForm.startDate || !reportForm.endDate) {
-        reportError.value = 'لطفاً تمام فیلدها را پر کنید.';
+        error.value = 'لطفاً تمام فیلدها را پر کنید.';
         return;
     }
-
     reportLoading.value = true;
-    reportError.value = '';
+    error.value = '';
     reportGenerated.value = false;
-
     try {
-        const response = await api.post(
-            '/get_hourly_pass_report',
-            {
-                username: reportForm.username,
-                start_date: toLatinDigits(reportForm.startDate),
-                end_date: toLatinDigits(reportForm.endDate),
-            },
-            { baseURL: '' },
-        );
-
-        const rows = Array.isArray(response) ? response : [];
-        reportRows.value = rows.map((row) => ({ ...row, decision: row.status }));
+        const response = await api.post('/get_hourly_pass_report', {
+            username: reportForm.username,
+            start_date: toLatinDigits(reportForm.startDate),
+            end_date: toLatinDigits(reportForm.endDate),
+        }, { baseURL: '' });
+        reportRows.value = (Array.isArray(response) ? response : []).map((row) => ({ ...row, decision: row.status }));
         reportGenerated.value = true;
     } catch (failure) {
-        reportError.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت داده‌ها.';
+        error.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت داده‌ها.';
         reportRows.value = [];
     } finally {
         reportLoading.value = false;
     }
 }
 
-function chooseReportDecision(row, status) {
-    row.decision = status;
-}
-
 async function submitReportDecision(row) {
-    reportBusyId.value = row.id;
-    reportError.value = '';
-
+    reportBusy.value = row.id;
+    error.value = '';
     try {
-        const response = await api.post(
-            '/update_hourly_pass_status',
-            {
-                id: row.id,
-                status: row.decision,
-            },
-            { baseURL: '' },
-        );
-
+        const response = await api.post('/update_hourly_pass_status', {
+            id: row.id,
+            status: row.decision,
+        }, { baseURL: '' });
         if (response.success === false) {
-            reportError.value = response.message || 'خطا در تغییر وضعیت.';
+            error.value = response.message || 'خطا در تغییر وضعیت.';
             return;
         }
-
         notice.value = 'وضعیت با موفقیت تغییر کرد.';
     } catch (failure) {
-        reportError.value = failure.apiFailure?.message || failure.message || 'خطا در ارسال درخواست.';
+        error.value = failure.apiFailure?.message || failure.message || 'خطا در ارسال درخواست.';
     } finally {
-        reportBusyId.value = null;
+        reportBusy.value = null;
+        reportOpenMenu.value = null;
     }
 }
 
@@ -192,454 +194,326 @@ function downloadReport() {
             passTitle: row.pass_title,
             passDuration: row.pass_duration,
         }));
-
     localStorage.setItem('hourlyPassReportData', JSON.stringify(approved));
     localStorage.setItem('hourlyPassUsername', reportForm.username);
     window.open('/hourlypass_Report_page', '_blank');
 }
 
+function selectRequestDecision(row, status) {
+    row.decision = status;
+    requestsOpenMenu.value = null;
+}
+function selectReportDecision(row, status) {
+    row.decision = status;
+    reportOpenMenu.value = null;
+}
+
 onMounted(() => {
     loadRequests();
     loadUsers();
+    loadTotals();
 });
 </script>
 
 <template>
-    <section class="pass">
-        <header class="pass__head">
-            <div>
-                <h1 class="pass__title">مدیریت پاس‌های ساعتی</h1>
-                <p class="pass__sub">مدیریت پاس‌های ساعتی و گزارشات مرتبط</p>
-            </div>
-        </header>
+    <header class="section-hero" style="--hero-accent:#0ea5e9;--hero-accent-2:#38bdf8;--hero-glow-1:rgba(14,165,233,0.14);--hero-glow-2:rgba(56,189,248,0.12);--hero-shadow:rgba(14,165,233,0.55);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(14,165,233,0.08);">
+        <div class="section-hero__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="13" r="8" fill="#fff" opacity=".14"/><circle cx="11" cy="13" r="8" stroke="#fff" stroke-width="1.9"/><path d="M11 8.5V13l3 1.9" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19.2" cy="6" r="3.5" fill="#fff"/><path d="M17.8 6H20.6M19.2 4.6V7.4" stroke="#0EA5E9" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-hero__text">
+            <h2>مدیریت پاس‌های ساعتی</h2>
+            <p>مدیریت پاس‌های ساعتی و گزارشات مرتبط</p>
+        </div>
+        <div class="section-hero__glow" aria-hidden="true"></div>
+    </header>
 
-        <div class="pass__tabs" role="tablist">
+    <div class="hourlyPass-frame">
+        <div class="hourlyPass-tabs" role="tablist">
             <button
-                type="button"
-                class="pass__tab"
-                :class="{ 'is-active': activeTab === 'requests' }"
+                class="hourlyPass-tab-btn"
+                :class="{ active: activeTab === 'hp-requests' }"
                 role="tab"
-                :aria-selected="activeTab === 'requests'"
-                @click="activeTab = 'requests'"
-            >
-                درخواست‌های پاس ساعتی
-            </button>
+                :aria-selected="activeTab === 'hp-requests'"
+                @click="switchTab('hp-requests')"
+            >درخواست‌های پاس ساعتی</button>
             <button
-                type="button"
-                class="pass__tab"
-                :class="{ 'is-active': activeTab === 'report' }"
+                class="hourlyPass-tab-btn"
+                :class="{ active: activeTab === 'hp-all-report' }"
                 role="tab"
-                :aria-selected="activeTab === 'report'"
-                @click="activeTab = 'report'"
-            >
-                گزارش انفرادی
-            </button>
+                :aria-selected="activeTab === 'hp-all-report'"
+                @click="switchTab('hp-all-report')"
+            >گزارش کلی</button>
+            <button
+                class="hourlyPass-tab-btn"
+                :class="{ active: activeTab === 'hp-individual' }"
+                role="tab"
+                :aria-selected="activeTab === 'hp-individual'"
+                @click="switchTab('hp-individual')"
+            >گزارش انفرادی</button>
         </div>
 
         <p v-if="error" class="h-alert" role="alert">{{ error }}</p>
         <p v-if="notice" class="h-alert h-alert--ok" role="status">{{ notice }}</p>
 
-        <div v-show="activeTab === 'requests'">
-            <div class="pass__toolbar">
-                <button type="button" class="h-btn h-btn-ghost" :disabled="loading" @click="loadRequests">
-                    {{ loading ? 'در حال دریافت…' : 'بروزرسانی' }}
-                </button>
-            </div>
-
-            <div v-if="loading" class="pass__loading">در حال دریافت درخواست‌ها…</div>
-
-            <div v-else class="pass__table-scroll">
-                <table class="pass__table">
-                    <thead>
-                        <tr>
-                            <th>نام کاربر</th>
-                            <th>تاریخ درخواست</th>
-                            <th>عنوان پاس</th>
-                            <th>مدت زمان پاس</th>
-                            <th>وضعیت درخواست</th>
-                            <th>ثبت تغییرات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <!-- Tab 1: pending requests -->
+        <div
+            id="hp-requests"
+            class="hourlyPass-tab-content"
+            :class="{ active: activeTab === 'hp-requests' }"
+            role="tabpanel"
+        >
+            <table class="hourlyPassReport-table" id="hourlyPassReportTable">
+                <thead>
+                    <tr>
+                        <th>نام کاربر</th>
+                        <th>تاریخ درخواست</th>
+                        <th>عنوان پاس</th>
+                        <th>مدت زمان پاس</th>
+                        <th>وضعیت درخواست</th>
+                        <th>ثبت تغییرات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="requestsLoading">
+                        <td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">در حال دریافت درخواست‌ها…</td>
+                    </tr>
+                    <template v-else>
                         <tr v-for="row in requests" :key="row.id">
                             <td>{{ row.username }}</td>
                             <td>{{ toPersianDigits(row.request_date) }}</td>
                             <td>{{ row.pass_title || '—' }}</td>
                             <td>{{ formatDuration(row.pass_duration) }}</td>
                             <td>
-                                <div class="pass__status">
+                                <div class="status-dropdown" style="position:relative;display:inline-block;">
                                     <button
                                         type="button"
-                                        class="pass__status-btn"
-                                        :aria-expanded="openRowId === row.id"
-                                        @click="toggleDropdown(row.id)"
-                                    >
-                                        {{ row.decision }}
-                                    </button>
-                                    <div v-if="openRowId === row.id" class="pass__status-menu" role="menu">
+                                        class="status-select-btn"
+                                        @click.stop="requestsOpenMenu = requestsOpenMenu === row.id ? null : row.id"
+                                    >{{ row.decision }}</button>
+                                    <div v-if="requestsOpenMenu === row.id" class="status-select-menu" @click.stop>
                                         <button
                                             v-for="status in DECISIONS"
                                             :key="status"
                                             type="button"
-                                            class="pass__status-option"
-                                            role="menuitem"
-                                            @click="chooseDecision(row, status)"
-                                        >
-                                            {{ status }}
-                                        </button>
+                                            class="status-select-option"
+                                            @click="selectRequestDecision(row, status)"
+                                        >{{ status }}</button>
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <button
                                     type="button"
-                                    class="h-btn h-btn-primary pass__submit"
-                                    :disabled="busyRowId === row.id"
-                                    @click="submitDecision(row)"
-                                >
-                                    ثبت تغییرات
-                                </button>
+                                    class="table-action-btn table-action-btn--primary"
+                                    :disabled="requestsBusy === row.id"
+                                    @click="submitRequestDecision(row)"
+                                >{{ requestsBusy === row.id ? 'در حال ثبت…' : 'ثبت تغییرات' }}</button>
                             </td>
                         </tr>
                         <tr v-if="requests.length === 0">
-                            <td colspan="6" class="pass__empty">درخواست پاس ساعتی در انتظاری وجود ندارد.</td>
+                            <td colspan="6" style="text-align:center;padding:2rem;color:#94a3b8;">درخواست پاس ساعتی در انتظاری وجود ندارد.</td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
+                    </template>
+                </tbody>
+            </table>
         </div>
 
-        <div v-show="activeTab === 'report'" class="pass__report">
-            <div class="pass__config">
-                <span class="pass__config-title">تنظیمات گزارش</span>
-                <div class="pass__config-grid">
-                    <label class="h-field">
-                        <span class="h-field__label">انتخاب کاربر</span>
-                        <select v-model="reportForm.username" class="h-input" required>
-                            <option value="" disabled>انتخاب کنید</option>
+        <!-- Tab 2: totals report -->
+        <div
+            id="hp-all-report"
+            class="hourlyPass-tab-content"
+            :class="{ active: activeTab === 'hp-all-report' }"
+            role="tabpanel"
+        >
+            <h2>گزارش کلی پاس‌های ساعتی</h2>
+            <table class="hourlyPassTotaluserReport-table" id="hourlyPassTotaluserReportTable">
+                <thead>
+                    <tr>
+                        <th class="hourlyPassezafetime">کل مدت زمان پاس</th>
+                        <th class="hourlyPasskarbar">نام کاربر</th>
+                        <th class="hourlyPassRadif">ردیف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="totalsLoading">
+                        <td colspan="3" style="text-align:center;padding:2rem;color:#64748b;">در حال بارگذاری…</td>
+                    </tr>
+                    <template v-else>
+                        <tr v-for="row in passReports" :key="row.username">
+                            <td>{{ row.total_pass_time }}</td>
+                            <td>{{ row.username }}</td>
+                            <td>{{ row.row_number }}</td>
+                        </tr>
+                        <tr v-if="passReports.length === 0">
+                            <td colspan="3" style="text-align:center;padding:2rem;color:#94a3b8;">داده‌ای برای نمایش وجود ندارد.</td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab 3: individual report -->
+        <div
+            id="hp-individual"
+            class="hourlyPass-tab-content"
+            :class="{ active: activeTab === 'hp-individual' }"
+            role="tabpanel"
+        >
+            <div class="hourlyPass-config">
+                <div class="hourlyPass-config-title">تنظیمات گزارش</div>
+                <div class="hourlyPass-config-grid">
+                    <div class="hourlyPass-config-item">
+                        <span>انتخاب کاربر</span>
+                        <select v-model="reportForm.username" id="usernameHourlypass" name="usernameHourlypass" required>
+                            <option value="" disabled selected>انتخاب کنید</option>
                             <option value="all_users">همه کاربران</option>
-                            <option v-for="user in users" :key="user.value" :value="user.value">
-                                {{ user.label || user.value }}
-                            </option>
+                            <option v-for="user in users" :key="user.username" :value="user.username">{{ user.username }}</option>
                         </select>
-                    </label>
-                    <label class="h-field">
-                        <span class="h-field__label">از تاریخ</span>
-                        <input v-model="reportForm.startDate" type="text" class="h-input" placeholder="۱۴۰۵/۰۱/۰۱" required>
-                    </label>
-                    <label class="h-field">
-                        <span class="h-field__label">تا تاریخ</span>
-                        <input v-model="reportForm.endDate" type="text" class="h-input" placeholder="۱۴۰۵/۰۱/۰۱" required>
-                    </label>
-                    <div class="pass__config-actions">
-                        <button type="button" class="h-btn h-btn-primary" :disabled="reportLoading" @click="generateReport">
+                    </div>
+                    <div class="hourlyPass-config-item">
+                        <span>از تاریخ</span>
+                        <input v-model="reportForm.startDate" type="text" id="start_date_hourlypass" name="start_date" placeholder="۱۴۰۵/۰۱/۰۱" required>
+                    </div>
+                    <div class="hourlyPass-config-item">
+                        <span>تا تاریخ</span>
+                        <input v-model="reportForm.endDate" type="text" id="end_date_hourlypass" name="end_date" placeholder="۱۴۰۵/۰۱/۳۱" required>
+                    </div>
+                    <div class="hourlyPass-config-actions">
+                        <button type="button" id="submitHourlyPassReport" :disabled="reportLoading" @click="generateReport">
                             {{ reportLoading ? 'در حال تهیه…' : 'تهیه گزارش' }}
                         </button>
                     </div>
                 </div>
             </div>
 
-            <p v-if="reportError" class="h-alert" role="alert">{{ reportError }}</p>
-
-            <div v-if="reportGenerated" class="pass__result">
-                <div class="pass__result-toolbar">
-                    <button type="button" class="h-btn h-btn-primary" @click="downloadReport">
-                        دریافت گزارش
-                    </button>
+            <div v-if="reportGenerated" id="hourlyPassReportResult">
+                <div class="hourlyPass-report-toolbar">
+                    <button id="downloadHourlyPassReport" type="button" @click="downloadReport">دریافت گزارش</button>
                 </div>
-
-                <div class="pass__table-scroll">
-                    <table class="pass__table">
-                        <thead>
-                            <tr>
-                                <th>ثبت تغییرات</th>
-                                <th>وضعیت درخواست</th>
-                                <th>مدت زمان پاس</th>
-                                <th>عنوان پاس</th>
-                                <th>تاریخ درخواست</th>
-                                <th>نام کاربر</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="row in reportRows" :key="row.id">
-                                <td>
+                <table class="hourlyPassIndivisualuserReport-table" id="hourlyPassIndivisualuserReportTable">
+                    <thead>
+                        <tr>
+                            <th>ثبت تغییرات</th>
+                            <th>وضعیت درخواست</th>
+                            <th>مدت زمان پاس</th>
+                            <th>عنوان پاس</th>
+                            <th>تاریخ درخواست</th>
+                            <th>نام کاربر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in reportRows" :key="row.id">
+                            <td>
+                                <button
+                                    type="button"
+                                    class="table-action-btn table-action-btn--primary"
+                                    :disabled="reportBusy === row.id"
+                                    @click="submitReportDecision(row)"
+                                >{{ reportBusy === row.id ? 'در حال ثبت…' : 'ثبت تغییرات' }}</button>
+                            </td>
+                            <td>
+                                <div class="status-dropdown" style="position:relative;display:inline-block;">
                                     <button
                                         type="button"
-                                        class="h-btn h-btn-primary pass__submit"
-                                        :disabled="reportBusyId === row.id"
-                                        @click="submitReportDecision(row)"
-                                    >
-                                        تأیید تغییرات
-                                    </button>
-                                </td>
-                                <td>
-                                    <div class="pass__status">
-                                        <button type="button" class="pass__status-btn" @click="row.decisionOpen = !row.decisionOpen">
-                                            {{ row.decision }}
-                                        </button>
-                                        <div v-if="row.decisionOpen" class="pass__status-menu" role="menu">
-                                            <button
-                                                v-for="status in DECISIONS"
-                                                :key="status"
-                                                type="button"
-                                                class="pass__status-option"
-                                                role="menuitem"
-                                                @click="chooseReportDecision(row, status); row.decisionOpen = false"
-                                            >
-                                                {{ status }}
-                                            </button>
-                                        </div>
+                                        class="status-select-btn"
+                                        @click.stop="reportOpenMenu = reportOpenMenu === row.id ? null : row.id"
+                                    >{{ row.decision }}</button>
+                                    <div v-if="reportOpenMenu === row.id" class="status-select-menu" @click.stop>
+                                        <button
+                                            v-for="status in DECISIONS"
+                                            :key="status"
+                                            type="button"
+                                            class="status-select-option"
+                                            @click="selectReportDecision(row, status)"
+                                        >{{ status }}</button>
                                     </div>
-                                </td>
-                                <td>{{ formatDuration(row.pass_duration) }}</td>
-                                <td>{{ row.pass_title || '—' }}</td>
-                                <td>{{ toPersianDigits(row.request_date) }}</td>
-                                <td>{{ row.username }}</td>
-                            </tr>
-                            <tr v-if="reportRows.length === 0">
-                                <td colspan="6" class="pass__empty">داده‌ای برای این بازه یافت نشد.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                </div>
+                            </td>
+                            <td>{{ formatDuration(row.pass_duration) }}</td>
+                            <td>{{ row.pass_title || '—' }}</td>
+                            <td>{{ toPersianDigits(row.request_date) }}</td>
+                            <td>{{ row.username }}</td>
+                        </tr>
+                        <tr v-if="reportRows.length === 0">
+                            <td colspan="6" style="text-align:center;padding:2rem;color:#94a3b8;">داده‌ای برای این بازه یافت نشد.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-    </section>
+    </div>
 </template>
 
 <style scoped>
-.pass {
-    display: flex;
-    flex-direction: column;
-    gap: 1.1rem;
-}
+/* The legacy admin.css rules already style `.hourlyPass-frame`, `.hourlyPass-tabs`,
+   `.hourlyPass-tab-btn`, `.hourlyPassReport-table`, etc.  We only add a few
+   complementary styles for the Vue-driven status dropdown/buttons so the
+   controls visually match the legacy table language. */
 
-.pass__title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 800;
-}
+/* The legacy sheet hard-codes `#downloadHourlyPassReport { display: none; }`
+   and relied on JS to unhide it; Vue controls visibility through v-if on the
+   parent container, so make sure the button isn't hidden when its container
+   is visible. */
+:deep(#downloadHourlyPassReport) { display: inline-block !important; }
 
-.pass__sub {
-    margin: 0.3rem 0 0;
-    color: #64748b;
-    font-size: 0.85rem;
-}
-
-[data-theme='dark'] .pass__sub {
-    color: var(--dk-text-2);
-}
-
-.pass__tabs {
-    display: flex;
-    gap: 0.4rem;
-    border-bottom: 1px solid rgb(15 23 42 / 0.1);
-}
-
-[data-theme='dark'] .pass__tabs {
-    border-bottom-color: var(--dk-line);
-}
-
-.pass__tab {
-    padding: 0.55rem 1rem;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    background: transparent;
-    color: #64748b;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-[data-theme='dark'] .pass__tab {
-    color: var(--dk-text-2);
-}
-
-.pass__tab.is-active {
-    border-bottom-color: var(--c-primary);
-    color: var(--c-primary-dark);
-}
-
-[data-theme='dark'] .pass__tab.is-active {
-    color: var(--dk-accent);
-}
-
-.pass__toolbar {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.pass__loading {
-    padding: 2.5rem 1rem;
-    text-align: center;
-    color: #64748b;
-}
-
-[data-theme='dark'] .pass__loading {
-    color: var(--dk-text-2);
-}
-
-.pass__table-scroll {
-    overflow-x: auto;
-    border: 1px solid rgb(15 23 42 / 0.08);
-    border-radius: var(--radius-token-md);
-}
-
-[data-theme='dark'] .pass__table-scroll {
-    border-color: var(--dk-border);
-}
-
-.pass__table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.84rem;
-    background: #fff;
-}
-
-[data-theme='dark'] .pass__table {
-    background: var(--dk-surface);
-}
-
-.pass__table th,
-.pass__table td {
-    padding: 0.65rem 0.7rem;
-    border-bottom: 1px solid rgb(15 23 42 / 0.07);
-    text-align: start;
-    white-space: nowrap;
-}
-
-[data-theme='dark'] .pass__table th,
-[data-theme='dark'] .pass__table td {
-    border-bottom-color: var(--dk-line);
-}
-
-.pass__table th {
-    color: #64748b;
-    font-size: 0.75rem;
-    background: rgb(15 23 42 / 0.03);
-}
-
-[data-theme='dark'] .pass__table th {
-    color: var(--dk-text-2);
-    background: var(--dk-surface-2);
-}
-
-.pass__table tbody tr:hover {
-    background: rgb(14 165 233 / 0.05);
-}
-
-[data-theme='dark'] .pass__table tbody tr:hover {
-    background: var(--dk-surface-2);
-}
-
-.pass__empty {
-    padding: 1.6rem !important;
-    color: #94a3b8;
-    text-align: center !important;
-}
-
-[data-theme='dark'] .pass__empty {
-    color: var(--dk-text-3);
-}
-
-.pass__status {
-    position: relative;
-}
-
-.pass__status-btn {
-    min-width: 7.5rem;
-    padding: 0.35rem 0.8rem;
-    border: 1px solid rgb(245 158 11 / 0.45);
-    border-radius: 999px;
+.status-select-btn {
+    min-width: 7rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgb(245 158 11 / 0.5);
+    border-radius: 8px;
     background: rgb(245 158 11 / 0.12);
     color: #b45309;
     font: inherit;
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 0.8rem;
     cursor: pointer;
 }
-
-[data-theme='dark'] .pass__status-btn {
-    color: #fcd34d;
-}
-
-.pass__status-menu {
+.status-select-menu {
     position: absolute;
     top: calc(100% + 4px);
     inset-inline-start: 0;
-    z-index: 10;
+    z-index: 30;
+    min-width: 9rem;
+    padding: 0.25rem;
+    border: 1px solid rgb(15 23 42 / 0.1);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgb(15 23 42 / 0.15);
     display: flex;
     flex-direction: column;
-    min-width: 9rem;
-    padding: 0.3rem;
-    border: 1px solid rgb(15 23 42 / 0.12);
-    border-radius: var(--radius-token-sm);
-    background: #fff;
-    box-shadow: 0 10px 30px rgb(15 23 42 / 0.16);
 }
-
-[data-theme='dark'] .pass__status-menu {
-    border-color: var(--dk-border);
-    background: var(--dk-surface-2);
-}
-
-.pass__status-option {
+.status-select-option {
     padding: 0.45rem 0.7rem;
     border: 0;
     border-radius: 6px;
     background: transparent;
     color: inherit;
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     text-align: start;
     cursor: pointer;
 }
-
-.pass__status-option:hover {
+.status-select-option:hover {
     background: rgb(14 165 233 / 0.1);
 }
 
-.pass__submit {
-    padding: 0.4rem 0.9rem;
+.table-action-btn {
+    padding: 0.4rem 0.8rem;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
     font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
 }
-
-.pass__config {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    padding: 1rem 1.1rem;
-    border: 1px solid rgb(15 23 42 / 0.08);
-    border-radius: var(--radius-token-md);
-    background: #fff;
+.table-action-btn--primary {
+    background: #0ea5e9;
+    color: #fff;
 }
-
-[data-theme='dark'] .pass__config {
-    border-color: var(--dk-border);
-    background: var(--dk-surface);
+.table-action-btn--primary:hover {
+    background: #0284c7;
 }
-
-.pass__config-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-}
-
-.pass__config-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.8rem;
-    align-items: end;
-}
-
-.pass__result {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-}
-
-.pass__result-toolbar {
-    display: flex;
-    justify-content: flex-start;
+.table-action-btn--primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>

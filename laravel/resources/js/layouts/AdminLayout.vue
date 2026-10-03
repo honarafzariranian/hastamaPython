@@ -37,6 +37,9 @@ import OvertimePage from '@/pages/admin/OvertimePage.vue';
 import HourlyPassPage from '@/pages/admin/HourlyPassPage.vue';
 import ShiftsPage from '@/pages/admin/ShiftsPage.vue';
 import PayrollPage from '@/pages/admin/PayrollPage.vue';
+import TicketsPage from '@/pages/admin/TicketsPage.vue';
+import InternalAutomationPage from '@/pages/admin/InternalAutomationPage.vue';
+import AttendancePage from '@/pages/admin/AttendancePage.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -47,7 +50,6 @@ const { isDark, toggleTheme } = useTheme();
  * One entry per legacy `icon-container`.  `box` is the id the legacy document
  * carried, `id` is the path segment `navTo()` pushed, and `accent` is the
  * `data-accent` the stylesheet keys the gradient tile off.
- *
  */
 const sections = [
     { id: 'dashboard', box: 'dashboardBox', label: 'داشبورد', accent: 'dashboard', component: DashboardPage },
@@ -55,16 +57,16 @@ const sections = [
     { id: 'vacation', box: 'vacationBox', label: 'مدیریت مرخصی ها', accent: 'leave', component: LeavePage },
     { id: 'overtime', box: 'overtimeBox', label: 'مدیریت اضافه کاری ها', accent: 'overtime', component: OvertimePage },
     { id: 'hourly-pass', box: 'hourlyPassBox', label: 'مدیریت پاس های ساعتی', accent: 'pass', component: HourlyPassPage },
-    { id: 'tickets', box: 'ticketBox', label: 'مدیریت تیکت ها', accent: 'ticket', component: null },
+    { id: 'tickets', box: 'ticketBox', label: 'مدیریت تیکت ها', accent: 'ticket', component: TicketsPage },
     {
         id: 'internal-automation',
         box: 'internalAutomationAdminBox',
         label: 'اتوماسیون داخلی',
         accent: 'automation',
-        component: null,
+        component: InternalAutomationPage,
     },
     { id: 'shifts', box: 'shiftBox', label: 'مدیریت شیفت‌ها', accent: 'shift', component: ShiftsPage },
-    { id: 'attendance', box: 'hozoorbox', label: 'مدیریت ساعت زن', accent: 'attendance', component: null },
+    { id: 'attendance', box: 'hozoorbox', label: 'مدیریت ساعت زن', accent: 'attendance', component: AttendancePage },
     { id: 'payroll', box: 'payrollBox', label: 'حقوق و دستمزد', accent: 'payroll', component: PayrollPage },
 ];
 
@@ -557,6 +559,12 @@ function tileIcon(accent) {
                 'coworker-panel': activeSection.id === 'coworkers',
                 'vacation-panel': activeSection.id === 'vacation',
                 'overtime-panel': activeSection.id === 'overtime',
+                'hourlyPass-panel': activeSection.id === 'hourly-pass',
+                'ticketing-panel': activeSection.id === 'tickets',
+                'internal-automation-admin-panel': activeSection.id === 'internal-automation',
+                'attendance-panel': activeSection.id === 'attendance',
+                'payroll-panel': activeSection.id === 'payroll',
+                'shift-panel': activeSection.id === 'shifts',
             }"
             :style="{ display: boxDisplay(activeSection.box) }"
             aria-label="محتوای بخش"
