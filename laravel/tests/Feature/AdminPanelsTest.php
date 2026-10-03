@@ -116,6 +116,9 @@ final class AdminPanelsTest extends TestCase
     public function the_require_admin_routes_refuse_an_anonymous_request(): void
     {
         $routes = [
+            ['GET', '/get_leave_reports'],
+            ['GET', '/admin/coworkers/users'],
+            ['POST', '/delete_user'],
             ['POST', '/update_user'],
             ['POST', '/update_leave_status'],
             ['GET', '/get_hourly_pass_requests'],
@@ -123,6 +126,7 @@ final class AdminPanelsTest extends TestCase
             ['POST', '/get_hourly_pass_report'],
             ['POST', '/update_hourly_pass_status'],
             ['GET', '/get_overtime_requests'],
+            ['GET', '/admin/overtime/reports'],
             ['GET', '/overtime_report'],
             ['POST', '/generate_individual_report'],
         ];
@@ -198,6 +202,9 @@ final class AdminPanelsTest extends TestCase
         $this->asUser();
 
         $routes = [
+            ['GET', '/get_leave_reports'],
+            ['GET', '/admin/coworkers/users'],
+            ['POST', '/delete_user'],
             ['POST', '/update_user'],
             ['POST', '/update_leave_status'],
             ['GET', '/get_hourly_pass_requests'],
@@ -205,6 +212,7 @@ final class AdminPanelsTest extends TestCase
             ['POST', '/get_hourly_pass_report'],
             ['POST', '/update_hourly_pass_status'],
             ['GET', '/get_overtime_requests'],
+            ['GET', '/admin/overtime/reports'],
             ['GET', '/overtime_report'],
             ['POST', '/generate_individual_report'],
         ];
@@ -620,6 +628,86 @@ final class AdminPanelsTest extends TestCase
             ->assertExactJson(['error' => 'User not found']);
     }
 
+    /**
+     * The coworkers directory is available to admins, paginated, and never
+     * selects either credential column from `user_table`.
+     */
+    #[Test]
+    public function coworker_directory_returns_user_fields_without_passwords(): void
+    {
+        $this->asAdmin();
+        $this->db->userTableRows = [(object) [
+            'username' => 'ali',
+            'department' => 'فناوری',
+            'work_hours' => '08:00 - 16:00',
+            'substitute' => 'سارا',
+            'name' => 'علی',
+            'last_name' => 'رضایی',
+            'employment_status' => 'official',
+            'is_active' => 'active',
+        ]];
+
+        $response = $this->getJson('/admin/coworkers/users?per_page=100');
+
+        $response->assertOk()->assertExactJson([
+            'success' => true,
+            'data' => [[
+                'username' => 'ali',
+                'department' => 'فناوری',
+                'work_hours' => '08:00 - 16:00',
+                'substitute' => 'سارا',
+                'name' => 'علی',
+                'last_name' => 'رضایی',
+                'employment_status' => 'official',
+                'is_active' => 'active',
+            ]],
+            'total' => 1,
+            'page' => 1,
+            'per_page' => 100,
+            'pages' => 1,
+        ]);
+
+        $queries = $this->db->queriesContaining('SELECT username, department, work_hours, substitute');
+        $this->assertCount(1, $queries);
+        $this->assertStringNotContainsString('password', strtolower($queries[0][0]));
+    }
+
+    #[Test]
+    public function get_leave_reports_returns_the_per_user_balances(): void
+    {
+        $this->asAdmin();
+        $this->db->leaveReportRows = [(object) [
+            'username' => 'ali',
+            'total_days' => 12,
+            'remaining_days' => 5,
+        ]];
+
+        $this->getJson('/get_leave_reports')
+            ->assertOk()
+            ->assertExactJson([
+                'success' => true,
+                'reports' => [[
+                    'username' => 'ali',
+                    'total_days' => 12,
+                    'remaining_days' => 5,
+                ]],
+            ]);
+    }
+
+    #[Test]
+    public function an_admin_can_delete_a_user_from_the_coworker_directory(): void
+    {
+        $this->asAdmin();
+
+        $this->postJson('/delete_user', ['username' => 'ali'])
+            ->assertOk()
+            ->assertExactJson(['success' => true]);
+
+        $queries = $this->db->queriesContaining('DELETE FROM user_table');
+        $this->assertCount(1, $queries);
+        $this->assertSame(['ali'], $queries[0][1]);
+    }
+
     // ── Leave ────────────────────────────────────────────────────────────────
 
     /**
@@ -854,6 +942,23 @@ final class AdminPanelsTest extends TestCase
         $this->assertSame('تاریخ ناموجود', $rows[1]['overtime_date']);
         $this->assertSame('00:00', $rows[1]['daily_overtime']);
         $this->assertSame('انتظار تایید', $rows[1]['status']);
+    }
+
+    #[Test]
+    public function admin_overtime_totals_are_sorted_and_formatted(): void
+    {
+        $this->asAdmin();
+        $this->db->ezafeTotalRows = [
+            (object) ['username' => 'ali', 'total_ezafe_time' => '01:30:00'],
+            (object) ['username' => 'sara', 'total_ezafe_time' => '7200'],
+        ];
+
+        $this->getJson('/admin/overtime/reports')
+            ->assertOk()
+            ->assertExactJson([
+                ['username' => 'sara', 'total_ezafe_time' => '۰۲:۰۰', 'row_number' => 1],
+                ['username' => 'ali', 'total_ezafe_time' => '۰۱:۳۰', 'row_number' => 2],
+            ]);
     }
 
     /**
@@ -1100,6 +1205,9 @@ class FakeAdminConnection extends Connection
     /** The rows behind `user_table` selects. */
     public array $userTableRows = [];
 
+    /** The rows behind `leave_report` selects. */
+    public array $leaveReportRows = [];
+
     /** The rows behind `admin_payroll_calculations` selects. */
     public array $payrollRows = [];
 
@@ -1283,6 +1391,18 @@ class FakeAdminConnection extends Connection
         // fetch_user_data.
         if (str_contains($sql, 'SELECT name, last_name, department FROM user_table')) {
             return $this->userTableRows;
+        }
+
+        if (str_contains($sql, 'SELECT COUNT(*) AS total FROM user_table')) {
+            return [(object) ['total' => count($this->userTableRows)]];
+        }
+
+        if (str_contains($sql, 'SELECT username, department, work_hours, substitute, name, last_name,')) {
+            return $this->userTableRows;
+        }
+
+        if (str_contains($sql, 'FROM leave_report')) {
+            return $this->leaveReportRows;
         }
 
         // user_table INSERT / UPDATE.

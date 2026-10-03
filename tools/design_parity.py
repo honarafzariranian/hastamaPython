@@ -65,7 +65,6 @@ PAIRS: dict[str, list[str]] = {
             "HourlyPassPage.vue",
             "OvertimePage.vue",
             "PayrollPage.vue",
-            "ReportsPage.vue",
             "ShiftsPage.vue",
         )
     ],

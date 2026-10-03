@@ -35,6 +35,7 @@ html, body {
     flex-direction: column;
     min-height: 100vh;
     align-items: center;
+    line-height: 1.6;
 }
 
 /* هدر باکس‌دار (مثل master-admin) — کلاس ma-header-box ظاهر نهایی رو تعیین می‌کنه */
@@ -1470,6 +1471,8 @@ html, body {
 /* دکمه حضور */
 .userTable-actions-cell .attendance-action-btn {
     color: #fff;
+    min-height: 0;
+    gap: 0;
 }
 
 .userTable-actions-cell .attendance-action-btn svg {

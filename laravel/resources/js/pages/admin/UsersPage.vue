@@ -8,8 +8,8 @@
  * the edit popup (POST /update_user) and the two per-row actions
  * (toggle-status / change-role on the master-admin user endpoints).
  *
- * The legacy delete button posted to the server-rendered admin page; the
- * Laravel port has no delete-user route, so no delete action is rendered.
+ * The directory also keeps the legacy attendance actions and delete
+ * confirmation, using the admin-scoped Laravel endpoints.
  */
 import { computed, onMounted, reactive, ref } from 'vue';
 import api from '@/services/api';
@@ -40,6 +40,7 @@ const WEEK_DAYS = [
     { key: 'seshanbeh', label: 'سه‌شنبه' },
     { key: 'chrshanbeh', label: 'چهارشنبه' },
     { key: 'panjshanbeh', label: 'پنج‌شنبه' },
+    { key: 'jomeh', label: 'جمعه', rest: true },
 ];
 
 const activeTab = ref('users');
@@ -57,6 +58,8 @@ const search = ref('');
 
 const editOpen = ref(false);
 const editSaving = ref(false);
+const deleteTarget = ref(null);
+const deleteSaving = ref(false);
 const editForm = reactive({
     currentUsername: '',
     username: '',
@@ -85,12 +88,21 @@ const addForm = reactive({
     seshanbeh: '',
     chrshanbeh: '',
     panjshanbeh: '',
+    jomeh: '',
 });
 
 const addSaving = ref(false);
 const addError = ref('');
+const applyAllSchedule = ref('');
 
 const busyUsername = ref('');
+const attendanceByUsername = reactive({});
+const ATTENDANCE_LABELS = {
+    not_checked_in: 'ثبت نشده',
+    checked_in: 'در حال کار',
+    checked_out: 'تکمیل شده',
+    loading: 'در حال دریافت…',
+};
 const registrationRequests = ref([]);
 const registrationLoaded = ref(false);
 const registrationLoading = ref(false);
@@ -187,6 +199,62 @@ function statusLabel(isActive) {
     return isActive === 'inactive' ? 'غیرفعال' : 'فعال';
 }
 
+function attendanceState(username) {
+    const key = String(username ?? '').trim();
+
+    return attendanceByUsername[key] ?? {
+        status: 'loading',
+        check_in: null,
+        check_out: null,
+    };
+}
+
+async function loadAttendanceStatuses() {
+    try {
+        const response = await api.get('/get_hozoor_today', { baseURL: '' });
+
+        for (const attendance of response.data?.users ?? []) {
+            const username = String(attendance.username ?? '').trim();
+
+            if (username !== '') {
+                attendanceByUsername[username] = {
+                    status: attendance.status ?? 'not_checked_in',
+                    check_in: attendance.check_in ?? null,
+                    check_out: attendance.check_out ?? null,
+                };
+            }
+        }
+    } catch (failure) {
+        console.warn('Could not load coworker attendance statuses.', failure);
+    }
+}
+
+async function recordAttendance(user, action) {
+    const username = String(user.username ?? '').trim();
+    const endpoint = action === 'checkin' ? '/sabt_hozoor_checkin' : '/sabt_hozoor_checkout';
+
+    busyUsername.value = username;
+    error.value = '';
+
+    try {
+        const response = await api.post(endpoint, { username }, { baseURL: '' });
+
+        if (!response.success || !response.data) {
+            throw new Error(response.message || 'خطا در ثبت اطلاعات حضور.');
+        }
+
+        attendanceByUsername[username] = {
+            status: response.data.status,
+            check_in: response.data.check_in ?? null,
+            check_out: response.data.check_out ?? null,
+        };
+    } catch (failure) {
+        error.value = failure.apiFailure?.message || failure.message || 'خطا در ثبت اطلاعات حضور.';
+    } finally {
+        busyUsername.value = '';
+    }
+}
+
 async function loadUsers() {
     loading.value = true;
     error.value = '';
@@ -211,6 +279,7 @@ async function loadUsers() {
         pages.value = 1;
     } finally {
         loading.value = false;
+        await loadAttendanceStatuses();
     }
 }
 
@@ -226,6 +295,43 @@ function goToPage(nextPage) {
 
     page.value = nextPage;
     loadUsers();
+}
+
+function openDelete(user) {
+    deleteTarget.value = user;
+}
+
+function closeDelete() {
+    if (!deleteSaving.value) {
+        deleteTarget.value = null;
+    }
+}
+
+async function confirmDelete() {
+    const username = String(deleteTarget.value?.username ?? '').trim();
+
+    if (!username) {
+        return;
+    }
+
+    deleteSaving.value = true;
+    error.value = '';
+
+    try {
+        const response = await api.post('/delete_user', { username }, { baseURL: '' });
+
+        if (response.success !== true) {
+            throw new Error(response.error || 'خطا در حذف کاربر.');
+        }
+
+        deleteTarget.value = null;
+        notice.value = 'کاربر با موفقیت حذف شد.';
+        await loadUsers();
+    } catch (failure) {
+        error.value = failure.apiFailure?.message || failure.message || 'خطا در حذف کاربر.';
+    } finally {
+        deleteSaving.value = false;
+    }
 }
 
 function openEdit(user) {
@@ -336,13 +442,15 @@ async function changeRole(user) {
 }
 
 function applyAllDays() {
-    const value = addForm.shanbeh;
+    const value = applyAllSchedule.value.trim();
     if (!value) {
         return;
     }
 
     for (const day of WEEK_DAYS) {
-        addForm[day.key] = value;
+        if (!day.rest) {
+            addForm[day.key] = value;
+        }
     }
 }
 
@@ -363,6 +471,8 @@ function resetAddForm() {
     addForm.seshanbeh = '';
     addForm.chrshanbeh = '';
     addForm.panjshanbeh = '';
+    addForm.jomeh = '';
+    applyAllSchedule.value = '';
 }
 
 async function submitAdd() {
@@ -429,10 +539,9 @@ const pageNumbers = computed(() => {
 </script>
 
 <template>
-    <section>
         <header
             class="section-hero"
-            style="--hero-accent:#6366f1;--hero-accent-2:#818cf8;--hero-glow-1:rgba(99,99,241,.14);--hero-glow-2:rgba(129,140,248,.12);--hero-shadow:rgba(99,102,241,.55);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(99,99,241,.08);"
+            style="--hero-accent:#6366f1;--hero-accent-2:#818cf8;--hero-glow-1:rgba(99,102,241,.14);--hero-glow-2:rgba(129,140,248,.12);--hero-shadow:rgba(99,102,241,.55);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(99,102,241,.08);"
         >
             <div class="section-hero__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="7.6" r="3.4" fill="#fff"/><path d="M3.2 20c.6-3.4 2.9-5.2 5.8-5.2s5.2 1.8 5.8 5.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="16.8" cy="9.2" r="2.5" fill="#fff" opacity=".6"/><path d="M16.2 14.7c2.3.5 4 2.1 4.4 4.3" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/></svg>
@@ -508,15 +617,19 @@ const pageNumbers = computed(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(user, index) in users" :key="user.username">
+                            <tr v-for="(user, index) in users" :key="user.username" :data-username="user.username">
                                 <td>{{ toPersianDigits((page - 1) * perPage + index + 1) }}</td>
                                 <td>{{ user.username }}</td>
                                 <td>{{ displayField(user.department) }}</td>
                                 <td>{{ displayField(user.work_hours) }}</td>
                                 <td>{{ displayField(user.substitute) }}</td>
-                                <td class="attendance-checkin-cell"><span class="attendance-checkin">—</span></td>
-                                <td class="attendance-checkout-cell"><span class="attendance-checkout">—</span></td>
-                                <td class="attendance-status-cell"><span class="attendance-status" data-state="loading">در حال دریافت…</span></td>
+                                <td class="attendance-checkin-cell"><span class="attendance-checkin">{{ attendanceState(user.username).check_in || '—' }}</span></td>
+                                <td class="attendance-checkout-cell"><span class="attendance-checkout">{{ attendanceState(user.username).check_out || '—' }}</span></td>
+                                <td class="attendance-status-cell">
+                                    <span class="attendance-status" :data-state="attendanceState(user.username).status">
+                                        {{ ATTENDANCE_LABELS[attendanceState(user.username).status] || '—' }}
+                                    </span>
+                                </td>
                                 <td class="employment-status-cell">
                                     <span class="employment-status-label" :data-status="user.employment_status || 'official'">
                                         {{ user.employment_status === 'unofficial' ? 'غیر رسمی' : 'رسمی' }}
@@ -529,15 +642,34 @@ const pageNumbers = computed(() => {
                                 </td>
                                 <td class="userTable-actions-cell">
                                     <div>
+                                        <form class="trash-icon-form" @submit.prevent>
+                                            <button type="button" class="trash-icon" :data-confirm-user="user.username" @click="openDelete(user)">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                                <span class="tooltip-text-table-del">حذف</span>
+                                            </button>
+                                        </form>
                                         <button type="button" class="edit-btn" @click="openEdit(user)">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                             <span class="tooltip-text-table">ویرایش</span>
                                         </button>
-                                        <button type="button" class="attendance-action-btn" disabled>
+                                        <button
+                                            type="button"
+                                            class="attendance-action-btn"
+                                            :class="`attendance-action-btn--${attendanceState(user.username).status === 'checked_out' ? 'done' : 'checkin'}`"
+                                            :data-username="user.username"
+                                            :disabled="attendanceState(user.username).status !== 'not_checked_in' || busyUsername === user.username"
+                                            @click="recordAttendance(user, 'checkin')"
+                                        >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
                                             <span class="tooltip-text-table-att">ثبت ورود دستی</span>
                                         </button>
-                                        <button type="button" class="manual-checkout-btn" disabled>
+                                        <button
+                                            type="button"
+                                            class="manual-checkout-btn"
+                                            :data-username="user.username"
+                                            :disabled="attendanceState(user.username).status !== 'checked_in' || busyUsername === user.username"
+                                            @click="recordAttendance(user, 'checkout')"
+                                        >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                                             <span class="tooltip-text-table-att">ثبت خروج دستی</span>
                                         </button>
@@ -557,108 +689,86 @@ const pageNumbers = computed(() => {
         <div
             id="cw-new-user-tab"
             v-show="activeTab === 'new'"
-            class="users__new coworker-tab-content"
+            class="coworker-tab-content"
             :class="{ active: activeTab === 'new' }"
         >
-            <form class="users__form" @submit.prevent="submitAdd">
-                <fieldset class="users__fieldset">
-                    <legend>اطلاعات هویتی</legend>
-                    <div class="users__grid">
-                        <label class="h-field">
-                            <span class="h-field__label">نام</span>
-                            <input v-model="addForm.name" type="text" class="h-input" required autocomplete="off">
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">نام خانوادگی</span>
-                            <input v-model="addForm.lastName" type="text" class="h-input" required autocomplete="off">
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">نام کاربری</span>
-                            <input v-model="addForm.username" type="text" class="h-input" required autocomplete="off">
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">رمز عبور</span>
-                            <input v-model="addForm.password" type="password" class="h-input" required autocomplete="new-password">
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">بخش فعالیت</span>
-                            <select v-model="addForm.department" class="h-input" required>
+            <form id="newUserForm" class="new-user-form" @submit.prevent="submitAdd">
+                <fieldset class="nu-section nu-section--identity">
+                    <div class="nu-section__head">
+                        <div class="nu-section__icon nu-section__icon--identity" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                        <div><h3 class="nu-section__title">اطلاعات هویتی</h3><p class="nu-section__sub">نام، نام کاربری و رمز عبور</p></div>
+                    </div>
+                    <div class="nu-section__body nu-grid nu-grid--5">
+                        <div class="nu-field"><label class="nu-field__label" for="newFirstName">نام</label><input id="newFirstName" v-model="addForm.name" name="name" type="text" class="nu-field__input" required autocomplete="off" placeholder="نام"></div>
+                        <div class="nu-field"><label class="nu-field__label" for="newLastName">نام خانوادگی</label><input id="newLastName" v-model="addForm.lastName" name="last_name" type="text" class="nu-field__input" required autocomplete="off" placeholder="نام خانوادگی"></div>
+                        <div class="nu-field"><label class="nu-field__label" for="newUsername">نام کاربری</label><input id="newUsername" v-model="addForm.username" name="username" type="text" class="nu-field__input nu-field__input--mono" required autocomplete="off" placeholder="نام کاربری"></div>
+                        <div class="nu-field"><label class="nu-field__label" for="nemPassword">رمز عبور</label><input id="nemPassword" v-model="addForm.password" name="password" type="password" class="nu-field__input" required autocomplete="off" placeholder="رمز عبور"></div>
+                        <div class="nu-field">
+                            <label class="nu-field__label" for="newDepartment">بخش فعالیت</label>
+                            <select id="newDepartment" v-model="addForm.department" name="department" class="nu-field__select" required>
                                 <option value="" disabled>انتخاب کنید</option>
-                                <option v-for="department in DEPARTMENTS" :key="department" :value="department">
-                                    {{ department }}
-                                </option>
+                                <option v-for="department in DEPARTMENTS" :key="department" :value="department">{{ department }}</option>
                             </select>
-                        </label>
+                        </div>
                     </div>
                 </fieldset>
 
-                <fieldset class="users__fieldset">
-                    <legend>اطلاعات شغلی</legend>
-                    <div class="users__grid">
-                        <label class="h-field">
-                            <span class="h-field__label">ساعت کاری</span>
-                            <select v-model="addForm.workHours" class="h-input" required>
+                <fieldset class="nu-section nu-section--job">
+                    <div class="nu-section__head">
+                        <div class="nu-section__icon nu-section__icon--job" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+                        <div><h3 class="nu-section__title">اطلاعات شغلی</h3><p class="nu-section__sub">ساعات کاری، استخدام و سمت</p></div>
+                    </div>
+                    <div class="nu-section__body nu-grid nu-grid--5">
+                        <div class="nu-field">
+                            <label class="nu-field__label" for="newWorkHours">ساعت کاری</label>
+                            <select id="newWorkHours" v-model="addForm.workHours" name="work_hours" class="nu-field__select">
                                 <option value="" disabled>انتخاب کنید</option>
-                                <option v-for="hours in WORK_HOURS" :key="hours" :value="hours">{{ hours }}</option>
+                                <option v-for="hours in WORK_HOURS" :key="hours" :value="hours">{{ toPersianDigits(hours) }}</option>
                             </select>
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">وضعیت استخدام</span>
-                            <select v-model="addForm.employmentStatus" class="h-input" required>
-                                <option value="official">رسمی</option>
-                                <option value="unofficial">غیر رسمی</option>
-                            </select>
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">نوع کاربری</span>
-                            <select v-model="addForm.role" class="h-input" required>
+                        </div>
+                        <div class="nu-field"><label class="nu-field__label" for="newEmploymentStatus">وضعیت استخدام</label><select id="newEmploymentStatus" v-model="addForm.employmentStatus" name="employment_status" class="nu-field__select" required><option value="official">رسمی</option><option value="unofficial">غیر رسمی</option></select></div>
+                        <div class="nu-field"><label class="nu-field__label" for="newRole">نوع کاربری</label><select id="newRole" v-model="addForm.role" name="role" class="nu-field__select" required><option value="" disabled>انتخاب کنید</option><option value="admin">مدیر</option><option value="user">کاربر عادی</option></select></div>
+                        <div class="nu-field">
+                            <label class="nu-field__label" for="newSubstitute">جانشین</label>
+                            <select id="newSubstitute" v-model="addForm.substitute" name="substitute" class="nu-field__select">
                                 <option value="" disabled>انتخاب کنید</option>
-                                <option value="admin">مدیر</option>
-                                <option value="user">کاربر عادی</option>
+                                <option v-for="substitute in SUBSTITUTES" :key="substitute" :value="substitute">{{ substitute }}</option>
                             </select>
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">جانشین</span>
-                            <select v-model="addForm.substitute" class="h-input" required>
-                                <option value="" disabled>انتخاب کنید</option>
-                                <option v-for="substitute in SUBSTITUTES" :key="substitute" :value="substitute">
-                                    {{ substitute }}
-                                </option>
-                            </select>
-                        </label>
-                        <label class="h-field">
-                            <span class="h-field__label">کد ساعت زن</span>
-                            <input v-model="addForm.hozoorNum" type="text" class="h-input" placeholder="۸ رقمی" required autocomplete="off">
-                        </label>
+                        </div>
+                        <div class="nu-field"><label class="nu-field__label" for="newhozoorNum">کد ساعت زن</label><input id="newhozoorNum" v-model="addForm.hozoorNum" name="hozoorNum" type="text" class="nu-field__input nu-field__input--mono" placeholder="۸ رقمی" required autocomplete="off"></div>
                     </div>
                 </fieldset>
 
-                <fieldset class="users__fieldset">
-                    <legend>ساعات کاری هفتگی</legend>
-                    <div class="users__apply-all">
-                        <label class="h-field">
-                            <span class="h-field__label">اعمال بر همه روزها</span>
-                            <input type="text" class="h-input" placeholder="مثلاً ۰۸:۰۰ - ۱۶:۰۰">
-                        </label>
-                        <button type="button" class="h-btn h-btn-ghost" @click="applyAllDays">اعمال</button>
+                <fieldset class="nu-section nu-section--schedule">
+                    <div class="nu-section__head">
+                        <div class="nu-section__icon nu-section__icon--schedule" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></div>
+                        <div><h3 class="nu-section__title">ساعات کاری هفتگی</h3><p class="nu-section__sub">ساعت ورود و خروج هر روز هفته</p></div>
                     </div>
-                    <div class="users__days">
-                        <label v-for="day in WEEK_DAYS" :key="day.key" class="h-field">
-                            <span class="h-field__label">{{ day.label }}</span>
-                            <input v-model="addForm[day.key]" type="text" class="h-input" placeholder="۰۸:۰۰ - ۱۶:۰۰">
-                        </label>
+                    <div class="nu-section__body">
+                        <div class="nu-apply-all">
+                            <label class="nu-apply-all__label" for="applyAllDays">اعمال بر همه روزها</label>
+                            <div class="nu-apply-all__group">
+                                <input id="applyAllDays" v-model="applyAllSchedule" type="text" class="nu-apply-all__input" placeholder="مثلاً ۰۸:۰۰ - ۱۶:۰۰">
+                                <button id="applyAllBtn" type="button" class="nu-apply-all__btn" @click="applyAllDays"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>اعمال</button>
+                            </div>
+                        </div>
+                        <div class="nu-schedule-grid">
+                            <div v-for="(day, index) in WEEK_DAYS" :key="day.key" class="nu-schedule-col" :class="{ 'nu-schedule-col--friday': day.rest }" :style="{ animationDelay: `${index * 40}ms` }">
+                                <div class="nu-schedule-dot" :class="day.rest ? 'nu-schedule-dot--rest' : 'nu-schedule-dot--active'"></div>
+                                <div class="nu-schedule-day">{{ day.label }}</div>
+                                <input v-model="addForm[day.key]" :id="day.key" :name="day.key" type="text" class="nu-schedule-input" :placeholder="day.rest ? 'تعطیل' : '۰۸:۰۰ - ۱۶:۰۰'" :readonly="day.rest">
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
 
                 <p v-if="addError" class="h-alert" role="alert">{{ addError }}</p>
-
-                <div class="users__form-footer">
-                    <span class="users__hint">فیلدهای ستاره‌دار الزامی هستند</span>
-                    <button type="submit" class="h-btn h-btn-primary" :disabled="addSaving">
-                        {{ addSaving ? 'در حال ثبت…' : 'ذخیره کاربر' }}
-                    </button>
-                </div>
             </form>
+
+            <div class="nu-footer">
+                <div class="nu-footer__hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>فیلدهای ستاره‌دار الزامی هستند</span></div>
+                <button type="submit" form="newUserForm" class="nu-footer__btn" :disabled="addSaving"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>{{ addSaving ? 'در حال ثبت…' : 'ذخیره کاربر' }}</button>
+            </div>
         </div>
         </div>
 
@@ -750,6 +860,38 @@ const pageNumbers = computed(() => {
             </div>
         </div>
 
+        <div
+            v-if="deleteTarget"
+            id="confirmDeleteModal"
+            class="modal"
+            :style="{ display: 'block' }"
+            @click.self="closeDelete"
+        >
+            <div class="confirm-delete-popup" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title">
+                <div class="confirm-delete-header">
+                    <h2 id="confirm-delete-title">
+                        <span class="confirm-delete-header-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </span>
+                        تایید حذف کاربر
+                    </h2>
+                    <button type="button" class="close-btn-confirm-delete" aria-label="بستن" @click="closeDelete">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="confirm-delete-body">
+                    <p>آیا از حذف کاربر «{{ deleteTarget.username }}» اطمینان دارید؟ این عملیات قابل بازگشت نیست.</p>
+                </div>
+                <div class="confirm-delete-footer">
+                    <button type="button" class="confirm-delete-btn-danger" :disabled="deleteSaving" @click="confirmDelete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        {{ deleteSaving ? 'در حال حذف…' : 'بله، حذف شود' }}
+                    </button>
+                    <button type="button" class="confirm-delete-btn-cancel" :disabled="deleteSaving" @click="closeDelete">انصراف</button>
+                </div>
+            </div>
+        </div>
+
         <div v-if="editOpen" class="users__modal-overlay" @click.self="closeEdit">
             <div class="users__modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
                 <header class="users__modal-head">
@@ -821,7 +963,6 @@ const pageNumbers = computed(() => {
                 </form>
             </div>
         </div>
-    </section>
 </template>
 
 <style scoped>
@@ -1058,79 +1199,6 @@ const pageNumbers = computed(() => {
 .users__page:disabled {
     opacity: 0.45;
     cursor: not-allowed;
-}
-
-.users__form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.2rem;
-    border: 1px solid rgb(15 23 42 / 0.08);
-    border-radius: var(--radius-token-md);
-    background: #fff;
-}
-
-[data-theme='dark'] .users__form {
-    border-color: var(--dk-border);
-    background: var(--dk-surface);
-}
-
-.users__fieldset {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    margin: 0;
-    padding: 0.9rem 1rem;
-    border: 1px solid rgb(15 23 42 / 0.08);
-    border-radius: var(--radius-token-sm);
-}
-
-[data-theme='dark'] .users__fieldset {
-    border-color: var(--dk-line);
-}
-
-.users__fieldset legend {
-    padding: 0 0.5rem;
-    font-size: 0.82rem;
-    font-weight: 800;
-}
-
-.users__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.8rem;
-}
-
-.users__apply-all {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.6rem;
-}
-
-.users__apply-all .h-field {
-    flex: 1;
-}
-
-.users__days {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.8rem;
-}
-
-.users__form-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-.users__hint {
-    font-size: 0.75rem;
-    color: #94a3b8;
-}
-
-[data-theme='dark'] .users__hint {
-    color: var(--dk-text-3);
 }
 
 .users__modal-overlay {

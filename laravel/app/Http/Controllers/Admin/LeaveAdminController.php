@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Support\Legacy\LegacyDate;
 use App\Support\Legacy\LegacyHozoorReport;
+use App\Support\Legacy\LegacySerializer;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,32 @@ use ValueError;
  */
 final class LeaveAdminController extends AdminPanelController
 {
+    /**
+     * `GET /get_leave_reports` — the per-user leave balances rendered in the
+     * admin vacation tab.
+     */
+    public function reports(Request $request): JsonResponse
+    {
+        $authError = $this->requireAdmin($request);
+
+        if ($authError !== null) {
+            return $authError;
+        }
+
+        try {
+            $rows = DB::connection()->select(
+                'SELECT username, total_days, remaining_days FROM leave_report'
+            );
+
+            return response()->json([
+                'success' => true,
+                'reports' => LegacySerializer::rows('leave_report', $rows),
+            ]);
+        } catch (Throwable) {
+            return response()->json(['success' => false, 'message' => 'خطا در دریافت گزارش مرخصی.'], 500);
+        }
+    }
+
     /**
      * `POST /update_leave_status` — move one leave request to a new status.
      *

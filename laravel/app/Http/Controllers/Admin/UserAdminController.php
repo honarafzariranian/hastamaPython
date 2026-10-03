@@ -120,6 +120,30 @@ final class UserAdminController extends AdminPanelController
         }
     }
 
+    /** `POST /delete_user` — remove an account from the coworkers directory. */
+    public function delete(Request $request): JsonResponse
+    {
+        $authError = $this->requireAdmin($request);
+
+        if ($authError !== null) {
+            return $authError;
+        }
+
+        $username = trim((string) $request->input('username', ''));
+
+        if ($username === '') {
+            return response()->json(['success' => false, 'error' => 'نام کاربری الزامی است.'], 400);
+        }
+
+        try {
+            DB::connection()->delete('DELETE FROM user_table WHERE username = ?', [$username]);
+
+            return response()->json(['success' => true]);
+        } catch (Throwable) {
+            return response()->json(['success' => false, 'error' => 'خطا در حذف کاربر.'], 500);
+        }
+    }
+
     /**
      * `POST /add_user` — create an account.
      *

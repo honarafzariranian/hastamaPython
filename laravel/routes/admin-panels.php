@@ -61,6 +61,9 @@ Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void
     Route::get('/admin/coworkers/users', [UserAdminController::class, 'index'])
         ->name('admin-panel.coworker-users');
 
+    Route::post('/delete_user', [UserAdminController::class, 'delete'])
+        ->name('admin-panel.delete-user');
+
     /*
      * The dashboard's figures.  The Python page built them as template context
      * (there was no URL), so this path is the port's own — it is registered
@@ -76,6 +79,9 @@ Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void
     Route::post('/update_leave_status', [LeaveAdminController::class, 'updateStatus'])
         ->name('admin-panel.update-leave-status');
 
+    Route::get('/get_leave_reports', [LeaveAdminController::class, 'reports'])
+        ->name('admin-panel.get-leave-reports');
+
     Route::get('/get_hourly_pass_requests', [HourlyPassController::class, 'requests'])
         ->name('admin-panel.get-hourly-pass-requests');
 
@@ -90,6 +96,9 @@ Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void
 
     Route::get('/get_overtime_requests', [OvertimeController::class, 'requests'])
         ->name('admin-panel.get-overtime-requests');
+
+    Route::get('/admin/overtime/reports', [OvertimeController::class, 'allReportData'])
+        ->name('admin-panel.overtime-all-report-data');
 
     Route::get('/overtime_report', [OvertimeController::class, 'report'])
         ->name('admin-panel.overtime-report');

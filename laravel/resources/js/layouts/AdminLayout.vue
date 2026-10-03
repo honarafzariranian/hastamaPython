@@ -553,7 +553,11 @@ function tileIcon(accent) {
             v-if="activeSection"
             :id="activeSection.box"
             class="management-box is-visible"
-            :class="{ 'coworker-panel': activeSection.id === 'coworkers' }"
+            :class="{
+                'coworker-panel': activeSection.id === 'coworkers',
+                'vacation-panel': activeSection.id === 'vacation',
+                'overtime-panel': activeSection.id === 'overtime',
+            }"
             :style="{ display: boxDisplay(activeSection.box) }"
             aria-label="محتوای بخش"
         >

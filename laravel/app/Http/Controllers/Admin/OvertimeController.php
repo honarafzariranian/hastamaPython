@@ -188,6 +188,46 @@ final class OvertimeController extends AdminPanelController
     }
 
     /**
+     * The sorted totals embedded in the Python admin page's template context.
+     */
+    public function allReportData(Request $request): JsonResponse
+    {
+        $authError = $this->requireAdmin($request);
+
+        if ($authError !== null) {
+            return $authError;
+        }
+
+        try {
+            $rows = DB::connection()->select(
+                'SELECT username, total_ezafe_time FROM ezafe_total_table'
+            );
+
+            usort($rows, fn (object $left, object $right): int => $this->overtimeSeconds($right->total_ezafe_time ?? null)
+                <=> $this->overtimeSeconds($left->total_ezafe_time ?? null)
+            );
+
+            $reports = [];
+            foreach ($rows as $index => $row) {
+                $seconds = $this->overtimeSeconds($row->total_ezafe_time ?? null);
+                $reports[] = [
+                    'username' => $row->username,
+                    'total_ezafe_time' => PersianText::toPersianDigits(sprintf(
+                        '%02d:%02d',
+                        intdiv($seconds, 3600),
+                        intdiv($seconds % 3600, 60),
+                    )),
+                    'row_number' => $index + 1,
+                ];
+            }
+
+            return response()->json($reports);
+        } catch (Throwable) {
+            return response()->json(['error' => 'خطا در دریافت گزارش اضافه‌کاری.'], 500);
+        }
+    }
+
+    /**
      * `POST /get_overtime_report` — every overtime row in a Jalali range.
      *
      * `username: "all_users"` covers everyone; any other value (including a
@@ -425,5 +465,27 @@ final class OvertimeController extends AdminPanelController
         }
 
         return null;
+    }
+
+    private function overtimeSeconds(mixed $value): int
+    {
+        $raw = $value instanceof \DateTimeInterface
+            ? $value->format('H:i:s')
+            : trim((string) ($value ?? ''));
+
+        if ($raw === '') {
+            return 0;
+        }
+
+        if (is_numeric($raw)) {
+            return max(0, (int) $raw);
+        }
+
+        $parts = array_map('intval', explode(':', $raw));
+        if (count($parts) === 2 || count($parts) === 3) {
+            return max(0, ($parts[0] * 3600) + ($parts[1] * 60) + ($parts[2] ?? 0));
+        }
+
+        return 0;
     }
 }

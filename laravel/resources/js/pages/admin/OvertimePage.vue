@@ -7,10 +7,8 @@
  * dropdown submitted through POST /update_overtime_status.  A decided row
  * disappears, as in the legacy `applyStatusChangeForApproval`.
  *
- * Tab 2 (گزارش کلی): GET /overtime_report — the org-wide totals from
- * ezafe_total_table.  NOTE: the ported endpoint reproduces the legacy 500
- * (the `overtime_report` template is missing from this installation), so
- * this tab renders the server's error rather than a table.
+ * Tab 2 (گزارش کلی): GET /admin/overtime/reports — the totals rendered in the
+ * Python admin template, sorted by duration.
  *
  * Tab 3 (گزارش انفرادی): POST /get_overtime_report returns every overtime
  * row in a Jalali range; decided rows can be re-decided with
@@ -24,6 +22,13 @@ import { toLatinDigits, toPersianDigits } from '@/utils/numbers';
 const PENDING = 'انتظار تایید';
 const DECIDED = ['تایید شده', 'رد شده', 'انصراف'];
 const DECISIONS = ['تایید شده', 'رد شده', 'انصراف'];
+
+function getStatusClass(status) {
+    if (status === 'تایید شده') return 'approved-status';
+    if (status === 'رد شده') return 'rejected-status';
+    if (status === 'انصراف') return 'cancelled-status';
+    return 'pending-status';
+}
 
 const activeTab = ref('requests');
 
@@ -128,7 +133,7 @@ async function loadAllReport() {
     allReport.value = [];
 
     try {
-        const response = await api.get('/overtime_report', { baseURL: '' });
+        const response = await api.get('/admin/overtime/reports', { baseURL: '' });
         allReport.value = Array.isArray(response) ? response : [];
     } catch (failure) {
         allReportError.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت گزارش کلی.';
@@ -224,19 +229,21 @@ onMounted(() => {
 </script>
 
 <template>
-    <section class="overtime">
-        <header class="overtime__head">
-            <div>
-                <h1 class="overtime__title">مدیریت اضافه‌کاری‌ها</h1>
-                <p class="overtime__sub">درخواست‌ها و گزارشات اضافه‌کاری پرسنل</p>
-            </div>
-        </header>
+    <header
+        class="section-hero"
+        style="--hero-accent:#a855f7;--hero-accent-2:#c084fc;--hero-glow-1:rgba(168,85,247,.14);--hero-glow-2:rgba(192,132,252,.12);--hero-shadow:rgba(168,85,247,.55);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(168,85,247,.08);"
+    >
+        <div class="section-hero__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="13" r="8" fill="#fff" opacity=".14"/><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.9"/><path d="M12 8.5V13l3 1.9" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18.8" cy="5.5" r="3.8" fill="#fff"/><path d="M18.8 3.7v3.6M17 5.5h3.6" stroke="#A855F7" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <div class="section-hero__text"><h2>مدیریت اضافه‌کاری‌ها</h2><p>درخواست‌ها و گزارشات اضافه‌کاری پرسنل</p></div>
+        <div class="section-hero__glow" aria-hidden="true"></div>
+    </header>
 
-        <div class="overtime__tabs" role="tablist">
+    <div class="overtime-frame">
+        <div class="overtime-tabs" role="tablist">
             <button
                 type="button"
-                class="overtime__tab"
-                :class="{ 'is-active': activeTab === 'requests' }"
+                class="overtime-tab-btn"
+                :class="{ active: activeTab === 'requests' }"
                 role="tab"
                 :aria-selected="activeTab === 'requests'"
                 @click="activeTab = 'requests'"
@@ -245,8 +252,8 @@ onMounted(() => {
             </button>
             <button
                 type="button"
-                class="overtime__tab"
-                :class="{ 'is-active': activeTab === 'all' }"
+                class="overtime-tab-btn"
+                :class="{ active: activeTab === 'all' }"
                 role="tab"
                 :aria-selected="activeTab === 'all'"
                 @click="activeTab = 'all'; loadAllReport()"
@@ -255,8 +262,8 @@ onMounted(() => {
             </button>
             <button
                 type="button"
-                class="overtime__tab"
-                :class="{ 'is-active': activeTab === 'report' }"
+                class="overtime-tab-btn"
+                :class="{ active: activeTab === 'report' }"
                 role="tab"
                 :aria-selected="activeTab === 'report'"
                 @click="activeTab = 'report'"
@@ -268,49 +275,42 @@ onMounted(() => {
         <p v-if="error" class="h-alert" role="alert">{{ error }}</p>
         <p v-if="notice" class="h-alert h-alert--ok" role="status">{{ notice }}</p>
 
-        <div v-show="activeTab === 'requests'">
-            <div class="overtime__toolbar">
-                <button type="button" class="h-btn h-btn-ghost" :disabled="loading" @click="loadRequests">
-                    {{ loading ? 'در حال دریافت…' : 'بروزرسانی' }}
-                </button>
-            </div>
-
-            <div v-if="loading" class="overtime__loading">در حال دریافت درخواست‌ها…</div>
-
-            <div v-else class="overtime__table-scroll">
-                <table class="overtime__table">
+        <div id="overtime-requests" v-show="activeTab === 'requests'" class="overtime-tab-content" :class="{ active: activeTab === 'requests' }" role="tabpanel">
+            <table id="overTimeRequestTable" class="overTime-table">
                     <thead>
                         <tr>
-                            <th>نام کاربر</th>
-                            <th>تاریخ درخواست</th>
-                            <th>مدت زمان اضافه کاری</th>
-                            <th>توضیحات</th>
-                            <th>وضعیت درخواست</th>
-                            <th>ثبت تغییرات</th>
+                            <th class="krbr-ezafe-drkhst">نام کاربر</th>
+                            <th class="trkh-ezafe-drkhst">تاریخ درخواست</th>
+                            <th class="mdt-ezafe-drkhst">مدت زمان اضافه کاری</th>
+                            <th class="tzht-ezafe-drkhst">توضیحات</th>
+                            <th class="vaziat-ezafe-drkhst">وضعیت درخواست</th>
+                            <th class="sbt-ezafe-drkhst">ثبت تغییرات</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in requests" :key="row.id">
-                            <td>{{ row.username }}</td>
-                            <td>{{ toPersianDigits(row.overtime_date) }}</td>
-                            <td>{{ toPersianDigits(row.daily_overtime) }}</td>
-                            <td class="overtime__desc">{{ row.description || '—' }}</td>
-                            <td>
-                                <div class="overtime__status">
+                        <tr v-if="loading"><td colspan="6">در حال دریافت درخواست‌ها…</td></tr>
+                        <tr v-else v-for="row in requests" :key="row.id" :id="`request_${row.id}`">
+                            <td class="krbr-ezafe-drkhst">{{ toPersianDigits(row.username) }}</td>
+                            <td class="trkh-ezafe-drkhst">{{ toPersianDigits(row.overtime_date) }}</td>
+                            <td class="mdt-ezafe-drkhst">{{ toPersianDigits(row.daily_overtime) }}</td>
+                            <td class="tzht-ezafe-drkhst">{{ toPersianDigits(row.description || '') }}</td>
+                            <td class="vaziat-ezafe-drkhst">
+                                <div class="status-container">
                                     <button
                                         type="button"
-                                        class="overtime__status-btn"
+                                        class="status-navbar pending-status"
                                         :aria-expanded="openRowId === row.id"
                                         @click="toggleDropdown(row.id)"
                                     >
-                                        {{ row.decision }}
+                                        {{ toPersianDigits(row.decision) }}
                                     </button>
-                                    <div v-if="openRowId === row.id" class="overtime__status-menu" role="menu">
+                                    <div class="status-dropdown" :style="{ display: openRowId === row.id ? 'flex' : 'none' }" role="menu">
                                         <button
                                             v-for="status in DECISIONS"
                                             :key="status"
                                             type="button"
-                                            class="overtime__status-option"
+                                            class="status-option"
+                                            :class="leaveStatusClass(status)"
                                             role="menuitem"
                                             @click="chooseDecision(row, status)"
                                         >
@@ -319,155 +319,88 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <button
-                                    type="button"
-                                    class="h-btn h-btn-primary overtime__submit"
-                                    :disabled="busyRowId === row.id"
-                                    @click="submitDecision(row)"
-                                >
-                                    ثبت تغییرات
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="requests.length === 0">
-                            <td colspan="6" class="overtime__empty">درخواست اضافه‌کاری در انتظاری وجود ندارد.</td>
+                            <td class="sbt-ezafe-drkhst"><button type="button" class="update-button" :disabled="busyRowId === row.id" @click="submitDecision(row)">ثبت تغییرات</button></td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
         </div>
 
-        <div v-show="activeTab === 'all'">
-            <div v-if="allReportLoading" class="overtime__loading">در حال دریافت گزارش کلی…</div>
-
-            <div v-else-if="allReportError" class="h-alert" role="alert">{{ allReportError }}</div>
-
-            <div v-else class="overtime__table-scroll">
-                <table class="overtime__table">
+        <div id="overtime-all-report" v-show="activeTab === 'all'" class="overtime-tab-content" :class="{ active: activeTab === 'all' }" role="tabpanel">
+            <p v-if="allReportError" class="h-alert" role="alert">{{ allReportError }}</p>
+            <table class="overTime-allreport-table">
                     <thead>
                         <tr>
-                            <th>ردیف</th>
-                            <th>نام کاربر</th>
-                            <th>کل مدت زمان اضافه کاری</th>
+                            <th class="overtimeezafetime">کل مدت زمان اضافه کاری</th>
+                            <th class="overtimekarbar">نام کاربر</th>
+                            <th class="overtimeRadif">ردیف</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <tr v-if="allReportLoading"><td colspan="3">در حال دریافت گزارش کلی…</td></tr>
                         <tr v-for="row in allReport" :key="row.username">
-                            <td>{{ toPersianDigits(row.row_number) }}</td>
-                            <td>{{ row.username }}</td>
-                            <td>{{ toPersianDigits(row.total_ezafe_time) }}</td>
+                            <td class="overtimeezafetime">{{ toPersianDigits(row.total_ezafe_time) }}</td>
+                            <td class="overtimekarbar">{{ toPersianDigits(row.username) }}</td>
+                            <td class="overtimeRadif">{{ toPersianDigits(row.row_number) }}</td>
                         </tr>
                         <tr v-if="allReport.length === 0">
-                            <td colspan="3" class="overtime__empty">داده‌ای برای نمایش نیست.</td>
+                            <td colspan="3">{{ allReportLoading ? '' : 'داده‌ای برای نمایش نیست.' }}</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
         </div>
 
-        <div v-show="activeTab === 'report'" class="overtime__report">
-            <div class="overtime__config">
-                <span class="overtime__config-title">پارامترهای گزارش</span>
-                <div class="overtime__config-grid">
-                    <label class="h-field">
-                        <span class="h-field__label">انتخاب کاربر</span>
-                        <select v-model="reportForm.username" class="h-input" required>
+        <div id="overtime-individual-report" v-show="activeTab === 'report'" class="overtime-tab-content" :class="{ active: activeTab === 'report' }" role="tabpanel">
+            <div class="overtime-config">
+                <div class="overtime-config-title">پارامترهای گزارش</div>
+                <div class="overtime-config-grid">
+                    <div class="overtime-config-item">
+                        <span>انتخاب کاربر</span>
+                        <select v-model="reportForm.username" id="usernameEzafeReport">
                             <option value="" disabled>انتخاب کنید</option>
                             <option value="all_users">همه کاربران</option>
                             <option v-for="user in users" :key="user.value" :value="user.value">
                                 {{ user.label || user.value }}
                             </option>
                         </select>
-                    </label>
-                    <label class="h-field">
-                        <span class="h-field__label">از تاریخ</span>
-                        <input v-model="reportForm.startDate" type="text" class="h-input" placeholder="۱۴۰۵/۰۱/۰۱" required>
-                    </label>
-                    <label class="h-field">
-                        <span class="h-field__label">تا تاریخ</span>
-                        <input v-model="reportForm.endDate" type="text" class="h-input" placeholder="۱۴۰۵/۰۱/۰۱" required>
-                    </label>
-                    <div class="overtime__config-actions">
-                        <button type="button" class="h-btn h-btn-primary" :disabled="reportLoading" @click="generateReport">
-                            {{ reportLoading ? 'در حال تهیه…' : 'تهیه گزارش' }}
-                        </button>
                     </div>
+                    <div class="overtime-config-item"><span>از تاریخ</span><input v-model="reportForm.startDate" type="text" id="start_date" name="start_date" placeholder="1404/01/01" autocomplete="off"></div>
+                    <div class="overtime-config-item"><span>تا تاریخ</span><input v-model="reportForm.endDate" type="text" id="end_date" name="end_date" placeholder="1404/01/01" autocomplete="off"></div>
+                    <div class="overtime-config-item overtime-config-actions"><button type="button" id="submitReport" :disabled="reportLoading" @click="generateReport">{{ reportLoading ? 'در حال تهیه…' : 'تهیه گزارش' }}</button></div>
                 </div>
             </div>
 
             <p v-if="reportError" class="h-alert" role="alert">{{ reportError }}</p>
 
-            <div v-if="reportGenerated" class="overtime__result">
-                <div class="overtime__result-toolbar">
-                    <button type="button" class="h-btn h-btn-primary" @click="downloadReport">
-                        دریافت گزارش
-                    </button>
-                </div>
-
-                <div class="overtime__table-scroll">
-                    <table class="overtime__table">
+            <div v-if="reportGenerated" id="overtimeReportResult" class="overtime-report-result">
+                <div class="overtime-report-toolbar"><button type="button" id="downloadOvertimeReport" @click="downloadReport">دریافت گزارش</button></div>
+                <table id="overTimeIndivisualReportTable" class="overTimeindivisualReport-table">
                         <thead>
                             <tr>
-                                <th>ثبت تغییرات</th>
-                                <th>وضعیت درخواست</th>
-                                <th>توضیحات</th>
-                                <th>مدت زمان اضافه کاری</th>
-                                <th>تاریخ درخواست</th>
-                                <th>نام کاربر</th>
-                                <th>ردیف</th>
+                                <th class="sbt-ezafe-gzrsh">ثبت تغییرات</th>
+                                <th class="vaziat-ezafe-gzrsh">وضعیت درخواست</th>
+                                <th class="tzht-ezafe-gzrsh">توضیحات</th>
+                                <th class="mdt-ezafe-gzrsh">مدت زمان اضافه کاری</th>
+                                <th class="trkh-ezafe-gzrsh">تاریخ درخواست</th>
+                                <th class="krbr-ezafe-gzrsh">نام کاربر</th>
+                                <th class="rdf-ezafe-gzrsh">ردیف</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(row, index) in reportRows" :key="row.id">
-                                <td>
-                                    <button
-                                        type="button"
-                                        class="h-btn h-btn-primary overtime__submit"
-                                        :disabled="reportBusyId === row.id"
-                                        @click="submitReportDecision(row)"
-                                    >
-                                        تایید تغییرات
-                                    </button>
-                                </td>
-                                <td>
-                                    <div class="overtime__status">
-                                        <button
-                                            type="button"
-                                            class="overtime__status-btn"
-                                            @click="row.decisionOpen = !row.decisionOpen"
-                                        >
-                                            {{ row.decision }}
-                                        </button>
-                                        <div v-if="row.decisionOpen" class="overtime__status-menu" role="menu">
-                                            <button
-                                                v-for="status in DECISIONS"
-                                                :key="status"
-                                                type="button"
-                                                class="overtime__status-option"
-                                                role="menuitem"
-                                                @click="chooseReportDecision(row, status); row.decisionOpen = false"
-                                            >
-                                                {{ status }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="overtime__desc">{{ row.description || '—' }}</td>
-                                <td>{{ toPersianDigits(row.daily_overtime) }}</td>
-                                <td>{{ toPersianDigits(row.overtime_date) }}</td>
-                                <td>{{ row.username }}</td>
-                                <td>{{ toPersianDigits(index + 1) }}</td>
+                                <td class="sbt-ezafe-gzrsh"><button type="button" class="confirm-changes-btn" :disabled="reportBusyId === row.id" @click="submitReportDecision(row)">تایید تغییرات</button></td>
+                                <td class="vaziat-ezafe-gzrsh"><div class="status-container"><div class="status-navbar" :class="getStatusClass(row.decision)" @click="row.decisionOpen = !row.decisionOpen">{{ toPersianDigits(row.decision) }}</div><div class="status-dropdown" :style="{ display: row.decisionOpen ? 'flex' : 'none' }"><button v-for="status in DECISIONS" :key="status" type="button" class="status-option" :class="getStatusClass(status)" @click="chooseReportDecision(row, status); row.decisionOpen = false">{{ status }}</button></div></div></td>
+                                <td class="tzht-ezafe-gzrsh">{{ toPersianDigits(row.description || '') }}</td>
+                                <td class="mdt-ezafe-gzrsh">{{ toPersianDigits(row.daily_overtime) }}</td>
+                                <td class="trkh-ezafe-gzrsh">{{ toPersianDigits(row.overtime_date) }}</td>
+                                <td class="krbr-ezafe-gzrsh">{{ toPersianDigits(row.username) }}</td>
+                                <td class="rdf-ezafe-gzrsh">{{ toPersianDigits(index + 1) }}</td>
                             </tr>
-                            <tr v-if="reportRows.length === 0">
-                                <td colspan="7" class="overtime__empty">داده‌ای برای این بازه یافت نشد.</td>
-                            </tr>
+                            <tr v-if="reportRows.length === 0"><td colspan="7">داده‌ای برای این بازه یافت نشد.</td></tr>
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
-    </section>
+    </div>
 </template>
 
 <style scoped>
