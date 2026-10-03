@@ -11,7 +11,16 @@
     box-sizing: border-box;
 }
 
-html, body {
+/*
+ * page-scoped: loaded only by `final_report_page.html` (`body.final-report-page`
+ * in the original; the port marks the same page with `.final-report-page`).
+ * Unscoped, this block forced `height: 100vh`, `overflow: hidden`,
+ * `justify-content: center` and `#f4f4f4` onto the admin panel, whose
+ * `.page-shell` was then centred underneath the sticky topbar.  See
+ * docs/migration/DESIGN_PARITY.md §3.6.
+ */
+html:has(.final-report-page),
+body:has(.final-report-page) {
     font-family: 'Vazir';
     margin: 0;
     padding: 0;

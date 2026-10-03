@@ -28,6 +28,8 @@ html, body {
 }
 
 .page-shell {
+    --admin-sidebar-top: 8rem;
+    --admin-sidebar-bottom: 25px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -52,6 +54,7 @@ html, body {
 .admin-topbar-modern.ma-header-box {
     position: sticky;
     top: 12px;
+    flex-direction: row;
     left: auto;
     right: auto;
     margin: 12px 20px 0;
@@ -962,9 +965,9 @@ html, body {
     height: auto;
     background-color: #ffffff;
     position: fixed;
-    top: 8rem;
+    top: var(--admin-sidebar-top);
     right: 0;
-    bottom: 12px;
+    bottom: var(--admin-sidebar-bottom);
     border-radius: 22px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -2711,6 +2714,29 @@ html, body {
     border: 0;
     box-shadow: none;
     color: var(--dash-ink);
+}
+
+@media (min-width: 769px) {
+    body:has(#dashboardBox.is-visible) #dashboardBox {
+        position: fixed !important;
+        top: var(--admin-sidebar-top) !important;
+        right: calc(clamp(64px, 6vw, 78px) + 1rem) !important;
+        bottom: auto !important;
+        left: 2rem !important;
+        width: auto !important;
+        max-width: none !important;
+        height: calc(100vh - var(--admin-sidebar-top) - var(--admin-sidebar-bottom)) !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        z-index: 50;
+        transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    body:has(.page-shell.sidebar-expanded):has(#dashboardBox.is-visible) #dashboardBox {
+        right: calc(clamp(180px, 18vw, 240px) + 1rem) !important;
+    }
 }
 
 /* هالهٔ رنگی پشت کارت‌ها — داخل مرزهای خودِ باکس می‌ماند تا سرریز نشود. */
@@ -10729,6 +10755,7 @@ body.dark-theme #dashboardBox .bar-fill {
     gap: 6px;
     justify-content: flex-start;
     padding: 26px 12px 16px;
+    margin-top: 0 !important;
 }
 
 /* خط گرادیانی بالای سایدبار */

@@ -71,7 +71,14 @@ html {
     direction: rtl;
 }
 
-body {
+/*
+ * page-scoped: `body` here is the whole screen, but this sheet is only loaded
+ * by `login.html` and `register.html`.  Both pages carry `.bg-scene` (the
+ * background scene is the first thing they render), so the body block is
+ * narrowed to them — otherwise `display: flex` leaks into the panel, whose own
+ * body is a plain block.  See docs/migration/DESIGN_PARITY.md §3.6.
+ */
+body:has(.bg-scene) {
     min-height: 100vh;
     min-height: 100dvh;
     margin: 0;
@@ -83,6 +90,14 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     transition: background 0.3s ease, color 0.3s ease;
+}
+
+#app:has(.login-shell) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 100dvh;
+    width: 100%;
 }
 
 ::selection {

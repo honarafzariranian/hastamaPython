@@ -2,14 +2,20 @@
     box-sizing: border-box;
 }
 
-:root {
+/*
+ * page-scoped: this sheet is only loaded by `payroll_report_page.html`, whose
+ * root is `.preview-page`.  `:root`/`body` would otherwise repaint every other
+ * page — on `/admin/dashboard` the leaked `body` background replaced the panel's
+ * own `#f9fafb`.  See docs/migration/DESIGN_PARITY.md §3.6.
+ */
+html:has(.preview-page) {
     color-scheme: light;
     font-family: 'Vazir', Tahoma, Arial, sans-serif;
     color: #163849;
     background: #eef4f7;
 }
 
-body {
+body:has(.preview-page) {
     margin: 0;
     min-width: 320px;
     background: linear-gradient(145deg, #edf7fa, #f7fbfc);

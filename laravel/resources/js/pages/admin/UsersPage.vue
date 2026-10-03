@@ -2,7 +2,7 @@
 /**
  * User management — the legacy `coworkerBox`.
  *
- * Directory (GET /master-admin/api/users, paginated + searchable), the
+ * Directory (GET /admin/coworkers/users, paginated + searchable), the
  * new-user form (POST /add_user — the port validates FastAPI-style form
  * fields, so the payload is sent as application/x-www-form-urlencoded),
  * the edit popup (POST /update_user) and the two per-row actions
@@ -52,7 +52,7 @@ const users = ref([]);
 const total = ref(0);
 const page = ref(1);
 const pages = ref(1);
-const perPage = 15;
+const perPage = 100;
 const search = ref('');
 
 const editOpen = ref(false);
@@ -91,9 +91,92 @@ const addSaving = ref(false);
 const addError = ref('');
 
 const busyUsername = ref('');
+const registrationRequests = ref([]);
+const registrationLoaded = ref(false);
+const registrationLoading = ref(false);
+const registrationError = ref('');
+const registrationSearch = ref('');
+const registrationStatus = ref('');
+const registrationPage = ref(1);
+const registrationPages = ref(1);
+const registrationActionId = ref('');
+const rejectRequestId = ref('');
+const rejectReason = ref('');
+
+const registrationStats = computed(() => ({
+    total: registrationRequests.value.length,
+    pending: registrationRequests.value.filter((request) => request.status === 'pending').length,
+    approved: registrationRequests.value.filter((request) => request.status === 'approved').length,
+    rejected: registrationRequests.value.filter((request) => request.status === 'rejected').length,
+}));
 
 function displayField(value) {
     return value === null || value === undefined || value === '' ? '—' : String(value);
+}
+
+async function loadRegistrationRequests() {
+    registrationLoading.value = true;
+    registrationError.value = '';
+
+    try {
+        const response = await api.get('/registration/admin/requests', {
+            params: {
+                status: registrationStatus.value,
+                search: registrationSearch.value,
+                page: registrationPage.value,
+                per_page: 25,
+            },
+            baseURL: '',
+        });
+
+        registrationRequests.value = response.data ?? [];
+        registrationPages.value = response.pages ?? 1;
+        registrationLoaded.value = true;
+    } catch (failure) {
+        registrationError.value = failure.apiFailure?.message || failure.message || 'خطا در دریافت درخواست‌ها.';
+        registrationRequests.value = [];
+    } finally {
+        registrationLoading.value = false;
+    }
+}
+
+async function approveRegistration(request) {
+    registrationActionId.value = request.request_id;
+    registrationError.value = '';
+
+    try {
+        await api.post(`/registration/admin/requests/${encodeURIComponent(request.request_id)}/approve`, {}, { baseURL: '' });
+        await loadRegistrationRequests();
+    } catch (failure) {
+        registrationError.value = failure.apiFailure?.message || failure.message || 'خطا در تأیید درخواست.';
+    } finally {
+        registrationActionId.value = '';
+    }
+}
+
+async function rejectRegistration() {
+    if (!rejectRequestId.value || !rejectReason.value.trim()) {
+        registrationError.value = 'دلیل رد درخواست را وارد کنید.';
+        return;
+    }
+
+    registrationActionId.value = rejectRequestId.value;
+    registrationError.value = '';
+
+    try {
+        await api.post(
+            `/registration/admin/requests/${encodeURIComponent(rejectRequestId.value)}/reject`,
+            { reason: rejectReason.value.trim() },
+            { baseURL: '' },
+        );
+        rejectRequestId.value = '';
+        rejectReason.value = '';
+        await loadRegistrationRequests();
+    } catch (failure) {
+        registrationError.value = failure.apiFailure?.message || failure.message || 'خطا در رد درخواست.';
+    } finally {
+        registrationActionId.value = '';
+    }
 }
 
 function roleLabel(role) {
@@ -109,7 +192,7 @@ async function loadUsers() {
     error.value = '';
 
     try {
-        const response = await api.get('/master-admin/api/users', {
+        const response = await api.get('/admin/coworkers/users', {
             params: {
                 page: page.value,
                 per_page: perPage,
@@ -346,19 +429,27 @@ const pageNumbers = computed(() => {
 </script>
 
 <template>
-    <section class="users">
-        <header class="users__head">
-            <div>
-                <h1 class="users__title">مدیریت کارکنان</h1>
-                <p class="users__sub">مدیریت اطلاعات و دسترسی کاربران سامانه</p>
+    <section>
+        <header
+            class="section-hero"
+            style="--hero-accent:#6366f1;--hero-accent-2:#818cf8;--hero-glow-1:rgba(99,99,241,.14);--hero-glow-2:rgba(129,140,248,.12);--hero-shadow:rgba(99,102,241,.55);--hero-ink:#16233a;--hero-muted:#5a6b80;--hero-glow-sheen:rgba(99,99,241,.08);"
+        >
+            <div class="section-hero__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="7.6" r="3.4" fill="#fff"/><path d="M3.2 20c.6-3.4 2.9-5.2 5.8-5.2s5.2 1.8 5.8 5.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="16.8" cy="9.2" r="2.5" fill="#fff" opacity=".6"/><path d="M16.2 14.7c2.3.5 4 2.1 4.4 4.3" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/></svg>
             </div>
+            <div class="section-hero__text">
+                <h2>مدیریت کارکنان</h2>
+                <p>مدیریت اطلاعات و دسترسی کاربران سامانه</p>
+            </div>
+            <div class="section-hero__glow" aria-hidden="true"></div>
         </header>
 
-        <div class="users__tabs" role="tablist">
+        <div class="coworker-frame">
+        <div class="coworker-tabs" role="tablist">
             <button
                 type="button"
-                class="users__tab"
-                :class="{ 'is-active': activeTab === 'users' }"
+            class="coworker-tab-btn"
+            :class="{ active: activeTab === 'users' }"
                 role="tab"
                 :aria-selected="activeTab === 'users'"
                 @click="activeTab = 'users'"
@@ -367,48 +458,53 @@ const pageNumbers = computed(() => {
             </button>
             <button
                 type="button"
-                class="users__tab"
-                :class="{ 'is-active': activeTab === 'new' }"
+                class="coworker-tab-btn"
+                :class="{ active: activeTab === 'new' }"
                 role="tab"
                 :aria-selected="activeTab === 'new'"
                 @click="activeTab = 'new'"
             >
                 تعریف کاربر جدید
             </button>
+            <button
+                type="button"
+                class="coworker-tab-btn"
+                :class="{ active: activeTab === 'requests' }"
+                role="tab"
+                :aria-selected="activeTab === 'requests'"
+                @click="activeTab = 'requests'"
+            >
+                درخواست ثبت نام
+            </button>
         </div>
 
         <p v-if="error" class="h-alert" role="alert">{{ error }}</p>
         <p v-if="notice" class="h-alert h-alert--ok" role="status">{{ notice }}</p>
 
-        <div v-show="activeTab === 'users'">
-            <div class="users__toolbar">
-                <label class="users__search">
-                    <span class="sr-only">جستجوی کاربر</span>
-                    <input
-                        v-model="search"
-                        type="search"
-                        placeholder="جستجو بر اساس نام کاربری…"
-                        @keyup.enter="applySearch"
-                    >
-                </label>
-                <button type="button" class="h-btn h-btn-ghost" @click="applySearch">جستجو</button>
-            </div>
-
+        <div
+            id="cw-users-tab"
+            v-show="activeTab === 'users'"
+            class="coworker-tab-content"
+            :class="{ active: activeTab === 'users' }"
+        >
             <div v-if="loading" class="users__loading">در حال دریافت کاربران…</div>
 
             <template v-else>
-                <div class="users__table-scroll">
-                    <table class="users__table">
+                <div class="user-table-scroll">
+                    <table id="userTable">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>نام کاربر</th>
-                                <th>بخش</th>
-                                <th>ساعت کاری</th>
-                                <th>جانشین</th>
-                                <th>نقش</th>
-                                <th>وضعیت</th>
-                                <th>عملیات</th>
+                                <th class="radif">#</th>
+                                <th class="nam-karbr">نام کاربر</th>
+                                <th class="dapart">بخش</th>
+                                <th class="saat-kari">ساعت کاری</th>
+                                <th class="janeshin">جانشین</th>
+                                <th class="saat-vorood">ورود</th>
+                                <th class="saat-khorooj">خروج</th>
+                                <th class="vaziat-hozoor">حضور</th>
+                                <th class="vaziat-estekhdam">نوع استخدام</th>
+                                <th class="vaziat-faaliat">وضعیت</th>
+                                <th class="taghirat">عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -418,83 +514,52 @@ const pageNumbers = computed(() => {
                                 <td>{{ displayField(user.department) }}</td>
                                 <td>{{ displayField(user.work_hours) }}</td>
                                 <td>{{ displayField(user.substitute) }}</td>
-                                <td>
-                                    <span class="users__role" :class="user.role === 'admin' ? 'is-admin' : ''">
-                                        {{ roleLabel(user.role) }}
+                                <td class="attendance-checkin-cell"><span class="attendance-checkin">—</span></td>
+                                <td class="attendance-checkout-cell"><span class="attendance-checkout">—</span></td>
+                                <td class="attendance-status-cell"><span class="attendance-status" data-state="loading">در حال دریافت…</span></td>
+                                <td class="employment-status-cell">
+                                    <span class="employment-status-label" :data-status="user.employment_status || 'official'">
+                                        {{ user.employment_status === 'unofficial' ? 'غیر رسمی' : 'رسمی' }}
                                     </span>
                                 </td>
-                                <td>
-                                    <span class="users__status" :class="user.is_active === 'inactive' ? 'is-inactive' : 'is-active'">
+                                <td class="is-active-cell">
+                                    <span class="is-active-label" :data-active="user.is_active || 'active'">
                                         {{ statusLabel(user.is_active) }}
                                     </span>
                                 </td>
-                                <td>
-                                    <div class="users__actions">
-                                        <button
-                                            type="button"
-                                            class="h-btn h-btn-ghost users__action"
-                                            @click="openEdit(user)"
-                                        >
-                                            ویرایش
+                                <td class="userTable-actions-cell">
+                                    <div>
+                                        <button type="button" class="edit-btn" @click="openEdit(user)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                            <span class="tooltip-text-table">ویرایش</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            class="h-btn h-btn-ghost users__action"
-                                            :disabled="busyUsername === user.username"
-                                            @click="toggleStatus(user)"
-                                        >
-                                            {{ user.is_active === 'inactive' ? 'فعال‌سازی' : 'غیرفعال‌سازی' }}
+                                        <button type="button" class="attendance-action-btn" disabled>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                                            <span class="tooltip-text-table-att">ثبت ورود دستی</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            class="h-btn h-btn-ghost users__action"
-                                            :disabled="busyUsername === user.username"
-                                            @click="changeRole(user)"
-                                        >
-                                            {{ user.role === 'admin' ? 'تغییر به کاربر' : 'تغییر به مدیر' }}
+                                        <button type="button" class="manual-checkout-btn" disabled>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                            <span class="tooltip-text-table-att">ثبت خروج دستی</span>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
                             <tr v-if="users.length === 0">
-                                <td colspan="8" class="users__empty">کاربری یافت نشد.</td>
+                                <td colspan="11">کاربری یافت نشد.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <div v-if="pages > 1" class="users__pagination">
-                    <button
-                        type="button"
-                        class="users__page"
-                        :disabled="page <= 1"
-                        @click="goToPage(page - 1)"
-                    >
-                        قبلی
-                    </button>
-                    <button
-                        v-for="pageNumber in pageNumbers"
-                        :key="pageNumber"
-                        type="button"
-                        class="users__page"
-                        :class="{ 'is-active': pageNumber === page }"
-                        @click="goToPage(pageNumber)"
-                    >
-                        {{ toPersianDigits(pageNumber) }}
-                    </button>
-                    <button
-                        type="button"
-                        class="users__page"
-                        :disabled="page >= pages"
-                        @click="goToPage(page + 1)"
-                    >
-                        بعدی
-                    </button>
-                </div>
             </template>
         </div>
 
-        <div v-show="activeTab === 'new'" class="users__new">
+        <div
+            id="cw-new-user-tab"
+            v-show="activeTab === 'new'"
+            class="users__new coworker-tab-content"
+            :class="{ active: activeTab === 'new' }"
+        >
             <form class="users__form" @submit.prevent="submitAdd">
                 <fieldset class="users__fieldset">
                     <legend>اطلاعات هویتی</legend>
@@ -594,6 +659,95 @@ const pageNumbers = computed(() => {
                     </button>
                 </div>
             </form>
+        </div>
+        </div>
+
+        <div
+            id="cw-reg-requests-tab"
+            v-show="activeTab === 'requests'"
+            class="coworker-tab-content"
+            :class="{ active: activeTab === 'requests' }"
+            role="tabpanel"
+        >
+            <section id="regRequestsBox" class="management-box reg-requests-panel">
+                <header class="reg-hero">
+                    <div class="reg-hero__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </div>
+                    <div class="reg-hero__text">
+                        <span class="reg-hero__kicker">پیشخوان ثبت‌نام</span>
+                        <h2>درخواست‌های ثبت‌نام کاربران جدید</h2>
+                        <p>درخواست‌های دریافتی را بررسی، تأیید یا رد کنید</p>
+                    </div>
+                    <div class="reg-hero__glow" aria-hidden="true"></div>
+                </header>
+
+                <div class="reg-stats" aria-label="آمار درخواست‌ها">
+                    <article class="reg-stat-card reg-stat-card--total"><div class="reg-stat-card__icon">📋</div><div class="reg-stat-card__body"><strong>{{ toPersianDigits(registrationStats.total) }}</strong><span>کل درخواست‌ها</span></div></article>
+                    <article class="reg-stat-card reg-stat-card--pending"><div class="reg-stat-card__icon">⏳</div><div class="reg-stat-card__body"><strong>{{ toPersianDigits(registrationStats.pending) }}</strong><span>انتظار بررسی</span></div></article>
+                    <article class="reg-stat-card reg-stat-card--approved"><div class="reg-stat-card__icon">✅</div><div class="reg-stat-card__body"><strong>{{ toPersianDigits(registrationStats.approved) }}</strong><span>تأیید شده</span></div></article>
+                    <article class="reg-stat-card reg-stat-card--rejected"><div class="reg-stat-card__icon">❌</div><div class="reg-stat-card__body"><strong>{{ toPersianDigits(registrationStats.rejected) }}</strong><span>رد شده</span></div></article>
+                </div>
+
+                <div class="reg-toolbar">
+                    <label class="reg-search">
+                        <svg class="reg-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+                        <input v-model="registrationSearch" type="search" placeholder="جستجو بر اساس نام یا نام کاربری…" autocomplete="off">
+                    </label>
+                    <select v-model="registrationStatus" class="reg-select" aria-label="فیلتر وضعیت">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="pending">انتظار بررسی</option>
+                        <option value="approved">تأیید شده</option>
+                        <option value="rejected">رد شده</option>
+                    </select>
+                    <button type="button" class="reg-load-btn" :disabled="registrationLoading" @click="registrationPage = 1; loadRegistrationRequests()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/><path d="M21 3v6h-6"/></svg>
+                        <span>{{ registrationLoading ? 'در حال بارگذاری…' : 'بارگذاری' }}</span>
+                    </button>
+                </div>
+
+                <p v-if="registrationError" class="h-alert" role="alert">{{ registrationError }}</p>
+
+                <div class="reg-table-wrap">
+                    <table class="reg-table">
+                        <thead><tr><th>ردیف</th><th>نام و نام خانوادگی</th><th>نام کاربری</th><th>بخش</th><th>زمان درخواست</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+                        <tbody>
+                            <tr v-if="!registrationLoaded && !registrationLoading" class="reg-empty-row">
+                                <td colspan="7"><div class="reg-empty-state"><div class="reg-empty-state__icon">🔍</div><p>برای مشاهده درخواست‌ها، «بارگذاری» را بزنید</p></div></td>
+                            </tr>
+                            <tr v-else-if="registrationLoading" class="reg-empty-row"><td colspan="7">در حال دریافت درخواست‌ها…</td></tr>
+                            <tr v-else-if="registrationRequests.length === 0" class="reg-empty-row"><td colspan="7"><div class="reg-empty-state"><div class="reg-empty-state__icon">🔍</div><p>درخواستی یافت نشد.</p></div></td></tr>
+                            <tr v-for="(request, index) in registrationRequests" v-else :key="request.request_id">
+                                <td>{{ toPersianDigits((registrationPage - 1) * 25 + index + 1) }}</td>
+                                <td>{{ `${request.first_name ?? ''} ${request.last_name ?? ''}`.trim() }}</td>
+                                <td>{{ request.username }}</td>
+                                <td>{{ displayField(request.department) }}</td>
+                                <td>{{ displayField(request.created_at) }}</td>
+                                <td>{{ request.status === 'pending' ? 'انتظار بررسی' : request.status === 'approved' ? 'تأیید شده' : 'رد شده' }}</td>
+                                <td class="reg-btn-group">
+                                    <button v-if="request.status === 'pending'" type="button" class="reg-btn" :disabled="registrationActionId === request.request_id" @click="approveRegistration(request)">تأیید</button>
+                                    <button v-if="request.status === 'pending'" type="button" class="reg-btn reg-btn--danger" @click="rejectRequestId = request.request_id">رد</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="registrationPages > 1" class="reg-pagination">
+                    <button type="button" class="reg-btn reg-btn--ghost" :disabled="registrationPage <= 1" @click="registrationPage -= 1; loadRegistrationRequests()">قبلی</button>
+                    <span>{{ toPersianDigits(registrationPage) }} / {{ toPersianDigits(registrationPages) }}</span>
+                    <button type="button" class="reg-btn reg-btn--ghost" :disabled="registrationPage >= registrationPages" @click="registrationPage += 1; loadRegistrationRequests()">بعدی</button>
+                </div>
+            </section>
+
+            <div v-if="rejectRequestId" class="reg-detail-modal">
+                <div class="reg-detail-modal__backdrop" @click="rejectRequestId = ''"></div>
+                <section class="reg-detail-modal__card reg-reject-card" role="dialog" aria-modal="true">
+                    <header class="reg-detail-modal__head"><div><span class="reg-detail-modal__kicker">رد درخواست</span><h3>دلیل رد درخواست</h3></div><button type="button" class="reg-detail-modal__close" aria-label="بستن" @click="rejectRequestId = ''">×</button></header>
+                    <div class="reg-detail-modal__body"><label class="reg-reject-label" for="regRejectReason">دلیل رد درخواست را وارد کنید:</label><textarea id="regRejectReason" v-model="rejectReason" class="reg-reject-textarea" rows="3" maxlength="500"></textarea></div>
+                    <footer class="reg-detail-modal__foot"><button type="button" class="reg-btn reg-btn--ghost" @click="rejectRequestId = ''">انصراف</button><button type="button" class="reg-btn reg-btn--danger" :disabled="registrationActionId === rejectRequestId" @click="rejectRegistration">رد درخواست</button></footer>
+                </section>
+            </div>
         </div>
 
         <div v-if="editOpen" class="users__modal-overlay" @click.self="closeEdit">

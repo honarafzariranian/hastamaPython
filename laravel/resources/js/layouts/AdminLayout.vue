@@ -36,7 +36,6 @@ import LeavePage from '@/pages/admin/LeavePage.vue';
 import OvertimePage from '@/pages/admin/OvertimePage.vue';
 import HourlyPassPage from '@/pages/admin/HourlyPassPage.vue';
 import ShiftsPage from '@/pages/admin/ShiftsPage.vue';
-import ReportsPage from '@/pages/admin/ReportsPage.vue';
 import PayrollPage from '@/pages/admin/PayrollPage.vue';
 
 const route = useRoute();
@@ -49,11 +48,6 @@ const { isDark, toggleTheme } = useTheme();
  * carried, `id` is the path segment `navTo()` pushed, and `accent` is the
  * `data-accent` the stylesheet keys the gradient tile off.
  *
- * `reports` is the one deliberate addition: the legacy panel linked the five
- * report documents from inside the sections, so the ported panel needs a
- * surface for them until those sections carry their own buttons.  It is marked
- * `extra` so the difference from the running application stays visible in the
- * source rather than looking like a ported tile.
  */
 const sections = [
     { id: 'dashboard', box: 'dashboardBox', label: 'داشبورد', accent: 'dashboard', component: DashboardPage },
@@ -72,7 +66,6 @@ const sections = [
     { id: 'shifts', box: 'shiftBox', label: 'مدیریت شیفت‌ها', accent: 'shift', component: ShiftsPage },
     { id: 'attendance', box: 'hozoorbox', label: 'مدیریت ساعت زن', accent: 'attendance', component: null },
     { id: 'payroll', box: 'payrollBox', label: 'حقوق و دستمزد', accent: 'payroll', component: PayrollPage },
-    { id: 'reports', box: 'reportsBox', label: 'گزارش‌ها', accent: 'reports', component: ReportsPage, extra: true },
 ];
 
 const DEFAULT_SECTION = 'dashboard';
@@ -285,8 +278,6 @@ const tileIcons = {
         '<path d="M4 8.5V6.5A2.5 2.5 0 016.5 4h2M15.5 4h2A2.5 2.5 0 0120 6.5v2M20 15.5v2a2.5 2.5 0 01-2.5 2.5h-2M8.5 20h-2A2.5 2.5 0 014 17.5v-2" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><circle cx="9.3" cy="10.8" r="1.25" fill="#fff"/><circle cx="14.7" cy="10.8" r="1.25" fill="#fff"/><path d="M9 14.8c.9.9 1.9 1.3 3 1.3s2.1-.4 3-1.3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
     payroll:
         '<rect x="3" y="7" width="18" height="13" rx="3.2" fill="#fff" opacity=".14"/><rect x="3" y="7" width="18" height="13" rx="3.2" stroke="#fff" stroke-width="1.9"/><path d="M6.5 7V6a2 2 0 012-2h8" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><path d="M6.5 11h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/><circle cx="16.5" cy="14.5" r="4" fill="#fff"/><circle cx="16.5" cy="14.5" r="2.1" stroke="#D97706" stroke-width="1.4"/><path d="M16.5 13.4v2.2" stroke="#D97706" stroke-width="1.3" stroke-linecap="round"/>',
-    reports:
-        '<path d="M5 4.5A2.5 2.5 0 017.5 2h9A2.5 2.5 0 0119 4.5v15A2.5 2.5 0 0116.5 22h-9A2.5 2.5 0 015 19.5v-15z" fill="#fff" opacity=".14"/><path d="M5 4.5A2.5 2.5 0 017.5 2h9A2.5 2.5 0 0119 4.5v15A2.5 2.5 0 0116.5 22h-9A2.5 2.5 0 015 19.5v-15z" stroke="#fff" stroke-width="1.9"/><path d="M8.4 17.4v-4.2M12 17.4v-7M15.6 17.4v-2.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="17.6" cy="5.6" r="3.2" fill="#fff"/><path d="M16.3 5.6h2.6M17.6 4.3v2.6" stroke="#0EA5E9" stroke-width="1.3" stroke-linecap="round"/>',
     exit:
         '<path d="M13.5 4.5H8a4 4 0 00-4 4v7a4 4 0 004 4h5.5" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><circle cx="9" cy="12" r="1.3" fill="#fff"/><path d="M11 12h9" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/><path d="M16.8 8.8L20 12l-3.2 3.2" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
 };
@@ -562,6 +553,7 @@ function tileIcon(accent) {
             v-if="activeSection"
             :id="activeSection.box"
             class="management-box is-visible"
+            :class="{ 'coworker-panel': activeSection.id === 'coworkers' }"
             :style="{ display: boxDisplay(activeSection.box) }"
             aria-label="محتوای بخش"
         >

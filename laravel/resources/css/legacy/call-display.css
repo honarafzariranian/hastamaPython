@@ -26,7 +26,14 @@
     --cd-transition: var(--c-duration-slow) var(--c-ease);
 }
 
-html, body {
+/*
+ * page-scoped: loaded only by `call-display.html`, which renders
+ * `.cd-slideshow` — the marker keeps `height: 100%` / `overflow: hidden` /
+ * `display: flex` on that screen instead of clamping every ported page's
+ * document.  See docs/migration/DESIGN_PARITY.md §3.6.
+ */
+html:has(.cd-slideshow),
+body:has(.cd-slideshow) {
     width: 100%; height: 100%; overflow: hidden;
     font-family: var(--c-font);
     background: var(--cd-bg-deep);

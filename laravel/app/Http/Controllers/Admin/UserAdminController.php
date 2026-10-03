@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Services\Auth\SessionRegistry;
 use App\Support\Legacy\LegacyHttpException;
 use App\Support\Legacy\LegacyInput;
+use App\Support\Legacy\LegacyPagination;
 use App\Support\Legacy\LegacyPassword;
 use App\Support\Legacy\LegacyQuery;
+use App\Support\Legacy\LegacySerializer;
 use App\Support\Legacy\LegacyValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,6 +58,67 @@ final class UserAdminController extends AdminPanelController
 
     /** `EMPLOYMENT_STATUS_VALUES` in `app/main.py`. */
     private const EMPLOYMENT_STATUSES = ['official', 'unofficial'];
+
+    /**
+     * `GET /admin/coworkers/users` — the directory rendered by admin.html.
+     * Password columns are intentionally excluded from the projection.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $params = LegacyQuery::validate($request, [
+            'page' => LegacyQuery::int(default: 1, ge: 1),
+            'per_page' => LegacyQuery::int(default: 100, ge: 1, le: 200),
+            'search' => LegacyQuery::nullableString(),
+        ]);
+
+        $authError = $this->requireAdmin($request);
+
+        if ($authError !== null) {
+            return $authError;
+        }
+
+        try {
+            $columns = $this->userTableColumns();
+            $employmentStatus = in_array('employment_status', $columns, true)
+                ? 'employment_status'
+                : "'official' AS employment_status";
+            $activeStatus = in_array('is_active', $columns, true)
+                ? 'is_active'
+                : "'active' AS is_active";
+            $where = '';
+            $bindings = [];
+            $search = trim((string) ($params['search'] ?? ''));
+
+            if ($search !== '') {
+                $where = ' WHERE (username LIKE ? OR name LIKE ? OR last_name LIKE ? OR department LIKE ?)';
+                $needle = '%'.$search.'%';
+                $bindings = [$needle, $needle, $needle, $needle];
+            }
+
+            $connection = DB::connection();
+            $total = (int) $connection->selectOne(
+                "SELECT COUNT(*) AS total FROM user_table{$where}",
+                $bindings
+            )->total;
+            $page = $params['page'];
+            $perPage = $params['per_page'];
+            $rows = $connection->select(
+                'SELECT username, department, work_hours, substitute, name, last_name, '.$employmentStatus.', '.$activeStatus."
+                 FROM user_table{$where}
+                 ORDER BY id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+                array_merge($bindings, [LegacyPagination::offset($page, $perPage), $perPage])
+            );
+
+            return response()->json(LegacyPagination::envelope(
+                LegacySerializer::rows('user_table', $rows),
+                $total,
+                $page,
+                $perPage,
+            ));
+        } catch (Throwable) {
+            return response()->json(['success' => false, 'error' => 'خطای داخلی سرور'], 500);
+        }
+    }
 
     /**
      * `POST /add_user` — create an account.

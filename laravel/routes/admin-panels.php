@@ -58,6 +58,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['admin', 'legacy.session:optional'])->group(function (): void {
 
+    Route::get('/admin/coworkers/users', [UserAdminController::class, 'index'])
+        ->name('admin-panel.coworker-users');
+
     /*
      * The dashboard's figures.  The Python page built them as template context
      * (there was no URL), so this path is the port's own — it is registered
