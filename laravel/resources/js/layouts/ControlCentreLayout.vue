@@ -230,7 +230,7 @@ const adminName = computed(() => auth.user?.name || auth.user?.username || 'مد
 </script>
 
 <template>
-    <div class="ma-page-shell">
+    <div class="ma-page-shell" :data-section="activeSection">
         <header class="topbar admin-topbar-modern ma-header-box">
             <div class="ma-header-left">
                 <button type="button" class="ma-hamburger" aria-label="باز کردن منو" @click="sidebarOpen = true">
