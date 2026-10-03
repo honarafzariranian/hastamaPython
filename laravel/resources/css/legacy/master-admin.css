@@ -224,6 +224,15 @@ body.dark-theme .sidebar-top-card.ma-header-brand {
     min-height: 0;
 }
 
+/* Vue adds a component root between this flex shell and the dashboard panels. */
+.ma-dashboard-page {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
+}
+
 /* ── Stat Cards Grid ─────────────────────────────────────── */
 .ma-top-cards-row {
     display: grid;

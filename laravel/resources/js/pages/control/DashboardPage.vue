@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div>
+    <div class="ma-dashboard-page">
         <p v-if="error" class="h-alert" role="alert">{{ error }}</p>
 
         <div v-if="loading" class="ma-top-cards-row" id="maStats">
