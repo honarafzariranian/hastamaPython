@@ -1760,7 +1760,7 @@ html, body {
  * `#overtimeModalContentmobile`, :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) `#hourlyPassModalContentmobile`), :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) flattening
  * them to 0x0.  `:where()` keeps the specificity unchanged inside the panels.
  * See docs/migration/DESIGN_PARITY.md §3.9 */
-.modal {
+:where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal {
     display: none; /* به طور پیش‌فرض مخفی است */
     position: fixed;
     z-index: 9999;

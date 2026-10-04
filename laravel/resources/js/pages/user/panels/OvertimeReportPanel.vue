@@ -28,10 +28,10 @@ const monthlyOvertimeTotal = computed(() => {
 });
 
 async function loadRecords() {
-    const response = await api.get('/get_overtime_requests', { baseURL: '' });
+    const response = await api.get('/get_user_overtime_requests', { baseURL: '' });
     const rows = Array.isArray(response) ? response : [];
 
-    records.value = rows.filter((row) => String(row.username || '').trim() === auth.username);
+    records.value = rows;
 }
 
 onMounted(async () => {

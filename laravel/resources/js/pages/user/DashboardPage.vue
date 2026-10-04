@@ -144,9 +144,9 @@ async function loadAttendance() {
 
 async function loadPassRecords() {
     try {
-        const response = await api.get('/get_hourly_pass_requests', { baseURL: '' });
+        const response = await api.get('/get_user_hourly_pass_requests', { baseURL: '' });
         const rows = Array.isArray(response) ? response : [];
-        passRecords.value = rows.filter((row) => String(row.username || '').trim() === auth.username);
+        passRecords.value = rows;
     } catch {
         passRecords.value = [];
     } finally {
@@ -171,11 +171,10 @@ async function loadLeaveBalance() {
 
 async function loadMonthlyOvertime() {
     try {
-        const response = await api.get('/get_overtime_requests', { baseURL: '' });
+        const response = await api.get('/get_user_overtime_requests', { baseURL: '' });
         const rows = Array.isArray(response) ? response : [];
-        const userRows = rows.filter((r) => String(r.username || '').trim() === auth.username);
         let totalMinutes = 0;
-        for (const row of userRows) {
+        for (const row of rows) {
             const raw = String(row.daily_overtime || '00:00');
             const cleaned = toLatinDigits(raw).trim();
             const parts = cleaned.split(':');

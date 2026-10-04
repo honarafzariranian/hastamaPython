@@ -199,6 +199,7 @@ onMounted(() => {
     document.body.dataset.notificationRole = 'user';
     document.body.dataset.notificationActor = auth.username || '';
     document.addEventListener('keydown', onEscape);
+    document.addEventListener('click', handleSettingsAccordion);
 });
 
 onUnmounted(() => {
@@ -206,6 +207,7 @@ onUnmounted(() => {
     delete document.body.dataset.notificationRole;
     delete document.body.dataset.notificationActor;
     document.removeEventListener('keydown', onEscape);
+    document.removeEventListener('click', handleSettingsAccordion);
 });
 
 /**
@@ -267,6 +269,23 @@ function toggleSettings() {
 function closeSettings() {
     settingsOpen.value = false;
     document.body.classList.remove('settings-panel-open');
+}
+
+function handleSettingsAccordion(event) {
+    const toggle = event.target.closest('.settings-accordion-toggle');
+    if (!toggle) return;
+
+    const section = toggle.closest('.settings-section');
+    if (!section) return;
+
+    const isOpen = section.classList.contains('is-open');
+    document.querySelectorAll('.settings-section.is-open').forEach((item) => {
+        if (item !== section) {
+            item.classList.remove('is-open');
+        }
+    });
+
+    section.classList.toggle('is-open', !isOpen);
 }
 
 // ── Topbar clock ──

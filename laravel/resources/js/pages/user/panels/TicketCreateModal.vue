@@ -105,7 +105,7 @@ onMounted(loadOptions);
 </script>
 
 <template>
-    <div id="ticketModal" class="user-ticket-create">
+    <div id="ticketModal" class="user-ticket-create is-open">
         <div class="user-ticket-create-backdrop" @click="emit('close')"></div>
         <section class="user-ticket-create-dialog" role="dialog" aria-modal="true" aria-labelledby="ticketCreateHeading">
             <header class="user-ticket-create-head">

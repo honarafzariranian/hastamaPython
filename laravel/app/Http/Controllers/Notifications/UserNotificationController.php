@@ -97,9 +97,9 @@ final class UserNotificationController extends Controller
         ))[0];
 
         $rows = $connection->select(
-            'SELECT '.self::INBOX_COLUMNS.'
+            'SELECT '.self::INBOX_COLUMNS."
              FROM user_notifications un JOIN notifications n ON n.id=un.notification_id
-             WHERE {$where} ORDER BY un.delivered_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY',
+             WHERE {$where} ORDER BY un.delivered_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
             array_merge($bindings, [LegacyPagination::offset($page, $pageSize), $pageSize])
         );
 

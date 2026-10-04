@@ -14,8 +14,11 @@ use App\Http\Controllers\MasterAdmin\SearchController;
 use App\Http\Controllers\MasterAdmin\SessionListController;
 use App\Http\Controllers\MasterAdmin\SystemHealthController;
 use App\Http\Controllers\MasterAdmin\UserController;
+use App\Http\Controllers\UserPanel\AttendanceController;
 use App\Http\Controllers\UserPanel\CalendarController;
+use App\Http\Controllers\UserPanel\HourlyPassController;
 use App\Http\Controllers\UserPanel\LeaveController;
+use App\Http\Controllers\UserPanel\OvertimeController;
 use App\Http\Controllers\UserPanel\PickerController;
 use App\Http\Controllers\UserPanel\ProfileController;
 use App\Http\Controllers\UserPanel\ShiftController;
@@ -192,6 +195,8 @@ Route::middleware(['legacy.session:optional'])->group(function (): void {
     Route::get('/get_user_info', [ProfileController::class, 'info'])->name('get_user_info');
     Route::get('/get_user_info_report', [ProfileController::class, 'report'])->name('get_user_info_report');
     Route::get('/get_leave_info', [LeaveController::class, 'info'])->name('get_leave_info');
+    Route::get('/get_user_hourly_pass_requests', [HourlyPassController::class, 'userRequests'])->name('get_user_hourly_pass_requests');
+    Route::get('/get_user_overtime_requests', [OvertimeController::class, 'userRequests'])->name('get_user_overtime_requests');
 });
 
 /* Public: the login page renders today's Jalali date from this, before anyone has a
