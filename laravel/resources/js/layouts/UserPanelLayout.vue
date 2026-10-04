@@ -346,6 +346,12 @@ async function markAllRead() {
 
 onMounted(() => {
     loadUnreadCount().catch(() => {});
+    const notifInterval = setInterval(() => {
+        loadUnreadCount().catch(() => {});
+    }, 60000);
+    onUnmounted(() => {
+        clearInterval(notifInterval);
+    });
 });
 
 // ── Profile avatar ──

@@ -9,7 +9,7 @@
  * *content* of the Python modal shell the layout renders, so the page wrapper
  * (`section.leave-page`) is gone.
  */
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import api from '@/services/api';
 import { toLatinDigits, toPersianDigits } from '@/utils/numbers';
 
@@ -32,20 +32,24 @@ const days = ref('۰');
 const substitute = ref('');
 const substituteOpen = ref(false);
 
-const SUBSTITUTE_OPTIONS = [
-    'بدون جانشین',
-    'فاطمه سالاری فر',
-    'مریم براتی',
-    'زهره محمودی',
-    'محدثه گنجمه',
-    'عالیه سقایی',
-    'فرشته ایزدی',
-    'مرتضی کمالی',
-    'فاطمه پاک نفس',
-    'سیدمرتضی موسوی پور',
-    'محمدمهدی صمدیان',
-    'صبا حلاجی',
-];
+const substituteOptions = ref([{ value: '', label: 'بدون جانشین' }]);
+
+async function loadSubstituteOptions() {
+    try {
+        const response = await api.get('/get_users', { baseURL: '' });
+        const users = Array.isArray(response?.users) ? response.users : [];
+        substituteOptions.value = [
+            { value: '', label: 'بدون جانشین' },
+            ...users.map((u) => ({ value: u.value, label: u.label || u.value })),
+        ];
+    } catch {
+        /* keep the default "بدون جانشین" option */
+    }
+}
+
+onMounted(() => {
+    loadSubstituteOptions();
+});
 
 const canSubmit = computed(() => startDate.value.trim() !== '' && endDate.value.trim() !== '');
 
@@ -102,7 +106,7 @@ function toggleSubstitute() {
 }
 
 function selectSubstitute(option) {
-    substitute.value = option;
+    substitute.value = option.label;
     substituteOpen.value = false;
 }
 
@@ -216,14 +220,14 @@ async function submitLeave() {
                  `display: none`; it is revealed by `toggleSubstituteDropdown()`. -->
             <div id="substituteDropdown" class="dropdown-content" role="listbox" :style="{ display: substituteOpen ? 'block' : 'none' }">
                 <div
-                    v-for="option in SUBSTITUTE_OPTIONS"
-                    :key="option"
+                    v-for="option in substituteOptions"
+                    :key="option.value"
                     class="dropdown-option"
-                    :data-value="option"
+                    :data-value="option.value"
                     role="option"
                     @click="selectSubstitute(option)"
                 >
-                    {{ option }}
+                    {{ option.label }}
                 </div>
             </div>
 

@@ -1,17 +1,8 @@
 <script setup>
-/**
- * The body of the legacy hourly-pass report popup
- * (`#popupOverlay > #reportHourBox`).
- *
- * `GET /get_hourly_pass_requests` (administrator scoped, bare array) filtered to
- * the signed-in user's own rows — the same read the section page made.  The
- * total line keeps the page's placeholder: the Python box printed a
- * server-side sum of approved durations and no Laravel route publishes it.
- */
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
-import { toPersianDigits } from '@/utils/numbers';
+import { toPersianDigits, toLatinDigits } from '@/utils/numbers';
 
 const emit = defineEmits(['close']);
 
@@ -20,6 +11,21 @@ const auth = useAuthStore();
 const loading = ref(true);
 const error = ref('');
 const records = ref([]);
+
+const totalPassDuration = computed(() => {
+    let totalMinutes = 0;
+    for (const row of records.value) {
+        const raw = String(row.pass_duration || '0');
+        const cleaned = toLatinDigits(raw).trim();
+        const parts = cleaned.split(':');
+        if (parts.length >= 2) {
+            totalMinutes += (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+        }
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return toPersianDigits(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
+});
 
 async function loadRecords() {
     const response = await api.get('/get_hourly_pass_requests', { baseURL: '' });
@@ -45,7 +51,7 @@ onMounted(async () => {
     <div id="reportHourBox" class="report-hour-box">
         <h2>مشروح گزارش</h2>
         <div id="text-hour-box">
-            <p>مدت زمان پاس های ساعتی: ۰</p>
+            <p>مدت زمان پاس های ساعتی: {{ totalPassDuration }}</p>
         </div>
         <table class="passsaatiReport-table" id="passsaatiReportTable">
             <thead>

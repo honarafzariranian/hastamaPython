@@ -1,17 +1,8 @@
 <script setup>
-/**
- * The body of the legacy overtime report popup
- * (`#popupOverlayezafe > #reportezafekariBox`).
- *
- * `GET /get_overtime_requests` is administrator scoped, so — exactly as the
- * section page did — the rows are filtered to the signed-in user.  The monthly
- * total line is the same placeholder the page showed: the Python box printed a
- * server-side sum from `ezafe_table` and no Laravel route publishes it.
- */
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
-import { toPersianDigits } from '@/utils/numbers';
+import { toPersianDigits, toLatinDigits } from '@/utils/numbers';
 
 const emit = defineEmits(['close']);
 
@@ -20,6 +11,21 @@ const auth = useAuthStore();
 const loading = ref(true);
 const error = ref('');
 const records = ref([]);
+
+const monthlyOvertimeTotal = computed(() => {
+    let totalMinutes = 0;
+    for (const row of records.value) {
+        const raw = String(row.daily_overtime || '00:00');
+        const cleaned = toLatinDigits(raw).trim();
+        const parts = cleaned.split(':');
+        if (parts.length >= 2) {
+            totalMinutes += (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+        }
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return toPersianDigits(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
+});
 
 async function loadRecords() {
     const response = await api.get('/get_overtime_requests', { baseURL: '' });
@@ -45,7 +51,7 @@ onMounted(async () => {
     <div id="reportezafekariBox" class="report-hour-box">
         <h2>مشروح گزارش</h2>
         <div id="overtimeBox">
-            <p><span id="dailyOvertime">۰ جمع ساعت اضافه کاری ماهانه</span></p>
+            <p><span id="dailyOvertime">{{ monthlyOvertimeTotal }} جمع ساعت اضافه کاری ماهانه</span></p>
         </div>
         <table id="OverTimeTable">
             <thead>

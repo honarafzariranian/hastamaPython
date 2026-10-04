@@ -201,11 +201,9 @@ function closeEdit() {
 }
 
 /**
- * The reference posts `POST /update_ticket` with `{id, receiver, title,
- * description}` (see `user-panel-script.js`).  That legacy `ticket_table`
- * handler is an intentional `410 Gone` stub in this checkout (see
- * `routes/ticketing.php`), so the call is reproduced verbatim and the stub
- * decides the answer rather than the panel silently speaking a different API.
+ * The legacy `POST /update_ticket` is a 410 Gone stub in this checkout.
+ * The normalized `PATCH /api/tickets/{id}` only supports status/priority/category/assignee,
+ * not title/description/receiver. Editing ticket content is not yet supported.
  */
 async function submitEdit() {
     if (!editTarget.value || editSaving.value) {
@@ -225,7 +223,11 @@ async function submitEdit() {
         closeEdit();
         await loadTickets();
     } catch (failure) {
-        editError.value = failure?.message || 'ویرایش تیکت انجام نشد.';
+        if (failure?.status === 410) {
+            editError.value = 'ویرایش تیکت در این نسخه پشتیبانی نمی‌شود.';
+        } else {
+            editError.value = failure?.message || 'ویرایش تیکت انجام نشد.';
+        }
     } finally {
         editSaving.value = false;
     }
@@ -247,18 +249,15 @@ async function confirmDelete() {
     deleteBusy.value = true;
 
     try {
-        /*
-         * The legacy `#confirmDeleteBtn` called `POST /delete-ticket`, which the
-         * Laravel port keeps as an intentional `410 Gone` stub (see
-         * routes/ticketing.php).  The call is reproduced verbatim so the panel
-         * behaves identically to the reference once that legacy surface is
-         * restored.
-         */
         await api.post('/delete-ticket', { ticket_id: deleteTarget.value.id }, { baseURL: '' });
         closeDelete();
         await loadTickets();
     } catch (failure) {
-        error.value = failure?.message || 'حذف تیکت انجام نشد.';
+        if (failure?.status === 410) {
+            error.value = 'حذف تیکت در این نسخه پشتیبانی نمی‌شود.';
+        } else {
+            error.value = failure?.message || 'حذف تیکت انجام نشد.';
+        }
         closeDelete();
     } finally {
         deleteBusy.value = false;
