@@ -143,8 +143,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <section class="profile-panel-page" aria-label="پروفایل من">
-        <div class="profile-panel-body">
+    <section class="profile-panel-body" aria-label="پروفایل من">
             <div class="profile-panel-avatar-block">
                 <img
                     class="profile-panel-avatar"
@@ -229,7 +228,6 @@ onMounted(async () => {
                     </ul>
                 </section>
             </div>
-        </div>
 
         <input
             ref="fileInput"

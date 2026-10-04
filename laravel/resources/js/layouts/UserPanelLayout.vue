@@ -27,12 +27,22 @@ import { toPersianDigits } from '@/utils/numbers';
 
 import DashboardPage from '@/pages/user/DashboardPage.vue';
 import ProfilePage from '@/pages/user/ProfilePage.vue';
-import LeavePage from '@/pages/user/LeavePage.vue';
-import OvertimePage from '@/pages/user/OvertimePage.vue';
-import HourlyPassPage from '@/pages/user/HourlyPassPage.vue';
+import LeaveRequestPanel from '@/pages/user/panels/LeaveRequestPanel.vue';
+import LeaveReportPanel from '@/pages/user/panels/LeaveReportPanel.vue';
+import OvertimeRequestPanel from '@/pages/user/panels/OvertimeRequestPanel.vue';
+import OvertimeReportPanel from '@/pages/user/panels/OvertimeReportPanel.vue';
+import HourlyPassRequestPanel from '@/pages/user/panels/HourlyPassRequestPanel.vue';
+import HourlyPassReportPanel from '@/pages/user/panels/HourlyPassReportPanel.vue';
+import AttendanceReportPanel from '@/pages/user/panels/AttendanceReportPanel.vue';
 import TicketPage from '@/pages/user/TicketPage.vue';
 import NotificationsPage from '@/pages/user/NotificationsPage.vue';
-import FinalReportPage from '@/pages/user/FinalReportPage.vue';
+
+/* The overlay surfaces the legacy document kept as fixed, display-toggled modals. */
+import ProfilePanel from '@/pages/user/panels/ProfilePanel.vue';
+import UserSupportCenter from '@/pages/user/panels/UserSupportCenter.vue';
+import InternalAutomationCenter from '@/pages/user/panels/InternalAutomationCenter.vue';
+import NotificationCenter from '@/pages/user/panels/NotificationCenter.vue';
+import TicketCreateModal from '@/pages/user/panels/TicketCreateModal.vue';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -45,13 +55,14 @@ const { isDark, toggleTheme } = useTheme();
 const pages = [
     { id: 'dashboard', label: 'داشبورد', component: DashboardPage },
     { id: 'profile', label: 'پروفایل من', component: ProfilePage },
-    { id: 'leave', label: 'ثبت مرخصی', component: LeavePage },
-    { id: 'overtime', label: 'ثبت اضافه کاری', component: OvertimePage },
-    { id: 'hourly-pass', label: 'ثبت پاس ساعتی', component: HourlyPassPage },
     { id: 'tickets', label: 'ثبت تیکت', component: TicketPage },
     { id: 'notifications', label: 'اعلان‌های من', component: NotificationsPage },
-    { id: 'final-report', label: 'گزارش نهایی', component: FinalReportPage },
 ];
+/*
+ * `user-panel.html` has no "final report" section: its four report links open
+ * the in-page pop-ups now rendered above, and the printable final report is a
+ * separate document (`/final_report_page`) that the user panel never linked.
+ */
 
 const activePageId = ref('dashboard');
 const sidebarOpen = ref(false);
@@ -60,6 +71,100 @@ const profileOpen = ref(false);
 const notifOpen = ref(false);
 const reportsOpen = ref(false);
 const settingsOpen = ref(false);
+
+/*
+ * ── The Python modal layer ──────────────────────────────────────────────────
+ *
+ * `user-panel-script.js` keeps the three request modals and the four report
+ * pop-ups as display-toggled containers plus one `body.leave-modal-open`
+ * marker (`updateModalOverlayState()`), and opens each of them from the same
+ * sidebar items the legacy document used.  The markup below is those exact
+ * containers — same ids, same classes, same display values — so the
+ * stylesheet's `.morakhaci-sabt` / `.popup-overlay` rules apply unchanged.
+ */
+const activeModal = ref('');
+const activeReport = ref('');
+const dashboardKey = ref(0);
+
+/**
+ * ── The standalone overlay surfaces ────────────────────────────────────────
+ *
+ * `user-panel.html` keeps five more containers as fixed overlays rather than
+ * page sections: the profile panel (`#profilePanel`), the support centre
+ * (`#userSupportCenter`), the internal-automation centre
+ * (`#internalAutomationCenter`), the notification centre
+ * (`#notificationCenter`) and the new-ticket form (`#ticketModal`).  The legacy
+ * sidebar / dropdown / dashboard cards opened them in place, so the same entry
+ * points open them here — one overlay at a time, exactly as the reference did.
+ */
+const activeOverlay = ref('');
+
+function openOverlay(name) {
+    activeOverlay.value = name;
+    activeModal.value = '';
+    activeReport.value = '';
+    sidebarOpen.value = false;
+    reportsOpen.value = false;
+    profileOpen.value = false;
+    notifOpen.value = false;
+    syncOverlayState();
+}
+
+function closeOverlay() {
+    activeOverlay.value = '';
+    syncOverlayState();
+}
+
+function showModal(name) {
+    activeModal.value = name;
+    activeReport.value = '';
+    sidebarOpen.value = false;
+    reportsOpen.value = false;
+    syncOverlayState();
+}
+
+function hideModal() {
+    activeModal.value = '';
+    syncOverlayState();
+}
+
+function showReport(name) {
+    activeReport.value = name;
+    activeModal.value = '';
+    reportsOpen.value = false;
+    syncOverlayState();
+}
+
+function hideReport() {
+    activeReport.value = '';
+    syncOverlayState();
+}
+
+/** `updateModalOverlayState()`: one body marker for any open overlay. */
+function syncOverlayState() {
+    document.body.classList.toggle(
+        'leave-modal-open',
+        activeModal.value !== ''
+        || activeReport.value !== ''
+        || activeOverlay.value !== '',
+    );
+}
+
+/** The legacy forms reloaded `/user_panel`; the SPA remounts the dashboard. */
+function refreshDashboard() {
+    dashboardKey.value += 1;
+}
+
+/** The legacy escape handler closed the settings panel, the profile panel and the sidebar. */
+function onEscape(event) {
+    if (event.key === 'Escape') {
+        hideModal();
+        hideReport();
+        closeOverlay();
+        closeSettings();
+        closeSidebar();
+    }
+}
 
 const activePage = computed(
     () => pages.find((page) => page.id === activePageId.value) ?? pages[0],
@@ -84,6 +189,23 @@ onMounted(() => {
     if (typeof requested === 'string' && pages.some((page) => page.id === requested)) {
         activePageId.value = requested;
     }
+
+    /*
+     * The document state `user-panel.html` carries on `<body>`:
+     * `class="user-panel-page" data-notification-role="user"
+     * data-notification-actor="{username}"`.
+     */
+    document.body.classList.add('user-panel-page');
+    document.body.dataset.notificationRole = 'user';
+    document.body.dataset.notificationActor = auth.username || '';
+    document.addEventListener('keydown', onEscape);
+});
+
+onUnmounted(() => {
+    document.body.classList.remove('user-panel-page', 'leave-modal-open', 'settings-panel-open');
+    delete document.body.dataset.notificationRole;
+    delete document.body.dataset.notificationActor;
+    document.removeEventListener('keydown', onEscape);
 });
 
 /**
@@ -139,10 +261,12 @@ function toggleReports() {
 
 function toggleSettings() {
     settingsOpen.value = !settingsOpen.value;
+    document.body.classList.toggle('settings-panel-open', settingsOpen.value);
 }
 
 function closeSettings() {
     settingsOpen.value = false;
+    document.body.classList.remove('settings-panel-open');
 }
 
 // ── Topbar clock ──
@@ -314,12 +438,12 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                         <div class="pd-section">
                             <div class="pd-section__label">حساب کاربری</div>
-                            <button type="button" class="pd-item" data-action="open-profile-panel" @click="closeProfile(); navigate('profile')">
+                            <button type="button" class="pd-item" data-action="open-profile-panel" @click="closeProfile(); openOverlay('profile')">
                                 <span class="pd-item__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
                                 <span class="pd-item__text">پروفایل من</span>
                                 <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
                             </button>
-                            <button type="button" class="pd-item" data-action="open-security-panel" @click="closeProfile()">
+                            <button type="button" class="pd-item" data-action="open-security-panel" @click="closeProfile(); openOverlay('profile')">
                                 <span class="pd-item__icon pd-item__icon--green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
                                 <span class="pd-item__text">امنیت و رمز عبور</span>
                                 <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
@@ -328,7 +452,7 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                         <div class="pd-section">
                             <div class="pd-section__label">پشتیبانی</div>
-                            <button type="button" class="pd-item" data-action="open-support-center" @click="closeProfile(); navigate('tickets')">
+                            <button type="button" class="pd-item" data-action="open-support-center" @click="closeProfile(); openOverlay('support')">
                                 <span class="pd-item__icon pd-item__icon--cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                                 <span class="pd-item__text">پشتیبانی فنی</span>
                                 <span class="pd-item__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
@@ -380,7 +504,7 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
                     </div>
                 </article>
             </div>
-            <button type="button" class="notification-view-all" data-action="open-notification-center" @click="closeNotif(); navigate('notifications')">مشاهده همه اعلان‌ها</button>
+            <button type="button" class="notification-view-all" data-action="open-notification-center" @click="closeNotif(); openOverlay('notifications')">مشاهده همه اعلان‌ها</button>
         </section>
 
         <div class="mobile-sidebar-overlay" @click="closeSidebar" aria-hidden="true"></div>
@@ -427,11 +551,11 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                     <div
                         class="sidebar-nav-item"
-                        :class="{ 'active': activePageId === 'leave' }"
+                        id="showMoreMorakhc"
                         data-action="open-leave"
                         role="button"
                         tabindex="0"
-                        @click="navigate('leave')"
+                        @click="showModal('leave')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
@@ -441,9 +565,11 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                     <div
                         class="sidebar-nav-item"
-                        :class="{ 'active': activePageId === 'overtime' }"
                         id="submitOvertime"
-                        @click="navigate('overtime')"
+                        data-action="open-overtime"
+                        role="button"
+                        tabindex="0"
+                        @click="showModal('overtime')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V10M10 19V5M16 19v-7M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -453,12 +579,11 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                     <div
                         class="sidebar-nav-item"
-                        :class="{ 'active': activePageId === 'hourly-pass' }"
                         id="submitPass"
                         data-action="open-hourly-pass"
                         role="button"
                         tabindex="0"
-                        @click="navigate('hourly-pass')"
+                        @click="showModal('pass')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -480,18 +605,17 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
                             </span>
                         </span>
                         <div class="sidebar-submenu" id="reportsSubmenu" :style="{ display: reportsOpen ? 'flex' : 'none' }">
-                            <a href="#" class="sidebar-submenu-item" data-report="leave" @click.prevent="navigate('leave')">گزارش مرخصی</a>
-                            <a href="#" class="sidebar-submenu-item" data-report="overtime" @click.prevent="navigate('overtime')">گزارش اضافه کاری</a>
-                            <a href="#" class="sidebar-submenu-item" data-report="pass" @click.prevent="navigate('hourly-pass')">گزارش پاس های ساعتی</a>
-                            <a href="#" class="sidebar-submenu-item" data-report="attendance" @click.prevent="navigate('final-report')">گزارش حضور و غیاب</a>
+                            <a href="#" class="sidebar-submenu-item" id="reportLeave" data-report="leave" @click.prevent="showReport('leave')">گزارش مرخصی</a>
+                            <a href="#" class="sidebar-submenu-item" id="reportOvertime" data-report="overtime" @click.prevent="showReport('overtime')">گزارش اضافه کاری</a>
+                            <a href="#" class="sidebar-submenu-item" id="reportPass" data-report="pass" @click.prevent="showReport('pass')">گزارش پاس های ساعتی</a>
+                            <a href="#" class="sidebar-submenu-item" id="reportAttendance" data-report="attendance" @click.prevent="showReport('attendance')">گزارش حضور و غیاب</a>
                         </div>
                     </div>
 
                     <div
                         class="sidebar-nav-item"
-                        :class="{ 'active': activePageId === 'tickets' }"
                         id="ticketListIcon"
-                        @click="navigate('tickets')"
+                        @click="openOverlay('ticket-create')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -505,7 +629,7 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
                         data-action="open-internal-automation"
                         role="button"
                         tabindex="0"
-                        @click="navigate('notifications')"
+                        @click="openOverlay('automation')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 0 1 7.5 3h9A2.5 2.5 0 0 1 19 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4.2A2.5 2.5 0 0 1 4 13.3V5.5A2.5 2.5 0 0 1 5 5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8h8M8 11.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
@@ -515,11 +639,10 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
                     <div
                         class="sidebar-nav-item"
-                        :class="{ 'active': activePageId === 'notifications' }"
                         data-action="open-notification-center"
                         role="button"
                         tabindex="0"
-                        @click="navigate('notifications')"
+                        @click="openOverlay('notifications')"
                     >
                         <span class="sidebar-item-content">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="currentColor" stroke-width="1.8"/></svg></span>
@@ -783,8 +906,133 @@ const displayRole = computed(() => auth.user?.role || 'کارشناس فناور
 
             <!-- محتوای اصلی داشبورد -->
             <main class="dashboard-main" id="top">
-                <component :is="activeComponent" @navigate="navigate" />
+                <component
+                    :is="activeComponent"
+                    :key="activePageId + ':' + dashboardKey"
+                    @navigate="navigate"
+                    @open="showModal"
+                    @overlay="openOverlay"
+                />
             </main>
         </div>
+
+        <!--
+            ═══ The modal layer ═══
+
+            The four containers below are `user-panel.html`'s own: the three
+            request modals (`#leaveModal`, `#overtimeModal`, `#hourlyPassModal`),
+            the three report pop-ups (`#popupOverlayMorakhsi`,
+            `#popupOverlayezafe`, `#popupOverlay`) and the attendance report
+            (`#popupHozoor`).  Their bodies are the panel components, so the
+            stylesheet sees exactly the same element tree as the legacy page.
+        -->
+
+        <!-- پاپ‌آپ ثبت مرخصی -->
+        <div
+            id="leaveModal"
+            class="morakhaci-sabt"
+            :style="{ display: activeModal === 'leave' ? 'flex' : 'none' }"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leaveModalTitle"
+        >
+            <div class="modal" id="leaveModalContent">
+                <LeaveRequestPanel
+                    v-if="activeModal === 'leave'"
+                    @close="hideModal"
+                    @submitted="refreshDashboard"
+                />
+            </div>
+        </div>
+
+        <!-- پاپ‌آپ ثبت اضافه کار -->
+        <div
+            id="overtimeModal"
+            class="morakhaci-sabt"
+            :style="{ display: activeModal === 'overtime' ? 'flex' : 'none' }"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="overtimeModalTitle"
+        >
+            <div class="modal" id="overtimeModalContentmobile">
+                <OvertimeRequestPanel
+                    v-if="activeModal === 'overtime'"
+                    @close="hideModal"
+                    @submitted="refreshDashboard"
+                />
+            </div>
+        </div>
+
+        <!-- پاپ‌آپ پاس ساعتی -->
+        <div
+            id="hourlyPassModal"
+            class="morakhaci-sabt"
+            :style="{ display: activeModal === 'pass' ? 'block' : 'none' }"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hourlyPassModalTitle"
+        >
+            <div class="modal" id="hourlyPassModalContentmobile">
+                <HourlyPassRequestPanel
+                    v-if="activeModal === 'pass'"
+                    @close="hideModal"
+                    @submitted="refreshDashboard"
+                />
+            </div>
+        </div>
+
+        <!-- پاپ‌اپ جدول مرخصی های کاربر -->
+        <div
+            id="popupOverlayMorakhsi"
+            class="popup-overlay"
+            :style="{ display: activeReport === 'leave' ? 'flex' : 'none' }"
+        >
+            <LeaveReportPanel v-if="activeReport === 'leave'" @close="hideReport" />
+        </div>
+
+        <!-- پاپ‌اپ جدول اضافه کاری های کاربر -->
+        <div
+            id="popupOverlayezafe"
+            class="popup-overlay"
+            :style="{ display: activeReport === 'overtime' ? 'flex' : 'none' }"
+        >
+            <OvertimeReportPanel v-if="activeReport === 'overtime'" @close="hideReport" />
+        </div>
+
+        <!-- پاپ‌اپ جدول پاس های ساعتی -->
+        <div
+            id="popupOverlay"
+            class="popup-overlay"
+            :style="{ display: activeReport === 'pass' ? 'flex' : 'none' }"
+        >
+            <HourlyPassReportPanel v-if="activeReport === 'pass'" @close="hideReport" />
+        </div>
+
+        <!-- پاپ اپ گزارش ساعت زن -->
+        <div
+            id="popupHozoor"
+            class="popupHozoor-overlay"
+            :style="{ display: activeReport === 'attendance' ? 'flex' : 'none' }"
+        >
+            <AttendanceReportPanel v-if="activeReport === 'attendance'" @close="hideReport" />
+        </div>
+
+        <!--
+            ═══ The standalone overlay surfaces ═══
+
+            `#profilePanel`, `#userSupportCenter`, `#internalAutomationCenter`,
+            `#notificationCenter` and `#ticketModal` are fixed overlays in
+            `user-panel.html`.  They render only while open, so the stylesheet
+            sees exactly the element tree the reference built on demand.
+        -->
+        <ProfilePanel v-if="activeOverlay === 'profile'" @close="closeOverlay" />
+        <UserSupportCenter v-if="activeOverlay === 'support'" @close="closeOverlay" @new-ticket="openOverlay('ticket-create')" />
+        <InternalAutomationCenter v-if="activeOverlay === 'automation'" @close="closeOverlay" />
+        <NotificationCenter v-if="activeOverlay === 'notifications'" @close="closeOverlay" />
+        <TicketCreateModal
+            v-if="activeOverlay === 'ticket-create'"
+            @close="closeOverlay"
+            @created="closeOverlay"
+        />
     </div>
 </template>

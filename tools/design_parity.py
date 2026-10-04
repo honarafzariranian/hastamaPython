@@ -41,18 +41,36 @@ PAIRS: dict[str, list[str]] = {
     "training-lesson.html": ["pages/public/TrainingLessonPage.vue"],
     "offline.html": ["pages/public/OfflinePage.vue"],
     "vpn-warning.html": ["pages/public/IranOnlyPage.vue"],
+    # The leave / overtime / hourly-pass surfaces are the modal bodies the
+    # layout renders, so their markup lives in `pages/user/panels/*` rather than
+    # in per-section pages.  `FinalReportPage.vue` is deliberately absent:
+    # `user-panel.html` has no such section (its report links are the in-page
+    # pop-ups), and the printable report is a separate document.
     "user-panel.html": ["layouts/UserPanelLayout.vue"]
     + [
         f"pages/user/{n}"
         for n in (
             "DashboardPage.vue",
             "ProfilePage.vue",
-            "LeavePage.vue",
-            "OvertimePage.vue",
-            "HourlyPassPage.vue",
             "TicketPage.vue",
             "NotificationsPage.vue",
-            "FinalReportPage.vue",
+        )
+    ]
+    + [
+        f"pages/user/panels/{n}"
+        for n in (
+            "LeaveRequestPanel.vue",
+            "LeaveReportPanel.vue",
+            "OvertimeRequestPanel.vue",
+            "OvertimeReportPanel.vue",
+            "HourlyPassRequestPanel.vue",
+            "HourlyPassReportPanel.vue",
+            "AttendanceReportPanel.vue",
+            "InternalAutomationCenter.vue",
+            "UserSupportCenter.vue",
+            "NotificationCenter.vue",
+            "ProfilePanel.vue",
+            "TicketCreateModal.vue",
         )
     ],
     "admin.html": ["layouts/AdminLayout.vue"]
@@ -95,6 +113,7 @@ PAIRS: dict[str, list[str]] = {
 # Cases where the class really is reproduced, and how — each one verified by
 # hand, so the reported gap count stays honest.
 ADJUDICATED: dict[tuple[str, str], str] = {
+    ("user-panel.html", "user-panel-page"): "applied to <body> by the layout",
     ("training.html", "tr-page"): "applied to <body> by the component",
     ("training.html", "cat_id"): "Jinja loop variable caught by the class scan",
     ("training-lesson.html", "tr-page"): "applied to <body> by the component",

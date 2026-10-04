@@ -26,6 +26,8 @@ const auth = useAuthStore();
 
 const VIEW_ICON_URL = '/images/view.png';
 const SEND_ICON_URL = '/images/send.png';
+const TRASH_ICON_URL = '/images/trash.png';
+const EDIT_ICON_URL = '/images/writing.png';
 
 const PRIORITIES = [
     { value: 'low', label: 'کم' },
@@ -153,6 +155,114 @@ async function openTicket(ticket) {
 function closeTicket() {
     activeTicket.value = null;
     replyText.value = '';
+}
+
+// ── Edit / delete modals (the legacy `#ticketEditModal`, `#confirmDeleteModal`) ──
+const editTarget = ref(null);
+const editForm = ref({ receiver: '', title: '', description: '' });
+const editReceivers = ref([]);
+const editError = ref('');
+const editSaving = ref(false);
+const deleteTarget = ref(null);
+const deleteBusy = ref(false);
+
+/**
+ * `openEditTicketModal()` reads the row's data-attributes into the form and
+ * loads the receiver picker from `GET /get_receivers` (the one edit endpoint
+ * this checkout ports), selecting the ticket's current receiver once it lands.
+ */
+async function openEdit(ticket) {
+    editTarget.value = ticket;
+    editError.value = '';
+    editForm.value = {
+        receiver: '',
+        title: ticket.subject || '',
+        description: ticket.body || ticket.last_message_preview || '',
+    };
+
+    try {
+        const response = await api.get('/get_receivers', { baseURL: '' });
+        editReceivers.value = Array.isArray(response) ? response : [];
+
+        const current = ticket.recipient_username || '';
+
+        editForm.value.receiver = editReceivers.value.some(
+            (receiver) => String(receiver) === String(current),
+        ) ? current : (editReceivers.value[0] || '');
+    } catch (failure) {
+        editReceivers.value = [];
+        editError.value = failure?.message || 'خطا در دریافت گیرندگان';
+    }
+}
+
+function closeEdit() {
+    editTarget.value = null;
+    editError.value = '';
+}
+
+/**
+ * The reference posts `POST /update_ticket` with `{id, receiver, title,
+ * description}` (see `user-panel-script.js`).  That legacy `ticket_table`
+ * handler is an intentional `410 Gone` stub in this checkout (see
+ * `routes/ticketing.php`), so the call is reproduced verbatim and the stub
+ * decides the answer rather than the panel silently speaking a different API.
+ */
+async function submitEdit() {
+    if (!editTarget.value || editSaving.value) {
+        return;
+    }
+
+    editSaving.value = true;
+    editError.value = '';
+
+    try {
+        await api.post('/update_ticket', {
+            id: editTarget.value.id,
+            receiver: editForm.value.receiver,
+            title: editForm.value.title,
+            description: editForm.value.description,
+        }, { baseURL: '' });
+        closeEdit();
+        await loadTickets();
+    } catch (failure) {
+        editError.value = failure?.message || 'ویرایش تیکت انجام نشد.';
+    } finally {
+        editSaving.value = false;
+    }
+}
+
+function openDelete(ticket) {
+    deleteTarget.value = ticket;
+}
+
+function closeDelete() {
+    deleteTarget.value = null;
+}
+
+async function confirmDelete() {
+    if (!deleteTarget.value || deleteBusy.value) {
+        return;
+    }
+
+    deleteBusy.value = true;
+
+    try {
+        /*
+         * The legacy `#confirmDeleteBtn` called `POST /delete-ticket`, which the
+         * Laravel port keeps as an intentional `410 Gone` stub (see
+         * routes/ticketing.php).  The call is reproduced verbatim so the panel
+         * behaves identically to the reference once that legacy surface is
+         * restored.
+         */
+        await api.post('/delete-ticket', { ticket_id: deleteTarget.value.id }, { baseURL: '' });
+        closeDelete();
+        await loadTickets();
+    } catch (failure) {
+        error.value = failure?.message || 'حذف تیکت انجام نشد.';
+        closeDelete();
+    } finally {
+        deleteBusy.value = false;
+    }
 }
 
 async function sendReply() {
@@ -284,6 +394,14 @@ onMounted(async () => {
                         <div class="contentTarikh">{{ ticket.body || ticket.last_message_preview || '—' }}</div>
                     </div>
                     <div class="virayeshVAhazf">
+                        <button type="button" class="trash-btn" data-action="confirm-delete-ticket" :data-ticket-id="ticket.id" @click="openDelete(ticket)">
+                            <img :src="TRASH_ICON_URL" alt="حذف">
+                            <span class="tooltip-text-table-del">حذف</span>
+                        </button>
+                        <button type="button" class="edit-btn" :data-id="ticket.id" @click="openEdit(ticket)">
+                            <img :src="EDIT_ICON_URL" alt="ویرایش">
+                            <span class="tooltip-text-table-edit">ویرایش</span>
+                        </button>
                         <button type="button" class="view-btn" @click="openTicket(ticket)">
                             <img :src="VIEW_ICON_URL" alt="مشاهده">
                             <span class="tooltip-text-table-view">مشاهده</span>
@@ -364,6 +482,48 @@ onMounted(async () => {
                         <img :src="SEND_ICON_URL" alt="">
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- پاپ‌آپ در جدول تیکت‌ها (legacy `#closeTicketListPopup`) -->
+        <a href="#" id="closeTicketListPopup" class="close-popup" @click.prevent="closeTicket()">بستن</a>
+
+        <!-- پنجره مدال تایید حذف تیکت -->
+        <div id="confirmDeleteModal" class="modal-hazf" :hidden="!deleteTarget">
+            <div class="modal-content-hazfPopup">
+                <h2>آیا مطمئن به حذف تیکت هستید؟</h2>
+                <button id="confirmDeleteBtn" class="ok-btn" :disabled="deleteBusy" @click="confirmDelete">
+                    {{ deleteBusy ? 'در حال حذف…' : 'تایید' }}
+                </button>
+                <button class="cancel-btn" @click="closeDelete">انصراف</button>
+            </div>
+        </div>
+
+        <!-- پاپ‌آپ ثبت ویرایش تیکت -->
+        <div id="ticketEditModal" class="modal" :hidden="!editTarget">
+            <div class="modal-content">
+                <span class="close" role="button" aria-label="بستن" @click="closeEdit">&times;</span>
+                <h2>ثبت تیکت</h2>
+                <form id="ticketEditeForm" class="ticket-popup-Req" @submit.prevent="submitEdit">
+                    <label for="ticketEditReceiver">دریافت کننده</label>
+                    <select id="ticketEditReceiver" name="ticketEditReceiver" required v-model="editForm.receiver">
+                        <option value="" disabled>{{ editReceivers.length ? 'انتخاب کنید' : 'در حال دریافت گیرندگان…' }}</option>
+                        <option v-for="receiver in editReceivers" :key="receiver" :value="receiver">{{ receiver }}</option>
+                    </select>
+
+                    <label for="ticketEditTitle">عنوان تیکت</label>
+                    <input type="text" id="ticketEditTitle" name="ticketEditTitle" required maxlength="180" autocomplete="off" autocapitalize="off" spellcheck="false" v-model="editForm.title">
+
+                    <label for="ticketEditDescription">توضیحات</label>
+                    <textarea id="ticketEditDescription" name="ticketEditDescription" rows="4" required maxlength="4000" v-model="editForm.description"></textarea>
+
+                    <div v-if="editError" class="user-ticket-create-error" role="alert">{{ editError }}</div>
+
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn-confirm" :disabled="editSaving">تایید</button>
+                        <button type="button" class="btn-cancel" @click="closeEdit">انصراف</button>
+                    </div>
+                </form>
             </div>
         </div>
     </section>

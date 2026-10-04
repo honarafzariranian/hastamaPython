@@ -28,6 +28,10 @@ const today = ref(null);
 const userInfo = ref(null);
 const attendance = ref(null);
 
+/* The pass-status card lists the caller's own three latest hourly passes. */
+const passRecords = ref([]);
+const passesLoading = ref(true);
+
 const PERSIAN_MONTHS = [
     'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
     'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
@@ -68,7 +72,13 @@ const attendanceStatusText = computed(() => {
 const canCheckIn = computed(() => attendance.value?.status === 'not_checked_in');
 const canCheckOut = computed(() => attendance.value?.status === 'checked_in');
 
-const emit = defineEmits(['navigate']);
+/*
+ * `navigate` still switches the remaining sections (tickets, notifications,
+ * profile, final report).  `open` is the legacy modal protocol: the leave,
+ * overtime and hourly-pass cards opened `#leaveModal`, `#overtimeModal` and
+ * `#hourlyPassModal` in place instead of leaving the dashboard.
+ */
+const emit = defineEmits(['navigate', 'open', 'overlay']);
 
 async function loadToday() {
     const response = await api.get('/get_today_date', { baseURL: '' });
@@ -93,6 +103,18 @@ async function loadAttendance() {
             workEnd: response?.data?.work_end ?? null,
         }
         : { status: 'not_checked_in', checkIn: null, checkOut: null };
+}
+
+async function loadPassRecords() {
+    try {
+        const response = await api.get('/get_hourly_pass_requests', { baseURL: '' });
+        const rows = Array.isArray(response) ? response : [];
+        passRecords.value = rows.filter((row) => String(row.username || '').trim() === auth.username);
+    } catch {
+        passRecords.value = [];
+    } finally {
+        passesLoading.value = false;
+    }
 }
 
 async function submitAttendance(action) {
@@ -125,6 +147,7 @@ async function submitAttendance(action) {
 }
 
 onMounted(async () => {
+    loadPassRecords();
     try {
         await Promise.all([loadToday(), loadUserInfo(), loadAttendance()]);
     } catch (failure) {
@@ -147,7 +170,7 @@ onMounted(async () => {
             </section>
             <section class="panel-card notif-card top-notif-card">
                 <h3 class="panel-title">اعلان‌های مدیریت</h3>
-                <div class="notif-item" data-action="open-notification-center" role="button" tabindex="0" @click="emit('navigate', 'notifications')">
+                <div class="notif-item" data-action="open-notification-center" role="button" tabindex="0" @click="emit('overlay', 'notifications')">
                     <span class="notif-icon">
                         <svg viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
@@ -156,7 +179,7 @@ onMounted(async () => {
                         <span>اطلاعیه‌ها و پیام‌های رسمی مدیریت را مشاهده کنید.</span>
                     </div>
                 </div>
-                <div class="see-all-link" data-action="open-notification-center" role="button" tabindex="0" @click="emit('navigate', 'notifications')">مشاهده همه اعلان‌ها</div>
+                <div class="see-all-link" data-action="open-notification-center" role="button" tabindex="0" @click="emit('overlay', 'notifications')">مشاهده همه اعلان‌ها</div>
             </section>
 
             <section class="attendance-action-card panel-card" id="attendanceActionCard" :data-username="auth.username">
@@ -210,7 +233,17 @@ onMounted(async () => {
                 </span>
                 <span class="stat-label">وضعیت پاس‌های ساعتی</span>
                 <div class="pass-list">
-                    <div class="pass-item no-pass">پاسی ثبت نشده است</div>
+                    <div v-if="passesLoading" class="pass-item no-pass">در حال دریافت…</div>
+                    <template v-else-if="passRecords.length === 0">
+                        <div class="pass-item no-pass">پاسی ثبت نشده است</div>
+                    </template>
+                    <template v-else>
+                        <div v-for="record in passRecords.slice(0, 3)" :key="record.id" class="pass-item">
+                            <strong class="pass-title">{{ record.pass_title || record.title || 'پاس ساعتی' }}</strong>
+                            <span class="pass-time">{{ record.pass_duration || record.duration || '—' }}</span>
+                        </div>
+                        <div v-if="passRecords.length > 3" class="pass-more">+{{ passRecords.length - 3 }} بیشتر</div>
+                    </template>
                 </div>
             </div>
 
@@ -234,14 +267,14 @@ onMounted(async () => {
                         <span>— روز باقی‌مانده</span>
                     </div>
                 </div>
-                <button type="button" class="new-leave-btn" data-action="open-leave" @click="emit('navigate', 'leave')">
+                <button type="button" class="new-leave-btn" data-action="open-leave" @click="emit('open', 'leave')">
                     <svg viewBox="0 0 24 24" fill="none"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     درخواست مرخصی جدید
                 </button>
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon-circle tint-purple" data-action="open-hourly-pass" title="ثبت پاس ساعتی" style="cursor:pointer" @click="emit('navigate', 'hourly-pass')">
+                <span class="stat-icon-circle tint-purple" data-action="open-hourly-pass" title="ثبت پاس ساعتی" style="cursor:pointer" @click="emit('open', 'pass')">
                     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
                 <span class="stat-label">تاخیر امروز</span>
@@ -250,7 +283,7 @@ onMounted(async () => {
             </div>
 
             <div class="stat-card">
-                <span class="stat-icon-circle tint-orange" data-action="open-overtime" title="ثبت اضافه‌کار" style="cursor:pointer" @click="emit('navigate', 'overtime')">
+                <span class="stat-icon-circle tint-orange" data-action="open-overtime" title="ثبت اضافه‌کار" style="cursor:pointer" @click="emit('open', 'overtime')">
                     <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 </span>
                 <span class="stat-label">اضافه کاری این ماه</span>
@@ -327,7 +360,7 @@ onMounted(async () => {
                     <h3 id="supportLauncherTitle">مرکز درخواست‌های من</h3>
                     <p>وضعیت درخواست‌ها و پاسخ‌های پشتیبانی را یکجا ببینید.</p>
                 </div>
-                <button type="button" class="support-launcher-action" @click="emit('navigate', 'tickets')">
+                <button type="button" class="support-launcher-action" @click="emit('overlay', 'support')">
                     مشاهده جزئیات پشتیبانی <span aria-hidden="true">←</span>
                 </button>
             </section>

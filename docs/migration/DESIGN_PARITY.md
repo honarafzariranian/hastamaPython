@@ -392,6 +392,80 @@ plus `npm run build`.  `php` is not installed in this container, so the Laravel
 HTTP layer and the `/static` passthrough are source-checked only; neither a
 paired browser screenshot nor a live websocket replay was possible.
 
+### 3.8 The call-management connection badge sat on the wrong edge — **fixed**
+
+Reported as *“the connection badge is still not in the same place as the
+Python page”*.  The badge is the floating `#csConnBadge`
+(`.cs-conn-float …--connecting|--connected|--disconnected`) at the bottom of
+`/call-management`.
+
+**Cause.**  `.cs-conn-float` declares the physical box and then the logical one:
+
+```css
+bottom: 18px !important;
+left: 18px !important;
+inset-inline-start: auto !important;
+inset-inline-end: auto !important;   /* RTL: this IS `left` — it erases the line above */
+```
+
+In a `dir="rtl"` document the later logical declaration wins inside the same
+rule, leaving the box with `top/right/left: auto` and only `bottom` set.  In
+Python that is harmless, because `call-system-standalone.css` then re-asserts
+the physical box *after* the logical properties:
+
+```css
+body.cs-page > #csConnBadge { position: fixed !important; inset: auto !important;
+                              bottom: 18px !important; left: 18px !important;
+                              margin: 0 !important; direction: ltr; }
+```
+
+`call-management.html` renders the badge as a **direct child of `<body>`**, so
+that rule matches there.  The SPA renders the same badge inside the application
+container — `BODY.cs-page > DIV#app > DIV > #csConnBadge` — where a child
+combinator can never match.  The badge therefore kept `left: auto`, fell back to
+its static inline position at the inline-start edge, and inherited `rtl`:
+
+| measurement @1200×800 | Python `:5000` | Laravel `:8000`, before | Laravel, after |
+|---|---|---|---|
+| badge rect | `x=18 y=740 139×42` | `x=1061 y=740 139×42` | `x=18 y=740 139×42` |
+| `left` / `bottom` | `18px` / `18px` | `auto → 1061.05px` / `18px` | `18px` / `18px` |
+| `direction` | `ltr` | `rtl` (icon/label order mirrored) | `ltr` |
+| icon / label origin | `x=34` / `x=61` | — | `x=34` / `x=61` |
+
+**Fix.**  In the Laravel copy of the stylesheet only, the two selectors became
+descendants — `body.cs-page #csConnBadge` and its `@media (max-width: 768px)`
+sibling — with the why recorded in the comment above them.  A descendant
+selector matches the Python DOM just as the child selector did (the badge is
+still a descendant of `body.cs-page`), and its specificity is unchanged
+(`1 id + 1 class + 1 element` in both forms), so the cascade Python computes is
+byte-for-byte the same rule set.  No markup, no component style and no Python
+file was touched.
+
+**Also checked.**  The stylesheet's other direct-child rule,
+`body.cs-page > * { position: relative; z-index: 1 }`, needs no change.  It
+lifts the page above the fixed aurora wash of `body.cs-page::before`
+(`z-index: 0`), and in the SPA it lands on `#app` — which *is* a direct child of
+`<body>` (`BODY.cs-page > DIV#app > …`) — so the whole rendered page still sits
+one layer above the wash, exactly as Python's per-child application does.  The
+interior stacking order works out the same as well: the badge keeps its own
+`z-index: 40` above the header's `30`, while in Python both are flattened to `1`
+and DOM order puts the badge on top; the confirm modal (`60`) and the toast
+stack (`10000`) stay above the badge in both.  Measured, not assumed — the
+computed `#app` box is `position: relative; z-index: 1` on the live SPA.
+
+**Verified with.**  Both pages measured live in the shared preview at
+1200×800 and at 390×800 — the badge box, its `left`/`bottom`, its `direction`
+and the origin of its icon and label are identical in the two apps — plus
+`npm run build` and a grep of the emitted bundle confirming
+`body.cs-page #csConnBadge{…inset:auto auto 18px 18px!important}`.
+`/call-management` is master-admin **and** referer gated in both apps
+(`_require_call_page_access`), so the Laravel side was rendered through the real
+SPA and the real built bundle with a local XHR/auth probe rather than a real
+login; the Python side was measured on the real `call-management.html` plus
+`call-system-standalone.css` served straight from `app/`, which is exactly the
+markup and stylesheet FastAPI ships.  No application file was modified for
+either measurement.
+
 ---
 
 ## 4. Remaining gaps (not fixed in this pass)

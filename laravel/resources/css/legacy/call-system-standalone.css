@@ -1874,9 +1874,19 @@ body.dark-mode .cs-waiting-select { background: var(--cs-surface-2); }
     }
 }
 
-/* The badge is a direct body child; keep its physical screen edge explicit
-   so RTL direction cannot reinterpret its horizontal position. */
-body.cs-page > #csConnBadge {
+/* The badge sits on the physical screen edge, not on a logical one: the rule
+   above sets `inset-inline-end`, which in an RTL document resolves to `left`
+   and erases the `left: 18px` declared before it.  Re-assert the physical box
+   here, after the logical properties, so RTL direction cannot reinterpret the
+   badge's position or the order of its icon/label.
+
+   The selector is a descendant rather than a child combinator on purpose.
+   `call-management.html` renders the badge as a direct child of `<body>`
+   (`body.cs-page > #csConnBadge`), while the SPA renders the same badge inside
+   the application container (`#app > div > …`).  Both are matched by the
+   descendant form, and its specificity is identical to the child form
+   (1 id + 1 class + 1 element), so the cascade Python computes is unchanged. */
+body.cs-page #csConnBadge {
     position: fixed !important;
     inset: auto !important;
     top: auto !important;
@@ -1888,7 +1898,7 @@ body.cs-page > #csConnBadge {
 }
 
 @media (max-width: 768px) {
-    body.cs-page > #csConnBadge {
+    body.cs-page #csConnBadge {
         bottom: 12px !important;
         left: 12px !important;
     }

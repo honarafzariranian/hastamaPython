@@ -1,3 +1,11 @@
+/* page-scoped by tools/scope_legacy_sheet.py
+   Guards keep these rules on the pages whose body contains
+   .page-shell, .ma-page-shell, .admin-shell — the templates that linked this sheet in the Python
+   app.  user-panel.html never linked it, so an unguarded rule could win the
+   cascade there; 195 selector part(s) were guarded.  The guard wraps
+   the whole selector in `:where(..)`, so it adds no specificity and the
+   cascade inside those pages is unchanged.
+   See docs/migration/DESIGN_PARITY.md §3.9 */
 /* ============================================================================
    HASTAMA ADMIN — MOBILE EXPERIENCE LAYER
    ----------------------------------------------------------------------------
@@ -216,7 +224,7 @@
         flex: 1 1 auto;
     }
 
-    .mobile-menu-toggle {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle {
         display: inline-flex;
         flex: 0 0 42px;
         width: 42px;
@@ -235,7 +243,7 @@
             background .3s var(--adm-ease-soft);
     }
 
-    .mobile-menu-toggle span {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle span {
         width: 17px;
         height: 2px;
         border-radius: 2px;
@@ -244,14 +252,14 @@
             opacity .25s linear;
     }
 
-    .mobile-menu-toggle[aria-expanded="true"] {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle[aria-expanded="true"] {
         background: linear-gradient(135deg, var(--adm-brand), var(--adm-brand-2));
         color: #fff;
     }
 
-    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; width: 0; }
-    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; width: 0; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     .ma-header-brand.ma-header-brand,
     .ma-header-brand {
@@ -265,14 +273,14 @@
         box-shadow: none !important;
     }
 
-    .ma-header-brand .sidebar-top-card-content {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-content {
         display: flex;
         align-items: center;
         gap: 9px;
         min-width: 0;
     }
 
-    .ma-header-brand .sidebar-top-card-mark {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-mark {
         width: 38px;
         height: 38px;
         flex: 0 0 38px;
@@ -284,31 +292,31 @@
         overflow: hidden;
     }
 
-    .ma-header-brand .sidebar-top-card-image {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-image {
         width: 100%;
         height: 100%;
         object-fit: contain;
     }
 
-    .ma-header-brand .sidebar-top-card-text {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-text {
         display: flex;
         flex-direction: column;
         min-width: 0;
         line-height: 1.35;
     }
 
-    .ma-header-brand .sidebar-top-card-title {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-title {
         font-size: .82rem;
         font-weight: 900;
         color: var(--adm-ink);
         letter-spacing: -.01em;
     }
 
-    .ma-header-brand .sidebar-top-card-sub {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-sub {
         display: none;
     }
 
-    .topbar-actions {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-actions {
         display: flex;
         align-items: center;
         justify-content: flex-end;
@@ -318,7 +326,7 @@
         flex-direction: row;
     }
 
-    .topbar-clock-pill {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-clock-pill {
         display: inline-flex;
         flex-direction: column;
         align-items: center;
@@ -338,7 +346,7 @@
         transition: padding .3s var(--adm-ease-soft), opacity .25s linear;
     }
 
-    .topbar-clock-date {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-clock-date {
         overflow: hidden;
         max-width: 100%;
         color: var(--adm-muted);
@@ -347,7 +355,7 @@
         text-overflow: ellipsis;
     }
 
-    .topbar-clock-time {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-clock-time {
         font-variant-numeric: tabular-nums;
         font-feature-settings: 'tnum' 1;
     }
@@ -356,8 +364,8 @@
         display: none;
     }
 
-    .topbar-icon-btn,
-    .theme-toggle {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-icon-btn,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .theme-toggle {
         display: inline-flex;
         flex: 0 0 40px;
         width: 40px;
@@ -373,26 +381,26 @@
         transition: transform .3s var(--adm-ease-spring), color .25s linear, background .25s linear;
     }
 
-    .topbar-icon-btn svg,
-    .theme-toggle svg {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-icon-btn svg,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .theme-toggle svg {
         width: 20px;
         height: 20px;
     }
 
-    .topbar-icon-btn:active,
-    .theme-toggle:active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-icon-btn:active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .theme-toggle:active {
         transform: scale(.92);
     }
 
-    .notification-bell {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-bell {
         position: relative;
     }
 
-    .notification-bell.has-unread {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-bell.has-unread {
         color: var(--adm-brand-2);
     }
 
-    .topbar-badge {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-badge {
         position: absolute;
         top: -5px;
         inset-inline-start: -5px;
@@ -410,7 +418,7 @@
         width: fit-content;
     }
 
-    .topbar-user {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-user {
         flex: 0 0 auto;
         gap: 0;
         padding: 0;
@@ -420,23 +428,23 @@
         border-radius: 999px;
     }
 
-    .topbar-user-info,
-    .topbar-user .chevron-icon {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-user-info,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-user .chevron-icon {
         display: none;
     }
 
-    .topbar-avatar-wrap,
-    .topbar-avatar {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-avatar-wrap,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-avatar {
         width: 40px;
         height: 40px;
     }
 
-    .topbar-avatar {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-avatar {
         border: 2px solid var(--adm-surface);
         box-shadow: 0 0 0 1px var(--adm-line), var(--adm-shadow-1);
     }
 
-    .topbar-user:active .topbar-avatar {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-user:active .topbar-avatar {
         transform: scale(.94);
     }
 
@@ -567,11 +575,11 @@
         text-overflow: ellipsis;
     }
 
-    .adm-tab.is-active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .adm-tab.is-active {
         color: var(--adm-accent);
     }
 
-    .adm-tab.is-active .adm-tab__icon {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .adm-tab.is-active .adm-tab__icon {
         transform: translateY(-2px) scale(1.06);
         opacity: 1;
         box-shadow: inset 0 1px 1px rgba(255, 255, 255, .55),
@@ -719,7 +727,7 @@
 
 
 
-    :where(.page-shell) .rightSidebar .mobile-sidebar-close {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .mobile-sidebar-close {
         position: absolute;
         top: calc(var(--adm-safe-t) + 12px);
         inset-inline-start: 14px;
@@ -800,13 +808,13 @@
         transition: height .4s var(--adm-ease-spring);
     }
 
-    :where(.page-shell) .rightSidebar .icon-container.active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .icon-container.active {
         border-color: var(--adm-line);
         background: linear-gradient(120deg, var(--tint, rgba(13, 148, 136, .10)), var(--adm-tile-wash));
         box-shadow: var(--adm-shadow-1), 0 12px 24px -20px var(--glow, var(--adm-accent-glow));
     }
 
-    :where(.page-shell) .rightSidebar .icon-container.active::before {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .icon-container.active::before {
         height: 56%;
     }
 
@@ -835,7 +843,7 @@
         text-overflow: ellipsis;
     }
 
-    :where(.page-shell) .rightSidebar .icon-container.active .icon-label {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .icon-container.active .icon-label {
         color: var(--adm-ink);
         font-weight: 900;
     }
@@ -877,12 +885,12 @@
         transform: scale(.978);
     }
 
-    :where(.page-shell) .rightSidebar .mobile-sidebar-close {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .mobile-sidebar-close {
         transition: transform .28s var(--adm-ease-spring), background .28s var(--adm-ease-soft),
             color .28s var(--adm-ease-soft);
     }
 
-    :where(.page-shell) .rightSidebar .mobile-sidebar-close:active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) :where(.page-shell) .rightSidebar .mobile-sidebar-close:active {
         transform: scale(.9) rotate(-6deg);
         background: rgba(244, 63, 94, .12);
         color: #e11d48;
@@ -922,7 +930,7 @@
     /* پنهان‌سازی اسکرول‌بار کشو */
     :where(.page-shell) .rightSidebar::-webkit-scrollbar { width: 0; height: 0; }
 
-    /* ── پردهٔ پشت کشو (Scrim) — فقط تزئینی، هرگز گیرندهٔ ورودی نیست ───────
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* ── پردهٔ پشت کشو (Scrim) — فقط تزئینی، هرگز گیرندهٔ ورودی نیست ───────
        این لایه تمام‌صفحه است و z-index آن (790) از کشو (800) کمتر است، اما
        روی مرورگر واقعی همین کافی نبود: کشو با transform روی یک لایهٔ
        کامپوزیتور جدا رندر می‌شود و منطقهٔ hit-test کامپوزیت‌شده تا یک فریم پس
@@ -946,7 +954,7 @@
         transition: opacity .34s var(--adm-ease-soft), visibility .34s linear;
     }
 
-    body.mobile-sidebar-open .mobile-sidebar-overlay {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.mobile-sidebar-open .mobile-sidebar-overlay {
         opacity: 1;
         visibility: visible;
         pointer-events: none !important;
@@ -968,7 +976,7 @@
     #notificationAdminBox,
     #shiftBox,
     #vacationBox,
-    #overtimeBox,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) #overtimeBox,
     #hourlyPassBox,
     #ticketBox,
     #internalAutomationAdminBox,
@@ -1009,7 +1017,7 @@
     #notificationAdminBox.management-box,
     #shiftBox.management-box,
     #vacationBox.management-box,
-    #overtimeBox.management-box,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) #overtimeBox.management-box,
     #hourlyPassBox.management-box,
     #ticketBox.management-box,
     #internalAutomationAdminBox.management-box,
@@ -1102,14 +1110,14 @@
         backdrop-filter: blur(14px) saturate(1.2);
     }
 
-    .coworker-tab-content.active,
-    .shift-tab-content.active,
-    .vacation-tab-content.active,
-    .overtime-tab-content.active,
-    .hourlyPass-tab-content.active,
-    .attendance-tab-content.active,
-    .payroll-tab-content.active,
-    .internal-automation-admin-tab-content.active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .coworker-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .shift-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .vacation-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .overtime-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .hourlyPass-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .attendance-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .payroll-tab-content.active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .internal-automation-admin-tab-content.active {
         animation: admTabIn .45s var(--adm-ease) both;
     }
 
@@ -1204,7 +1212,7 @@
     }
 
     .dash-head__badge,
-    .notification-kicker,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-kicker,
     .reg-hero__kicker {
         display: inline-flex;
         align-items: center;
@@ -1279,7 +1287,7 @@
     .dashboard-quick-card,
     .dashboard-chart-card,
     .dashboard-table-card,
-    .stat-card,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .stat-card,
     .summary-card,
     .reg-stat-card,
     .notification-stats > *,
@@ -1289,7 +1297,7 @@
     .shift-table-card,
     .ticket-card,
     .notification-card,
-    .panel-card,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .panel-card,
     .management-card,
     .report-card,
     .karaneh-summary-card,
@@ -1714,32 +1722,32 @@
     .attendance-tabs > * svg,
     .payroll-tabs > * svg { width: 15px; height: 15px; flex: 0 0 15px; }
 
-    .coworker-tabs > .active,
-    .shift-tabs > .active,
-    .vacation-tabs > .active,
-    .overtime-tabs > .active,
-    .hourlyPass-tabs > .active,
-    .attendance-tabs > .active,
-    .payroll-tabs > .active,
-    .internal-automation-admin-tabs > .active,
-    .helpdesk-views > .active,
-    .tabs > .active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .coworker-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .shift-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .vacation-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .overtime-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .hourlyPass-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .attendance-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .payroll-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .internal-automation-admin-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .helpdesk-views > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .tabs > .active {
         border-color: var(--adm-line) !important;
         background: linear-gradient(140deg, #ffffff, #f2f8fb) !important;
         color: var(--adm-ink) !important;
         box-shadow: 0 8px 18px -12px rgba(8, 30, 50, .45) !important;
     }
 
-    .coworker-tabs > .active::after,
-    .shift-tabs > .active::after,
-    .vacation-tabs > .active::after,
-    .overtime-tabs > .active::after,
-    .hourlyPass-tabs > .active::after,
-    .attendance-tabs > .active::after,
-    .payroll-tabs > .active::after,
-    .internal-automation-admin-tabs > .active::after,
-    .helpdesk-views > .active::after,
-    .tabs > .active::after {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .coworker-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .shift-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .vacation-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .overtime-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .hourlyPass-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .attendance-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .payroll-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .internal-automation-admin-tabs > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .helpdesk-views > .active::after,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .tabs > .active::after {
         content: '';
         position: absolute;
         bottom: 4px;
@@ -1773,7 +1781,7 @@
     .payroll-save-actions,
     .form-actions,
     .action-buttons,
-    .modal-buttons,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-buttons,
     .shift-popup-actions,
     .sabt-ticket-actions,
     .internal-automation-admin-form-footer,
@@ -1796,7 +1804,7 @@
 
     .form-actions > *,
     .action-buttons > *,
-    .modal-buttons > *,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-buttons > *,
     .shift-popup-actions > *,
     .sabt-ticket-actions > *,
     .notification-confirm-actions > * {
@@ -2071,11 +2079,11 @@
         background: #f1f8fa !important;
     }
 
-    /* دکمه‌های عملیات داخل جدول */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* دکمه‌های عملیات داخل جدول */
     .management-box .edit-btn,
     .management-box .trash-icon,
     .management-box .manual-checkout-btn,
-    .management-box .attendance-action-btn {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .management-box .attendance-action-btn {
         display: inline-flex;
         min-width: 40px;
         min-height: 40px;
@@ -2087,7 +2095,7 @@
 
     .management-box .tooltip-text-table,
     .management-box .tooltip-text-table-att,
-    .management-box .tooltip-text-table-del {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .management-box .tooltip-text-table-del {
         display: none;
     }
 
@@ -2226,7 +2234,7 @@
 
     .helpdesk-pane-head,
     .helpdesk-views-head,
-    .ticket-panel-kicker {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-panel-kicker {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -2263,7 +2271,7 @@
         line-height: 1.9;
     }
 
-    .line-separator { height: 1px; background: var(--adm-line); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .line-separator { height: 1px; background: var(--adm-line); }
 
 
     /* ══════════════════════════════════════════════════════════════════════
@@ -2310,7 +2318,7 @@
     }
 
 
-    /* ══════════════════════════════════════════════════════════════════════
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* ══════════════════════════════════════════════════════════════════════
        ۱۳) مودال‌ها، پاپ‌آپ‌ها و پیام‌ها → برگه‌های کشویی (Bottom Sheet)
        ══════════════════════════════════════════════════════════════════ */
 
@@ -2319,15 +2327,15 @@
        می‌شود. ما فقط ظاهر و هندسه را در حالت «باز» طراحی می‌کنیم. */
     .modal,
     .modal-virayesh,
-    .modal-hazf,
-    .MoshahedeOverlay,
-    .popup-overlay,
-    .popupHozoor-overlay,
-    .morakhaci-sabt,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-hazf,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .MoshahedeOverlay,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popup-overlay,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-overlay,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .morakhaci-sabt,
     .shift-popup-overlay,
     .reg-detail-modal,
     .notification-dialog,
-    .notification-detail {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-detail {
         z-index: 1200 !important;
         position: fixed !important;
         inset: 0 !important;
@@ -2349,7 +2357,7 @@
         animation: admOverlayIn .3s var(--adm-ease-soft) both;
     }
 
-    .ticket-conversation-overlay {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-overlay {
         background: radial-gradient(120% 80% at 50% 0%, rgba(11, 42, 59, .36), rgba(6, 18, 30, .66)) !important;
     }
 
@@ -2358,7 +2366,7 @@
         to { opacity: 1; }
     }
 
-    /* کارت‌های دیالوگ → برگهٔ کشویی پایین‌چسب (Bottom Sheet)
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* کارت‌های دیالوگ → برگهٔ کشویی پایین‌چسب (Bottom Sheet)
        کارت‌ها با position:fixed مستقل از نوع display لایهٔ پوشاننده پایین
        صفحه می‌چسبند؛ بنابراین اگر منطق فعلی overlay را block یا flex کند،
        نتیجه یکی است. خودِ کارت هم display ندارد تا حالت «بسته» حفظ شود. */
@@ -2366,33 +2374,33 @@
     .modal-content-checkout,
     .confirm-delete-popup,
     .popup-content-virayesh,
-    .modal-content-hazfPopup,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup,
     .modal-content-sabtTicket,
-    .ticket-status-box,
-    .popupHozoor-content,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-status-box,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content,
     .sabt-ticket-dialog,
     .shift-popup-content,
     .shift-popup,
     .modaleSabteTicket.sabt-ticket-wrap,
     .reg-detail-modal__card,
     .notification-dialog-card,
-    .MoshahdePopup,
-    .ticket-conversation-dialog,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .MoshahdePopup,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-dialog,
     /* همان زنجیره‌های انتخابگر لایه‌های قدیمی‌تر، تا قواعد قبلی موبایل
        (responsive-mobile.css و ticketing.css) روی این کارت‌ها غالب نشوند. */
     .page-shell .modal .modal-content,
     .page-shell .modal-virayesh .popup-content-virayesh,
     .page-shell .modal-hazf .modal-content-hazfPopup,
     .page-shell .modaleSabteTicket .modal-content-sabtTicket,
-    .modal-hazf .modal-content-hazfPopup,
-    .popup-overlay .ticket-status-box,
-    .popupHozoor-overlay .popupHozoor-content,
-    .morakhaci-sabt .modal .modal-content,
-    .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap,
-    .morakhaci-sabt .modal-content-sabtTicket.sabt-ticket-dialog,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-hazf .modal-content-hazfPopup,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popup-overlay .ticket-status-box,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-overlay .popupHozoor-content,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .morakhaci-sabt .modal .modal-content,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .morakhaci-sabt .modaleSabteTicket.sabt-ticket-wrap,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .morakhaci-sabt .modal-content-sabtTicket.sabt-ticket-dialog,
     .shift-popup-overlay .shift-popup,
-    .MoshahdePopup,
-    .ticket-conversation-overlay ~ .ticket-conversation-dialog {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .MoshahdePopup,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-overlay ~ .ticket-conversation-dialog {
         position: fixed !important;
         top: auto !important;
         bottom: 0 !important;
@@ -2417,7 +2425,7 @@
         padding-bottom: var(--adm-safe-b) !important;
     }
 
-    /* کارت‌هایی که چیدمان داخلی‌شان ستونی است، در حالت باز هم ستونی می‌مانند */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* کارت‌هایی که چیدمان داخلی‌شان ستونی است، در حالت باز هم ستونی می‌مانند */
     :is(.ticket-conversation-dialog, .notification-dialog-card, .reg-detail-modal__card):is([style*="display: flex"], [style*="display:flex"], [style*="display: block"], [style*="display:block"]) {
         display: flex !important;
         flex-direction: column;
@@ -2428,20 +2436,20 @@
         to { opacity: 1; transform: none; }
     }
 
-    /* دستگیرهٔ کشیدن برگه — چسبان تا همیشه در دید بماند */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* دستگیرهٔ کشیدن برگه — چسبان تا همیشه در دید بماند */
     .modal-content::before,
     .confirm-delete-popup::before,
     .popup-content-virayesh::before,
-    .modal-content-hazfPopup::before,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup::before,
     .modal-content-sabtTicket::before,
-    .ticket-status-box::before,
-    .popupHozoor-content::before,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-status-box::before,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content::before,
     .sabt-ticket-dialog::before,
     .shift-popup::before,
     .reg-detail-modal__card::before,
     .notification-dialog-card::before,
-    .MoshahdePopup::before,
-    .ticket-conversation-dialog::before {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .MoshahdePopup::before,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-dialog::before {
         content: '';
         position: sticky;
         top: 6px;
@@ -2455,30 +2463,30 @@
         pointer-events: none;
     }
 
-    /* بدنهٔ اسکرول‌شوندهٔ برگه */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* بدنهٔ اسکرول‌شوندهٔ برگه */
     .modal-content > *,
     .popup-content-virayesh > *,
-    .modal-content-hazfPopup > *,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup > *,
     .modal-content-sabtTicket > *,
-    .ticket-status-box > *,
-    .popupHozoor-content > *,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-status-box > *,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content > *,
     .sabt-ticket-dialog > *,
     .shift-popup-content > * {
         max-width: 100%;
     }
 
-    .modal-content form,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content form,
     .popup-content-virayesh form,
     .sabt-ticket-dialog form {
         padding: 16px 15px !important;
     }
 
-    .modal-content h2,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content h2,
     .popup-content-virayesh h2,
-    .modal-content-hazfPopup h2,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup h2,
     .modal-content-sabtTicket h2,
-    .ticket-status-box h2,
-    .popupHozoor-content h2,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-status-box h2,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content h2,
     .profile-panel-title {
         margin: 0 !important;
         padding: 20px 16px 12px !important;
@@ -2489,14 +2497,14 @@
         overflow-wrap: anywhere;
     }
 
-    .modal-content p,
-    .modal-content-hazfPopup p,
-    .popupHozoor-content p {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content p,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup p,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content p {
         font-size: .78rem;
         line-height: 1.95;
     }
 
-    .modal-buttons,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-buttons,
     .form-actions {
         position: sticky;
         bottom: 0;
@@ -2509,13 +2517,13 @@
     .confirm-delete-header,
     .confirm-delete-body,
     .confirm-delete-footer,
-    .modal-content > p,
-    .modal-content > h2 {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content > p,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content > h2 {
         padding-inline: 16px;
     }
 
     .confirm-delete-footer,
-    .ok-btn {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ok-btn {
         padding-bottom: calc(12px + var(--adm-safe-b)) !important;
     }
 
@@ -2525,14 +2533,14 @@
         min-height: 46px;
     }
 
-    /* گفتگوی تیکت: تمام‌صفحه برای خوانایی مکالمه */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* گفتگوی تیکت: تمام‌صفحه برای خوانایی مکالمه */
     .ticket-conversation-dialog,
-    .ticket-conversation-overlay .ticket-conversation-dialog {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-overlay .ticket-conversation-dialog {
         max-height: 96dvh !important;
         border-radius: 26px 26px 0 0 !important;
     }
 
-    .ticket-conversation-head {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-conversation-head {
         position: sticky;
         top: 0;
         z-index: 4;
@@ -2541,7 +2549,7 @@
         background: var(--adm-surface);
     }
 
-    .ticket-reply-bar {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-reply-bar {
         position: sticky;
         bottom: 0;
         z-index: 4;
@@ -2552,9 +2560,9 @@
         background: var(--adm-surface-2);
     }
 
-    .ticket-reply-bar > * { min-width: 0; }
-    .ticket-reply-bar input,
-    .ticket-reply-bar textarea { flex: 1 1 auto; min-height: 46px; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-reply-bar > * { min-width: 0; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-reply-bar input,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-reply-bar textarea { flex: 1 1 auto; min-height: 46px; }
 
     /* پیام موفقیت و توست‌ها */
     .success-message,
@@ -2588,7 +2596,7 @@
     }
 
 
-    /* ══════════════════════════════════════════════════════════════════════
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* ══════════════════════════════════════════════════════════════════════
        ۱۴) منوی پروفایل، تم تیره و اصلاحات ریزی
        ══════════════════════════════════════════════════════════════════ */
 
@@ -2619,7 +2627,7 @@
         transition: opacity .22s var(--adm-ease-soft), transform .22s var(--adm-ease-soft), visibility .22s;
     }
 
-    /* حالت باز: ارتفاع محدود به فضای بین هدر و نوار تب، به‌همراه انیمیشن ورود.
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* حالت باز: ارتفاع محدود به فضای بین هدر و نوار تب، به‌همراه انیمیشن ورود.
        انیمیشن عمداً همین‌جا (و نه در قاعدهٔ کلی) است: با fill-mode: both روی
        حالت بسته، opacity نهاییِ انیمیشن (۱) روی پنل جمع‌شده می‌ماند و یک نوار
        خالی زیر هدر دیده می‌شود. */
@@ -2628,12 +2636,12 @@
         animation: admSectionIn .34s var(--adm-ease) both;
     }
 
-    /* دیگر شیت پایین‌چسب نیست؛ دستگیرهٔ کشیدن لازم نیست */
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) /* دیگر شیت پایین‌چسب نیست؛ دستگیرهٔ کشیدن لازم نیست */
     .profile-dropdown::before {
         display: none;
     }
 
-    .pd-header {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-header {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -2643,11 +2651,11 @@
         background: linear-gradient(120deg, rgba(13, 148, 136, .10), rgba(14, 165, 233, .08));
     }
 
-    .pd-header__avatar img { width: 46px; height: 46px; border-radius: 50%; }
-    .pd-header__name { font-size: .88rem; font-weight: 900; }
-    .pd-header__role { font-size: .66rem; color: var(--adm-muted); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-header__avatar img { width: 46px; height: 46px; border-radius: 50%; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-header__name { font-size: .88rem; font-weight: 900; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-header__role { font-size: .66rem; color: var(--adm-muted); }
 
-    .pd-section__label {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-section__label {
         margin: 14px 4px 8px;
         color: var(--adm-faint);
         font-size: .62rem;
@@ -2655,7 +2663,7 @@
         letter-spacing: .02em;
     }
 
-    .pd-item {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-item {
         display: flex;
         width: 100%;
         min-height: 52px;
@@ -2670,18 +2678,18 @@
         transition: transform .3s var(--adm-ease-spring), background .3s var(--adm-ease-soft);
     }
 
-    .pd-item:active { transform: scale(.975); background: var(--adm-surface-2); }
-    .pd-item__icon { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 13px; }
-    .pd-item__text { flex: 1 1 auto; font-size: .8rem; font-weight: 800; }
-    .pd-item__arrow { width: 16px; height: 16px; color: var(--adm-faint); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-item:active { transform: scale(.975); background: var(--adm-surface-2); }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-item__icon { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 13px; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-item__text { flex: 1 1 auto; font-size: .8rem; font-weight: 800; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .pd-item__arrow { width: 16px; height: 16px; color: var(--adm-faint); }
 
-    .profile-panel {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .profile-panel {
         position: fixed !important;
         inset: auto 0 0 0 !important;
         max-height: 92dvh !important;
     }
 
-    .profile-panel-header {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .profile-panel-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -2692,8 +2700,8 @@
 
     .profile-panel-title { font-size: .9rem !important; padding: 0 !important; border: 0 !important; }
     .profile-panel-subtitle { font-size: .68rem; color: var(--adm-muted); }
-    .profile-panel-body { padding: 14px 15px calc(16px + var(--adm-safe-b)); overflow-y: auto; }
-    .profile-panel-close {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .profile-panel-body { padding: 14px 15px calc(16px + var(--adm-safe-b)); overflow-y: auto; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .profile-panel-close {
         display: inline-flex;
         width: 38px;
         height: 38px;
@@ -2714,7 +2722,7 @@
 
     /* اسکلت و لودینگ */
     .ticket-loading-state,
-    .notification-loading {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-loading {
         padding: 18px;
         color: var(--adm-muted);
         font-size: .74rem;
@@ -2722,7 +2730,7 @@
     }
 
     .ticket-loading-state::after,
-    .notification-loading::after {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .notification-loading::after {
         content: '';
         display: block;
         width: 34px;
@@ -2790,20 +2798,20 @@
         background: linear-gradient(180deg, rgba(18, 32, 47, .95), rgba(14, 26, 39, .88)) !important;
     }
 
-    body.dark-mode .mobile-menu-toggle,
-    body.dark-theme .mobile-menu-toggle,
-    body.dark-mode .topbar-icon-btn,
-    body.dark-theme .topbar-icon-btn,
-    body.dark-mode .theme-toggle,
-    body.dark-theme .theme-toggle,
-    body.dark-mode .topbar-clock-pill,
-    body.dark-theme .topbar-clock-pill {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .mobile-menu-toggle,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .mobile-menu-toggle,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .topbar-icon-btn,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .topbar-icon-btn,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .theme-toggle,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .theme-toggle,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .topbar-clock-pill,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .topbar-clock-pill {
         background: var(--adm-surface);
         color: var(--adm-ink-2);
     }
 
-    body.dark-mode .mobile-menu-toggle,
-    body.dark-theme .mobile-menu-toggle { color: #5eead4; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .mobile-menu-toggle,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .mobile-menu-toggle { color: #5eead4; }
 
     body.dark-mode .management-box thead th,
     body.dark-theme .management-box thead th {
@@ -2840,30 +2848,30 @@
         background: linear-gradient(150deg, var(--adm-surface), var(--adm-surface-2)) !important;
     }
 
-    body.dark-mode .coworker-tabs > .active,
-    body.dark-theme .coworker-tabs > .active,
-    body.dark-mode .shift-tabs > .active,
-    body.dark-theme .shift-tabs > .active,
-    body.dark-mode .vacation-tabs > .active,
-    body.dark-theme .vacation-tabs > .active,
-    body.dark-mode .overtime-tabs > .active,
-    body.dark-theme .overtime-tabs > .active,
-    body.dark-mode .hourlyPass-tabs > .active,
-    body.dark-theme .hourlyPass-tabs > .active,
-    body.dark-mode .attendance-tabs > .active,
-    body.dark-theme .attendance-tabs > .active,
-    body.dark-mode .payroll-tabs > .active,
-    body.dark-theme .payroll-tabs > .active,
-    body.dark-mode .internal-automation-admin-tabs > .active,
-    body.dark-theme .internal-automation-admin-tabs > .active,
-    body.dark-mode .helpdesk-views > .active,
-    body.dark-theme .helpdesk-views > .active {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .coworker-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .coworker-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .shift-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .shift-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .vacation-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .vacation-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .overtime-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .overtime-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .hourlyPass-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .hourlyPass-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .attendance-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .attendance-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .payroll-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .payroll-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .internal-automation-admin-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .internal-automation-admin-tabs > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .helpdesk-views > .active,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .helpdesk-views > .active {
         background: linear-gradient(140deg, #1e3444, #182a3a) !important;
         color: #fff !important;
     }
 
-    body.dark-mode .management-box .edit-btn,
-    body.dark-theme .management-box .edit-btn {
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-mode .management-box .edit-btn,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) body.dark-theme .management-box .edit-btn {
         background: #1d3444 !important;
     }
 
@@ -2903,13 +2911,13 @@
         padding-inline: 9px;
     }
 
-    .ma-header-brand .sidebar-top-card-text { display: none; }
-    .topbar-clock-pill { max-width: 74px; padding: 4px 7px; }
-    .topbar-clock-date { display: none; }
-    .topbar-icon-btn,
-    .theme-toggle { flex: 0 0 38px; width: 38px; height: 38px; }
-    .topbar-avatar-wrap,
-    .topbar-avatar { width: 38px; height: 38px; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ma-header-brand .sidebar-top-card-text { display: none; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-clock-pill { max-width: 74px; padding: 4px 7px; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-clock-date { display: none; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-icon-btn,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .theme-toggle { flex: 0 0 38px; width: 38px; height: 38px; }
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-avatar-wrap,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .topbar-avatar { width: 38px; height: 38px; }
 
     :root { --adm-pad-x: 10px; }
 
@@ -2918,7 +2926,7 @@
 
     .form-actions > *,
     .action-buttons > *,
-    .modal-buttons > *,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-buttons > *,
     .shift-popup-actions > *,
     .sabt-ticket-actions > *,
     .notification-confirm-actions > *,
@@ -2939,12 +2947,12 @@
 }
 
 @media screen and (max-width: 768px) and (orientation: landscape) {
-    .modal-content,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content,
     .popup-content-virayesh,
-    .modal-content-hazfPopup,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .modal-content-hazfPopup,
     .modal-content-sabtTicket,
-    .ticket-status-box,
-    .popupHozoor-content,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .ticket-status-box,
+    :where(body:has(:where(.page-shell, .ma-page-shell, .admin-shell))) .popupHozoor-content,
     .sabt-ticket-dialog { max-height: 96dvh !important; }
 
     .adm-tabbar { padding-bottom: calc(var(--adm-safe-b) + 4px); }
